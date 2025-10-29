@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const { cartItems, paymentMethod = 'stripe' } = await request.json()
 
     // Check if at least one payment system is configured
-    const stripeConfigured = !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_your_secret_key_here')
+    const stripeConfigured = !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_REDACTED')
     const paystackConfigured = isPaystackConfigured()
     
     if (!stripeConfigured && !paystackConfigured) {

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const tests = []
 
     // Test 1: Check environment variables
-    const hasSecretKey = !!(process.env.PAYSTACK_SECRET_KEY && process.env.PAYSTACK_SECRET_KEY !== 'sk_test_your_paystack_secret_key_here')
+    const hasSecretKey = !!(process.env.PAYSTACK_SECRET_KEY && process.env.PAYSTACK_SECRET_KEY !== 'sk_test_REDACTED')
     const hasPublicKey = !!(process.env.PAYSTACK_PUBLIC_KEY && process.env.PAYSTACK_PUBLIC_KEY !== 'pk_test_your_paystack_public_key_here')
     
     tests.push({

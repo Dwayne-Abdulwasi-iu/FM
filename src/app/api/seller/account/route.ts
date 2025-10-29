@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if Paystack is configured
-    if (!process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET_KEY === 'sk_test_your_paystack_secret_key_here') {
+    if (!process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET_KEY === 'sk_test_REDACTED') {
       return NextResponse.json(
         { message: 'Payment system not configured. Please contact support.' },
         { status: 503 }

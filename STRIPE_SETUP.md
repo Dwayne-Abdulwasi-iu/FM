@@ -14,7 +14,7 @@ Edit your `.env.local` file and replace:
 ```bash
 # Replace these placeholder values
 STRIPE_PUBLISHABLE_KEY="pk_test_your_actual_publishable_key_here"
-STRIPE_SECRET_KEY="sk_test_your_actual_secret_key_here"
+STRIPE_SECRET_KEY="sk_test_REDACTED"
 ```
 
 ### 3. Test Cards (Use these for testing)

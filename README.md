@@ -137,6 +137,50 @@ EMAIL_SERVER_PASSWORD="your-app-password"
 EMAIL_FROM="noreply@yourapp.com"
 ```
 
+### Testing MongoDB locally
+
+If you want to test a MongoDB connection locally (for example to verify Prisma + Atlas), follow these steps.
+
+- Create or update `.env.local` with your MongoDB Atlas URL (do NOT commit this file):
+
+   PowerShell (per-session):
+   ```powershell
+   $env:DATABASE_URL = 'mongodb+srv://<USER>:<PASS>@<CLUSTER>/<DB>?<OPTIONS>'
+   npm run test:mongo
+   ```
+
+   Or create a `.env.local` from the example file and replace the placeholder:
+   ```powershell
+   copy .env.local.example .env.local
+   # then edit .env.local and paste your DATABASE_URL
+   npm run test:mongo
+   ```
+
+- The repository includes a convenience npm script `test:mongo` which runs `node src/test-mongo.js`. That script will:
+   - attempt to load `DATABASE_URL` from the environment or `.env.local` (if present),
+   - instantiate the Prisma client, and
+   - print the user count or an informative error message.
+
+Security notes:
+- Never commit `.env.local` with real credentials. Use `.env.local.example` as a template and keep secrets out of version control.
+- If you accidentally committed secrets, rotate the credentials immediately.
+
+If you'd like, I can also add a README section that shows how to run the same test from Linux/macOS shells (bash/zsh)." 
+
+For macOS / Linux (bash or zsh):
+
+```bash
+# Temporary (per-session) environment variable
+export DATABASE_URL='mongodb+srv://<USER>:<PASS>@<CLUSTER>/<DB>?<OPTIONS>'
+# Ensure Prisma client is generated if schema changed
+npx prisma generate
+npm run test:mongo
+```
+
+Quick tip: if you've recently changed `prisma/schema.prisma`, run `npx prisma generate` before running the test so the generated client matches the schema.
+
+Note: the repository includes an env-checker that validates `DATABASE_URL` before running the test (`scripts/check-mongo-env.js`). Use `npm run test:mongo` which runs the checker first.
+
 ## Project Structure
 
 ```
@@ -283,6 +327,47 @@ npm run test:watch      # Run tests in watch mode
 - Enable HTTPS only
 - Configure CORS properly
 - Set up rate limiting
+
+### If secrets were accidentally committed
+
+If you discover credentials (API keys, DB URLs, private keys) in the repository history or files, follow these steps immediately:
+
+1. Rotate the exposed credentials first. For example, for MongoDB Atlas: create a new database user or change the existing user's password in the Atlas UI, then update any services that use it.
+
+2. Remove the offending file from the current branch so future clones don't see it:
+
+```bash
+git rm --cached path/to/file
+git commit -m "chore(secrets): remove sensitive file"
+git push
+```
+
+3. If the secret was pushed to the remote (most likely), consider purging it from git history. This is disruptive (rewrites history) and requires coordination with other collaborators. Two common tools:
+
+- BFG Repo-Cleaner (simpler):
+
+```bash
+# install bfg, then
+bfg --delete-files YOUR_FILE
+git push --force
+```
+
+- git filter-repo (recommended by GitHub for complex cases):
+
+```bash
+# install git-filter-repo, then
+git filter-repo --invert-paths --path path/to/file
+git push --force
+```
+
+4. After purging history, rotate the credentials again (to be safe) and notify any team members to re-clone the repository.
+
+5. Store secrets securely going forward:
+   - GitHub Actions: use repository Secrets (Settings → Secrets and variables → Actions).
+   - Local development: keep `.env.local` in `.gitignore` and use `.env.local.example` as a template.
+   - Production: use your cloud provider's secret manager or environment variables.
+
+If you'd like, I can prepare the exact filter-repo or BFG commands tailored to the files found in this repository and (optionally) run them. Note: I will only rewrite history with your explicit confirmation.
 
 ### Performance
 - Enable Next.js image optimization

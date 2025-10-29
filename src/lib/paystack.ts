@@ -1,4 +1,4 @@
-const PayStack = require('paystack')(process.env.PAYSTACK_SECRET_KEY || 'sk_test_your_paystack_secret_key_here')
+const PayStack = require('paystack')(process.env.PAYSTACK_SECRET_KEY || 'sk_test_REDACTED')
 
 export { PayStack as paystack }
 
@@ -12,7 +12,7 @@ export function calculatePaystackFee(amount: number): number {
 export function isPaystackConfigured(): boolean {
   return !!(
     process.env.PAYSTACK_SECRET_KEY && 
-    process.env.PAYSTACK_SECRET_KEY !== 'sk_test_your_paystack_secret_key_here' &&
+    process.env.PAYSTACK_SECRET_KEY !== 'sk_test_REDACTED' &&
     process.env.PAYSTACK_PUBLIC_KEY &&
     process.env.PAYSTACK_PUBLIC_KEY !== 'pk_test_your_paystack_public_key_here'
   )
