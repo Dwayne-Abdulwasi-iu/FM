@@ -1,0 +1,36 @@
+name: MongoDB Test
+
+# Manual workflow to run the MongoDB env checker and test script.
+# Recommended: set a repository secret named `MONGO_DB_URL` containing your
+# mongodb+srv://... connection string (do NOT store credentials in repo files).
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  mongo-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run MongoDB env checker and test
+        env:
+          # Provide your MongoDB URL via repository secret `MONGO_DB_URL`.
+          # Go to repository Settings -> Secrets and variables -> Actions -> New repository secret
+          DATABASE_URL: ${{ secrets.MONGO_DB_URL }}
+        run: |
+          node scripts/check-mongo-env.js
+          # regenerate client in case schema changed
+          npx prisma generate
+          # run the test script (package.json test:mongo calls the checker again)
+          npm run test:mongo
