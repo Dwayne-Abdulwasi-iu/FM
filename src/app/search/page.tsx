@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Eye, Crown, Search, ArrowLeft } from 'lucide-react'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
@@ -42,13 +41,11 @@ interface SearchResults {
 }
 
 export default function SearchPage() {
-  const searchParams = useSearchParams()
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
-  
-  const query = searchParams.get('q')
-  const page = parseInt(searchParams.get('page') || '1')
+  const [query, setQuery] = useState<string | null>(null)
+  const [page, setPage] = useState<number>(1)
 
   const categories = [
     'all',
@@ -60,10 +57,18 @@ export default function SearchPage() {
     'Concept Art'
   ]
 
+  // Read URL search params on the client and trigger search when they change
   useEffect(() => {
-    if (query) {
-      performSearch()
-    }
+    const params = new URLSearchParams(window.location.search)
+    const q = params.get('q')
+    const p = parseInt(params.get('page') || '1')
+    setQuery(q)
+    setPage(Number.isNaN(p) ? 1 : p)
+    // perform search when any of these change
+  }, [/* run once, then performSearch below */])
+
+  useEffect(() => {
+    if (query) performSearch()
   }, [query, page, selectedCategory])
 
   const performSearch = async () => {

@@ -1,15 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn, getSession } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 
 export default function SignInPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const [callbackUrl, setCallbackUrl] = useState('/')
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const cb = params.get('callbackUrl')
+      setCallbackUrl(cb || '/')
+    } catch (err) {
+      setCallbackUrl('/')
+    }
+  }, [])
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

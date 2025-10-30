@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
@@ -33,7 +33,6 @@ interface Design {
 export default function DesignsPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -49,13 +48,14 @@ export default function DesignsPage() {
     'Concept Art'
   ]
 
-  // Set category from URL parameter on initial load
+  // Set category from URL parameter on initial load (read from window.location in client)
   useEffect(() => {
-    const categoryParam = searchParams.get('category')
+    const params = new URLSearchParams(window.location.search)
+    const categoryParam = params.get('category')
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam)
     }
-  }, [searchParams])
+  }, [])
 
   useEffect(() => {
     fetchDesigns()

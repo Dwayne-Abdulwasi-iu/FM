@@ -22,7 +22,7 @@ npx @next/codemod@canary next-lint-to-eslint-cli .
 5:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
 
 ./src/app/api/checkout/route.ts
-4:18  Warning: 'calculatePlatformFee' is defined but never used.  @typescript-eslint/no-unused-vars
+4:41  Warning: 'calculatePlatformFee' is defined but never used.  @typescript-eslint/no-unused-vars
 
 ./src/app/api/customer-care/messages/route.ts
 16:33  Warning: 'isAdmin' is assigned a value but never used.  @typescript-eslint/no-unused-vars

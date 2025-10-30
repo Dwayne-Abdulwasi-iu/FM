@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     let event
 
     try {
+      const stripe = getStripe()
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
       console.error('Webhook signature verification failed:', err)
@@ -42,16 +43,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: any) {
-  try {
-    const userId = session.metadata.userId
-    const platformFee = parseFloat(session.metadata.platformFee)
-    const orderItems = JSON.parse(session.metadata.orderItems)
 
-    // Generate unique order number
-    const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-
-    // Create order
     const order = await prisma.order.create({
       data: {
         orderNumber,

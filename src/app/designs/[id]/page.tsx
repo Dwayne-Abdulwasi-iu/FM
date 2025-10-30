@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Heart, ShoppingCart, Star, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import ProtectedContent from '@/components/ProtectedContent'
@@ -42,7 +42,6 @@ interface Design {
 export default function DesignPage() {
   const params = useParams()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const [design, setDesign] = useState<Design | null>(null)
   const [loading, setLoading] = useState(true)
@@ -52,21 +51,20 @@ export default function DesignPage() {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
   const [hasAccess, setHasAccess] = useState(false)
 
-  // Check if admin is viewing this page
-  const isAdminViewing = searchParams.get('admin') === 'true' && session?.user?.role === 'ADMIN'
-  
+  // Check if admin is viewing this page via ?admin=true
+  const isAdminViewing = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === 'true' && session?.user?.role === 'ADMIN'
+
   // Redirect non-admin users who try to access admin mode
   useEffect(() => {
-    if (searchParams.get('admin') === 'true' && session && session.user?.role !== 'ADMIN') {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('admin') === 'true' && session && session.user?.role !== 'ADMIN') {
       // Remove the admin parameter and redirect
-      const newSearchParams = new URLSearchParams(searchParams)
-      newSearchParams.delete('admin')
-      const newUrl = newSearchParams.toString() 
-        ? `${window.location.pathname}?${newSearchParams.toString()}`
-        : window.location.pathname
+      params.delete('admin')
+      const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname
       router.replace(newUrl)
     }
-  }, [searchParams, session, router])
+  }, [session, router])
 
   useEffect(() => {
     if (params.id) {

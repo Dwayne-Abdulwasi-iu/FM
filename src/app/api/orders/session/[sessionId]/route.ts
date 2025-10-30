@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ sessionId: string }> }) {
@@ -17,7 +17,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
 
   // Resolve params (supports Promise or object) and retrieve the checkout session from Stripe
   const paramsObj = await Promise.resolve(context.params)
-  // Retrieve the checkout session from Stripe
+  // Initialize Stripe lazily and retrieve the checkout session
+  const stripe = getStripe()
   const checkoutSession = await stripe.checkout.sessions.retrieve(paramsObj.sessionId)
     
     if (!checkoutSession.payment_intent) {

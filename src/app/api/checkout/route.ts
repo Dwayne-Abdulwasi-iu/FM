@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { stripe, calculatePlatformFee } from '@/lib/stripe'
+import { getStripe, isStripeConfigured, calculatePlatformFee } from '@/lib/stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const { cartItems, paymentMethod = 'stripe' } = await request.json()
 
     // Check if at least one payment system is configured
-    const stripeConfigured = !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_REDACTED')
+  const stripeConfigured = isStripeConfigured() && process.env.STRIPE_SECRET_KEY !== 'sk_test_REDACTED'
     const paystackConfigured = isPaystackConfigured()
     
     if (!stripeConfigured && !paystackConfigured) {
@@ -126,7 +126,8 @@ export async function POST(request: NextRequest) {
     const platformFeeTotal = Math.round(totalAmount * 0.05 * 100) // 5% in cents
 
     if (paymentMethod === 'stripe') {
-      // Create Stripe checkout session
+      // Create Stripe checkout session (initialize Stripe lazily)
+      const stripe = getStripe()
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: lineItems,
@@ -146,9 +147,9 @@ export async function POST(request: NextRequest) {
             platformFee: platformFeeTotal.toString()
           }
         }
-  // Stripe's SDK typing can be noisy here; narrow the rest of our code and allow this single cast.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+    // Stripe's SDK typing can be noisy here; narrow the rest of our code and allow this single cast.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
 
       return NextResponse.json({
         sessionId: checkoutSession.id,

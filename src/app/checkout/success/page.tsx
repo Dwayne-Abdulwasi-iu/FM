@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { CheckCircle, Download, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -27,11 +27,16 @@ interface OrderDetails {
 }
 
 export default function CheckoutSuccessPage() {
-  const searchParams = useSearchParams()
   const router = useRouter()
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const sessionId = searchParams.get('session_id') || searchParams.get('reference')
+  const [sessionId, setSessionId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const sid = params.get('session_id') || params.get('reference')
+    setSessionId(sid)
+  }, [])
 
   useEffect(() => {
     if (sessionId) {
