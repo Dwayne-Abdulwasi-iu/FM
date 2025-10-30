@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
+    void error
     console.error('Profile designs error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
@@ -162,6 +163,7 @@ export async function PATCH(request: NextRequest) {
     })
 
   } catch (error) {
+    void error
     console.error('Design action error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },

@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ stats })
 
   } catch (error) {
+    void error
     console.error('Profile stats error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },

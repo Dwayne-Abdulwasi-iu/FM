@@ -10,9 +10,14 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
-  moduleNameMapping: {
+  // Map the `@/` path alias used across the repo to the `src` folder.
+  // The correct Jest option name is `moduleNameMapper` (not `moduleNameMapping`).
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Ignore the nested example app/workspace to prevent haste module name collisions
+  // (there are two package.json files both named "fashion-marketplace").
+  modulePathIgnorePatterns: ['<rootDir>/fashion-marketplace/'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',

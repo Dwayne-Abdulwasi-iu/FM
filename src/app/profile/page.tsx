@@ -37,6 +37,8 @@ interface Design {
   createdAt: string
 }
 
+type TabId = 'overview' | 'designs' | 'earnings' | 'account'
+
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -44,7 +46,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'designs' | 'earnings' | 'account'>('overview')
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -291,15 +293,17 @@ export default function ProfilePage() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              {[
-                { id: 'overview', label: 'Overview', icon: Eye },
-                { id: 'designs', label: 'My Designs', icon: Upload },
-                { id: 'earnings', label: 'Earnings', icon: DollarSign },
-                { id: 'account', label: 'Bank Account', icon: CreditCard }
-              ].map((tab) => (
+              {(
+                [
+                  { id: 'overview' as TabId, label: 'Overview', icon: Eye },
+                  { id: 'designs' as TabId, label: 'My Designs', icon: Upload },
+                  { id: 'earnings' as TabId, label: 'Earnings', icon: DollarSign },
+                  { id: 'account' as TabId, label: 'Bank Account', icon: CreditCard }
+                ] as { id: TabId; label: string; icon: any }[]
+              ).map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'

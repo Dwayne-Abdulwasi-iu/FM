@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { paystack } from '@/lib/paystack'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get list of Nigerian banks from Paystack
     const response = await paystack.misc.list_banks({ country: 'nigeria' })

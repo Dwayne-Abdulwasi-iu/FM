@@ -219,6 +219,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
+    void error
     console.error('Checkout error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },

@@ -48,8 +48,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
+    // Prisma error P2031 occurs when MongoDB transactions are attempted but
+    // the server is not a replica set (common for local single-node mongod).
+    // Provide a clearer message so devs can fix their local Mongo setup.
+    // See: https://pris.ly/d/mongodb-replica-set
+    // If other errors occur, fall back to generic 500.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e: any = error
+    if (e && e.code === 'P2031') {
+      return NextResponse.json(
+        {
+          error:
+            'Prisma requires MongoDB to be run as a replica set for transactions (P2031). For local dev: start mongod with --replSet and run rs.initiate(), or use MongoDB Atlas.'
+        },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

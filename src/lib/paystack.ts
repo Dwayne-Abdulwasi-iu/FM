@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const PayStack = require('paystack')(process.env.PAYSTACK_SECRET_KEY || 'sk_test_REDACTED')
 
 export { PayStack as paystack }

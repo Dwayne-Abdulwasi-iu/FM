@@ -4,6 +4,29 @@ import prisma from '@/lib/prisma'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
+// Minimal local types for Stripe webhook payloads (keep narrow and safe)
+type StripeOrderItem = {
+  designId: string
+  quantity: number
+  price: number
+  purchaseType?: 'REGULAR' | 'OWNERSHIP'
+  designerId?: string
+}
+
+type StripeCheckoutSession = {
+  metadata: {
+    userId: string
+    platformFee: string
+    orderItems: string
+  }
+  amount_total: number
+  payment_intent?: string
+}
+
+type StripePaymentIntent = {
+  id: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
@@ -34,6 +57,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
+    void error
     console.error('Webhook error:', error)
     return NextResponse.json(
       { message: 'Webhook error' },
@@ -42,11 +66,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: any) {
+async function handleCheckoutCompleted(session: StripeCheckoutSession) {
   try {
     const userId = session.metadata.userId
     const platformFee = parseFloat(session.metadata.platformFee)
-    const orderItems = JSON.parse(session.metadata.orderItems)
+    const orderItems: StripeOrderItem[] = JSON.parse(session.metadata.orderItems)
 
     // Generate unique order number
     const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
@@ -61,12 +85,12 @@ async function handleCheckoutCompleted(session: any) {
         customerId: userId,
         stripePaymentIntentId: session.payment_intent,
         items: {
-          create: orderItems.map((item: any) => ({
-            designId: item.designId,
-            quantity: item.quantity,
-            price: item.price,
-            purchaseType: item.purchaseType || 'REGULAR'
-          }))
+          create: orderItems.map((item: StripeOrderItem) => ({
+              designId: item.designId,
+              quantity: item.quantity,
+              price: item.price,
+              purchaseType: item.purchaseType || 'REGULAR'
+            }))
         }
       },
       include: {
@@ -83,13 +107,13 @@ async function handleCheckoutCompleted(session: any) {
     })
 
     // Update design sales statistics, create seller earnings, and handle purchases
-    for (const item of orderItems) {
+  for (const item of orderItems) {
       const saleAmount = item.price * item.quantity
       const platformCommission = saleAmount * 0.05 // 5% commission
       const sellerEarning = saleAmount - platformCommission // 95% to seller
 
       // Update design statistics
-      const updateData: any = {
+      const updateData = {
         totalSales: { increment: item.quantity },
         totalRevenue: { increment: saleAmount } // Total revenue (before commission)
       }
@@ -145,11 +169,12 @@ async function handleCheckoutCompleted(session: any) {
 
     console.log(`Order ${orderNumber} created successfully`)
   } catch (error) {
+    void error
     console.error('Error handling checkout completion:', error)
   }
 }
 
-async function handlePaymentSucceeded(paymentIntent: any) {
+async function handlePaymentSucceeded(paymentIntent: StripePaymentIntent) {
   try {
     // Update order status if needed
     await prisma.order.updateMany({
@@ -163,6 +188,7 @@ async function handlePaymentSucceeded(paymentIntent: any) {
 
     console.log(`Payment ${paymentIntent.id} succeeded`)
   } catch (error) {
+    void error
     console.error('Error handling payment success:', error)
   }
 }

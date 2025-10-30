@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Chat session error:', error)
+      void error
+      console.error('Chat session error:', error)
     return NextResponse.json(
       { message: 'Failed to create chat session' },
       { status: 500 }

@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
@@ -12,24 +14,24 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">For Designers</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="/upload" className="hover:text-white">Start Selling</a></li>
-              <li><a href="/resources" className="hover:text-white">Resources</a></li>
+              <li><Link href="/upload" className="hover:text-white">Start Selling</Link></li>
+              <li><Link href="/resources" className="hover:text-white">Resources</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">For Buyers</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="/designs" className="hover:text-white">Browse Designs</a></li>
-              <li><a href="/categories" className="hover:text-white">Categories</a></li>
-              <li><a href="/trending" className="hover:text-white">Trending</a></li>
+              <li><Link href="/designs" className="hover:text-white">Browse Designs</Link></li>
+              <li><Link href="/categories" className="hover:text-white">Categories</Link></li>
+              <li><Link href="/trending" className="hover:text-white">Trending</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">Support</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="/help" className="hover:text-white">Help Center</a></li>
-              <li><a href="/contact" className="hover:text-white">Contact Us</a></li>
-              <li><a href="/terms" className="hover:text-white">Terms of Service</a></li>
+              <li><Link href="/help" className="hover:text-white">Help Center</Link></li>
+              <li><Link href="/contact" className="hover:text-white">Contact Us</Link></li>
+              <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

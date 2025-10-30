@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    void error
     console.error('Design approval error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },

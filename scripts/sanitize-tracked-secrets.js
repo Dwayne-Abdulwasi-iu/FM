@@ -6,7 +6,8 @@ const {execSync} = require('child_process');
 function run(cmd) {
   try {
     return execSync(cmd, {encoding: 'utf8'}).trim();
-  } catch (e) {
+  } catch (_e) {
+    void _e
     return '';
   }
 }
@@ -32,7 +33,7 @@ for (const file of tracked) {
   const ext = path.extname(file).toLowerCase();
   if (['.png', '.jpg', '.jpeg', '.gif', '.zip', '.lock'].includes(ext)) continue;
   let text;
-  try { text = fs.readFileSync(file, 'utf8'); } catch (e) { continue; }
+  try { text = fs.readFileSync(file, 'utf8'); } catch (e) { void e; continue; }
   let out = text;
   for (const p of patterns) {
     out = out.replace(p.rx, p.repl);
@@ -53,8 +54,9 @@ try {
   run(`git add ${changed.map(f => JSON.stringify(f)).join(' ')}`);
   run('git commit -m "chore(secrets): sanitize tracked files - replace live tokens with placeholders"');
   console.log('Committed sanitized files.');
-} catch (e) {
-  console.error('Failed to commit sanitized files. Please review and commit manually.');
-}
+  } catch (_e) {
+    void _e
+    console.error('Failed to commit sanitized files. Please review and commit manually.');
+  }
 
 console.log('Done. Run `node scripts/scan-secrets.js` to re-check.');

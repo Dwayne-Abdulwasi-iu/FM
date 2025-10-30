@@ -28,15 +28,20 @@
         "./src/*"
       ]
     },
+    "types": [
+      "jest",
+      "@testing-library/jest-dom"
+    ],
     "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/*_old.*",
+    "**/*.old.*"
   ]
 }

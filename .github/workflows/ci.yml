@@ -30,6 +30,10 @@ jobs:
     - name: Run linter
       run: npm run lint
 
+    - name: "Optional - Check MongoDB env before running mongo tests"
+      if: env.RUN_MONGO_TEST == 'true'
+      run: node scripts/check-mongo-env.js
+
     - name: Run type check
       run: npm run type-check
 

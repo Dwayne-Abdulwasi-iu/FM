@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const featured = searchParams.get('featured')
 
-    let where: any = {}
+  const where: any = {}
     
     if (category && category !== 'all') {
       where.category = category
@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ resources })
   } catch (error) {
+    void error
     console.error('Failed to fetch resources:', error)
     return NextResponse.json(
       { error: 'Failed to fetch resources' },
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ resource }, { status: 201 })
   } catch (error) {
+    void error
     console.error('Failed to create resource:', error)
     return NextResponse.json(
       { error: 'Failed to create resource' },
@@ -171,6 +173,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ resource })
   } catch (error) {
+    void error
     console.error('Failed to update resource:', error)
     return NextResponse.json(
       { error: 'Failed to update resource' },
@@ -219,6 +222,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    void error
     console.error('Failed to delete resource:', error)
     return NextResponse.json(
       { error: 'Failed to delete resource' },

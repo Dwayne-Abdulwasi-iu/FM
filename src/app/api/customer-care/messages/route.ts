@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
-
+      void error
+      console.error('Send message error:', error)
     const { sessionId, message, isAdmin } = await request.json()
 
     if (!sessionId || !message?.trim()) {
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
 
     if (!chatSession) {
       return NextResponse.json(
-        { message: 'Chat session not found' },
+        void error
+        console.error('Get messages error:', error)
         { status: 404 }
       )
     }

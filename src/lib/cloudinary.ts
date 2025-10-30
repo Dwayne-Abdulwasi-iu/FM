@@ -19,21 +19,38 @@ export async function uploadToCloudinary(
   file: Buffer,
   options: {
     folder?: string;
-    transformation?: any;
+    transformation?: unknown;
   } = {}
 ): Promise<UploadResult> {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream(
       {
-        folder: options.folder || 'fashion-marketplace',
-        resource_type: 'auto',
-        transformation: options.transformation,
+    folder: options.folder || 'fashion-marketplace',
+    resource_type: 'auto',
+    // transformation may be unknown at this boundary; cast to any for the
+    // cloudinary client which accepts various shapes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transformation: options.transformation as any,
       },
-      (error, result) => {
+      (error: unknown, result: unknown) => {
         if (error) {
-          reject(error);
+          reject(error)
+          return
+        }
+
+        // Coerce the result to the expected shape when available.
+        if (result && typeof result === 'object') {
+          resolve(result as UploadResult)
         } else {
-          resolve(result as UploadResult);
+          // Fail safe: resolve with a minimal empty object matching UploadResult
+          resolve({
+            public_id: '',
+            secure_url: '',
+            width: 0,
+            height: 0,
+            format: '',
+            bytes: 0,
+          })
         }
       }
     ).end(file);

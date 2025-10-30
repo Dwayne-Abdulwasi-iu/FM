@@ -185,7 +185,8 @@ export async function POST(request: NextRequest) {
             ).end(buffer)
           })
 
-          fileUrl = (uploadResult as any).secure_url
+          type CloudinaryResult = { secure_url?: string }
+          fileUrl = (uploadResult as unknown as CloudinaryResult).secure_url || ''
         } catch (cloudinaryError) {
           console.error('Cloudinary upload failed:', cloudinaryError)
           // Fall back to local storage

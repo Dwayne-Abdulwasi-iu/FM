@@ -3,6 +3,21 @@ import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 
+// Minimal local types for Paystack webhook payloads
+type PaystackOrderItem = {
+  designId: string
+  quantity: number
+  price: number
+  purchaseType?: 'REGULAR' | 'OWNERSHIP'
+}
+
+type PaystackMetadata = {
+  userId?: string
+  platformFee?: string
+  orderItems?: string
+  originalAmountUSD?: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
@@ -33,10 +48,10 @@ export async function POST(request: NextRequest) {
       console.log('Processing Paystack payment:', { reference, amount, currency })
 
       // Get metadata
-      const userId = metadata?.userId
-      const platformFee = parseFloat(metadata?.platformFee || '0')
-      const orderItems = JSON.parse(metadata?.orderItems || '[]')
-      const originalAmountUSD = parseFloat(metadata?.originalAmountUSD || '0')
+  const userId = metadata?.userId
+  const platformFee = parseFloat(metadata?.platformFee || '0')
+  const orderItems: PaystackOrderItem[] = JSON.parse(metadata?.orderItems || '[]')
+  const originalAmountUSD = parseFloat(metadata?.originalAmountUSD || '0')
 
       if (!userId || !orderItems.length) {
         console.error('Missing required metadata:', { userId, orderItems })
@@ -53,7 +68,7 @@ export async function POST(request: NextRequest) {
           status: 'COMPLETED',
           stripePaymentIntentId: reference, // Use reference for tracking
           items: {
-            create: orderItems.map((item: any) => ({
+            create: orderItems.map((item: PaystackOrderItem) => ({
               designId: item.designId,
               quantity: item.quantity,
               price: item.price,
@@ -89,7 +104,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Update design statistics and handle ownership
-        const updateData: any = {
+        const updateData = {
           totalSales: { increment: item.quantity },
           totalRevenue: { increment: saleAmount }
         }
@@ -188,7 +203,7 @@ export async function POST(request: NextRequest) {
       try {
         const platformRecipientCode = process.env.PAYSTACK_PLATFORM_RECIPIENT
         if (platformRecipientCode) {
-          const totalCommission = order.items.reduce((sum: number, item: any) => {
+          const totalCommission = order.items.reduce((sum: number, item: { price: number; quantity: number }) => {
             return sum + (item.price * item.quantity * 0.05)
           }, 0)
           
@@ -226,6 +241,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
 
   } catch (error) {
+    void error
     console.error('Paystack webhook error:', error)
     return NextResponse.json(
       { message: 'Webhook error' },

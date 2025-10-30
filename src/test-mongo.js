@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
@@ -15,8 +16,9 @@ try {
       }
     }
   }
-} catch (e) {
+} catch (_e) {
   // ignore parsing errors, we'll show a clearer message later
+  void _e
 }
 
 // Create a Prisma client instance that is safe to reuse in development

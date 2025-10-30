@@ -1,24 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import { Navbar } from '@/components/layout/navbar'
 import { SessionProvider } from 'next-auth/react'
+import type { ReactNode } from 'react'
+import type { Session } from 'next-auth'
 
 // Mock the session
-const mockSession = {
+const mockSession: Session = {
   user: {
     id: '1',
+    role: 'USER',
     name: 'Test User',
     email: 'test@example.com',
   },
   expires: '2024-01-01',
 }
 
-const MockSessionProvider = ({ children, session = null }: any) => {
-  return (
-    <SessionProvider session={session}>
-      {children}
-    </SessionProvider>
-  )
-}
+type MockProps = { children: ReactNode; session?: Session | null }
+const MockSessionProvider = ({ children, session = null }: MockProps) => (
+  <SessionProvider session={session}>{children}</SessionProvider>
+)
 
 describe('Navbar', () => {
   it('renders the navbar with logo', () => {

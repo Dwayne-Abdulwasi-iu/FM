@@ -34,6 +34,7 @@ export function FeaturedDesigns() {
         setDesigns(data.designs.slice(0, 6)) // Show only 6 featured designs
       }
     } catch (error) {
+        void error
       console.error('Error fetching featured designs:', error)
     } finally {
       setLoading(false)

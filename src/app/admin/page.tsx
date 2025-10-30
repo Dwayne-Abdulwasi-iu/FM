@@ -4,21 +4,17 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Users, 
-  ShoppingBag, 
-  DollarSign, 
-  TrendingUp, 
-  Eye, 
-  Edit, 
-  Trash2, 
+import {
+  Users,
+  ShoppingBag,
+  DollarSign,
+  TrendingUp,
+  Eye,
+  Trash2,
   Shield,
   UserCheck,
   UserX,
-  Calendar,
   Search,
-  Filter,
-  Download,
   Mail,
   MessageCircle,
   BookOpen
@@ -82,10 +78,12 @@ interface Design {
   }
 }
 
+type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings'
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings'>('overview')
+  const [activeTab, setActiveTab] = useState<AdminTabId>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [designs, setDesigns] = useState<Design[]>([])
@@ -467,19 +465,21 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              {[
-                { id: 'overview', label: 'Overview', icon: Eye },
-                { id: 'users', label: 'User Management', icon: Users },
-                { id: 'designs', label: 'Design Management', icon: ShoppingBag },
-                { id: 'orders', label: 'Order Management', icon: ShoppingBag },
-                { id: 'resources', label: 'Resources', icon: BookOpen },
-                { id: 'contact', label: 'Contact Messages', icon: Mail },
-                { id: 'chat', label: 'Customer Care', icon: MessageCircle },
-                { id: 'earnings', label: 'Earnings Report', icon: DollarSign }
-              ].map((tab) => (
+              {(
+                [
+                  { id: 'overview' as AdminTabId, label: 'Overview', icon: Eye },
+                  { id: 'users' as AdminTabId, label: 'User Management', icon: Users },
+                  { id: 'designs' as AdminTabId, label: 'Design Management', icon: ShoppingBag },
+                  { id: 'orders' as AdminTabId, label: 'Order Management', icon: ShoppingBag },
+                  { id: 'resources' as AdminTabId, label: 'Resources', icon: BookOpen },
+                  { id: 'contact' as AdminTabId, label: 'Contact Messages', icon: Mail },
+                  { id: 'chat' as AdminTabId, label: 'Customer Care', icon: MessageCircle },
+                  { id: 'earnings' as AdminTabId, label: 'Earnings Report', icon: DollarSign }
+                ] as { id: AdminTabId; label: string; icon: any }[]
+              ).map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
@@ -887,6 +887,8 @@ export default function AdminDashboard() {
                         </button>
                         <div className="flex space-x-2">
                           <select
+                            title="Update message status"
+                            aria-label="Update message status"
                             value={selectedMessage.status}
                             onChange={(e) => updateContactMessageStatus(selectedMessage.id, e.target.value)}
                             className="px-3 py-1 border border-gray-300 rounded text-sm text-black"

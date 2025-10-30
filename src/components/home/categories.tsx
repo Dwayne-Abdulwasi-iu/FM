@@ -39,7 +39,8 @@ export function Categories() {
           setCounts(results)
         }
       } catch (error) {
-        console.error('Failed to fetch category counts', error)
+          void error
+          console.error('Failed to fetch category counts', error)
       } finally {
         if (mounted) setLoading(false)
       }

@@ -40,9 +40,7 @@ function scanFile(filePath) {
         results.push({file: filePath, type: p.name, match});
       }
     });
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) { void e }
 }
 
 function walk(dir) {

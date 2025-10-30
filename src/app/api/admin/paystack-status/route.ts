@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     let transferError = null
     try {
       // Try to list transfer recipients to check if transfers are enabled
-      const recipientsResponse = await paystack.transfer_recipient.list()
-      transfersEnabled = true
+  await paystack.transfer_recipient.list()
+  transfersEnabled = true
     } catch (error: any) {
       transferError = error.message
       if (error.message?.includes('not enabled') || error.message?.includes('permission')) {
@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
+    void error
     console.error('Paystack account check error:', error)
     return NextResponse.json(
       { 
