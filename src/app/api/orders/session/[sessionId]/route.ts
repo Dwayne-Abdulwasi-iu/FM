@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { stripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { sessionId: string } }
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ sessionId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -18,8 +15,10 @@ export async function GET(
       )
     }
 
-    // Retrieve the checkout session from Stripe
-    const checkoutSession = await stripe.checkout.sessions.retrieve(params.sessionId)
+  // Resolve params (supports Promise or object) and retrieve the checkout session from Stripe
+  const paramsObj = await Promise.resolve(context.params)
+  // Retrieve the checkout session from Stripe
+  const checkoutSession = await stripe.checkout.sessions.retrieve(paramsObj.sessionId)
     
     if (!checkoutSession.payment_intent) {
       return NextResponse.json(

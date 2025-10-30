@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
-      void error
-      console.error('Send message error:', error)
     const { sessionId, message, isAdmin } = await request.json()
 
     if (!sessionId || !message?.trim()) {
@@ -32,8 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (!chatSession) {
       return NextResponse.json(
-        void error
-        console.error('Get messages error:', error)
+        { message: 'Chat session not found' },
         { status: 404 }
       )
     }
@@ -137,7 +134,8 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
-    const formattedMessages = messages.map(msg => ({
+    type ChatMessageShape = { id: string; message: string; senderId: string; senderName: string; senderRole: string; createdAt: string | Date; isRead: boolean }
+    const formattedMessages = (messages as ChatMessageShape[]).map((msg) => ({
       id: msg.id,
       message: msg.message,
       senderId: msg.senderId,

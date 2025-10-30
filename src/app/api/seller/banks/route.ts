@@ -7,7 +7,7 @@ export async function GET() {
     const response = await paystack.misc.list_banks({ country: 'nigeria' })
 
     if (response.status) {
-      const banks = response.data.map((bank: any) => ({
+      const banks = response.data.map((bank: { name: string; code: string; slug?: string }) => ({
         name: bank.name,
         code: bank.code,
         slug: bank.slug

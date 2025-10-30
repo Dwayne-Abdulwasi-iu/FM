@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+// Local minimal payload type to avoid accidental any and keep the shape clear
+type DesignUpdatePayload = {
+  approvalStatus: string
+  isActive?: boolean
+  rejectionReason?: string | null
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,15 +36,10 @@ export async function POST(request: NextRequest) {
     })
 
     // Update design approval status
-    const updateData: any = {
+    const updateData: DesignUpdatePayload = {
       approvalStatus: action === 'approve' ? 'APPROVED' : 'REJECTED',
-    }
-
-    if (action === 'approve') {
-      updateData.isActive = true
-    } else {
-      updateData.isActive = false
-      updateData.rejectionReason = 'Rejected by admin'
+      isActive: action === 'approve' ? true : false,
+      rejectionReason: action === 'reject' ? 'Rejected by admin' : undefined
     }
 
     const design = await prisma.design.update({

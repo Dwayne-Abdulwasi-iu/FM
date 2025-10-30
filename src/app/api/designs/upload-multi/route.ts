@@ -145,14 +145,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Process media files
-    const mediaFiles: any[] = []
+    type MediaFilePayload = {
+      fileName: string
+      fileUrl: string
+      fileType: string
+      mimeType: string
+      fileSize: number
+      duration?: number | null
+      accessType?: string
+      sortOrder?: number
+    }
+
+    const mediaFiles: MediaFilePayload[] = []
     let primaryImageUrl = ''
     let thumbnailUrl = ''
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       const metadataStr = fileMetadataStrings[i]
-      const metadata = JSON.parse(metadataStr)
+      let metadata: unknown = {}
+      try {
+        metadata = JSON.parse(metadataStr)
+      } catch (parseError) {
+        console.debug('Invalid file metadata JSON, using defaults', parseError)
+        metadata = {}
+      }
+      const md = metadata as Record<string, unknown>
       
       // Convert file to buffer
       const bytes = await file.arrayBuffer()
@@ -165,7 +183,7 @@ export async function POST(request: NextRequest) {
       if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
         try {
           const uploadResult = await new Promise((resolve, reject) => {
-            const uploadOptions: any = {
+            const uploadOptions: Record<string, unknown> = {
               resource_type: fileType === 'VIDEO' ? 'video' : 'image',
               folder: fileType === 'VIDEO' ? 'fashion-designs/videos' : 'fashion-designs',
             }
@@ -176,9 +194,11 @@ export async function POST(request: NextRequest) {
               ]
             }
 
+            // cloudinary types are loose here; keep the runtime guard but disable explicit-any lint for this call
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             cloudinary.uploader.upload_stream(
-              uploadOptions,
-              (error, result) => {
+              uploadOptions as any /* eslint-disable-line @typescript-eslint/no-explicit-any */,
+              (error: unknown, result: unknown) => {
                 if (error) reject(error)
                 else resolve(result)
               }
@@ -213,8 +233,8 @@ export async function POST(request: NextRequest) {
         mimeType: file.type,
         fileSize: file.size,
         duration,
-        accessType: metadata.accessType,
-        sortOrder: metadata.sortOrder
+        accessType: typeof md.accessType === 'string' ? md.accessType : undefined,
+        sortOrder: typeof md.sortOrder === 'number' ? (md.sortOrder as number) : undefined
       })
     }
 

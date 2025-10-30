@@ -44,18 +44,19 @@ export async function POST(request: NextRequest) {
         }
       })
 
-    } catch (error: any) {
-      console.error('PalmPay verification error:', error)
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      console.error('PalmPay verification error:', err)
       
       return NextResponse.json({
         success: false,
         message: 'Verification failed',
-        error: error.message,
+        error: err.message,
         details: {
           accountNumber: testAccount,
           bankCode: palmPayCode,
           bankName: 'PalmPay',
-          errorType: error.name || 'Unknown',
+          errorType: err.name || 'Unknown',
           possibleCauses: [
             'Account number might be incorrect',
             'PalmPay account might not be eligible for transfers',

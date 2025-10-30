@@ -6,7 +6,7 @@ import { paystack } from '@/lib/paystack'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Admin access required' },
@@ -15,36 +15,50 @@ export async function GET() {
     }
 
     // Check Paystack account balance
-    let balance = null
-    let balanceError = null
+    let balance: unknown = null
+    let balanceError: string | null = null
     try {
       const balanceResponse = await paystack.balance.list()
       balance = balanceResponse.data
-    } catch (error: any) {
-      balanceError = error.message
+    } catch (err: unknown) {
+      balanceError = err instanceof Error ? err.message : String(err)
     }
 
     // Check if transfers are enabled
     let transfersEnabled = false
-    let transferError = null
+    let transferError: string | null = null
     try {
       // Try to list transfer recipients to check if transfers are enabled
-  await paystack.transfer_recipient.list()
-  transfersEnabled = true
-    } catch (error: any) {
-      transferError = error.message
-      if (error.message?.includes('not enabled') || error.message?.includes('permission')) {
+      await paystack.transfer_recipient.list()
+      transfersEnabled = true
+    } catch (err: unknown) {
+      transferError = err instanceof Error ? err.message : String(err)
+      if (transferError.includes('not enabled') || transferError.includes('permission')) {
         transfersEnabled = false
       }
     }
 
     // Get recent transactions
-    let recentTransactions = null
+    let recentTransactions: unknown = null
     try {
       const transactionsResponse = await paystack.transaction.list({ perPage: 5 })
       recentTransactions = transactionsResponse.data
-    } catch (error: any) {
-      // Ignore transaction errors for now
+    } catch (err: unknown) {
+      // Ignore transaction errors for now but log
+      console.debug('Paystack transactions fetch failed:', err)
+    }
+
+    // Build a safe balance summary
+    let balanceSummary = '⚠️ Could not fetch balance'
+    if (Array.isArray(balance)) {
+      try {
+        type BalanceEntry = { currency?: string; balance?: number }
+        balanceSummary = `💰 Current balance: ${(
+          (balance as BalanceEntry[])
+        ).map((b) => `${b.currency ?? 'UNKNOWN'} ${Math.round((b.balance ?? 0) / 100)}`).join(', ')}`
+      } catch {
+        balanceSummary = '💰 Balance available (unformatted)'
+      }
     }
 
     return NextResponse.json({
@@ -58,11 +72,11 @@ export async function GET() {
           enabled: transfersEnabled,
           error: transferError
         },
-        recentTransactions: recentTransactions?.length || 0
+        recentTransactions: Array.isArray(recentTransactions) ? recentTransactions.length : 0
       },
       recommendations: [
         !transfersEnabled ? '⚠️ Transfers may not be enabled on your Paystack account' : '✅ Transfers appear to be enabled',
-        balance ? `💰 Current balance: ${balance.map((b: any) => `${b.currency} ${b.balance/100}`).join(', ')}` : '⚠️ Could not fetch balance',
+        balanceSummary,
         'For production: Ensure your Paystack account has transfer permissions enabled',
         'Test transfers work differently - they may not actually move money',
         'Consider using Paystack Split Payments for automatic distribution'

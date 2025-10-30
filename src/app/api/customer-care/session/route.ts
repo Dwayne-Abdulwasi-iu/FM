@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     const sessions = await prisma.chatSession.findMany({
       where: {
-        status: status as any
+        status: status as string
       },
       orderBy: {
         updatedAt: 'desc'
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     })
 
     const total = await prisma.chatSession.count({
-      where: { status: status as any }
+      where: { status: status as string }
     })
 
     return NextResponse.json({

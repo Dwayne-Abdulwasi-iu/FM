@@ -3,10 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -18,6 +15,7 @@ export async function PATCH(
     }
 
     const { status } = await request.json()
+  const paramsObj = await params
     
     if (!['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].includes(status)) {
       return NextResponse.json(
@@ -27,7 +25,7 @@ export async function PATCH(
     }
 
     const updatedMessage = await prisma.contactMessage.update({
-      where: { id: params.id },
+      where: { id: paramsObj.id },
       data: { 
         status,
         updatedAt: new Date()
@@ -48,10 +46,7 @@ export async function PATCH(
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -62,8 +57,10 @@ export async function GET(
       )
     }
 
+  const paramsObj = await params
+
     const message = await prisma.contactMessage.findUnique({
-      where: { id: params.id },
+      where: { id: paramsObj.id },
       include: {
         user: {
           select: {

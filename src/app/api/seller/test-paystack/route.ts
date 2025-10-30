@@ -38,8 +38,8 @@ export async function GET() {
       if (response.status && response.data.length > 0) {
         apiConnectivity = 'PASS'
       }
-    } catch (error: any) {
-      apiError = error.message
+    } catch (error: unknown) {
+      apiError = error instanceof Error ? error.message : String(error)
     }
 
     tests.push({
@@ -60,12 +60,12 @@ export async function GET() {
       
       // This should fail (dummy account), but if the API responds properly, connectivity is good
       accountResolution = 'API_RESPONDING'
-    } catch (error: any) {
-      if (error.message?.includes('Could not resolve account name')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Could not resolve account name')) {
         // This is expected for dummy account - means API is working
         accountResolution = 'PASS'
       } else {
-        resolutionError = error.message
+        resolutionError = error instanceof Error ? error.message : String(error)
       }
     }
 

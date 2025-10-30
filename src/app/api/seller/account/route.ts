@@ -139,25 +139,27 @@ export async function POST(request: NextRequest) {
       verifiedAccountName = verification.data.account_name
       isVerified = true
 
-    } catch (verifyError: any) {
-      console.error('Bank verification error:', verifyError)
+    } catch (verifyError: unknown) {
+      const err = verifyError instanceof Error ? verifyError : new Error(String(verifyError))
+      console.error('Bank verification error:', err)
       
       // More specific error messages
-      if (verifyError.message?.includes('Invalid account number')) {
+      if (err.message.includes('Invalid account number')) {
         return NextResponse.json(
           { message: 'Invalid account number. Please check and try again.' },
           { status: 400 }
         )
       }
       
-      if (verifyError.message?.includes('Invalid bank code')) {
+      if (err.message.includes('Invalid bank code')) {
         return NextResponse.json(
           { message: 'Invalid bank code. Please select a different bank and try again.' },
           { status: 400 }
         )
       }
 
-      if (verifyError.message?.includes('network') || verifyError.code === 'ENOTFOUND') {
+      const maybe = (verifyError && typeof verifyError === 'object') ? (verifyError as Record<string, unknown>) : {}
+      if (err.message.includes('network') || (typeof maybe.code === 'string' && maybe.code === 'ENOTFOUND')) {
         return NextResponse.json(
           { message: 'Network error. Please check your internet connection and try again.' },
           { status: 500 }

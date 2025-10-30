@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       // For testing, show all designs regardless of approval status
       // isActive: true,
     };
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
 
     const [designs, total] = await Promise.all([
       prisma.design.findMany({
-        where,
+        where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */,
         skip,
         take: limit,
         orderBy,
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.design.count({ where }),
+  prisma.design.count({ where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */ }),
     ]);
 
     return NextResponse.json({

@@ -42,7 +42,21 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(totalDesigns / limit)
 
     // Format designs with sales count
-    const formattedDesigns = designs.map((design: any) => ({
+    type DesignWithCount = {
+      id: string
+      title: string
+      description?: string | null
+      price: number
+      imageUrl: string
+      category: string
+      tags?: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+      _count?: { orderItems?: number }
+    }
+
+    const formattedDesigns = designs.map((design: DesignWithCount) => ({
       id: design.id,
       title: design.title,
       description: design.description,
@@ -53,7 +67,7 @@ export async function GET(request: NextRequest) {
       isActive: design.isActive,
       createdAt: design.createdAt,
       updatedAt: design.updatedAt,
-      salesCount: design._count.orderItems
+      salesCount: design._count?.orderItems ?? 0
     }))
 
     return NextResponse.json({

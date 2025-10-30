@@ -1,0 +1,141 @@
+
+> fashion-marketplace@0.1.0 lint
+> next lint
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+ ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Dwayne\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Dwayne\OneDrive\Desktop\fashion web\package-lock.json
+
+
+./src/app/admin/page.tsx
+688:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/api/categories/route.ts
+5:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/checkout/route.ts
+4:18  Warning: 'calculatePlatformFee' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/customer-care/messages/route.ts
+16:33  Warning: 'isAdmin' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/customer-care/session/route.ts
+6:28  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/profile/route.ts
+6:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/profile/stats/route.ts
+6:27  Warning: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/seller/test-paystack/route.ts
+56:13  Warning: 'verification' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/seller/verify/route.ts
+57:9  Warning: 'isVerified' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/auth/signin/page.tsx
+43:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/auth/signup/page.tsx
+58:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/cart/page.tsx
+174:9  Warning: 'platformFee' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+223:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/categories/page.tsx
+6:64  Warning: 'Eye' is defined but never used.  @typescript-eslint/no-unused-vars
+6:69  Warning: 'Heart' is defined but never used.  @typescript-eslint/no-unused-vars
+6:76  Warning: 'ShoppingCart' is defined but never used.  @typescript-eslint/no-unused-vars
+69:6  Warning: React Hook useEffect has a missing dependency: 'fetchCategories'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/checkout/success/page.tsx
+31:9  Warning: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+112:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/contact/page.tsx
+43:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/customer-care/page.tsx
+43:6  Warning: React Hook useEffect has a missing dependency: 'initializeChat'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+126:34  Warning: 'userMessage' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/designs/page.tsx
+58:6  Warning: React Hook useEffect has a missing dependency: 'categories'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+62:6  Warning: React Hook useEffect has a missing dependency: 'fetchDesigns'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+185:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/designs/[id]/page.tsx
+5:31  Warning: 'Star' is defined but never used.  @typescript-eslint/no-unused-vars
+7:8  Warning: 'ProtectedContent' is defined but never used.  @typescript-eslint/no-unused-vars
+76:6  Warning: React Hook useEffect has a missing dependency: 'checkAccess'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+343:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+390:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+411:45  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+480:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+538:57  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+573:55  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/help/page.tsx
+15:3  Warning: 'Settings' is defined but never used.  @typescript-eslint/no-unused-vars
+22:3  Warning: 'Download' is defined but never used.  @typescript-eslint/no-unused-vars
+23:3  Warning: 'Star' is defined but never used.  @typescript-eslint/no-unused-vars
+24:3  Warning: 'Heart' is defined but never used.  @typescript-eslint/no-unused-vars
+25:3  Warning: 'Eye' is defined but never used.  @typescript-eslint/no-unused-vars
+27:3  Warning: 'Palette' is defined but never used.  @typescript-eslint/no-unused-vars
+28:3  Warning: 'Users' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/profile/page.tsx
+6:69  Warning: 'Heart' is defined but never used.  @typescript-eslint/no-unused-vars
+6:76  Warning: 'Settings' is defined but never used.  @typescript-eslint/no-unused-vars
+6:98  Warning: 'Edit' is defined but never used.  @typescript-eslint/no-unused-vars
+6:104  Warning: 'Trash2' is defined but never used.  @typescript-eslint/no-unused-vars
+61:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+142:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+385:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/resources/page.tsx
+11:3  Warning: 'Filter' is defined but never used.  @typescript-eslint/no-unused-vars
+23:3  Warning: 'Users' is defined but never used.  @typescript-eslint/no-unused-vars
+26:3  Warning: 'Smartphone' is defined but never used.  @typescript-eslint/no-unused-vars
+27:3  Warning: 'Laptop' is defined but never used.  @typescript-eslint/no-unused-vars
+28:3  Warning: 'Tablet' is defined but never used.  @typescript-eslint/no-unused-vars
+67:10  Warning: 'loading' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+71:6  Warning: React Hook useEffect has a missing dependency: 'fetchResources'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+293:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+432:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/search/page.tsx
+67:6  Warning: React Hook useEffect has a missing dependency: 'performSearch'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+195:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/trending/page.tsx
+192:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/upload/page.tsx
+6:93  Warning: 'Video' is defined but never used.  @typescript-eslint/no-unused-vars
+346:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/upload/page_multi.tsx
+6:93  Warning: 'Video' is defined but never used.  @typescript-eslint/no-unused-vars
+260:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/home/categories.tsx
+54:6  Warning: React Hook useEffect has a missing dependency: 'categoryList'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/home/featured-designs.tsx
+91:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ProtectedContent.tsx
+101:16  Warning: 'clipboardError' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

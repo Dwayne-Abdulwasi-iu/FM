@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ComponentType, type SVGProps } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -39,7 +39,7 @@ interface HelpCategory {
   id: string
   title: string
   description: string
-  icon: any
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   color: string
 }
 

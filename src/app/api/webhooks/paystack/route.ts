@@ -11,13 +11,6 @@ type PaystackOrderItem = {
   purchaseType?: 'REGULAR' | 'OWNERSHIP'
 }
 
-type PaystackMetadata = {
-  userId?: string
-  platformFee?: string
-  orderItems?: string
-  originalAmountUSD?: string
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
@@ -39,19 +32,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Invalid signature' }, { status: 400 })
     }
 
-    const event = JSON.parse(body)
+    // Parse event defensively
+    const rawEvent: unknown = JSON.parse(body)
+    const event = rawEvent as { event?: string; data?: unknown }
 
-    if (event.event === 'charge.success') {
-      const { data } = event
-      const { reference, amount, currency, customer, metadata } = data
+    if (event.event === 'charge.success' && event.data) {
+      const data = event.data as { reference?: string; amount?: number; currency?: string; metadata?: unknown }
+      const { reference, amount, currency } = data
 
       console.log('Processing Paystack payment:', { reference, amount, currency })
 
-      // Get metadata
-  const userId = metadata?.userId
-  const platformFee = parseFloat(metadata?.platformFee || '0')
-  const orderItems: PaystackOrderItem[] = JSON.parse(metadata?.orderItems || '[]')
-  const originalAmountUSD = parseFloat(metadata?.originalAmountUSD || '0')
+      // Defensive metadata extraction
+      const metadata = data.metadata as Record<string, unknown> | undefined
+      const userId = typeof metadata?.userId === 'string' ? metadata.userId : undefined
+      const platformFee = parseFloat(String(metadata?.platformFee ?? '0'))
+
+      let orderItems: PaystackOrderItem[] = []
+      try {
+        if (typeof metadata?.orderItems === 'string') {
+          orderItems = JSON.parse(metadata.orderItems as string)
+        } else if (Array.isArray(metadata?.orderItems)) {
+          orderItems = (metadata.orderItems as unknown[]) as PaystackOrderItem[]
+        }
+      } catch (err) {
+        console.error('Failed to parse orderItems from metadata:', err)
+        orderItems = []
+      }
+
+      const originalAmountUSD = parseFloat(String(metadata?.originalAmountUSD ?? '0'))
 
       if (!userId || !orderItems.length) {
         console.error('Missing required metadata:', { userId, orderItems })
@@ -61,14 +69,14 @@ export async function POST(request: NextRequest) {
       // Create order in database
       const order = await prisma.order.create({
         data: {
-          orderNumber: reference,
+          orderNumber: reference ?? `PS-${Date.now()}`,
           customerId: userId,
           totalAmount: originalAmountUSD, // Store in USD
           platformFee: platformFee,
           status: 'COMPLETED',
-          stripePaymentIntentId: reference, // Use reference for tracking
+          stripePaymentIntentId: reference ?? undefined, // Use reference for tracking
           items: {
-            create: orderItems.map((item: PaystackOrderItem) => ({
+            create: orderItems.map((item) => ({
               designId: item.designId,
               quantity: item.quantity,
               price: item.price,
@@ -85,7 +93,7 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Create seller earnings, purchase records, and handle ownership for each item  
+      // Create seller earnings, purchase records, and handle ownership for each item
       for (const item of order.items) {
         const saleAmount = item.price * item.quantity
         const commission = saleAmount * 0.05 // 5% commission
@@ -97,28 +105,22 @@ export async function POST(request: NextRequest) {
             platformCommission: commission,
             sellerAmount,
             quantity: item.quantity,
-            sellerId: item.design.designerId,
+            sellerId: (item.design?.designerId ?? '') as string,
             orderId: order.id,
             designId: item.designId
           }
         })
 
-        // Update design statistics and handle ownership
-        const updateData = {
-          totalSales: { increment: item.quantity },
-          totalRevenue: { increment: saleAmount }
-        }
-
-        // Handle ownership transfer
-        if (item.purchaseType === 'OWNERSHIP') {
-          updateData.isOwned = true
-          updateData.ownedBy = userId
-          updateData.isActive = false // Make design unavailable for future purchases
-        }
-
+        // Update design statistics and handle ownership (inline payload)
         await prisma.design.update({
           where: { id: item.designId },
-          data: updateData
+          data: {
+            totalSales: { increment: item.quantity },
+            totalRevenue: { increment: saleAmount },
+            ...(item.purchaseType === 'OWNERSHIP'
+              ? { isOwned: true, ownedBy: userId, isActive: false }
+              : {})
+          }
         })
 
         // Create purchase record for access control
@@ -136,7 +138,7 @@ export async function POST(request: NextRequest) {
         // Auto-transfer earnings to seller account
         try {
           const sellerAccount = await prisma.sellerAccount.findUnique({
-            where: { userId: item.design.designerId }
+            where: { userId: item.design?.designerId ?? '' }
           })
 
           if (sellerAccount && sellerAccount.isVerified) {
@@ -145,7 +147,7 @@ export async function POST(request: NextRequest) {
             // If no recipient code exists (manual verification), create one now
             if (!recipientCode) {
               try {
-                console.log('Creating recipient code for seller:', item.design.designerId)
+                console.log('Creating recipient code for seller:', item.design?.designerId)
                 const recipient = await paystack.transfer_recipient.create({
                   type: 'nuban',
                   name: sellerAccount.accountName,
@@ -156,13 +158,13 @@ export async function POST(request: NextRequest) {
 
                 if (recipient.status) {
                   recipientCode = recipient.data.recipient_code
-                  
+
                   // Update the seller account with the recipient code
                   await prisma.sellerAccount.update({
-                    where: { userId: item.design.designerId },
+                    where: { userId: item.design?.designerId ?? '' },
                     data: { recipientCode }
                   })
-                  
+
                   console.log('Recipient code created and saved:', recipientCode)
                 }
               } catch (recipientError) {
@@ -179,19 +181,19 @@ export async function POST(request: NextRequest) {
                 source: 'balance',
                 amount: transferAmountNGN * 100, // Convert to kobo
                 recipient: recipientCode,
-                reason: `Earnings from sale of "${item.design.title}" - Order #${order.orderNumber}`
+                reason: `Earnings from sale of "${item.design?.title ?? ''}" - Order #${order.orderNumber}`
               })
 
               if (transfer.status) {
-                console.log(`Transfer initiated for seller ${item.design.designerId}: ₦${transferAmountNGN}`)
+                console.log(`Transfer initiated for seller ${item.design?.designerId}: ₦${transferAmountNGN}`)
               } else {
                 console.error('Transfer failed:', transfer.message)
               }
             } else {
-              console.error('Unable to create recipient code for seller:', item.design.designerId)
+              console.error('Unable to create recipient code for seller:', item.design?.designerId)
             }
           } else {
-            console.log('Seller account not verified or not found for user:', item.design.designerId)
+            console.log('Seller account not verified or not found for user:', item.design?.designerId)
           }
         } catch (transferError) {
           console.error('Auto-transfer error:', transferError)
@@ -203,10 +205,10 @@ export async function POST(request: NextRequest) {
       try {
         const platformRecipientCode = process.env.PAYSTACK_PLATFORM_RECIPIENT
         if (platformRecipientCode) {
-          const totalCommission = order.items.reduce((sum: number, item: { price: number; quantity: number }) => {
-            return sum + (item.price * item.quantity * 0.05)
+          const totalCommission = order.items.reduce((sum: number, it: { price: number; quantity: number }) => {
+            return sum + (it.price * it.quantity * 0.05)
           }, 0)
-          
+
           const commissionNGN = Math.round(totalCommission * 800) // Convert to NGN
 
           const platformTransfer = await paystack.transfer.initiate({

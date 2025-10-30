@@ -51,11 +51,15 @@ export async function GET(request: NextRequest) {
       })
     ])
 
-    // Calculate stats
-    const totalSales = ordersData.length
-    const totalRevenue = ordersData.reduce((sum: number, orderItem: any) => sum + orderItem.order.totalAmount, 0)
-    const totalEarnings = sellerEarnings.reduce((sum: number, earning: any) => sum + earning.sellerAmount, 0)
-    const platformCommission = sellerEarnings.reduce((sum: number, earning: any) => sum + earning.platformCommission, 0)
+  // Calculate stats
+  const totalSales = ordersData.length
+  // Narrow the incoming shapes from Prisma for safer reductions
+  type OrderItemShape = { order: { totalAmount: number } }
+  type SellerEarningShape = { sellerAmount: number; platformCommission: number; createdAt: string | Date }
+
+  const totalRevenue = (ordersData as OrderItemShape[]).reduce((sum, orderItem) => sum + (orderItem.order?.totalAmount ?? 0), 0)
+  const totalEarnings = (sellerEarnings as SellerEarningShape[]).reduce((sum, earning) => sum + (earning.sellerAmount ?? 0), 0)
+  const platformCommission = (sellerEarnings as SellerEarningShape[]).reduce((sum, earning) => sum + (earning.platformCommission ?? 0), 0)
 
     // Calculate monthly earnings for the chart
     const currentDate = new Date()
@@ -65,12 +69,12 @@ export async function GET(request: NextRequest) {
       const month = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
       const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 1)
       
-      const monthEarnings = sellerEarnings
-        .filter((earning: any) => {
+      const monthEarnings = (sellerEarnings as SellerEarningShape[])
+        .filter((earning) => {
           const earningDate = new Date(earning.createdAt)
           return earningDate >= month && earningDate < nextMonth
         })
-        .reduce((sum: number, earning: any) => sum + earning.sellerAmount, 0)
+        .reduce((sum, earning) => sum + (earning.sellerAmount ?? 0), 0)
 
       monthlyEarnings.push({
         month: month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),

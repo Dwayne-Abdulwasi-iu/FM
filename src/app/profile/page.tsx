@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, Heart, Settings, CreditCard, Edit, Trash2, CheckCircle, X } from 'lucide-react'
@@ -299,7 +299,7 @@ export default function ProfilePage() {
                   { id: 'designs' as TabId, label: 'My Designs', icon: Upload },
                   { id: 'earnings' as TabId, label: 'Earnings', icon: DollarSign },
                   { id: 'account' as TabId, label: 'Bank Account', icon: CreditCard }
-                ] as { id: TabId; label: string; icon: any }[]
+                ] as { id: TabId; label: string; icon: ElementType }[]
               ).map((tab) => (
                 <button
                   key={tab.id}
@@ -503,8 +503,25 @@ export default function ProfilePage() {
 
 // Seller Account Management Component
 function SellerAccountTab() {
-  const [sellerAccount, setSellerAccount] = useState<any>(null)
-  const [banks, setBanks] = useState<any[]>([])
+    // Minimal types for seller account and banks to avoid `any`
+    interface SellerAccount {
+      userId?: string
+      accountNumber?: string
+      accountName?: string
+      bankCode?: string
+      bankName?: string
+      recipientCode?: string | null
+      isVerified?: boolean
+      isActive?: boolean
+    }
+
+    interface Bank {
+      code: string
+      name: string
+    }
+
+    const [sellerAccount, setSellerAccount] = useState<SellerAccount | null>(null)
+    const [banks, setBanks] = useState<Bank[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [verifying, setVerifying] = useState(false)

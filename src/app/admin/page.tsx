@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -80,6 +80,35 @@ interface Design {
 
 type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings'
 
+// Minimal types for admin lists to reduce `any` usage in state
+interface ContactMessage {
+  id: string
+  subject?: string
+  name?: string
+  email?: string
+  priority?: 'low' | 'medium' | 'high'
+  status?: string
+  createdAt: string
+  message?: string
+  user?: { name?: string; email?: string }
+}
+
+interface ChatMessage {
+  id: string
+  message?: string
+  isAdmin?: boolean
+  createdAt: string
+}
+
+interface ChatSession {
+  id: string
+  user: { name?: string; email?: string }
+  _count: { messages: number }
+  messages: ChatMessage[]
+  status?: string
+  createdAt: string
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -95,11 +124,11 @@ export default function AdminDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
   const [adminConfirm, setAdminConfirm] = useState<{ step: number; userId: string; userEmail: string; action: 'makeAdmin' | 'removeAdmin' } | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [contactMessages, setContactMessages] = useState<any[]>([])
-  const [chatSessions, setChatSessions] = useState<any[]>([])
-  const [selectedMessage, setSelectedMessage] = useState<any>(null)
-  const [selectedChatSession, setSelectedChatSession] = useState<any>(null)
-  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([])
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null)
+  const [selectedChatSession, setSelectedChatSession] = useState<ChatSession | null>(null)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [replyMessage, setReplyMessage] = useState('')
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -131,7 +160,7 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     try {
       setLoading(true)
-      const [statsRes, usersRes, designsRes, ordersRes, contactRes, chatRes] = await Promise.all([
+        const [statsRes, usersRes, designsRes, ordersRes, contactRes, chatRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/users'),
         fetch('/api/admin/designs'),
@@ -169,7 +198,7 @@ export default function AdminDashboard() {
         const chatData = await chatRes.json()
         setChatSessions(chatData.sessions || [])
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       console.error('Error fetching admin data:', error)
     } finally {
       setLoading(false)
@@ -198,7 +227,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${action} user`)
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       console.error(`Error ${action} user:`, error)
       showNotification('error', `Error occurred while ${action} user`)
     }
@@ -233,7 +262,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to delete user account: ${responseData.error || 'Unknown error'}`)
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       console.error('Error deleting user:', error)
       showNotification('error', 'Network error occurred while deleting user account')
     }
@@ -256,7 +285,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${adminConfirm.action} user`)
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       console.error(`Error ${adminConfirm.action} user:`, error)
       showNotification('error', `Error occurred during ${adminConfirm.action}`)
     }
@@ -276,7 +305,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${action} design`)
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       console.error(`Error ${action} design:`, error)
       showNotification('error', `Error occurred while ${action} design`)
     }
@@ -306,7 +335,7 @@ export default function AdminDashboard() {
         const error = await response.json()
         showToast(`Failed to ${action} design: ${error.message}`, 'error')
       }
-    } catch (error) {
+  } catch (error) { console.error(error);
       showToast(`Failed to ${action} design`, 'error')
     }
   }
@@ -320,13 +349,14 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-        showNotification('success', `Message marked as ${status.toLowerCase()}`)
+          showNotification('success', `Message marked as ${status.toLowerCase()}`)
         fetchAdminData()
       } else {
         showNotification('error', 'Failed to update message status')
       }
     } catch (error) {
-      showNotification('error', 'Error updating message status')
+        console.error('Error updating message status:', error)
+        showNotification('error', 'Error updating message status')
     }
   }
 
@@ -359,12 +389,13 @@ export default function AdminDashboard() {
       if (response.ok) {
         setReplyMessage('')
         fetchChatMessages(sessionId)
-        showNotification('success', 'Reply sent successfully')
+          showNotification('success', 'Reply sent successfully')
       } else {
         showNotification('error', 'Failed to send reply')
       }
     } catch (error) {
-      showNotification('error', 'Error sending reply')
+        console.error('Error sending reply:', error)
+        showNotification('error', 'Error sending reply')
     }
   }
 
@@ -475,7 +506,7 @@ export default function AdminDashboard() {
                   { id: 'contact' as AdminTabId, label: 'Contact Messages', icon: Mail },
                   { id: 'chat' as AdminTabId, label: 'Customer Care', icon: MessageCircle },
                   { id: 'earnings' as AdminTabId, label: 'Earnings Report', icon: DollarSign }
-                ] as { id: AdminTabId; label: string; icon: any }[]
+                ] as { id: AdminTabId; label: string; icon: ElementType }[]
               ).map((tab) => (
                 <button
                   key={tab.id}
@@ -531,7 +562,7 @@ export default function AdminDashboard() {
                     </div>
                     <select
                       value={userFilter}
-                      onChange={(e) => setUserFilter(e.target.value as any)}
+                      onChange={(e) => setUserFilter(e.target.value as 'all' | 'verified' | 'unverified')}
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-black"
                       title="Filter users by verification status"
                       aria-label="Filter users"

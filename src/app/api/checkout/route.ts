@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify cart items and calculate total
-    let totalAmount = 0
-    const lineItems = []
-    const orderItems = []
+  // Verify cart items and calculate total
+  let totalAmount = 0
+  const lineItems: unknown[] = []
+  type OrderItem = { designId: string; quantity: number; price: number; purchaseType?: string; designerId?: string }
+  const orderItems: OrderItem[] = []
 
     for (const item of cartItems) {
       const design = await prisma.design.findUnique({
@@ -145,7 +146,9 @@ export async function POST(request: NextRequest) {
             platformFee: platformFeeTotal.toString()
           }
         }
-      })
+  // Stripe's SDK typing can be noisy here; narrow the rest of our code and allow this single cast.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
 
       return NextResponse.json({
         sessionId: checkoutSession.id,
@@ -158,7 +161,8 @@ export async function POST(request: NextRequest) {
       
       // Get unique designers from order items and check their subaccounts
       const designerIds = [...new Set(orderItems.map(item => item.designerId))]
-      const subaccounts = []
+  type Subaccount = { subaccount: string; share: number }
+  const subaccounts: Subaccount[] = []
       
       for (const designerId of designerIds) {
         const sellerAccount = await prisma.sellerAccount.findUnique({
@@ -179,7 +183,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Create Paystack transaction with split payments
-      const transactionData: any = {
+      const transactionData: Record<string, unknown> = {
         email: session.user.email || 'customer@example.com',
         amount: amountInNGN * 100, // Paystack expects kobo (NGN * 100)
         currency: 'NGN',

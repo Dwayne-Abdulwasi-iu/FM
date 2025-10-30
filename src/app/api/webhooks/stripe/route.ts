@@ -14,13 +14,10 @@ type StripeOrderItem = {
 }
 
 type StripeCheckoutSession = {
-  metadata: {
-    userId: string
-    platformFee: string
-    orderItems: string
-  }
-  amount_total: number
-  payment_intent?: string
+  // Stripe's SDK can set metadata to null — allow null to match runtime shapes
+  metadata?: { userId?: string; platformFee?: string; orderItems?: string } | null
+  amount_total?: number | null
+  payment_intent?: string | null
 }
 
 type StripePaymentIntent = {
@@ -66,24 +63,46 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: StripeCheckoutSession) {
+async function handleCheckoutCompleted(session: unknown) {
   try {
-    const userId = session.metadata.userId
-    const platformFee = parseFloat(session.metadata.platformFee)
-    const orderItems: StripeOrderItem[] = JSON.parse(session.metadata.orderItems)
+    // Coerce the incoming runtime object to our narrow local shape
+    const s = session as StripeCheckoutSession
+
+    const userId = s?.metadata?.userId
+    if (!userId) {
+      console.error('Stripe checkout.session completed webhook missing metadata.userId, skipping order creation')
+      return
+    }
+
+    const platformFee = parseFloat(s?.metadata?.platformFee || '0')
+    let orderItems: StripeOrderItem[] = []
+    try {
+      orderItems = JSON.parse(s?.metadata?.orderItems || '[]')
+    } catch (err) {
+      console.error('Failed to parse orderItems from session metadata:', err)
+      orderItems = []
+    }
 
     // Generate unique order number
     const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
+    // Determine a stable stripe payment intent id (payment_intent can be string or object)
+    let stripePaymentIntentId: string | undefined = undefined
+    if (s.payment_intent) {
+      if (typeof s.payment_intent === 'string') stripePaymentIntentId = s.payment_intent
+      else if (typeof s.payment_intent === 'object' && 'id' in (s.payment_intent as { id?: string })) stripePaymentIntentId = (s.payment_intent as { id?: string }).id
+      else stripePaymentIntentId = String(s.payment_intent)
+    }
 
     // Create order
     const order = await prisma.order.create({
       data: {
         orderNumber,
         status: 'COMPLETED',
-        totalAmount: session.amount_total / 100, // Convert from cents
-        platformFee: platformFee / 100, // Convert from cents
+  totalAmount: (s.amount_total ?? 0) / 100, // Convert from cents
+  platformFee: platformFee / 100, // Convert from cents
         customerId: userId,
-        stripePaymentIntentId: session.payment_intent,
+  stripePaymentIntentId: stripePaymentIntentId,
         items: {
           create: orderItems.map((item: StripeOrderItem) => ({
               designId: item.designId,
@@ -107,33 +126,29 @@ async function handleCheckoutCompleted(session: StripeCheckoutSession) {
     })
 
     // Update design sales statistics, create seller earnings, and handle purchases
-  for (const item of orderItems) {
+    for (const item of orderItems) {
       const saleAmount = item.price * item.quantity
       const platformCommission = saleAmount * 0.05 // 5% commission
       const sellerEarning = saleAmount - platformCommission // 95% to seller
 
-      // Update design statistics
-      const updateData = {
+      // Build update payload inline (avoid a loosely-typed intermediate variable)
+      const designUpdateData = {
         totalSales: { increment: item.quantity },
-        totalRevenue: { increment: saleAmount } // Total revenue (before commission)
-      }
-
-      // Handle ownership transfer
-      if (item.purchaseType === 'OWNERSHIP') {
-        updateData.isOwned = true
-        updateData.ownedBy = userId
-        updateData.isActive = false // Make design unavailable for future purchases
+        totalRevenue: { increment: saleAmount },
+        ...(item.purchaseType === 'OWNERSHIP'
+          ? { isOwned: true, ownedBy: userId, isActive: false }
+          : {})
       }
 
       await prisma.design.update({
         where: { id: item.designId },
-        data: updateData
+        data: designUpdateData
       })
 
       // Create seller earning record
       await prisma.sellerEarning.create({
         data: {
-          sellerId: item.designerId,
+          sellerId: (item.designerId ?? '') as string,
           orderId: order.id,
           designId: item.designId,
           saleAmount: saleAmount,
@@ -174,19 +189,20 @@ async function handleCheckoutCompleted(session: StripeCheckoutSession) {
   }
 }
 
-async function handlePaymentSucceeded(paymentIntent: StripePaymentIntent) {
+async function handlePaymentSucceeded(paymentIntent: unknown) {
+  const pi = paymentIntent as StripePaymentIntent
   try {
     // Update order status if needed
     await prisma.order.updateMany({
       where: {
-        stripePaymentIntentId: paymentIntent.id
+        stripePaymentIntentId: pi.id
       },
       data: {
         status: 'COMPLETED'
       }
     })
 
-    console.log(`Payment ${paymentIntent.id} succeeded`)
+    console.log(`Payment ${pi.id} succeeded`)
   } catch (error) {
     void error
     console.error('Error handling payment success:', error)

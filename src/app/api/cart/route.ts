@@ -36,7 +36,14 @@ export async function GET() {
     })
 
     // Calculate total based on purchase type
-    const total = cartItems.reduce((sum: number, item: any) => {
+    type CartItemWithDesign = {
+      purchaseType?: string | null
+      quantity: number
+      design: { ownershipPrice?: number | null; price: number }
+    }
+
+    const typedCartItems = cartItems as unknown as CartItemWithDesign[]
+    const total = typedCartItems.reduce((sum: number, item) => {
       const price = item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice 
         ? item.design.ownershipPrice 
         : item.design.price

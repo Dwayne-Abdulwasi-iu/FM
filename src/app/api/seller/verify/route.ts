@@ -76,7 +76,7 @@ export async function POST() {
             } else {
               console.error('Recipient creation failed:', recipient.message)
             }
-          } catch (recipientError: any) {
+          } catch (recipientError: unknown) {
             console.error('Recipient creation error:', recipientError)
             // Continue even if recipient creation fails
           }
@@ -103,7 +103,7 @@ export async function POST() {
             } else {
               console.error('Subaccount creation failed:', subaccount.message)
             }
-          } catch (subaccountError: any) {
+          } catch (subaccountError: unknown) {
             console.error('Subaccount creation error:', subaccountError)
             // Continue even if subaccount creation fails
           }
@@ -143,13 +143,17 @@ export async function POST() {
         )
       }
 
-    } catch (verifyError: any) {
+    } catch (verifyError: unknown) {
+      const err = verifyError instanceof Error ? verifyError : new Error(String(verifyError))
+      // Normalize unknown to object shape for safe property access without `any`
+      const maybe = (verifyError && typeof verifyError === 'object') ? (verifyError as Record<string, unknown>) : {}
       console.error('Detailed verification error:', {
-        error: verifyError,
-        message: verifyError.message,
-        code: verifyError.code,
-        response: verifyError.response?.data,
-        stack: verifyError.stack
+        error: err,
+        message: err.message,
+        // unknown may not have code/response fields — access safely from `maybe`
+        code: typeof maybe.code === 'string' ? maybe.code : undefined,
+        response: (maybe.response && typeof maybe.response === 'object') ? (maybe.response as Record<string, unknown>)['data'] : undefined,
+        stack: err.stack
       })
       
       // For PalmPay and other digital banks, offer manual verification
@@ -178,7 +182,7 @@ export async function POST() {
       }
       
       // Specific error handling for other cases
-      if (verifyError.message?.includes('Invalid account number')) {
+  if (err.message.includes('Invalid account number')) {
         return NextResponse.json(
           { 
             success: false,
@@ -189,7 +193,7 @@ export async function POST() {
         )
       }
       
-      if (verifyError.message?.includes('Invalid bank code')) {
+  if (err.message.includes('Invalid bank code')) {
         return NextResponse.json(
           { 
             success: false,
@@ -200,7 +204,8 @@ export async function POST() {
         )
       }
 
-      if (verifyError.code === 'ENOTFOUND' || verifyError.message?.includes('network')) {
+  const maybeCode = typeof maybe.code === 'string' ? maybe.code : undefined
+  if (maybeCode === 'ENOTFOUND' || err.message.includes('network')) {
         return NextResponse.json(
           { 
             success: false,
@@ -217,7 +222,7 @@ export async function POST() {
           success: false,
           message: 'Automatic verification failed. Would you like to proceed with manual verification?',
           errorCode: 'VERIFICATION_FAILED',
-          error: verifyError.message,
+          error: err.message,
           manualVerificationAvailable: true
         },
         { status: 500 }

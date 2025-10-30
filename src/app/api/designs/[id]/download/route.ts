@@ -3,10 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -17,8 +14,8 @@ export async function GET(
       )
     }
 
-    const { id } = await params
-    const designId = id
+    const paramsObj = await params
+    const designId = paramsObj.id
 
     // Check if design exists
     const design = await prisma.design.findUnique({
@@ -70,7 +67,7 @@ export async function GET(
 
     // Create a simple download response with file list for now
     // In production, you would create an actual ZIP file
-    const fileList = design.mediaFiles.map(file => ({
+    const fileList = design.mediaFiles.map((file: { fileName: string; fileUrl: string; fileType: string; fileSize: number; accessType?: string | null }) => ({
       name: file.fileName,
       url: file.fileUrl,
       type: file.fileType,
