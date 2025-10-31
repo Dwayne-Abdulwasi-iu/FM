@@ -1,7 +1,5 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import React from 'react'
+"use client";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp } from 'lucide-react'
@@ -12,16 +10,14 @@ interface CategoryData {
   description: string
   icon: string
   color: string
-}
 
 interface CategoryInfo {
   [key: string]: {
-    description: string
-    icon: string
-    color: string
-  }
+    description: string;
+    icon: string;
+    color: string;
+  };
 }
-
 export default function CategoriesPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<CategoryData[]>([])
@@ -359,5 +355,4 @@ export default function CategoriesPage() {
         </div>
       </div>
     </div>
-  // ...existing code...
-}
+  }
