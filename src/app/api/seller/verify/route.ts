@@ -35,7 +35,6 @@ export async function POST() {
 
     // Verify bank account with Paystack
     let verifiedAccountName = sellerAccount.accountName
-    let isVerified = false
     let recipientCode = sellerAccount.recipientCode
 
     try {
@@ -54,7 +53,6 @@ export async function POST() {
 
       if (verification.status) {
         verifiedAccountName = verification.data.account_name
-        isVerified = true
         
         // Create or update transfer recipient if not exists
         if (!recipientCode) {

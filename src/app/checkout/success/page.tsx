@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+// import { useRouter } from 'next/navigation'
 import { CheckCircle, Download, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -27,7 +28,7 @@ interface OrderDetails {
 }
 
 export default function CheckoutSuccessPage() {
-  const router = useRouter()
+  // const router = useRouter()
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -114,9 +115,11 @@ export default function CheckoutSuccessPage() {
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                   <div className="w-16 h-16 flex-shrink-0">
-                    <img
+                    <Image
                       src={item.design.imageUrl}
                       alt={item.design.title}
+                      width={64}
+                      height={64}
                       className="w-full h-full object-cover rounded-lg"
                     />
                   </div>

@@ -53,7 +53,7 @@ export async function GET() {
     let resolutionError = null
     try {
       // Test with Access Bank - a commonly used bank
-      const verification = await paystack.misc.resolve_account_number({
+  await paystack.misc.resolve_account_number({
         account_number: '0123456789', // Dummy account for testing API
         bank_code: '044' // Access Bank
       })

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Plus, Upload, Trash2, Image as ImageIcon, Video, FileText, CheckCircle, X, DollarSign } from 'lucide-react'
+import Image from 'next/image'
 
 interface MediaFile {
   id: string
@@ -306,10 +307,13 @@ export default function UploadPage() {
                                 controls
                               />
                             ) : (
-                              <img 
-                                src={media.preview} 
+                              <Image 
+                                src={media.preview || ''} 
                                 alt="Preview" 
+                                width={200}
+                                height={128}
                                 className="max-w-xs max-h-32 object-cover rounded border"
+                                placeholder="empty"
                               />
                             )}
                           </div>
@@ -512,10 +516,13 @@ export default function UploadPage() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors relative">
                   {preview ? (
                     <div className="space-y-4">
-                      <img 
-                        src={preview} 
+                      <Image 
+                        src={preview || ''} 
                         alt="Preview" 
+                        width={256}
+                        height={256}
                         className="max-h-64 mx-auto rounded-lg shadow-sm"
+                        placeholder="empty"
                       />
                       <button
                         type="button"

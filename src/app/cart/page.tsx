@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 interface CartItem {
@@ -140,9 +141,9 @@ export default function CartPage() {
     return cartItems.reduce((sum, item) => sum + (item.design.price * item.quantity), 0)
   }
 
-  const calculatePlatformFee = (total: number) => {
-    return total * 0.05 // 5% platform fee (deducted from sellers, not added to buyers)
-  }
+  // const calculatePlatformFee = (total: number) => {
+  //   return total * 0.05 // 5% platform fee (deducted from sellers, not added to buyers)
+  // }
 
   if (!session || errorMessage === 'Please sign in to view your cart.') {
     return (
@@ -171,7 +172,7 @@ export default function CartPage() {
   }
 
   const total = calculateTotal()
-  const platformFee = calculatePlatformFee(total)
+  // const platformFee = calculatePlatformFee(total)
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -220,9 +221,11 @@ export default function CartPage() {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                     <div className="w-20 h-20 flex-shrink-0">
-                      <img
+                      <Image
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     </div>

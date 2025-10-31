@@ -12,20 +12,13 @@ import {
   ShoppingCart,
   CreditCard,
   User,
-  Settings,
   Shield,
   Mail,
   Phone,
   MessageCircle,
   Book,
   Video,
-  Download,
-  Star,
-  Heart,
-  Eye,
-  FileText,
-  Palette,
-  Users
+  FileText
 } from 'lucide-react'
 
 interface FAQItem {

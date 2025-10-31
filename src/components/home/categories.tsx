@@ -1,16 +1,17 @@
 "use client"
+import React from 'react'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export function Categories() {
   const router = useRouter()
-  const categoryList = [
+  const categoryList = React.useMemo(() => ([
     { name: 'Fashion Illustrations', image: '🎨' },
     { name: 'Sketches', image: '✏️' },
     { name: 'Digital Designs', image: '💻' },
     { name: 'Pattern Designs', image: '🎭' },
-  ]
+  ]), [])
 
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
@@ -51,7 +52,7 @@ export function Categories() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [categoryList])
 
   const handleClick = (categoryName: string) => {
     // Navigate to designs page filtered by category

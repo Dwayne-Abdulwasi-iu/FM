@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown, TrendingUp, Flame } from 'lucide-react'
+import Image from 'next/image'
 
 interface Design {
   id: string
@@ -189,11 +190,15 @@ export default function TrendingPage() {
 
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <Image
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
+                      width={400}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
+                      placeholder="blur"
+                      blurDataURL={'/api/placeholder/400/400'}
+                      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/api/placeholder/400/400'
                       }}

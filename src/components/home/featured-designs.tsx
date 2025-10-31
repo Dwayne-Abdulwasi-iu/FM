@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Design {
   id: string
@@ -88,21 +89,12 @@ export function FeaturedDesigns() {
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-xl transition-shadow">
                 <div className="aspect-square relative">
-                  <img
+                  <Image
                     src={design.imageUrl}
                     alt={design.title}
+                    width={400}
+                    height={400}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `data:image/svg+xml,${encodeURIComponent(`
-                        <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="100%" height="100%" fill="#f3f4f6"/>
-                          <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#6b7280" text-anchor="middle" dy=".3em">
-                            Fashion Design
-                          </text>
-                        </svg>
-                      `)}`;
-                    }}
                   />
                 </div>
                 <div className="p-6">

@@ -8,7 +8,7 @@ async function main() {
 
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12)
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@fashionmarketplace.com' },
     update: {},
     create: {
@@ -99,7 +99,7 @@ async function main() {
 
   // Create sample customer
   const customerPassword = await bcrypt.hash('customer123', 12)
-  const customer = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'customer@example.com' },
     update: {},
     create: {

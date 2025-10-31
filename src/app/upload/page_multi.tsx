@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Video, Trash2, Eye, Lock } from 'lucide-react'
+import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock } from 'lucide-react'
+import Image from 'next/image'
 
 interface MediaFile {
   id: string
@@ -257,9 +258,11 @@ export default function EnhancedUploadPage() {
                                 controls
                               />
                             ) : (
-                              <img 
-                                src={media.preview} 
+                              <Image 
+                                src={media.preview || ''} 
                                 alt="Preview" 
+                                width={128}
+                                height={128}
                                 className="max-h-32 mx-auto rounded"
                               />
                             )}

@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
+// ...existing code...
 import prisma from '@/lib/prisma'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(request: NextRequest) {
+async function handleCheckoutCompleted(session: any) {
+  // Implement order creation and stats update logic here
+}
+
+async function handlePaymentSucceeded(paymentIntent: any) {
+  // Implement payment success logic here
+}
   try {
     const body = await request.text()
     const signature = request.headers.get('stripe-signature')!
@@ -44,109 +52,6 @@ export async function POST(request: NextRequest) {
 }
 
 
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        status: 'COMPLETED',
-        totalAmount: session.amount_total / 100, // Convert from cents
-        platformFee: platformFee / 100, // Convert from cents
-        customerId: userId,
-        stripePaymentIntentId: session.payment_intent,
-        items: {
-          create: orderItems.map((item: any) => ({
-            designId: item.designId,
-            quantity: item.quantity,
-            price: item.price,
-            purchaseType: item.purchaseType || 'REGULAR'
-          }))
-        }
-      },
-      include: {
-        items: {
-          include: {
-            design: {
-              include: {
-                designer: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    // Update design sales statistics, create seller earnings, and handle purchases
-    for (const item of orderItems) {
-      const saleAmount = item.price * item.quantity
-      const platformCommission = saleAmount * 0.05 // 5% commission
-      const sellerEarning = saleAmount - platformCommission // 95% to seller
-
-      // Update design statistics
-      const updateData: any = {
-        totalSales: { increment: item.quantity },
-        totalRevenue: { increment: saleAmount } // Total revenue (before commission)
-      }
-
-      // Handle ownership transfer
-      if (item.purchaseType === 'OWNERSHIP') {
-        updateData.isOwned = true
-        updateData.ownedBy = userId
-        updateData.isActive = false // Make design unavailable for future purchases
-      }
-
-      await prisma.design.update({
-        where: { id: item.designId },
-        data: updateData
-      })
-
-      // Create seller earning record
-      await prisma.sellerEarning.create({
-        data: {
-          sellerId: item.designerId,
-          orderId: order.id,
-          designId: item.designId,
-          saleAmount: saleAmount,
-          platformCommission: platformCommission,
-          sellerAmount: sellerEarning,
-          quantity: item.quantity
-        }
-      })
-
-      // Create purchase record for access control
-      await prisma.purchase.create({
-        data: {
-          userId: userId,
-          designId: item.designId,
-          orderId: order.id,
-          purchaseType: item.purchaseType || 'REGULAR',
-          purchasePrice: item.price,
-          accessGranted: true
-        }
-      })
-    }
-          sellerId: item.designerId,
-          orderId: order.id,
-          designId: item.designId,
-          saleAmount: saleAmount,
-          platformCommission: platformCommission,
-          sellerAmount: sellerEarning,
-          quantity: item.quantity
-        }
-      })
-    }
-
-    // Clear user's cart
-    await prisma.cartItem.deleteMany({
-      where: {
-        userId,
-        designId: { in: orderItems.map((item: any) => item.designId) }
-      }
-    })
-
-    console.log(`Order ${orderNumber} created successfully`)
-  } catch (error) {
-    console.error('Error handling checkout completion:', error)
-  }
-}
 
 async function handlePaymentSucceeded(paymentIntent: any) {
   try {

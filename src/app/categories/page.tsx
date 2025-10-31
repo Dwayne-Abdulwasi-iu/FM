@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp, Eye, Heart, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp } from 'lucide-react'
 
 interface CategoryData {
   name: string
@@ -13,108 +14,85 @@ interface CategoryData {
   color: string
 }
 
+interface CategoryInfo {
+  [key: string]: {
+    description: string
+    icon: string
+    color: string
+  }
+}
+
 export default function CategoriesPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<CategoryData[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [sortBy, setSortBy] = useState<'name' | 'count'>('name')
 
-  const categoryInfo: Record<string, { description: string; icon: string; color: string }> = {
-    'Fashion Illustrations': {
-      description: 'Hand-drawn and digital fashion sketches, croquis, and artistic illustrations',
-      icon: '🎨',
-      color: 'from-pink-500 to-rose-500'
-    },
-    'Pattern Designs': {
-      description: 'Repeating patterns, textile designs, and surface patterns for fashion',
-      icon: '🔲',
-      color: 'from-purple-500 to-indigo-500'
-    },
-    'Digital Designs': {
-      description: 'Computer-generated fashion designs, CAD patterns, and digital artwork',
-      icon: '💻',
-      color: 'from-blue-500 to-cyan-500'
-    },
-    'Sketches': {
-      description: 'Quick fashion sketches, concept drawings, and design development work',
-      icon: '✏️',
-      color: 'from-green-500 to-emerald-500'
-    },
-    'Technical Drawings': {
-      description: 'Flat drawings, spec sheets, and technical fashion illustrations',
-      icon: '📐',
-      color: 'from-orange-500 to-red-500'
-    },
-    'Embroidery Designs': {
-      description: 'Embroidery patterns, digitized designs, and decorative motifs',
-      icon: '🧵',
-      color: 'from-yellow-500 to-orange-500'
-    },
-    'Print Designs': {
-      description: 'Textile prints, fabric designs, and surface pattern collections',
-      icon: '🖨️',
-      color: 'from-teal-500 to-green-500'
-    },
-    'Color Palettes': {
-      description: 'Fashion color schemes, seasonal palettes, and color trend forecasts',
-      icon: '🎨',
-      color: 'from-indigo-500 to-purple-500'
-    }
-  }
+    const categoryInfo: CategoryInfo = React.useMemo(() => ({
+      'Fashion Illustrations': {
+        description: 'Hand-drawn and digital fashion sketches, croquis, and artistic illustrations',
+        icon: '🎨',
+        color: 'from-pink-500 to-rose-500'
+      },
+      'Pattern Designs': {
+        description: 'Repeating patterns, textile designs, and surface patterns for fashion',
+        icon: '🔲',
+        color: 'from-purple-500 to-indigo-500'
+      },
+      'Digital Designs': {
+        description: 'Computer-generated fashion designs, CAD patterns, and digital artwork',
+        icon: '💻',
+        color: 'from-blue-500 to-cyan-500'
+      },
+      'Sketches': {
+        description: 'Quick fashion sketches, concept drawings, and design development work',
+        icon: '✏️',
+        color: 'from-green-500 to-emerald-500'
+      },
+      'Technical Drawings': {
+        description: 'Flat drawings, spec sheets, and technical fashion illustrations',
+        icon: '📐',
+        color: 'from-orange-500 to-red-500'
+      },
+      'Embroidery Designs': {
+        description: 'Embroidery patterns, digitized designs, and decorative motifs',
+        icon: '🧵',
+        color: 'from-yellow-500 to-orange-500'
+      },
+      'Print Designs': {
+        description: 'Textile prints, fabric designs, and surface pattern collections',
+        icon: '🖨️',
+        color: 'from-teal-500 to-green-500'
+      },
+      'Color Palettes': {
+        description: 'Fashion color schemes, seasonal palettes, and color trend forecasts',
+        icon: '🎨',
+        color: 'from-indigo-500 to-purple-500'
+      }
+    }), [])
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  const fetchCategories = async () => {
+  const fetchCategories = React.useCallback(async () => {
     try {
       setLoading(true)
-      
       // Fetch counts for known categories
-      const categoryNames = Object.keys(categoryInfo)
-      const categoryPromises = categoryNames.map(async (category) => {
-        try {
-          const response = await fetch(`/api/designs?category=${encodeURIComponent(category)}&limit=1`)
-          if (response.ok) {
-            const data = await response.json()
-            return {
-              name: category,
-              count: data.total || 0,
-              ...categoryInfo[category]
-            }
-          }
-          return {
-            name: category,
-            count: 0,
-            ...categoryInfo[category]
-          }
-        } catch (error) {
-          console.error(`Failed to fetch count for ${category}:`, error)
-          return {
-            name: category,
-            count: 0,
-            ...categoryInfo[category]
-          }
-        }
-      })
-
-      const categoryData = await Promise.all(categoryPromises)
-      setCategories(categoryData)
-    } catch (error) {
-      console.error('Failed to fetch categories:', error)
+      // ...existing code...
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
 
   const filteredCategories = categories
-    .filter(category => 
+    .filter((category: CategoryData) => 
       category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       category.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => {
+    .sort((a: CategoryData, b: CategoryData) => {
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name)
       } else {
@@ -126,7 +104,7 @@ export default function CategoriesPage() {
     router.push(`/designs?category=${encodeURIComponent(categoryName)}`)
   }
 
-  const totalDesigns = categories.reduce((sum, cat) => sum + cat.count, 0)
+  const totalDesigns = categories.reduce((sum: number, cat: CategoryData) => sum + cat.count, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -381,5 +359,5 @@ export default function CategoriesPage() {
         </div>
       </div>
     </div>
-  )
+  // ...existing code...
 }

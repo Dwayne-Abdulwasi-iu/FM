@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Eye, Crown, Search, ArrowLeft } from 'lucide-react'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
@@ -67,9 +68,31 @@ export default function SearchPage() {
     // perform search when any of these change
   }, [/* run once, then performSearch below */])
 
+
+  const performSearch = useCallback(async () => {
+    try {
+      setLoading(true)
+      const searchUrl = new URLSearchParams({
+        q: query || '',
+        page: page.toString(),
+        ...(selectedCategory !== 'all' && { category: selectedCategory })
+      })
+
+      const response = await fetch(`/api/search?${searchUrl}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSearchResults(data)
+      }
+    } catch (error) {
+      console.error('Search failed:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [query, page, selectedCategory])
+
   useEffect(() => {
     if (query) performSearch()
-  }, [query, page, selectedCategory])
+  }, [query, page, selectedCategory, performSearch])
 
   const performSearch = async () => {
     try {
@@ -197,11 +220,15 @@ export default function SearchPage() {
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <Image
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
+                      width={400}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
+                      placeholder="blur"
+                      blurDataURL={generateDesignPlaceholder(400, 400)}
+                      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                         const target = e.target as HTMLImageElement
                         target.src = generateDesignPlaceholder(400, 400)
                       }}

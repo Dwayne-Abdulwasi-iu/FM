@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import React from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, MoreHorizontal, ArrowLeft, Shield, User } from 'lucide-react'
@@ -34,23 +35,8 @@ export default function CustomerCarePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting')
 
-  useEffect(() => {
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-    initializeChat()
-  }, [session, router])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  const initializeChat = async () => {
+  const initializeChat = React.useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/customer-care/session', {
@@ -59,7 +45,6 @@ export default function CustomerCarePage() {
           'Content-Type': 'application/json',
         },
       })
-
       if (response.ok) {
         const session = await response.json()
         setChatSession(session)
@@ -72,7 +57,24 @@ export default function CustomerCarePage() {
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
+    initializeChat()
+  }, [session, router, initializeChat])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
 
   const loadMessages = async (sessionId: string) => {
     try {
@@ -112,7 +114,7 @@ export default function CustomerCarePage() {
         
         // Simulate admin response after a short delay (for demo purposes)
         setTimeout(() => {
-          simulateAdminResponse(messageText)
+          simulateAdminResponse()
         }, 1500)
       }
     } catch (error) {
@@ -123,7 +125,7 @@ export default function CustomerCarePage() {
     }
   }
 
-  const simulateAdminResponse = (userMessage: string) => {
+  const simulateAdminResponse = () => {
     setIsTyping(true)
     
     setTimeout(() => {
@@ -198,6 +200,8 @@ export default function CustomerCarePage() {
               <button
                 onClick={() => router.back()}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Go back"
+                aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </button>
@@ -222,13 +226,13 @@ export default function CustomerCarePage() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Voice call">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Voice call" aria-label="Voice call">
                 <Phone className="h-5 w-5 text-gray-600" />
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Video call">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Video call" aria-label="Video call">
                 <Video className="h-5 w-5 text-gray-600" />
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="More options">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="More options" aria-label="More options">
                 <MoreHorizontal className="h-5 w-5 text-gray-600" />
               </button>
             </div>

@@ -3,7 +3,8 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, Heart, Settings, CreditCard, Edit, Trash2, CheckCircle, X } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 interface UserProfile {
@@ -58,7 +59,7 @@ export default function ProfilePage() {
       return
     }
     fetchProfile()
-  }, [session, status])
+  }, [session, status, router])
 
   const fetchProfile = async () => {
     try {
@@ -83,8 +84,8 @@ export default function ProfilePage() {
         const designsData = await designsRes.json()
         setDesigns(designsData.designs)
       }
-    } catch (error) {
-      console.error('Failed to fetch profile data:', error)
+  } catch {
+    console.error('Failed to fetch profile data') // Keeping this line for error logging
     } finally {
       setLoading(false)
     }
@@ -139,7 +140,7 @@ export default function ProfilePage() {
         const error = await response.json()
         setErrorMessage(error.message || 'Failed to delete design')
       }
-    } catch (error) {
+    } catch {
       setErrorMessage('An error occurred while deleting the design')
     } finally {
       setDeleteConfirm(null)
@@ -245,8 +246,8 @@ export default function ProfilePage() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Designs</p>
@@ -255,38 +256,35 @@ export default function ProfilePage() {
                 <Upload className="w-8 h-8 text-indigo-600" />
               </div>
             </div>
-
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSales}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats?.totalSales ?? 0}</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-green-600" />
               </div>
             </div>
-
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
+            setErrorMessage('Failed to load profile') // Keeping this line for error message
+            setLoading(false) // Keeping this line for loading state
                 </div>
                 <DollarSign className="w-8 h-8 text-blue-600" />
               </div>
             </div>
-
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Your Earnings</p>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalEarnings)}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
                   <p className="text-xs text-gray-500">After 5% platform fee</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-600" />
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Tabs */}
@@ -380,23 +378,16 @@ export default function ProfilePage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {designs.map((design) => (
-                      <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="aspect-square bg-gray-100">
-                          <img
-                            src={design.imageUrl}
-                            alt={design.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              // Try multiple fallback options
-                              if (target.src.includes('placeholder-fallback')) {
-                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNGM0Y0RjYiLz48cGF0aCBkPSJNMjAwIDEwMEMyNzIuMDg3IDEwMCAzMzAgMTU3LjkxMyAzMzAgMjMwUzI3Mi4wODcgMzYwIDIwMCAzNjBTNzAgMzAyLjA4NyA3MCAyMzBTMTI3LjkxMyAxMDAgMjAwIDEwMFoiIGZpbGw9IiNENUQ5REQiLz48dGV4dCB4PSIyMDAiIHk9IjI3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjNkI3MzgwIj5EZXNpZ248L3RleHQ+PC9zdmc+'
-                              } else {
-                                target.src = `data:image/svg+xml;charset=UTF-8,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ctext x='200' y='200' text-anchor='middle' font-family='Arial' font-size='16' fill='%236b7280'%3EDesign Image%3C/text%3E%3C/svg%3E?placeholder-fallback=true`
-                              }
-                            }}
-                          />
-                        </div>
+                        <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="aspect-square bg-gray-100">
+                            <Image
+                              src={design.imageUrl}
+                              alt={design.title}
+                              width={400}
+                              height={400}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         <div className="p-4">
                           <h4 className="font-medium text-gray-900 mb-1">{design.title}</h4>
                           <p className="text-sm text-gray-600 mb-2">{design.category}</p>
@@ -443,7 +434,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Total Revenue Generated</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatPrice(stats?.totalRevenue ?? 0)}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Platform Commission (5%)</p>
@@ -451,7 +442,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Your Earnings (95%)</p>
-                        <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalEarnings)}</p>
+                        <p className="text-2xl font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
                       </div>
                     </div>
                   </div>
@@ -478,7 +469,7 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Design</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete "{deleteConfirm.title}"? This action cannot be undone.
+              Are you sure you want to delete "{deleteConfirm?.title ?? ''}"? This action cannot be undone.
             </p>
             <div className="flex space-x-4">
               <button

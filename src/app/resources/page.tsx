@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, type ComponentType, type SVGProps } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { 
   ArrowLeft,
@@ -8,7 +9,6 @@ import {
   Download,
   ExternalLink,
   Search,
-  Filter,
   Palette,
   Ruler,
   Scissors,
@@ -20,12 +20,8 @@ import {
   Link as LinkIcon,
   Star,
   Clock,
-  Users,
   TrendingUp,
   Globe,
-  Smartphone,
-  Laptop,
-  Tablet,
   Heart,
   Eye,
   ChevronRight
@@ -64,15 +60,15 @@ export default function ResourcesPage() {
   const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all')
   const [resources, setResources] = useState<Resource[]>([])
-  const [loading, setLoading] = useState(true)
+  // const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchResources()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, selectedType, selectedDifficulty])
 
   const fetchResources = async () => {
     try {
-      setLoading(true)
       const params = new URLSearchParams()
       if (selectedCategory !== 'all') params.append('category', selectedCategory)
       if (selectedType !== 'all') params.append('type', selectedType)
@@ -86,8 +82,6 @@ export default function ResourcesPage() {
     } catch (error) {
       console.error('Failed to fetch resources:', error)
       setResources([])
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -290,9 +284,11 @@ export default function ResourcesPage() {
                 return (
                   <div key={resource.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                     <div className="aspect-video bg-gray-200 rounded-t-lg relative overflow-hidden">
-                      <img
+                      <Image
                         src={resource.thumbnail}
                         alt={resource.title}
+                        width={400}
+                        height={225}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 left-2">
@@ -429,9 +425,11 @@ export default function ResourcesPage() {
               return (
                 <div key={resource.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                   <div className="aspect-video bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <img
+                    <Image
                       src={resource.thumbnail}
                       alt={resource.title}
+                      width={400}
+                      height={225}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-2 left-2">

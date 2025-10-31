@@ -19,7 +19,7 @@ jest.mock('next/navigation', () => ({
 // mocked SessionProvider(session={...}) and have useSession() read it.
 const _mockSessionStore = { data: null, status: 'unauthenticated' }
 jest.mock('next-auth/react', () => {
-  const React = require('react')
+  // import React if needed
   return {
     useSession: () => _mockSessionStore,
     signIn: jest.fn(),

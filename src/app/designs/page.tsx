@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
+import Image from 'next/image'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
 
 interface Design {
@@ -55,10 +56,12 @@ export default function DesignsPage() {
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchDesigns()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory])
 
   const fetchDesigns = async () => {
@@ -182,9 +185,11 @@ export default function DesignsPage() {
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <Image
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
+                      width={400}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement

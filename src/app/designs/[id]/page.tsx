@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Heart, ShoppingCart, Star, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
+import { Heart, ShoppingCart, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
-import ProtectedContent from '@/components/ProtectedContent'
+
 
 interface MediaFile {
   id: string
@@ -71,6 +72,7 @@ export default function DesignPage() {
       fetchDesign(params.id as string)
       checkAccess(params.id as string)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const checkAccess = async (designId: string) => {
@@ -338,9 +340,11 @@ export default function DesignPage() {
                   )
                 } else {
                   return (
-                    <img
+                    <Image
                       src={selectedFile.fileUrl}
                       alt={selectedFile.fileName}
+                      width={800}
+                      height={600}
                       className="w-full h-full object-cover cursor-zoom-in"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
@@ -385,9 +389,11 @@ export default function DesignPage() {
                               </div>
                             </div>
                           ) : (
-                            <img
+                            <Image
                               src={file.fileUrl}
                               alt={file.fileName}
+                              width={200}
+                              height={200}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
@@ -406,7 +412,7 @@ export default function DesignPage() {
                     })}
                     
                     {/* Locked Premium Files */}
-                    {lockedFiles.map((file, index) => (
+                    {lockedFiles.map((file) => (
                       <div
                         key={`locked-${file.id}`}
                         className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100"
@@ -475,7 +481,7 @@ export default function DesignPage() {
             <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
               <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                 {design.designer.image ? (
-                  <img src={design.designer.image} alt={design.designer.name || ''} className="w-12 h-12 rounded-full" />
+                  <Image src={design.designer.image} alt={design.designer.name || ''} width={48} height={48} className="w-12 h-12 rounded-full" />
                 ) : (
                   <span className="text-gray-500 font-semibold">
                     {(design.designer.name || 'A')[0].toUpperCase()}
@@ -533,7 +539,7 @@ export default function DesignPage() {
                 <h3 className="font-semibold text-gray-900 mb-3">Included Media</h3>
                 <div className="grid grid-cols-1 gap-2">
                   {/* Accessible Files */}
-                  {getAccessibleMediaFiles().map((file, index) => (
+                  {getAccessibleMediaFiles().map((file) => (
                     <div 
                       key={file.id}
                       className="flex items-center justify-between p-2 rounded bg-gray-50"
@@ -568,7 +574,7 @@ export default function DesignPage() {
                   ))}
                   
                   {/* Locked Premium Files */}
-                  {getLockedPremiumFiles().map((file, index) => (
+                  {getLockedPremiumFiles().map((file) => (
                     <div 
                       key={`locked-${file.id}`}
                       className="flex items-center justify-between p-2 rounded bg-purple-50 border border-purple-200"
