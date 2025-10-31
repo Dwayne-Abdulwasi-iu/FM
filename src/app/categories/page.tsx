@@ -9,7 +9,7 @@ interface CategoryData {
   count: number
   description: string
   icon: string
-  color: string
+  color: string;
 
 interface CategoryInfo {
   [key: string]: {
