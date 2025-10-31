@@ -94,27 +94,6 @@ export default function SearchPage() {
     if (query) performSearch()
   }, [query, page, selectedCategory, performSearch])
 
-  const performSearch = async () => {
-    try {
-      setLoading(true)
-      const searchUrl = new URLSearchParams({
-        q: query || '',
-        page: page.toString(),
-        ...(selectedCategory !== 'all' && { category: selectedCategory })
-      })
-
-      const response = await fetch(`/api/search?${searchUrl}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSearchResults(data)
-      }
-    } catch (error) {
-      console.error('Search failed:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
