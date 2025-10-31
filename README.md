@@ -38,46 +38,46 @@ chmod +x setup.sh
 # Install dependencies
 npm install
 
-# Setup database
-npx prisma generate
-npx prisma db push
+## Database Setup: MongoDB Atlas Only
 
-# Seed database
-npm run db:seed
+This project uses **MongoDB Atlas** for all development, testing, and production environments. You do **NOT** need Docker or a local MongoDB instance.
 
-# Start development server
-npm run dev
-```
+**Required:**
+- Create a MongoDB Atlas cluster.
+- Obtain your connection string (SRV URI) from Atlas, e.g.:
+  
+   `mongodb+srv://<username>:<password>@cluster0.as7yeiu.mongodb.net/fashion_dev?retryWrites=true&w=majority&appName=Cluster0`
 
-## 🏗️ Architecture Overview
+- Set your connection string as the `DATABASE_URL` environment variable before running the app:
 
-### Tech Stack
-- **Frontend**: Next.js 15, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: SQLite (dev), PostgreSQL (production)
-- **Authentication**: NextAuth.js (Credentials + OAuth)
-- **Payments**: Stripe Connect (5% platform commission)
-- **File Storage**: Cloudinary
-- **Deployment**: Vercel ready
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- Git
-
-### Installation
-
-1. **Clone the repository**
+   **PowerShell:**
    ```powershell
-   git clone <your-repo-url>
-   cd fashion-marketplace
+   $env:DATABASE_URL='mongodb+srv://<username>:<password>@cluster0.as7yeiu.mongodb.net/fashion_dev?retryWrites=true&w=majority&appName=Cluster0'
+   npm run dev
    ```
 
-2. **Install dependencies**
-   ```powershell
+   **.env.local (not committed):**
+   ```
+   DATABASE_URL="mongodb+srv://<username>:<password>@cluster0.as7yeiu.mongodb.net/fashion_dev?retryWrites=true&w=majority&appName=Cluster0"
+   ```
+
+- Do **NOT** commit `.env.local` or secrets to the repository.
+
+## Local Development
+- No Docker or local MongoDB required.
+- All Prisma transactions work with Atlas (replica set is handled by Atlas).
+
+## Quick Test
+To verify connectivity:
+```powershell
+node src/test-mongo.js
+```
+
+## Registration Smoke Test
+To test user registration (after starting dev server):
+```powershell
+node -e "fetch('http://localhost:3000/api/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'Automated Test',email:'autotest+atlas@example.com',password:'Test12345!',role:'USER'})}).then(async r=>{console.log('STATUS',r.status); const t=await r.text(); console.log(t)}).catch(e=>{console.error('Fetch error',e);process.exit(1)})"
+```
    npm install
    ```
 

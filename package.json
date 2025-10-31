@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-  "test:mongo": "node scripts/check-mongo-env.js && node src/test-mongo.js",
+    "test:mongo": "node scripts/check-mongo-env.js && node src/test-mongo.js",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
