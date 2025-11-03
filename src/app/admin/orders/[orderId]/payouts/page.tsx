@@ -79,13 +79,13 @@ export default async function AdminOrderPayoutsPage({ params }: { params: Promis
   const data = (await res.json()) as PayoutsResponse
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Order Payouts</h1>
         <Link href="/admin" className="text-sm text-blue-600 hover:underline">Back to Admin</Link>
       </div>
 
-      <section className="rounded-md border bg-white p-4 shadow-sm">
+      <section className="rounded-md border bg-white p-3 md:p-4 shadow-sm">
         <h2 className="mb-2 text-lg font-medium">Order</h2>
         <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
           <div><span className="text-gray-500">Order ID:</span> {data.order.id}</div>
@@ -97,7 +97,7 @@ export default async function AdminOrderPayoutsPage({ params }: { params: Promis
         </div>
       </section>
 
-      <section className="rounded-md border bg-white p-4 shadow-sm">
+      <section className="rounded-md border bg-white p-3 md:p-4 shadow-sm">
         <h2 className="mb-3 text-lg font-medium">Items</h2>
         <div className="overflow-auto">
           <table className="min-w-full text-left text-sm">
@@ -150,7 +150,7 @@ export default async function AdminOrderPayoutsPage({ params }: { params: Promis
         </div>
       </section>
 
-      <section className="rounded-md border bg-white p-4 shadow-sm">
+      <section className="rounded-md border bg-white p-3 md:p-4 shadow-sm">
         <h2 className="mb-2 text-lg font-medium">Payout status summary</h2>
         {Object.keys(data.statusCounts || {}).length ? (
           <ul className="flex flex-wrap gap-3 text-sm">
@@ -163,7 +163,7 @@ export default async function AdminOrderPayoutsPage({ params }: { params: Promis
         )}
       </section>
 
-      <section className="rounded-md border bg-white p-4 shadow-sm space-y-2">
+      <section className="rounded-md border bg-white p-3 md:p-4 shadow-sm space-y-2">
         <h2 className="text-lg font-medium">Paystack</h2>
         {data.paystack ? (
           <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
@@ -183,7 +183,7 @@ export default async function AdminOrderPayoutsPage({ params }: { params: Promis
       </section>
 
       {data.recommendations?.length ? (
-        <section className="rounded-md border bg-white p-4 shadow-sm">
+        <section className="rounded-md border bg-white p-3 md:p-4 shadow-sm">
           <h2 className="mb-2 text-lg font-medium">Recommendations</h2>
           <ul className="list-disc space-y-1 pl-5 text-sm text-gray-700">
             {data.recommendations.map((r, i) => (

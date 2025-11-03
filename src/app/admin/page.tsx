@@ -742,16 +742,16 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 xs:px-2 xs:py-6">
+        <div className="mb-8 xs:mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage your fashion marketplace platform</p>
         </div>
 
         {/* Stats Overview */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 xs:gap-4">
+            <div className="bg-white rounded-lg shadow-sm p-6 xs:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Users</p>
@@ -762,7 +762,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 xs:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Designs</p>
@@ -773,7 +773,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 xs:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -784,7 +784,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 xs:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Platform Earnings (5%)</p>
@@ -800,7 +800,7 @@ export default function AdminDashboard() {
         {/* Navigation Tabs */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex space-x-6 px-4 overflow-x-auto xs:space-x-4 xs:px-3 md:space-x-8 md:px-6">
               {[
                 { id: 'overview', label: 'Overview', icon: Eye },
                 { id: 'users', label: 'User Management', icon: Users },
@@ -828,7 +828,7 @@ export default function AdminDashboard() {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 xs:p-4 md:p-6">
             {activeTab === 'overview' && (
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -845,7 +845,7 @@ export default function AdminDashboard() {
                     <Link href="#orders" onClick={() => setActiveTab('orders')} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Go to Orders</Link>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div className="col-span-1 md:col-span-2">
                       <label className="block text-xs text-gray-600 mb-1">Buyer</label>
@@ -925,44 +925,44 @@ export default function AdminDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredUsers.map((user) => (
                         <tr key={user.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                             <div>
                               <div className="text-sm font-medium text-gray-900">{user.name || 'No name'}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                             }`}>
                               {user.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                             }`}>
                               {user.isVerified ? 'Verified' : 'Unverified'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                             {user._count.designs} designs, {user._count.orders} orders
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleUserAction(user.id, user.isVerified ? 'unverify' : 'verify')}
@@ -1028,7 +1028,7 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {filteredDesigns.map((design) => (
                     <div key={design.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                       <div className="aspect-square relative">
@@ -1055,7 +1055,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                       </div>
-                      <div className="p-4">
+                      <div className="p-3 md:p-4">
                         <h4 className="font-semibold text-gray-900 truncate">{design.title}</h4>
                         <p className="text-sm text-gray-600 mb-2">by {design.designer.name || design.designer.email}</p>
                         <div className="flex justify-between items-center mb-2">
@@ -1128,7 +1128,7 @@ export default function AdminDashboard() {
               <div>
                 <h3 id="orders" className="text-lg font-semibold text-gray-900 mb-6">Order Management</h3>
                 {/* Filters */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
                     <div className="col-span-1 md:col-span-2">
                       <label className="block text-xs text-gray-600 mb-1">Buyer</label>
@@ -1188,18 +1188,18 @@ export default function AdminDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={()=>handleOrderSort('orderNumber')} className={`inline-flex items-center gap-1 ${ordSortBy==='orderNumber'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Order {ordSortBy==='orderNumber' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={()=>handleOrderSort('customer')} className={`inline-flex items-center gap-1 ${ordSortBy==='customer'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Customer {ordSortBy==='customer' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={()=>handleOrderSort('total')} className={`inline-flex items-center gap-1 ${ordSortBy==='total'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Amount {ordSortBy==='total' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Fee</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Fee</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={()=>handleOrderSort('date')} className={`inline-flex items-center gap-1 ${ordSortBy==='date'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Date {ordSortBy==='date' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
                         </th>
                       </tr>
@@ -1207,13 +1207,13 @@ export default function AdminDashboard() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {orders.map((order) => (
                         <tr key={order.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             #{order.orderNumber}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                             {order.customer.name} ({order.customer.email})
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs">
                             <div className="space-y-1">
                               {order.items && order.items.length > 0 ? (
                                 order.items.map((item) => (
@@ -1228,13 +1228,13 @@ export default function AdminDashboard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900">
                             {formatPrice(order.totalAmount)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-green-600">
                             {formatPrice(computePlatformFeeUSD(order))}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                               order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
@@ -1243,7 +1243,7 @@ export default function AdminDashboard() {
                               {order.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(order.createdAt).toLocaleDateString()}
                           </td>
                         </tr>
@@ -1257,7 +1257,7 @@ export default function AdminDashboard() {
             {activeTab === 'exclusive' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Exclusive Sales</h3>
-                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div className="col-span-1 md:col-span-2">
                       <label className="block text-xs text-gray-600 mb-1">Buyer</label>
@@ -1449,32 +1449,32 @@ export default function AdminDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={() => handleSort('title')} className={`inline-flex items-center gap-1 ${exSortBy === 'title' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
                             Design
                             {exSortBy === 'title' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
                           </button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={() => handleSort('buyer')} className={`inline-flex items-center gap-1 ${exSortBy === 'buyer' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
                             Buyer
                             {exSortBy === 'buyer' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
                           </button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={() => handleSort('seller')} className={`inline-flex items-center gap-1 ${exSortBy === 'seller' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
                             Seller
                             {exSortBy === 'seller' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
                           </button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={() => handleSort('price')} className={`inline-flex items-center gap-1 ${exSortBy === 'price' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
                             Price
                             {exSortBy === 'price' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
                           </button>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           <button onClick={() => handleSort('date')} className={`inline-flex items-center gap-1 ${exSortBy === 'date' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
                             Date
                             {exSortBy === 'date' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
@@ -1485,15 +1485,15 @@ export default function AdminDashboard() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredExclusiveSales.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No exclusive sales yet</td>
+                          <td colSpan={6} className="px-3 py-6 md:px-6 md:py-8 text-center text-gray-500">No exclusive sales yet</td>
                         </tr>
                       ) : (
                         filteredExclusiveSales.map((ex) => (
                           <tr key={ex.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               {ex.order?.orderNumber || '—'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs">
                               <Link href={`/designs/${ex.design.id}?admin=true`} className="text-indigo-600 hover:underline" title={ex.design.title}>
                                 {ex.design.title}
                               </Link>
@@ -1501,18 +1501,18 @@ export default function AdminDashboard() {
                                 <span className="ml-2 inline-flex px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">Removed from marketplace</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700">
                               {ex.buyer.name || ex.buyer.email}
                               <div className="text-xs text-gray-500">{ex.buyer.email}</div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700">
                               {ex.design.designer.name || ex.design.designer.email}
                               <div className="text-xs text-gray-500">{ex.design.designer.email}</div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatPrice(ex.purchasePrice)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(ex.createdAt).toLocaleDateString()}
                             </td>
                           </tr>
@@ -1647,37 +1647,37 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                              <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {contactMessages.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={6} className="px-3 py-6 md:px-6 md:py-8 text-center text-gray-500">
                                 No contact messages yet
                               </td>
                             </tr>
                           ) : (
                             contactMessages.map((message) => (
                               <tr key={message.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
                                     {message.subject}
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <div className="text-sm text-gray-900">{message.name}</div>
                                   <div className="text-sm text-gray-500">{message.email}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                     message.priority === 'high' ? 'bg-red-100 text-red-800' :
                                     message.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -1686,7 +1686,7 @@ export default function AdminDashboard() {
                                     {message.priority}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                     message.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
                                     message.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
@@ -1696,10 +1696,10 @@ export default function AdminDashboard() {
                                     {message.status}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                                   {new Date(message.createdAt).toLocaleDateString()}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
                                   <button
                                     onClick={() => setSelectedMessage(message)}
                                     className="text-indigo-600 hover:text-indigo-900 mr-3"
@@ -1726,7 +1726,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {activeTab === 'chat' && (
+              {activeTab === 'chat' && (
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Customer Care Chat Sessions</h3>
@@ -1801,32 +1801,32 @@ export default function AdminDashboard() {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Message</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Message</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
+                            <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {chatSessions.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                              <td colSpan={6} className="px-3 py-6 md:px-6 md:py-8 text-center text-gray-500">
                                 No active chat sessions
                               </td>
                             </tr>
                           ) : (
                             chatSessions.map((session) => (
                               <tr key={session.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <div className="text-sm font-medium text-gray-900">{session.user.name || 'Anonymous'}</div>
                                   <div className="text-sm text-gray-500">{session.user.email}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900">
                                   {session._count.messages} messages
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                                   {session.messages[0] ? (
                                     <div>
                                       <div className="truncate max-w-xs">{session.messages[0].message}</div>
@@ -1838,7 +1838,7 @@ export default function AdminDashboard() {
                                     'No messages yet'
                                   )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                     session.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
                                     session.status === 'CLOSED' ? 'bg-gray-100 text-gray-800' :
@@ -1847,10 +1847,10 @@ export default function AdminDashboard() {
                                     {session.status}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                                   {new Date(session.createdAt).toLocaleDateString()}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
                                   <button
                                     onClick={() => {
                                       setSelectedChatSession(session)
