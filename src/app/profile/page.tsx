@@ -189,7 +189,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
           <Banner type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
@@ -281,7 +281,8 @@ export default function ProfilePage() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            {/* Make tabs horizontally scrollable on mobile to avoid layout overflow */}
+            <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-4 sm:space-x-8">
               {[
                 { id: 'overview', label: 'Overview', icon: Eye },
                 { id: 'designs', label: 'My Designs', icon: Upload },
@@ -292,7 +293,7 @@ export default function ProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as ProfileTab)}
-                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                  className={`flex flex-none items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
