@@ -373,7 +373,7 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 lg:gap-6">
+                  <div className="grid grid-cols-2 gap-4 md:gap-6">
                     {designs.map((design) => (
                       <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="aspect-square bg-gray-100">

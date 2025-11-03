@@ -175,7 +175,7 @@ function DesignsPageInner() {
 
         {/* Designs Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-4 gap-4 xs:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
@@ -198,7 +198,7 @@ function DesignsPageInner() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-4 gap-4 xs:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
