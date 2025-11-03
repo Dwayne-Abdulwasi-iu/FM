@@ -1,0 +1,30 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start standalone (bg)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"start:standalone:3000"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Smoke test (HTTP)",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$urls = 'http://localhost:3000/','http://localhost:3000/auth/signin','http://localhost:3000/api/health','http://localhost:3000/api/status','http://localhost:3000/designs'; foreach ($u in $urls) { try { $r = Invoke-WebRequest -Uri $u -Method GET; Write-Output (\"$u`t$($r.StatusCode)\") } catch { Write-Output (\"$u`tFAILED: $($_.Exception.Message)\") } }"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

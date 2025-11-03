@@ -21,14 +21,26 @@ async function copyDir(src, dest) {
 
 (async () => {
   const projectRoot = process.cwd();
-  const src = path.join(projectRoot, '.next', 'static');
-  const dest = path.join(projectRoot, '.next', 'standalone', '.next', 'static');
+
+  // Copy .next/static (required for Next server)
+  const staticSrc = path.join(projectRoot, '.next', 'static');
+  const staticDest = path.join(projectRoot, '.next', 'standalone', '.next', 'static');
   try {
-    await fsp.access(src);
+    await fsp.access(staticSrc);
+    await copyDir(staticSrc, staticDest);
+    console.log('Copied .next/static -> .next/standalone/.next/static');
   } catch {
-    console.error('Source static directory not found:', src);
-    process.exit(1);
+    console.error('Source static directory not found:', staticSrc);
   }
-  await copyDir(src, dest);
-  console.log('Copied .next/static -> .next/standalone/.next/static');
+
+  // Copy public assets so standalone server can serve them
+  const publicSrc = path.join(projectRoot, 'public');
+  const publicDest = path.join(projectRoot, '.next', 'standalone', 'public');
+  try {
+    await fsp.access(publicSrc);
+    await copyDir(publicSrc, publicDest);
+    console.log('Copied public -> .next/standalone/public');
+  } catch {
+    // public folder may not exist; that's fine
+  }
 })();

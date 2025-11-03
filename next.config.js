@@ -22,6 +22,14 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+  // Ensure Prisma engines and public assets are included in standalone output
+  outputFileTracingIncludes: {
+    '/*': [
+      './node_modules/.prisma/client/**/*',
+      './node_modules/@prisma/engines/**',
+      './public/**/*',
+    ],
+  },
   async headers() {
     // Security headers applied to all routes in production
     const securityHeaders = [

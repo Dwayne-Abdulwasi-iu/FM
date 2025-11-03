@@ -8,6 +8,7 @@
     "postbuild": "node scripts/copy-static.js",
     "start": "next start",
     "start:standalone": "node -r dotenv/config .next/standalone/server.js dotenv_config_path=.env.local",
+    "start:standalone:3000": "set PORT=3000 && node -r dotenv/config .next/standalone/server.js dotenv_config_path=.env.local",
     "start:standalone:3001": "set PORT=3001 && node -r dotenv/config .next/standalone/server.js dotenv_config_path=.env.local",
     "lint": "next lint",
     "db:push": "prisma db push",
