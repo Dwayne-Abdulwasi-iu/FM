@@ -1,5 +1,38 @@
 # Fashion Marketplace
 
+## Deploying on Render
+
+This repo includes a `render.yaml` that provisions a Web Service using Next.js standalone output.
+
+Prerequisites:
+- A MongoDB connection string (DATABASE_URL) — e.g., MongoDB Atlas
+- NextAuth secret (NEXTAUTH_SECRET) and URL (NEXTAUTH_URL)
+- Cloudinary account (CLOUDINARY_URL) if you use uploads
+- Stripe secret key (STRIPE_SECRET_KEY) and webhook secret (STRIPE_WEBHOOK_SECRET) if payments are enabled
+- Paystack secret key (PAYSTACK_SECRET_KEY) if NGN payments are enabled
+- Optional: Google OAuth (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) for social sign-in
+
+Steps:
+1. Push to GitHub (branch `master`).
+2. In Render, create a new Web Service and connect this repo. Render will detect `render.yaml`.
+3. Set the required Environment Variables in Render (see the list above). Do not commit secrets.
+4. Click Deploy. Render will run `npm ci && npm run build`, then start with `node .next/standalone/server.js`.
+5. After the first deploy, add your Render URL to `NEXTAUTH_URL` (e.g., `https://<service-name>.onrender.com`) and re-deploy.
+6. Update Stripe and Paystack dashboards to point webhooks to:
+   - Stripe: `https://<service>/api/webhooks/stripe`
+   - Paystack: `https://<service>/api/webhooks/paystack`
+
+Health check:
+- Render uses `/api/health` (configured via `healthCheckPath`) to verify the service. You can also hit `/api/status` for a quick JSON.
+
+Local production run (optional):
+```
+npm run build
+npm run start:standalone:3000
+```
+
+# Fashion Marketplace
+
 A full-stack fashion marketplace where designers can showcase and sell their illustrations, sketches, and fashion designs. Built with Next.js, TypeScript, Prisma, and Stripe.
 
 ## 🚀 Project Status

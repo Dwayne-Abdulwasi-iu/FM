@@ -2,22 +2,32 @@ services:
   - type: web
     name: fashion-marketplace
     env: node
+    # region: frankfurt    # optional: set your preferred region (oregon|frankfurt|singapore)
+    plan: free            # choose plan (free|starter|standard|pro); adjust as needed
     buildCommand: npm ci && npm run build
     startCommand: node .next/standalone/server.js
     autoDeploy: true
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       # Define your secrets in Render Dashboard or use a linked env group
-      # - key: DATABASE_URL
-      #   sync: false
-      # - key: NEXTAUTH_SECRET
-      #   sync: false
-      # - key: NEXTAUTH_URL
-      #   sync: false
-      # - key: CLOUDINARY_URL
-      #   sync: false
-      # - key: STRIPE_SECRET_KEY
-      #   sync: false
-      # - key: PAYSTACK_SECRET_KEY
-      #   sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      # Add any other keys you use (e.g., GOOGLE_CLIENT_ID/SECRET for next-auth Google provider)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
