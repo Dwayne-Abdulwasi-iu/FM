@@ -12,6 +12,7 @@ export function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -165,12 +166,96 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu */}
-          <button className="md:hidden" aria-label="Open menu">
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="md:hidden p-2 rounded hover:bg-gray-100"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen ? 'true' : 'false'}
+            aria-controls="mobile-menu"
+            onClick={() => setMobileOpen((v) => !v)}
+          >
             <Menu className="w-6 h-6" />
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu Panel */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop to close on outside click */}
+          <div
+            className="fixed inset-0 bg-black/10 z-40 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div
+            id="mobile-menu"
+            className="md:hidden z-50 relative bg-white border-t border-gray-200 shadow-sm"
+          >
+            <div className="px-4 py-4 space-y-4">
+              {/* Search (mobile) */}
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search designs..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                  disabled={isSearching}
+                />
+              </form>
+
+              <div className="grid grid-cols-1 gap-2">
+                <Link href="/designs" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                  Browse
+                </Link>
+                <Link href="/contact" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                  Contact
+                </Link>
+                {session && (
+                  <Link href="/upload" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2">
+                    <Upload className="w-4 h-4" /> Upload
+                  </Link>
+                )}
+                <Link href="/cart" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2 relative">
+                  <ShoppingBag className="w-4 h-4" />
+                  Cart
+                  {cartCount > 0 && (
+                    <span className="ml-auto bg-indigo-700 text-white text-xs rounded-full px-2 py-0.5">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+                {session ? (
+                  <>
+                    {session.user?.role === 'ADMIN' && (
+                      <Link href="/admin" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2">
+                        <Shield className="w-4 h-4" /> Admin
+                      </Link>
+                    )}
+                    <Link href="/profile" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => { setMobileOpen(false); signOut(); }}
+                      className="w-full text-left px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => { setMobileOpen(false); signIn(); }}
+                    className="w-full text-left px-4 py-2 rounded-lg bg-indigo-700 text-white hover:bg-indigo-800 font-medium"
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </nav>
   );
 }
