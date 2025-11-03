@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Update design approval status
-    const updateData: any = {
+    const updateData: { approvalStatus: string; isActive?: boolean; rejectionReason?: string } = {
       approvalStatus: action === 'approve' ? 'APPROVED' : 'REJECTED',
     }
 

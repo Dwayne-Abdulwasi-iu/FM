@@ -121,10 +121,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Platform takes 5% from sellers, not buyers
-    const platformFeeTotal = Math.round(totalAmount * 0.05 * 100) // 5% in cents
+  // Platform takes 5% from sellers, not buyers
+  const platformFeeTotal = calculatePlatformFee(totalAmount) // 5% in cents
 
-    if (paymentMethod === 'stripe') {
+  if (paymentMethod === 'stripe') {
       // Create Stripe checkout session
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -153,6 +153,19 @@ export async function POST(request: NextRequest) {
         paymentMethod: 'stripe'
       })
     } else if (paymentMethod === 'paystack') {
+      const ps = paystack as {
+        transaction: {
+          initialize: (args: {
+            email: string
+            amount: number
+            currency: string
+            reference: string
+            callback_url: string
+            metadata: Record<string, string | number | boolean>
+            split?: { type: string; subaccounts: Array<{ subaccount: string; share: number }> }
+          }) => Promise<{ status: boolean; data: { reference: string; authorization_url: string }; message?: string }>
+        }
+      }
       // Convert USD to NGN for Paystack
       const amountInNGN = convertUSDToNGN(totalAmount)
       
@@ -179,7 +192,15 @@ export async function POST(request: NextRequest) {
       }
       
       // Create Paystack transaction with split payments
-      const transactionData: any = {
+      const transactionData: {
+        email: string
+        amount: number
+        currency: 'NGN' | string
+        reference: string
+        callback_url: string
+        metadata: Record<string, string | number | boolean>
+        split?: { type: string; subaccounts: Array<{ subaccount: string; share: number }> }
+      } = {
         email: session.user.email || 'customer@example.com',
         amount: amountInNGN * 100, // Paystack expects kobo (NGN * 100)
         currency: 'NGN',
@@ -203,7 +224,7 @@ export async function POST(request: NextRequest) {
         console.log('Split payment configuration:', JSON.stringify(transactionData.split, null, 2))
       }
       
-      const transaction = await paystack.transaction.initialize(transactionData)
+  const transaction = await ps.transaction.initialize(transactionData)
 
       if (!transaction.status) {
         throw new Error('Failed to initialize Paystack transaction')

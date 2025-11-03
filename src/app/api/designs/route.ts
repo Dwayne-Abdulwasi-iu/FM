@@ -6,6 +6,12 @@ import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: "Database is not configured. Set DATABASE_URL in .env.local." },
+        { status: 503 }
+      );
+    }
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
@@ -86,6 +92,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Short-circuit if DB is not configured to avoid Prisma initialization errors
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          designs: [],
+          pagination: { page: 1, limit: 0, total: 0, pages: 0 },
+          warning: "Database is not configured. Set DATABASE_URL in .env.local.",
+        },
+        { status: 503 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
@@ -93,13 +110,15 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const userId = searchParams.get("userId");
     const featured = searchParams.get("featured") === "true";
+    const timeframe = (searchParams.get("timeframe") || "all").toLowerCase(); // all | month | week
     const userOnly = searchParams.get("userOnly") === "true";
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      // For testing, show all designs regardless of approval status
-      // isActive: true,
+    const where: Record<string, unknown> = {
+      // Hide inactive and exclusively owned designs from public listings
+      isActive: true,
+      isOwned: false,
     };
 
     // Only show designs by regular users (not admins)
@@ -123,6 +142,14 @@ export async function GET(request: NextRequest) {
 
     if (userId) {
       where.designerId = userId;
+    }
+
+    // Optional timeframe filtering for trending/featured views
+    if (timeframe === "week" || timeframe === "month") {
+      const now = new Date();
+      const days = timeframe === "week" ? 7 : 30;
+      const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      (where as Record<string, unknown>).createdAt = { gte: from };
     }
 
     // For featured designs, order by totalSales and totalRevenue

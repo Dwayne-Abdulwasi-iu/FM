@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, type ComponentType } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   ArrowLeft,
   BookOpen,
   Download,
   ExternalLink,
   Search,
-  Filter,
   Palette,
   Ruler,
   Scissors,
@@ -20,12 +20,8 @@ import {
   Link as LinkIcon,
   Star,
   Clock,
-  Users,
   TrendingUp,
   Globe,
-  Smartphone,
-  Laptop,
-  Tablet,
   Heart,
   Eye,
   ChevronRight
@@ -53,7 +49,7 @@ interface ResourceCategory {
   id: string
   title: string
   description: string
-  icon: any
+  icon: ComponentType<{ className?: string }>
   color: string
   count: number
 }
@@ -64,15 +60,9 @@ export default function ResourcesPage() {
   const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all')
   const [resources, setResources] = useState<Resource[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchResources()
-  }, [selectedCategory, selectedType, selectedDifficulty])
-
-  const fetchResources = async () => {
+  
+  const fetchResources = useCallback(async () => {
     try {
-      setLoading(true)
       const params = new URLSearchParams()
       if (selectedCategory !== 'all') params.append('category', selectedCategory)
       if (selectedType !== 'all') params.append('type', selectedType)
@@ -86,10 +76,12 @@ export default function ResourcesPage() {
     } catch (error) {
       console.error('Failed to fetch resources:', error)
       setResources([])
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [selectedCategory, selectedType, selectedDifficulty])
+
+  useEffect(() => {
+    void fetchResources()
+  }, [fetchResources])
 
   const getCategoryCount = (categoryId: string) => {
     return resources.filter(resource => resource.category === categoryId).length
@@ -290,9 +282,11 @@ export default function ResourcesPage() {
                 return (
                   <div key={resource.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                     <div className="aspect-video bg-gray-200 rounded-t-lg relative overflow-hidden">
-                      <img
+                      <Image
                         src={resource.thumbnail}
                         alt={resource.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 left-2">
@@ -429,9 +423,11 @@ export default function ResourcesPage() {
               return (
                 <div key={resource.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                   <div className="aspect-video bg-gray-200 rounded-t-lg relative overflow-hidden">
-                    <img
+                    <Image
                       src={resource.thumbnail}
                       alt={resource.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-2 left-2">

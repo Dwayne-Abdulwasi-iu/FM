@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+const CATEGORY_LIST = [
+  { name: 'Fashion Illustrations', image: '🎨' },
+  { name: 'Sketches', image: '✏️' },
+  { name: 'Digital Designs', image: '💻' },
+  { name: 'Pattern Designs', image: '🎭' },
+]
+
 export function Categories() {
   const router = useRouter()
-  const categoryList = [
-    { name: 'Fashion Illustrations', image: '🎨' },
-    { name: 'Sketches', image: '✏️' },
-    { name: 'Digital Designs', image: '💻' },
-    { name: 'Pattern Designs', image: '🎭' },
-  ]
 
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
@@ -22,7 +23,7 @@ export function Categories() {
       try {
         const results: Record<string, number> = {}
         await Promise.all(
-          categoryList.map(async (c) => {
+          CATEGORY_LIST.map(async (c) => {
             // Request with limit=1 to get pagination.total which contains exact count
             const url = `/api/designs?category=${encodeURIComponent(c.name)}&limit=1`
             const res = await fetch(url)
@@ -45,7 +46,7 @@ export function Categories() {
       }
     }
 
-    fetchCounts()
+  fetchCounts()
 
     return () => {
       mounted = false
@@ -63,7 +64,7 @@ export function Categories() {
         <h2 className="text-3xl font-bold text-white text-center mb-4">Browse by Categories</h2>
         <p className="text-white text-center mb-12">Explore different types of fashion designs and illustrations</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categoryList.map((category) => (
+          {CATEGORY_LIST.map((category) => (
             <button
               key={category.name}
               onClick={() => handleClick(category.name)}

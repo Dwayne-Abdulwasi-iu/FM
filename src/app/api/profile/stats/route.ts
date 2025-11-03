@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -53,9 +53,18 @@ export async function GET(request: NextRequest) {
 
     // Calculate stats
     const totalSales = ordersData.length
-    const totalRevenue = ordersData.reduce((sum: number, orderItem: any) => sum + orderItem.order.totalAmount, 0)
-    const totalEarnings = sellerEarnings.reduce((sum: number, earning: any) => sum + earning.sellerAmount, 0)
-    const platformCommission = sellerEarnings.reduce((sum: number, earning: any) => sum + earning.platformCommission, 0)
+    const totalRevenue = ordersData.reduce(
+      (sum: number, orderItem: { order: { totalAmount: number } }) => sum + orderItem.order.totalAmount,
+      0
+    )
+    const totalEarnings = sellerEarnings.reduce(
+      (sum: number, earning: { sellerAmount: number }) => sum + earning.sellerAmount,
+      0
+    )
+    const platformCommission = sellerEarnings.reduce(
+      (sum: number, earning: { platformCommission: number }) => sum + earning.platformCommission,
+      0
+    )
 
     // Calculate monthly earnings for the chart
     const currentDate = new Date()
@@ -66,11 +75,11 @@ export async function GET(request: NextRequest) {
       const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 1)
       
       const monthEarnings = sellerEarnings
-        .filter((earning: any) => {
+        .filter((earning: { createdAt: string | Date }) => {
           const earningDate = new Date(earning.createdAt)
           return earningDate >= month && earningDate < nextMonth
         })
-        .reduce((sum: number, earning: any) => sum + earning.sellerAmount, 0)
+        .reduce((sum: number, earning: { sellerAmount: number }) => sum + earning.sellerAmount, 0)
 
       monthlyEarnings.push({
         month: month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),

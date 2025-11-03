@@ -36,7 +36,7 @@ export default function TermsOfServicePage() {
                 1. Agreement to Terms
               </h2>
               <p className="text-gray-700 mb-4">
-                By accessing and using the Fashion Marketplace platform ("Service"), you accept and agree to be bound by the terms and provision of this agreement.
+                By accessing and using the Fashion Marketplace platform (&quot;Service&quot;), you accept and agree to be bound by the terms and provision of this agreement.
               </p>
               <p className="text-gray-700">
                 If you do not agree to abide by the above, please do not use this service.
@@ -51,7 +51,7 @@ export default function TermsOfServicePage() {
               </h2>
               <ul className="list-disc list-inside text-gray-700 space-y-2">
                 <li>You must be 13 years or older to use this Service.</li>
-                <li>You must be a human. Accounts registered by "bots" or other automated methods are not permitted.</li>
+                <li>You must be a human. Accounts registered by &quot;bots&quot; or other automated methods are not permitted.</li>
                 <li>You must provide a valid email address and any other information requested in order to complete the signup process.</li>
                 <li>You are responsible for maintaining the security of your account and password.</li>
                 <li>You are responsible for all content posted and activity that occurs under your account.</li>
@@ -164,7 +164,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Disclaimer</h2>
               <div className="space-y-4 text-gray-700">
                 <p>
-                  The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, this Company:
+                  The information on this website is provided on an &quot;as is&quot; basis. To the fullest extent permitted by law, this Company:
                 </p>
                 <ul className="list-disc list-inside ml-4 space-y-1">
                   <li>Excludes all representations and warranties relating to this website and its contents</li>

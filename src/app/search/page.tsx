@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import SafeImage from '@/components/ui/safe-image'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Eye, Crown, Search, ArrowLeft } from 'lucide-react'
-import { generateDesignPlaceholder } from '@/lib/placeholders'
+// Removed unused placeholder import
 
 interface Design {
   id: string
@@ -41,7 +42,7 @@ interface SearchResults {
   resultsCount: number
 }
 
-export default function SearchPage() {
+function SearchPageInner() {
   const searchParams = useSearchParams()
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,6 +65,7 @@ export default function SearchPage() {
     if (query) {
       performSearch()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, page, selectedCategory])
 
   const performSearch = async () => {
@@ -93,6 +95,8 @@ export default function SearchPage() {
       currency: 'USD'
     }).format(price)
   }
+
+  // Image sanitization handled by SafeImage
 
   if (!query) {
     return (
@@ -131,10 +135,10 @@ export default function SearchPage() {
           </h1>
           {searchResults && (
             <p className="text-gray-700">
-              {searchResults.resultsCount} result{searchResults.resultsCount !== 1 ? 's' : ''} found for "{searchResults.searchTerm}"
-              {searchResults.pagination.total > searchResults.resultsCount && 
-                ` (${searchResults.pagination.total} total)`
-              }
+              {searchResults.resultsCount} result{searchResults.resultsCount !== 1 ? 's' : ''} found for &quot;{searchResults.searchTerm}&quot;
+              {searchResults.pagination.total > searchResults.resultsCount && (
+                <span> ({searchResults.pagination.total} total)</span>
+              )}
             </p>
           )}
         </div>
@@ -192,14 +196,10 @@ export default function SearchPage() {
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <SafeImage
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = generateDesignPlaceholder(400, 400)
-                      }}
                     />
                     {/* Premium Badge */}
                     {design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (
@@ -290,5 +290,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" /> }>
+      <SearchPageInner />
+    </Suspense>
   )
 }

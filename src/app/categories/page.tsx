@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp, Eye, Heart, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp } from 'lucide-react'
 
 interface CategoryData {
   name: string
@@ -66,6 +66,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     fetchCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchCategories = async () => {
@@ -359,7 +360,7 @@ export default function CategoriesPage() {
         {/* Call to Action */}
         <div className="mt-12 text-center bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-8">
           <TrendingUp className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Don't see your category?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Don&apos;t see your category?</h2>
           <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
             Upload your designs and help us grow new categories. Our platform supports all types of fashion and design content.
           </p>

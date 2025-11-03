@@ -16,7 +16,7 @@ jest.mock('next/navigation', () => ({
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({
-  useSession: () => ({ data: null, status: 'unauthenticated' }),
+  useSession: jest.fn(() => ({ data: null, status: 'unauthenticated' })),
   signIn: jest.fn(),
   signOut: jest.fn(),
   SessionProvider: ({ children }) => children,
@@ -26,3 +26,12 @@ jest.mock('next-auth/react', () => ({
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
 process.env.NEXTAUTH_SECRET = 'test-secret'
 process.env.DATABASE_URL = 'file:./test.db'
+
+// Provide a basic fetch mock to avoid console noise from components that
+// optimistically fetch in client effects (e.g., Navbar cart count)
+if (typeof global.fetch === 'undefined') {
+  global.fetch = jest.fn(async () => ({
+    ok: true,
+    json: async () => ({ count: 0 }),
+  }))
+}

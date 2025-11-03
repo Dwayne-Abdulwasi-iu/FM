@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { Navbar } from '@/components/layout/navbar'
-import { SessionProvider } from 'next-auth/react'
+import { SessionProvider, useSession } from 'next-auth/react'
+import type { Session } from 'next-auth'
 
 // Mock the session
 const mockSession = {
@@ -8,11 +9,13 @@ const mockSession = {
     id: '1',
     name: 'Test User',
     email: 'test@example.com',
+    role: 'USER',
   },
   expires: '2024-01-01',
 }
 
-const MockSessionProvider = ({ children, session = null }: any) => {
+type MockSessionProviderProps = { children: React.ReactNode; session?: Session | null }
+const MockSessionProvider = ({ children, session = null }: MockSessionProviderProps) => {
   return (
     <SessionProvider session={session}>
       {children}
@@ -33,6 +36,8 @@ describe('Navbar', () => {
   })
 
   it('shows sign in button when not authenticated', () => {
+    // Ensure unauthenticated state for this test
+    (useSession as unknown as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' })
     render(
       <MockSessionProvider session={null}>
         <Navbar />
@@ -43,6 +48,8 @@ describe('Navbar', () => {
   })
 
   it('shows upload link when authenticated', () => {
+    // Mock authenticated state
+    (useSession as unknown as jest.Mock).mockReturnValue({ data: mockSession, status: 'authenticated' })
     render(
       <MockSessionProvider session={mockSession}>
         <Navbar />

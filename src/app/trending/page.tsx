@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import SafeImage from '@/components/ui/safe-image'
+import Banner from '@/components/ui/banner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -38,6 +40,8 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true)
   const [timeFrame, setTimeFrame] = useState('all')
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const timeFrames = [
     { value: 'all', label: 'All Time' },
@@ -45,25 +49,39 @@ export default function TrendingPage() {
     { value: 'week', label: 'This Week' },
   ]
 
-  useEffect(() => {
-    fetchTrendingDesigns()
-  }, [timeFrame])
-
-  const fetchTrendingDesigns = async () => {
+  const fetchTrendingDesigns = useCallback(async () => {
     try {
       setLoading(true)
-      // Get featured designs which are sorted by sales and revenue
-      const response = await fetch('/api/designs?featured=true&limit=20')
+      const controller = new AbortController()
+      const params = new URLSearchParams({ featured: 'true', limit: '20' })
+      if (timeFrame && timeFrame !== 'all') params.set('timeframe', timeFrame)
+      // Get featured designs which are sorted by sales and revenue, optionally filtered by timeframe
+      const response = await fetch(`/api/designs?${params.toString()}`, { signal: controller.signal })
       if (response.ok) {
         const data = await response.json()
         setDesigns(data.designs)
+      } else if (response.status === 503) {
+        // DB not configured or temporarily unavailable
+        const data = await response.json().catch(() => ({}))
+        setDesigns([])
+        setErrorMessage(
+          (data?.warning as string) || 'Service temporarily unavailable. Please try again later.'
+        )
       }
     } catch (error) {
       console.error('Failed to fetch trending designs:', error)
+      if ((error as { name?: string }).name !== 'AbortError') {
+        setErrorMessage('Failed to load trending designs.')
+      }
     } finally {
       setLoading(false)
     }
-  }
+  }, [timeFrame])
+
+  useEffect(() => {
+    fetchTrendingDesigns()
+    // No cleanup needed; fetch has internal abort protection
+  }, [fetchTrendingDesigns])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -93,19 +111,22 @@ export default function TrendingPage() {
       })
 
       if (response.ok) {
-        alert(`"${designTitle}" added to cart successfully!`)
+        setSuccessMessage(`"${designTitle}" added to cart successfully!`)
         window.dispatchEvent(new CustomEvent('cartUpdated'))
+        setTimeout(() => setSuccessMessage(null), 3000)
       } else {
         const error = await response.json()
-        alert(`Failed to add to cart: ${error.message}`)
+        setErrorMessage(`Failed to add to cart: ${error.message}`)
       }
     } catch (error) {
       console.error('Add to cart error:', error)
-      alert('Failed to add to cart. Please try again.')
+      setErrorMessage('Failed to add to cart. Please try again.')
     } finally {
       setAddingToCart(null)
     }
   }
+
+  // Image sanitization handled by SafeImage
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,10 +141,6 @@ export default function TrendingPage() {
           <p className="text-gray-700 mb-6">
             Discover the most popular fashion designs based on sales, views, and community engagement
           </p>
-        </div>
-
-        {/* Time Frame Filter */}
-        <div className="mb-8">
           <div className="flex flex-wrap gap-2">
             {timeFrames.map((frame) => (
               <button
@@ -140,6 +157,18 @@ export default function TrendingPage() {
             ))}
           </div>
         </div>
+
+        {/* Notices */}
+        {successMessage && (
+          <Banner type="success" onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Banner>
+        )}
+        {errorMessage && (
+          <Banner type="error" onClose={() => setErrorMessage(null)}>
+            {errorMessage}
+          </Banner>
+        )}
 
         {/* Trending Designs Grid */}
         {loading ? (
@@ -189,14 +218,10 @@ export default function TrendingPage() {
 
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <SafeImage
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = '/api/placeholder/400/400'
-                      }}
                     />
                     {/* Premium Badge */}
                     {design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (

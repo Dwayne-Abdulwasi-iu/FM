@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, type UploadApiOptions, type TransformationOptions } from 'cloudinary';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -19,16 +19,20 @@ export async function uploadToCloudinary(
   file: Buffer,
   options: {
     folder?: string;
-    transformation?: any;
+    transformation?: TransformationOptions | TransformationOptions[];
   } = {}
 ): Promise<UploadResult> {
   return new Promise((resolve, reject) => {
+    const uploadOptions: UploadApiOptions = {
+      folder: options.folder || 'fashion-marketplace',
+      resource_type: 'auto',
+    }
+    if (options.transformation) {
+      uploadOptions.transformation = options.transformation
+    }
+
     cloudinary.uploader.upload_stream(
-      {
-        folder: options.folder || 'fashion-marketplace',
-        resource_type: 'auto',
-        transformation: options.transformation,
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           reject(error);

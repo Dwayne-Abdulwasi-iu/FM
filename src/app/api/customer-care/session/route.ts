@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     const sessions = await prisma.chatSession.findMany({
       where: {
-        status: status as any
+        status: status as 'ACTIVE' | 'CLOSED' | 'PENDING'
       },
       orderBy: {
         updatedAt: 'desc'
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     })
 
     const total = await prisma.chatSession.count({
-      where: { status: status as any }
+      where: { status: status as 'ACTIVE' | 'CLOSED' | 'PENDING' }
     })
 
     return NextResponse.json({

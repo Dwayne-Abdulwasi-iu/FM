@@ -1,13 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { paystack } from '@/lib/paystack'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get list of Nigerian banks from Paystack
-    const response = await paystack.misc.list_banks({ country: 'nigeria' })
+    const ps = paystack as {
+      misc: { list_banks: (args: { country: string }) => Promise<{ status: boolean; data: Array<{ name: string; code: string; slug: string }> }> }
+    }
+    const response = await ps.misc.list_banks({ country: 'nigeria' })
 
     if (response.status) {
-      const banks = response.data.map((bank: any) => ({
+      const banks = response.data.map((bank: { name: string; code: string; slug: string }) => ({
         name: bank.name,
         code: bank.code,
         slug: bank.slug

@@ -1,4 +1,4 @@
-'use client'
+ 'use client'
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
@@ -18,6 +18,8 @@ import {
   Trash2,
   Edit
 } from 'lucide-react'
+import ConfirmModal from '@/components/ui/confirm-modal'
+import Banner from '@/components/ui/banner'
 
 interface Resource {
   id?: string
@@ -43,6 +45,9 @@ export default function AdminResourcesPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingResource, setEditingResource] = useState<Resource | null>(null)
   const [saving, setSaving] = useState(false)
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const [formData, setFormData] = useState<Resource>({
     title: '',
@@ -138,37 +143,22 @@ export default function AdminResourcesPage() {
       if (response.ok) {
         await fetchResources()
         resetForm()
-        alert(editingResource ? 'Resource updated successfully!' : 'Resource added successfully!')
+        setNotice({ type: 'success', message: editingResource ? 'Resource updated successfully!' : 'Resource added successfully!' })
+        setTimeout(() => setNotice(null), 4000)
       } else {
         const error = await response.json()
-        alert(`Error: ${error.message}`)
+        setNotice({ type: 'error', message: `Error: ${error.message}` })
       }
     } catch (error) {
       console.error('Error saving resource:', error)
-      alert('Failed to save resource')
+      setNotice({ type: 'error', message: 'Failed to save resource' })
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this resource?')) return
-
-    try {
-      const response = await fetch(`/api/admin/resources?id=${id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        await fetchResources()
-        alert('Resource deleted successfully!')
-      } else {
-        alert('Failed to delete resource')
-      }
-    } catch (error) {
-      console.error('Error deleting resource:', error)
-      alert('Failed to delete resource')
-    }
+    setConfirmDelete({ id })
   }
 
   const resetForm = () => {
@@ -209,6 +199,9 @@ export default function AdminResourcesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {notice && (
+          <Banner type={notice.type} message={notice.message} onClose={() => setNotice(null)} />
+        )}
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -539,6 +532,43 @@ export default function AdminResourcesPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Delete Resource"
+        description={
+          <div>
+            <p className="mb-2">This action cannot be undone.</p>
+            <p className="text-sm text-gray-600">Are you sure you want to permanently delete this resource?</p>
+          </div>
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        tone="danger"
+        confirming={confirmingDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          if (!confirmDelete?.id) return
+          try {
+            setConfirmingDelete(true)
+            const response = await fetch(`/api/admin/resources?id=${confirmDelete.id}`, {
+              method: 'DELETE',
+            })
+            if (response.ok) {
+              await fetchResources()
+              setNotice({ type: 'success', message: 'Resource deleted successfully!' })
+              setTimeout(() => setNotice(null), 3000)
+            } else {
+              setNotice({ type: 'error', message: 'Failed to delete resource' })
+            }
+          } catch {
+            setNotice({ type: 'error', message: 'Failed to delete resource' })
+          } finally {
+            setConfirmingDelete(false)
+            setConfirmDelete(null)
+          }
+        }}
+      />
     </div>
   )
 }

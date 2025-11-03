@@ -1,0 +1,170 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import SafeImage from '@/components/ui/safe-image'
+import { Copy, Search } from 'lucide-react'
+import { toast } from 'react-hot-toast'
+
+interface OrderListItem {
+  id: string
+  orderNumber: string
+  totalAmount: number
+  platformFee: number
+  createdAt: string
+  items: Array<{
+    id: string
+    quantity: number
+    price: number
+    design: { id: string; title: string; imageUrl: string; designer: { id: string; name: string | null } }
+  }>
+}
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const res = await fetch('/api/orders', { cache: 'no-store' })
+        if (!res.ok) {
+          setError('Failed to load your orders')
+          return
+        }
+        const data = await res.json()
+        setOrders(data.orders || [])
+      } catch {
+        setError('Unable to load your orders right now')
+      } finally {
+        setLoading(false)
+      }
+    }
+    run()
+  }, [])
+
+  const formatPrice = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
+  const formatDate = (d: string) => new Date(d).toLocaleString()
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return orders
+    const q = query.toLowerCase()
+    return orders.filter(o =>
+      o.orderNumber.toLowerCase().includes(q) ||
+      o.items.some(it => it.design.title.toLowerCase().includes(q))
+    )
+  }, [orders, query])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const current = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filtered.slice(start, start + pageSize)
+  }, [filtered, page])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Orders</h1>
+        {error && (
+          <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-800">{error}</div>
+        )}
+        {orders.length === 0 ? (
+          <div className="text-center bg-white rounded-lg p-8 border border-gray-200">
+            <p className="text-gray-700 mb-4">You have no orders yet.</p>
+            <Link href="/designs" className="text-indigo-600 hover:text-indigo-800 font-medium">Browse designs</Link>
+          </div>
+        ) : (
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={query}
+                  onChange={(e) => { setQuery(e.target.value); setPage(1) }}
+                  placeholder="Search by order number or design title..."
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-black placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {current.map((order) => (
+                <div key={order.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <Link href={`/profile/orders/${order.id}`} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                        Order #{order.orderNumber}
+                      </Link>
+                      <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatPrice(order.totalAmount)}</div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const base = typeof window !== 'undefined' ? window.location.origin : ''
+                            await navigator.clipboard.writeText(`${base}/profile/orders/${order.id}`)
+                            toast.success('Order link copied')
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800"
+                      >
+                        <Copy className="w-3 h-3" /> Copy link
+                      </button>
+                    </div>
+                  </div>
+                  <Link href={`/profile/orders/${order.id}`} className="flex -space-x-2">
+                    {order.items.slice(0, 4).map((item) => (
+                      <div key={item.id} className="w-12 h-12 rounded overflow-hidden border border-gray-200 bg-gray-100">
+                        <SafeImage src={item.design.imageUrl} alt={item.design.title} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {order.items.length > 4 && (
+                      <div className="w-12 h-12 rounded border border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-gray-600">
+                        +{order.items.length - 4}
+                      </div>
+                    )}
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between text-sm">
+              <div className="text-gray-600">Page {page} of {totalPages}</div>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

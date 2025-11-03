@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import SafeImage from '@/components/ui/safe-image'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Video, Trash2, Eye, Lock } from 'lucide-react'
+import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock } from 'lucide-react'
 
 interface MediaFile {
   id: string
@@ -257,8 +258,8 @@ export default function EnhancedUploadPage() {
                                 controls
                               />
                             ) : (
-                              <img 
-                                src={media.preview} 
+                              <SafeImage 
+                                src={media.preview || ''} 
                                 alt="Preview" 
                                 className="max-h-32 mx-auto rounded"
                               />

@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "react-hot-toast";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ export function Providers({ children }: ProvidersProps) {
       refetchOnWindowFocus={true}
     >
       {children}
+      <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
     </SessionProvider>
   );
 }

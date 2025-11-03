@@ -93,25 +93,27 @@ export async function POST(request: NextRequest) {
           )
         }
 
-  // Use transaction to ensure all deletions happen together
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-          // Delete order items for orders placed by this user
+        // Consolidate and batch deletes to minimize transaction time
+        const designIds = userToDelete.designs.map((d) => d.id)
+
+        const runDeletionTransaction = (timeoutMs: number) => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+          // Pre-collect order ids once
           const userOrders = await tx.order.findMany({
             where: { customerId: userId },
             select: { id: true }
           })
-          
-          for (const order of userOrders) {
-            await tx.orderItem.deleteMany({ where: { orderId: order.id } })
-          }
+          const orderIds = userOrders.map((o) => o.id)
 
-          // Delete user's designs and all related data
-          for (const design of userToDelete.designs) {
-            await tx.orderItem.deleteMany({ where: { designId: design.id } })
-            await tx.cartItem.deleteMany({ where: { designId: design.id } })
-            await tx.favorite.deleteMany({ where: { designId: design.id } })
-            await tx.review.deleteMany({ where: { designId: design.id } })
-            await tx.sellerEarning.deleteMany({ where: { designId: design.id } })
+          // Delete order items by orderId (single statement) and by designId (if any)
+          if (orderIds.length > 0) {
+            await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } })
+          }
+          if (designIds.length > 0) {
+            await tx.orderItem.deleteMany({ where: { designId: { in: designIds } } })
+            await tx.cartItem.deleteMany({ where: { designId: { in: designIds } } })
+            await tx.favorite.deleteMany({ where: { designId: { in: designIds } } })
+            await tx.review.deleteMany({ where: { designId: { in: designIds } } })
+            await tx.sellerEarning.deleteMany({ where: { designId: { in: designIds } } })
           }
 
           // Delete all user-related data
@@ -124,10 +126,22 @@ export async function POST(request: NextRequest) {
           await tx.sellerAccount.deleteMany({ where: { userId } })
           await tx.account.deleteMany({ where: { userId } })
           await tx.session.deleteMany({ where: { userId } })
-          
+
           // Finally delete the user
           await tx.user.delete({ where: { id: userId } })
-        })
+        }, { timeout: timeoutMs, maxWait: 10000 })
+
+        try {
+          await runDeletionTransaction(20000)
+        } catch (err: unknown) {
+          // Retry once with a higher timeout if the interactive transaction expired (P2028)
+          if ((err as { code?: string })?.code === 'P2028') {
+            console.warn('Admin delete: transaction timed out, retrying with higher timeout...')
+            await runDeletionTransaction(45000)
+          } else {
+            throw err
+          }
+        }
 
         return NextResponse.json({ 
           message: 'User account deleted successfully',

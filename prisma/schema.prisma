@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   email     String   @unique
   name      String?
   image     String?
@@ -43,7 +43,7 @@ model User {
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id @default(cuid()) @map("_id")
   userId            String
   type              String
   provider          String
@@ -59,21 +59,23 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("accounts")
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   sessionToken String   @unique
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
 model Design {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   title        String
   description  String?
   price        Float
@@ -106,11 +108,12 @@ model Design {
   purchases  Purchase[]
   mediaFiles DesignMedia[]
 
+  @@index([designerId])
   @@map("designs")
 }
 
 model DesignMedia {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   fileName    String   // Original filename
   fileUrl     String   // Storage URL
   fileType    String   // IMAGE, VIDEO
@@ -128,7 +131,7 @@ model DesignMedia {
 }
 
 model Order {
-  id            String   @id @default(cuid())
+  id            String   @id @default(cuid()) @map("_id")
   orderNumber   String   @unique
   status        String   @default("PENDING")
   totalAmount   Float
@@ -145,11 +148,12 @@ model Order {
   items OrderItem[]
   earnings SellerEarning[]
 
+  @@index([customerId])
   @@map("orders")
 }
 
 model OrderItem {
-  id           String @id @default(cuid())
+  id           String @id @default(cuid()) @map("_id")
   quantity     Int    @default(1)
   price        Float
   purchaseType String @default("REGULAR") // REGULAR or OWNERSHIP
@@ -159,11 +163,13 @@ model OrderItem {
   designId String
   design   Design @relation(fields: [designId], references: [id])
 
+  @@index([orderId])
+  @@index([designId])
   @@map("order_items")
 }
 
 model Review {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
@@ -174,11 +180,13 @@ model Review {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
   @@unique([userId, designId])
+  @@index([userId])
+  @@index([designId])
   @@map("reviews")
 }
 
 model Favorite {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   createdAt DateTime @default(now())
 
   userId   String
@@ -187,11 +195,13 @@ model Favorite {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
   @@unique([userId, designId])
+  @@index([userId])
+  @@index([designId])
   @@map("favorites")
 }
 
 model CartItem {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   quantity     Int      @default(1)
   purchaseType String   @default("REGULAR") // REGULAR or OWNERSHIP
   createdAt    DateTime @default(now())
@@ -202,16 +212,28 @@ model CartItem {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
   @@unique([userId, designId, purchaseType])
+  @@index([userId])
+  @@index([designId])
   @@map("cart_items")
 }
 
 model SellerEarning {
-  id               String   @id @default(cuid())
+  id               String   @id @default(cuid()) @map("_id")
   saleAmount       Float    // Original sale amount (what customer paid)
   platformCommission Float  // 5% commission taken by platform
   sellerAmount     Float    // Amount seller receives (95% of sale)
   quantity         Int      @default(1)
   createdAt        DateTime @default(now())
+
+  // Payout audit fields
+  payoutStatus       PayoutStatus @default(PENDING) // PENDING, SKIPPED_SPLIT, PAID, FAILED
+  payoutProvider     String?                        // e.g., PAYSTACK, PAYSTACK_SPLIT, MANUAL
+  payoutTransferId   String?                        // gateway transfer/reference code
+  payoutAttemptedAt  DateTime?
+  payoutCompletedAt  DateTime?
+  payoutError        String?
+  payoutCurrency     String?                        // e.g., NGN, USD
+  payoutAmountMinor  Int?                           // e.g., amount in kobo/cents
 
   sellerId String
   seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
@@ -220,11 +242,21 @@ model SellerEarning {
   designId String
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
+  @@index([sellerId])
+  @@index([orderId])
+  @@index([designId])
   @@map("seller_earnings")
 }
 
+enum PayoutStatus {
+  PENDING
+  SKIPPED_SPLIT
+  PAID
+  FAILED
+}
+
 model Purchase {
-  id            String   @id @default(cuid())
+  id            String   @id @default(cuid()) @map("_id")
   purchaseType  String   // REGULAR or OWNERSHIP
   accessGranted Boolean  @default(true)
   purchasePrice Float
@@ -241,7 +273,7 @@ model Purchase {
 }
 
 model SellerAccount {
-  id               String   @id @default(cuid())
+  id               String   @id @default(cuid()) @map("_id")
   accountNumber    String   // Bank account number
   accountName      String   // Account holder name
   bankName         String   // Bank name
@@ -260,7 +292,7 @@ model SellerAccount {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   name      String
   email     String
   subject   String
@@ -277,7 +309,7 @@ model ContactMessage {
 }
 
 model ChatSession {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   status    String   @default("ACTIVE") // ACTIVE, CLOSED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -290,7 +322,7 @@ model ChatSession {
 }
 
 model ChatMessage {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid()) @map("_id")
   message    String
   senderId   String
   senderName String
@@ -305,7 +337,7 @@ model ChatMessage {
 }
 
 model Resource {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   title       String
   description String
   type        String   // guide, template, tool, tutorial, reference, inspiration

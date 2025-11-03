@@ -40,7 +40,7 @@ export default function ContactPage() {
         const errorData = await response.json()
         setError(errorData.message || 'Failed to send message')
       }
-    } catch (error) {
+    } catch {
       setError('Failed to send message. Please try again.')
     } finally {
       setLoading(false)
@@ -60,7 +60,7 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Have questions or need help? We're here to assist you. Send us a message or start a live chat with our support team.
+            Have questions or need help? We&apos;re here to assist you. Send us a message or start a live chat with our support team.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function ContactPage() {
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                    <span className="text-green-800 font-medium">Message sent successfully! We'll get back to you soon.</span>
+                    <span className="text-green-800 font-medium">Message sent successfully! We&apos;ll get back to you soon.</span>
                   </div>
                   <button
                     onClick={() => setSuccess(false)}

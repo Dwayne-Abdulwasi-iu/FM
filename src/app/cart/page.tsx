@@ -1,18 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import SafeImage from '@/components/ui/safe-image'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { formatPriceLocalized, type SupportedCurrency } from '@/lib/currency'
 
 interface CartItem {
   id: string
   quantity: number
+  purchaseType: 'REGULAR' | 'OWNERSHIP'
   design: {
     id: string
     title: string
     price: number
+    ownershipPrice: number | null
     imageUrl: string
     thumbnailUrl: string | null
     designer: {
@@ -31,6 +35,8 @@ export default function CartPage() {
   const [checkingOut, setCheckingOut] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paystack'>('stripe')
+  const [currency, setCurrency] = useState<SupportedCurrency>('USD')
+  const [locale, setLocale] = useState<string>('en-US')
 
   useEffect(() => {
     if (session) {
@@ -39,6 +45,22 @@ export default function CartPage() {
       setLoading(false)
     }
   }, [session])
+
+  useEffect(() => {
+    const loadLocale = async () => {
+      try {
+        const res = await fetch('/api/locale', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setLocale(data.locale || 'en-US')
+          setCurrency((data.currency === 'NGN' ? 'NGN' : 'USD'))
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadLocale()
+  }, [])
 
   const fetchCart = async () => {
     try {
@@ -108,7 +130,8 @@ export default function CartPage() {
         body: JSON.stringify({
           cartItems: cartItems.map(item => ({
             designId: item.design.id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            purchaseType: item.purchaseType
           })),
           paymentMethod
         })
@@ -129,20 +152,23 @@ export default function CartPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
+  const formatPrice = (priceUSD: number) => formatPriceLocalized(priceUSD, currency, locale)
+
+  const getUnitPrice = (item: CartItem) => {
+    if (item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice) {
+      return item.design.ownershipPrice
+    }
+    return item.design.price
   }
 
   const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.design.price * item.quantity), 0)
+    return cartItems.reduce((sum, item) => sum + (getUnitPrice(item) * item.quantity), 0)
   }
 
-  const calculatePlatformFee = (total: number) => {
-    return total * 0.05 // 5% platform fee (deducted from sellers, not added to buyers)
-  }
+  // 5% platform fee (deducted from sellers, not added to buyers)
+  // Keeping the information for documentation; function removed to satisfy lint.
+
+  // Image sanitization handled by SafeImage
 
   if (!session || errorMessage === 'Please sign in to view your cart.') {
     return (
@@ -171,7 +197,7 @@ export default function CartPage() {
   }
 
   const total = calculateTotal()
-  const platformFee = calculatePlatformFee(total)
+  // const platformFee = calculatePlatformFee(total) // Fee is displayed in info text; not used in totals
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -206,12 +232,8 @@ export default function CartPage() {
               <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Your cart is empty</h3>
               <p className="text-gray-600 mb-6">Start shopping to add items to your cart</p>
-              <Link 
-                href="/designs"
-                className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
+              <Link href="/designs" className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                 Browse Designs
-                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
           ) : (
@@ -220,7 +242,7 @@ export default function CartPage() {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                     <div className="w-20 h-20 flex-shrink-0">
-                      <img
+                      <SafeImage
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
                         className="w-full h-full object-cover rounded-lg"
@@ -233,39 +255,52 @@ export default function CartPage() {
                           {item.design.title}
                         </h3>
                       </Link>
-                      <p className="text-sm text-gray-600">
-                        by {item.design.designer.name || 'Anonymous'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-600">
+                          by {item.design.designer.name || 'Anonymous'}
+                        </p>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          item.purchaseType === 'OWNERSHIP' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {item.purchaseType === 'OWNERSHIP' ? 'Exclusive Ownership' : 'Regular License'}
+                        </span>
+                      </div>
                       <p className="font-semibold text-gray-900">
-                        {formatPrice(item.design.price)}
+                        {formatPrice(getUnitPrice(item))}
                       </p>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={updating === item.id}
-                        className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={updating === item.id}
-                        className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {item.purchaseType === 'OWNERSHIP' ? (
+                      <div className="flex items-center justify-center w-24 text-sm text-gray-500">
+                        Qty: 1
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={updating === item.id}
+                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          disabled={updating === item.id}
+                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                     
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">
-                        {formatPrice(item.design.price * item.quantity)}
+                        {formatPrice(getUnitPrice(item) * item.quantity)}
                       </p>
                       <button
                         onClick={() => removeFromCart(item.id)}

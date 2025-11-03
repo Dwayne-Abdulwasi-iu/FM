@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { sessionId, message, isAdmin } = await request.json()
+  const { sessionId, message } = await request.json()
 
     if (!sessionId || !message?.trim()) {
       return NextResponse.json(

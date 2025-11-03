@@ -39,7 +39,8 @@ jobs:
     - name: Build application
       run: npm run build
       env:
-        DATABASE_URL: file:./dev.db
+        # Use a placeholder MongoDB URL compatible with Prisma provider
+        DATABASE_URL: mongodb://localhost:27017/test
         NEXTAUTH_URL: http://localhost:3000
         NEXTAUTH_SECRET: test-secret
         SKIP_ENV_VALIDATION: true

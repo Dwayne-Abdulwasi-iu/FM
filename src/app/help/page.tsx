@@ -12,21 +12,15 @@ import {
   ShoppingCart,
   CreditCard,
   User,
-  Settings,
   Shield,
   Mail,
   Phone,
   MessageCircle,
   Book,
   Video,
-  Download,
-  Star,
-  Heart,
-  Eye,
-  FileText,
-  Palette,
-  Users
+  FileText
 } from 'lucide-react'
+import type { ComponentType } from 'react'
 
 interface FAQItem {
   id: string
@@ -39,7 +33,7 @@ interface HelpCategory {
   id: string
   title: string
   description: string
-  icon: any
+  icon: ComponentType<{ className?: string }>
   color: string
 }
 
@@ -443,7 +437,7 @@ export default function HelpPage() {
             <MessageCircle className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Still need help?</h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Can't find what you're looking for? Our support team is here to help you with any questions or issues.
+              Can&apos;t find what you&apos;re looking for? Our support team is here to help you with any questions or issues.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -32,14 +32,15 @@ export async function GET(request: NextRequest) {
 
     // Test 2: API Connectivity
     let apiConnectivity = 'FAIL'
-    let apiError = null
+    let apiError: string | null = null
     try {
-      const response = await paystack.misc.list_banks({ country: 'nigeria' })
+      const ps = paystack as unknown as { misc: { list_banks: (args: { country: string }) => Promise<{ status?: boolean; data: unknown[] }> } }
+      const response = await ps.misc.list_banks({ country: 'nigeria' })
       if (response.status && response.data.length > 0) {
         apiConnectivity = 'PASS'
       }
-    } catch (error: any) {
-      apiError = error.message
+    } catch (error: unknown) {
+      apiError = error instanceof Error ? error.message : 'Unknown error'
     }
 
     tests.push({
@@ -50,22 +51,24 @@ export async function GET(request: NextRequest) {
 
     // Test 3: Account Resolution (using a known test account)
     let accountResolution = 'FAIL'
-    let resolutionError = null
+    let resolutionError: string | null = null
     try {
       // Test with Access Bank - a commonly used bank
-      const verification = await paystack.misc.resolve_account_number({
+      const ps = paystack as unknown as { misc: { resolve_account_number: (args: { account_number: string; bank_code: string }) => Promise<unknown> } }
+      await ps.misc.resolve_account_number({
         account_number: '0123456789', // Dummy account for testing API
         bank_code: '044' // Access Bank
       })
       
       // This should fail (dummy account), but if the API responds properly, connectivity is good
       accountResolution = 'API_RESPONDING'
-    } catch (error: any) {
-      if (error.message?.includes('Could not resolve account name')) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message?.includes('Could not resolve account name')) {
         // This is expected for dummy account - means API is working
         accountResolution = 'PASS'
       } else {
-        resolutionError = error.message
+        resolutionError = message
       }
     }
 

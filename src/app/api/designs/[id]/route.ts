@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
@@ -57,14 +59,19 @@ export async function GET(
       )
     }
 
-    // For now, allow viewing of pending designs for testing
-    // In production, you might want to restrict this to admins or design owners
-    // if (!design.isActive && design.approvalStatus !== 'APPROVED') {
-    //   return NextResponse.json(
-    //     { message: 'Design not found' },
-    //     { status: 404 }
-    //   )
-    // }
+    // Gate access for exclusive (owned) designs: only admin or the buyer (ownedBy) can view
+    if (design.isOwned) {
+      const session = await getServerSession(authOptions)
+      const userId = session?.user?.id
+      const isAdmin = session?.user?.role === 'ADMIN'
+      const isOwner = userId && design.ownedBy && userId === design.ownedBy
+      if (!isAdmin && !isOwner) {
+        return NextResponse.json(
+          { message: 'Design not found' },
+          { status: 404 }
+        )
+      }
+    }
 
     return NextResponse.json({ design })
 

@@ -26,7 +26,12 @@ export async function POST(request: NextRequest) {
     })
 
     try {
-      const verification = await paystack.misc.resolve_account_number({
+      const ps = paystack as unknown as {
+        misc: {
+          resolve_account_number: (args: { account_number: string; bank_code: string }) => Promise<{ status?: boolean; data?: { account_name?: string }; message?: string }>
+        }
+      }
+      const verification = await ps.misc.resolve_account_number({
         account_number: testAccount,
         bank_code: palmPayCode
       })
@@ -44,18 +49,18 @@ export async function POST(request: NextRequest) {
         }
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('PalmPay verification error:', error)
       
       return NextResponse.json({
         success: false,
         message: 'Verification failed',
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         details: {
           accountNumber: testAccount,
           bankCode: palmPayCode,
           bankName: 'PalmPay',
-          errorType: error.name || 'Unknown',
+          errorType: (error as { name?: string })?.name || 'Unknown',
           possibleCauses: [
             'Account number might be incorrect',
             'PalmPay account might not be eligible for transfers',

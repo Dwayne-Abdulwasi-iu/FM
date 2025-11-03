@@ -1,24 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import SafeImage from '@/components/ui/safe-image'
+import { formatPriceLocalized, type SupportedCurrency } from '@/lib/currency'
 import { 
   Users, 
   ShoppingBag, 
   DollarSign, 
   TrendingUp, 
   Eye, 
-  Edit, 
   Trash2, 
   Shield,
   UserCheck,
   UserX,
-  Calendar,
   Search,
-  Filter,
-  Download,
   Mail,
   MessageCircle,
   BookOpen
@@ -59,6 +57,13 @@ interface Order {
     name: string | null
     email: string
   }
+  items: Array<{
+    id: string
+    quantity: number
+    price: number
+    purchaseType: 'REGULAR' | 'OWNERSHIP' | string
+    design: { id: string; title: string }
+  }>
 }
 
 interface Design {
@@ -82,14 +87,61 @@ interface Design {
   }
 }
 
+// Row shape for Exclusive Sales table and CSV export
+type ExclusiveSale = {
+  id: string
+  createdAt: string
+  purchasePrice: number
+  buyer: { id: string; name: string | null; email: string }
+  design: { id: string; title: string; imageUrl: string; isActive: boolean; ownedBy: string | null; designer: { id: string; name: string | null; email: string } }
+  order: { id?: string; orderNumber?: string; createdAt?: string } | null
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings'>('overview')
+  type AdminTab = 'overview' | 'users' | 'designs' | 'orders' | 'exclusive' | 'resources' | 'contact' | 'chat' | 'earnings'
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [designs, setDesigns] = useState<Design[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  // Orders filters, sorting, pagination
+  const [ordBuyerQuery, setOrdBuyerQuery] = useState('')
+  const [ordOrderQuery, setOrdOrderQuery] = useState('')
+  const [ordStatus, setOrdStatus] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'FAILED'>('ALL')
+  const [ordFromDate, setOrdFromDate] = useState<string>('')
+  const [ordToDate, setOrdToDate] = useState<string>('')
+  const [ordMinTotal, setOrdMinTotal] = useState<string>('')
+  const [ordMaxTotal, setOrdMaxTotal] = useState<string>('')
+  const [ordPurchaseType, setOrdPurchaseType] = useState<'ALL' | 'REGULAR' | 'OWNERSHIP'>('ALL')
+  const [ordPage, setOrdPage] = useState<number>(1)
+  const [ordPageSize, setOrdPageSize] = useState<number>(50)
+  const [ordTotal, setOrdTotal] = useState<number>(0)
+  const [ordSortBy, setOrdSortBy] = useState<'date' | 'total' | 'customer' | 'orderNumber'>('date')
+  const [ordSortOrder, setOrdSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [isOrderExporting, setIsOrderExporting] = useState<boolean>(false)
+  const [exclusiveSales, setExclusiveSales] = useState<ExclusiveSale[]>([])
+  // Exclusive Sales pagination meta
+  const [exPage, setExPage] = useState<number>(1)
+  const [exPageSize, setExPageSize] = useState<number>(50)
+  const [exTotal, setExTotal] = useState<number>(0)
+  // Exclusive Sales sorting
+  const [exSortBy, setExSortBy] = useState<'date' | 'price' | 'buyer' | 'seller' | 'title'>('date')
+  const [exSortOrder, setExSortOrder] = useState<'asc' | 'desc'>('desc')
+  // Export state
+  const [isExportingAll, setIsExportingAll] = useState<boolean>(false)
+  // Price range filters (USD as source of truth)
+  const [exMinPrice, setExMinPrice] = useState<string>('')
+  const [exMaxPrice, setExMaxPrice] = useState<string>('')
+  // Exclusive Sales filters
+  const [exBuyerQuery, setExBuyerQuery] = useState('')
+  const [exSellerQuery, setExSellerQuery] = useState('')
+  const [exFromDate, setExFromDate] = useState<string>('')
+  const [exToDate, setExToDate] = useState<string>('')
+  const [exOrderQuery, setExOrderQuery] = useState<string>('')
+  // With server-side filtering, the list received is already filtered
+  const filteredExclusiveSales = exclusiveSales
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified'>('all')
@@ -97,12 +149,37 @@ export default function AdminDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
   const [adminConfirm, setAdminConfirm] = useState<{ step: number; userId: string; userEmail: string; action: 'makeAdmin' | 'removeAdmin' } | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [contactMessages, setContactMessages] = useState<any[]>([])
-  const [chatSessions, setChatSessions] = useState<any[]>([])
-  const [selectedMessage, setSelectedMessage] = useState<any>(null)
-  const [selectedChatSession, setSelectedChatSession] = useState<any>(null)
-  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [currency, setCurrency] = useState<SupportedCurrency>('USD')
+  const [locale, setLocale] = useState<string>('en-US')
+  interface ContactMessage {
+    id: string
+    subject: string
+    name: string
+    email: string
+    message: string
+    priority: 'high' | 'medium' | 'low'
+    status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+    createdAt: string
+    user?: { name: string | null; email: string }
+  }
+  interface AdminChatSession {
+    id: string
+    user: { name: string | null; email: string }
+    _count: { messages: number }
+    messages: Array<{ message: string; createdAt: string }>
+    status: 'ACTIVE' | 'CLOSED' | string
+    createdAt: string
+  }
+  interface CareMessage { id: string; message: string; isAdmin: boolean; createdAt: string }
+
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([])
+  const [chatSessions, setChatSessions] = useState<AdminChatSession[]>([])
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null)
+  const [selectedChatSession, setSelectedChatSession] = useState<AdminChatSession | null>(null)
+  const [chatMessages, setChatMessages] = useState<CareMessage[]>([])
   const [replyMessage, setReplyMessage] = useState('')
+
+  // SafeImage centralizes sanitization and onError fallback
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ type, message })
@@ -114,30 +191,13 @@ export default function AdminDashboard() {
   }
 
   // Check if user is admin
-  useEffect(() => {
-    if (status === 'loading') return
-    
-    if (!session || session.user?.role !== 'ADMIN') {
-      router.push('/')
-      return
-    }
-    
-    fetchAdminData()
-  }, [session, status, router])
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 5000) // Auto-hide after 5 seconds
-  }
-
-  const fetchAdminData = async () => {
+  const fetchAdminData = useCallback(async () => {
     try {
       setLoading(true)
-      const [statsRes, usersRes, designsRes, ordersRes, contactRes, chatRes] = await Promise.all([
+      const [statsRes, usersRes, designsRes, contactRes, chatRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/users'),
         fetch('/api/admin/designs'),
-        fetch('/api/admin/orders'),
         fetch('/api/contact'),
         fetch('/api/customer-care/session')
       ])
@@ -157,10 +217,11 @@ export default function AdminDashboard() {
         setDesigns(designsData.designs)
       }
 
-      if (ordersRes.ok) {
-        const ordersData = await ordersRes.json()
-        setOrders(ordersData.orders)
-      }
+      // Load orders with current filters
+      await fetchOrders()
+
+      // Load exclusive sales with current filters after base data loads
+      await fetchExclusiveSales()
 
       if (contactRes.ok) {
         const contactData = await contactRes.json()
@@ -175,6 +236,279 @@ export default function AdminDashboard() {
       console.error('Error fetching admin data:', error)
     } finally {
       setLoading(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // Debounce orders fetch on filters/sort/page change
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fetchOrders()
+    }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordBuyerQuery, ordOrderQuery, ordStatus, ordFromDate, ordToDate, ordMinTotal, ordMaxTotal, ordPurchaseType, ordPage, ordPageSize, ordSortBy, ordSortOrder])
+
+  const fetchOrders = async () => {
+    const params = new URLSearchParams()
+    if (ordBuyerQuery.trim()) params.set('buyer', ordBuyerQuery.trim())
+    if (ordOrderQuery.trim()) params.set('order', ordOrderQuery.trim())
+    if (ordStatus !== 'ALL') params.set('status', ordStatus)
+    if (ordFromDate) params.set('from', ordFromDate)
+    if (ordToDate) params.set('to', ordToDate)
+    if (ordMinTotal && !Number.isNaN(parseFloat(ordMinTotal))) params.set('minTotal', String(parseFloat(ordMinTotal)))
+    if (ordMaxTotal && !Number.isNaN(parseFloat(ordMaxTotal))) params.set('maxTotal', String(parseFloat(ordMaxTotal)))
+    if (ordPurchaseType !== 'ALL') params.set('purchaseType', ordPurchaseType)
+    params.set('page', String(ordPage))
+    params.set('pageSize', String(ordPageSize))
+    params.set('sortBy', ordSortBy)
+    params.set('sortOrder', ordSortOrder)
+
+    const res = await fetch(`/api/admin/orders?${params.toString()}`, { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      setOrders(data.orders || [])
+      if (data.meta) setOrdTotal(Number(data.meta.total) || 0)
+      else setOrdTotal((data.orders || []).length)
+    }
+  }
+
+  const handleOrderSort = (key: 'date' | 'total' | 'customer' | 'orderNumber') => {
+    setOrdPage(1)
+    if (ordSortBy === key) setOrdSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    else {
+      setOrdSortBy(key)
+      setOrdSortOrder(key === 'date' ? 'desc' : 'asc')
+    }
+  }
+
+  const exportAllOrders = async () => {
+    try {
+      setIsOrderExporting(true)
+      const base = new URLSearchParams()
+      if (ordBuyerQuery.trim()) base.set('buyer', ordBuyerQuery.trim())
+      if (ordOrderQuery.trim()) base.set('order', ordOrderQuery.trim())
+      if (ordStatus !== 'ALL') base.set('status', ordStatus)
+      if (ordFromDate) base.set('from', ordFromDate)
+      if (ordToDate) base.set('to', ordToDate)
+      if (ordMinTotal && !Number.isNaN(parseFloat(ordMinTotal))) base.set('minTotal', String(parseFloat(ordMinTotal)))
+      if (ordMaxTotal && !Number.isNaN(parseFloat(ordMaxTotal))) base.set('maxTotal', String(parseFloat(ordMaxTotal)))
+      if (ordPurchaseType !== 'ALL') base.set('purchaseType', ordPurchaseType)
+      base.set('sortBy', ordSortBy)
+      base.set('sortOrder', ordSortOrder)
+
+      const pageSize = 200
+      let page = 1
+      let total = Infinity
+      const rows: Order[] = []
+      while (rows.length < total) {
+        const p = new URLSearchParams(base)
+        p.set('page', String(page))
+        p.set('pageSize', String(pageSize))
+        const res = await fetch(`/api/admin/orders?${p.toString()}`, { cache: 'no-store' })
+        if (!res.ok) break
+        const data = await res.json()
+        if (Number.isFinite(data?.meta?.total)) total = data.meta.total
+        else total = (data?.orders || []).length
+        const batch: Order[] = data?.orders || []
+        if (batch.length === 0) break
+        rows.push(...batch)
+        if (batch.length < pageSize) break
+        page += 1
+        await new Promise(r => setTimeout(r, 50))
+      }
+
+      const header = ['OrderNumber','CustomerName','CustomerEmail','Status','ItemCount','Items','TotalUSD','DateISO']
+      const escape = (v: string) => '"' + (v ?? '').replaceAll('"', '""') + '"'
+      const csv = [
+        header.join(','),
+        ...rows.map((o) => {
+          const itemsText = (o.items || []).map(it => `${it.design.title}${it.purchaseType === 'OWNERSHIP' ? ' (Ownership)' : ''}×${it.quantity}`).join('; ')
+          return [
+            o.orderNumber,
+            o.customer.name || o.customer.email || '',
+            o.customer.email || '',
+            o.status,
+            String((o.items || []).length),
+            itemsText,
+            String(o.totalAmount ?? ''),
+            new Date(o.createdAt).toISOString()
+          ].map(x => escape(String(x))).join(',')
+        })
+      ].join('\n')
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `orders-all-${new Date().toISOString().slice(0,10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setIsOrderExporting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session || session.user?.role !== 'ADMIN') {
+      router.push('/')
+      return
+    }
+
+    fetchAdminData()
+  }, [session, status, router, fetchAdminData])
+
+  // Load admin locale/currency for formatting
+  useEffect(() => {
+    const loadLocale = async () => {
+      try {
+        const res = await fetch('/api/locale', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setLocale(data.locale || 'en-US')
+          setCurrency(data.currency === 'NGN' ? 'NGN' : 'USD')
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadLocale()
+  }, [])
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setExPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exBuyerQuery, exSellerQuery, exFromDate, exToDate, exMinPrice, exMaxPrice])
+
+  // Debounced server-side fetch when filters, pagination, or sorting change
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fetchExclusiveSales()
+    }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exBuyerQuery, exSellerQuery, exFromDate, exToDate, exPage, exPageSize, exSortBy, exSortOrder])
+
+  const formatPrice = (amountUSD: number) => formatPriceLocalized(amountUSD, currency, locale)
+
+  const computePlatformFeeUSD = (order: Order) => {
+    const itemsTotal = (order.items || []).reduce((sum, it) => sum + it.price * it.quantity, 0)
+    return Number((itemsTotal * 0.05).toFixed(2))
+  }
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 5000) // Auto-hide after 5 seconds
+  }
+
+  
+
+  const fetchExclusiveSales = async () => {
+    const params = new URLSearchParams()
+    if (exBuyerQuery.trim()) params.set('buyer', exBuyerQuery.trim())
+    if (exSellerQuery.trim()) params.set('seller', exSellerQuery.trim())
+    if (exFromDate) params.set('from', exFromDate)
+    if (exToDate) params.set('to', exToDate)
+    if (exOrderQuery.trim()) params.set('order', exOrderQuery.trim())
+  if (exMinPrice && !Number.isNaN(parseFloat(exMinPrice))) params.set('minPrice', String(parseFloat(exMinPrice)))
+  if (exMaxPrice && !Number.isNaN(parseFloat(exMaxPrice))) params.set('maxPrice', String(parseFloat(exMaxPrice)))
+    // pagination
+    params.set('page', String(exPage))
+    params.set('pageSize', String(exPageSize))
+    // sorting
+    params.set('sortBy', exSortBy)
+    params.set('sortOrder', exSortOrder)
+
+    const res = await fetch(`/api/admin/exclusive-sales?${params.toString()}`, { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      setExclusiveSales(data.exclusiveSales || [])
+      if (data.meta) {
+        setExTotal(Number(data.meta.total) || 0)
+      } else {
+        setExTotal(data.exclusiveSales?.length || 0)
+      }
+    }
+  }
+
+  const handleSort = (key: 'date' | 'price' | 'buyer' | 'seller' | 'title') => {
+    setExPage(1)
+    if (exSortBy === key) {
+      setExSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setExSortBy(key)
+      // sensible defaults
+      setExSortOrder(key === 'date' ? 'desc' : 'asc')
+    }
+  }
+
+  const exportAllExclusiveSales = async () => {
+    try {
+      setIsExportingAll(true)
+      const params = new URLSearchParams()
+      if (exBuyerQuery.trim()) params.set('buyer', exBuyerQuery.trim())
+      if (exSellerQuery.trim()) params.set('seller', exSellerQuery.trim())
+      if (exFromDate) params.set('from', exFromDate)
+      if (exToDate) params.set('to', exToDate)
+  if (exOrderQuery.trim()) params.set('order', exOrderQuery.trim())
+  if (exMinPrice && !Number.isNaN(parseFloat(exMinPrice))) params.set('minPrice', String(parseFloat(exMinPrice)))
+  if (exMaxPrice && !Number.isNaN(parseFloat(exMaxPrice))) params.set('maxPrice', String(parseFloat(exMaxPrice)))
+      params.set('sortBy', exSortBy)
+      params.set('sortOrder', exSortOrder)
+
+      const pageSize = 200
+      let page = 1
+      let total = Infinity
+      const rows: ExclusiveSale[] = []
+
+      while (rows.length < total) {
+        const loopParams = new URLSearchParams(params)
+        loopParams.set('page', String(page))
+        loopParams.set('pageSize', String(pageSize))
+        const res = await fetch(`/api/admin/exclusive-sales?${loopParams.toString()}`, { cache: 'no-store' })
+        if (!res.ok) break
+        const data = await res.json()
+        if (Number.isFinite(data?.meta?.total)) {
+          total = data.meta.total
+        } else {
+          total = data?.exclusiveSales?.length || 0
+        }
+        const batch: ExclusiveSale[] = data?.exclusiveSales || []
+        if (batch.length === 0) break
+        rows.push(...batch)
+        if (batch.length < pageSize) break
+        page += 1
+        // small delay to avoid hammering server
+        await new Promise(r => setTimeout(r, 50))
+      }
+
+      const header = ['OrderNumber','DesignTitle','BuyerName','BuyerEmail','SellerName','SellerEmail','PriceUSD','DateISO']
+      const escape = (v: string) => '"' + (v ?? '').replaceAll('"', '""') + '"'
+      const csv = [
+        header.join(','),
+        ...rows.map((r) => [
+          r.order?.orderNumber || '',
+          r.design.title || '',
+          r.buyer.name || r.buyer.email || '',
+          r.buyer.email || '',
+          r.design.designer.name || r.design.designer.email || '',
+          r.design.designer.email || '',
+          String(r.purchasePrice ?? ''),
+          new Date(r.createdAt).toISOString()
+        ].map(x => escape(String(x))).join(','))
+      ].join('\n')
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `exclusive-sales-all-${new Date().toISOString().slice(0,10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setIsExportingAll(false)
     }
   }
 
@@ -308,7 +642,7 @@ export default function AdminDashboard() {
         const error = await response.json()
         showToast(`Failed to ${action} design: ${error.message}`, 'error')
       }
-    } catch (error) {
+    } catch {
       showToast(`Failed to ${action} design`, 'error')
     }
   }
@@ -327,7 +661,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', 'Failed to update message status')
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Error updating message status')
     }
   }
@@ -365,7 +699,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', 'Failed to send reply')
       }
-    } catch (error) {
+    } catch {
       showNotification('error', 'Error sending reply')
     }
   }
@@ -400,7 +734,7 @@ export default function AdminDashboard() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
+          <p className="text-gray-600">You don&apos;t have permission to access this page.</p>
         </div>
       </div>
     )
@@ -443,7 +777,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                   <p className="text-xs text-green-600">{stats.totalOrders} orders</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-600" />
@@ -454,7 +788,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Platform Earnings (5%)</p>
-                  <p className="text-2xl font-bold text-gray-900">${stats.platformEarnings.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.platformEarnings)}</p>
                   <p className="text-xs text-purple-600">Commission earned</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-purple-600" />
@@ -472,6 +806,7 @@ export default function AdminDashboard() {
                 { id: 'users', label: 'User Management', icon: Users },
                 { id: 'designs', label: 'Design Management', icon: ShoppingBag },
                 { id: 'orders', label: 'Order Management', icon: ShoppingBag },
+                { id: 'exclusive', label: 'Exclusive Sales', icon: TrendingUp },
                 { id: 'resources', label: 'Resources', icon: BookOpen },
                 { id: 'contact', label: 'Contact Messages', icon: Mail },
                 { id: 'chat', label: 'Customer Care', icon: MessageCircle },
@@ -479,7 +814,7 @@ export default function AdminDashboard() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as AdminTab)}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
@@ -496,7 +831,50 @@ export default function AdminDashboard() {
           <div className="p-6">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={exportAllOrders}
+                      disabled={isOrderExporting}
+                      className={`px-3 py-2 text-sm rounded text-white ${isOrderExporting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                      title="Export all filtered orders"
+                    >
+                      {isOrderExporting ? 'Exporting…' : 'Export Orders CSV'}
+                    </button>
+                    <Link href="#orders" onClick={() => setActiveTab('orders')} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Go to Orders</Link>
+                  </div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Buyer</label>
+                      <input type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Order #</label>
+                      <input type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">From</label>
+                        <input type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">To</label>
+                        <input type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-xs text-gray-600">
+                      {ordTotal > 0 ? (()=>{ const start=(ordPage-1)*ordPageSize+1; const end=Math.min(ordPage*ordPageSize, ordTotal); return <span>Showing {start}-{end} of {ordTotal} results</span>; })() : <span>Showing results matching your filters</span>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={()=>{ setOrdBuyerQuery(''); setOrdOrderQuery(''); setOrdFromDate(''); setOrdToDate(''); setOrdMinTotal(''); setOrdMaxTotal(''); setOrdStatus('ALL'); setOrdPurchaseType('ALL'); setOrdSortBy('date'); setOrdSortOrder('desc'); setOrdPageSize(50); setOrdPage(1); fetchOrders(); }} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Reset all</button>
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {orders.slice(0, 5).map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -505,7 +883,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-600">{order.customer.name} - {order.customer.email}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-gray-900">${order.totalAmount.toFixed(2)}</p>
+                        <p className="font-medium text-gray-900">{formatPrice(order.totalAmount)}</p>
                         <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -531,7 +909,7 @@ export default function AdminDashboard() {
                     </div>
                     <select
                       value={userFilter}
-                      onChange={(e) => setUserFilter(e.target.value as any)}
+                      onChange={(e) => setUserFilter(e.target.value as 'all' | 'verified' | 'unverified')}
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-black"
                       title="Filter users by verification status"
                       aria-label="Filter users"
@@ -654,21 +1032,10 @@ export default function AdminDashboard() {
                   {filteredDesigns.map((design) => (
                     <div key={design.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                       <div className="aspect-square relative">
-                        <img
+                        <SafeImage
                           src={design.imageUrl}
                           alt={design.title}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `data:image/svg+xml,${encodeURIComponent(`
-                              <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="100%" height="100%" fill="#f3f4f6"/>
-                                <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#6b7280" text-anchor="middle" dy=".3em">
-                                  Fashion Design
-                                </text>
-                              </svg>
-                            `)}`;
-                          }}
                         />
                         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold ${
                           design.approvalStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
@@ -692,13 +1059,13 @@ export default function AdminDashboard() {
                         <h4 className="font-semibold text-gray-900 truncate">{design.title}</h4>
                         <p className="text-sm text-gray-600 mb-2">by {design.designer.name || design.designer.email}</p>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-lg font-bold text-indigo-600">${design.price.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-indigo-600">{formatPrice(design.price)}</span>
                           <span className="text-sm text-gray-500">{design.totalSales} sales</span>
                         </div>
                         {design.buyingTypes === 'BOTH' && design.ownershipPrice && (
                           <div className="mb-2">
                             <span className="text-sm text-purple-600 font-medium">
-                              Ownership: ${design.ownershipPrice.toFixed(2)}
+                              Ownership: {formatPrice(design.ownershipPrice)}
                             </span>
                           </div>
                         )}
@@ -759,17 +1126,82 @@ export default function AdminDashboard() {
 
             {activeTab === 'orders' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Order Management</h3>
+                <h3 id="orders" className="text-lg font-semibold text-gray-900 mb-6">Order Management</h3>
+                {/* Filters */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Buyer</label>
+                      <input type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Order #</label>
+                      <input type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Status</label>
+                      <select value={ordStatus} onChange={(e)=>{ setOrdStatus(e.target.value as 'ALL' | 'PENDING' | 'COMPLETED' | 'FAILED'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black"><option value="ALL">All</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="FAILED">Failed</option></select>
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Purchase Type</label>
+                      <select value={ordPurchaseType} onChange={(e)=>{ setOrdPurchaseType(e.target.value as 'ALL' | 'REGULAR' | 'OWNERSHIP'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black"><option value="ALL">All</option><option value="REGULAR">Regular</option><option value="OWNERSHIP">Ownership</option></select>
+                    </div>
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">From</label>
+                        <input type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">To</label>
+                        <input type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                      </div>
+                    </div>
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Min Total (USD)</label>
+                        <input type="number" min={0} step="0.01" value={ordMinTotal} onChange={(e)=>{ setOrdMinTotal(e.target.value); setOrdPage(1); }} placeholder="e.g. 10" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Max Total (USD)</label>
+                        <input type="number" min={0} step="0.01" value={ordMaxTotal} onChange={(e)=>{ setOrdMaxTotal(e.target.value); setOrdPage(1); }} placeholder="e.g. 500" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-xs text-gray-600">
+                      {ordTotal > 0 ? (()=>{ const start=(ordPage-1)*ordPageSize+1; const end=Math.min(ordPage*ordPageSize, ordTotal); return <span>Showing {start}-{end} of {ordTotal} results</span>; })() : <span>Showing results matching your filters</span>}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <button onClick={()=>{ setOrdBuyerQuery(''); setOrdOrderQuery(''); setOrdFromDate(''); setOrdToDate(''); setOrdMinTotal(''); setOrdMaxTotal(''); setOrdStatus('ALL'); setOrdPurchaseType('ALL'); setOrdSortBy('date'); setOrdSortOrder('desc'); setOrdPageSize(50); setOrdPage(1); fetchOrders(); }} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Reset all</button>
+                      <label className="text-xs text-gray-500" htmlFor="ord-page-size">Rows per page</label>
+                      <select id="ord-page-size" value={ordPageSize} onChange={(e)=>{ setOrdPageSize(parseInt(e.target.value,10) || 50); setOrdPage(1); }} className="px-2 py-1 border border-gray-300 rounded text-sm text-black">{[10,25,50,100,200].map(n=> <option key={n} value={n}>{n}</option>)}</select>
+                      <button onClick={()=> setOrdPage(p => Math.max(1, p-1))} disabled={ordPage<=1} className={`px-2 py-1 text-sm rounded ${ordPage<=1?'bg-gray-100 text-gray-400 cursor-not-allowed':'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Prev</button>
+                      <span className="text-xs text-gray-600 px-1">Page {ordPage}{ordTotal>0?` of ${Math.max(1, Math.ceil(ordTotal/ordPageSize))}`:''}</span>
+                      <input type="number" min={1} max={Math.max(1, Math.ceil(ordTotal/ordPageSize))} value={ordPage} onChange={(e)=>{ const v=parseInt(e.target.value||'1',10); if(!Number.isNaN(v)) setOrdPage(Math.min(Math.max(1,v), Math.max(1, Math.ceil(ordTotal/ordPageSize)))) }} className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-black" title="Go to page" />
+                      <button onClick={()=> setOrdPage(p => p + 1)} disabled={ordTotal>0 ? ordPage >= Math.ceil(ordTotal/ordPageSize) : orders.length < ordPageSize} className={`px-2 py-1 text-sm rounded ${ordTotal>0 && ordPage >= Math.ceil(ordTotal/ordPageSize) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Next</button>
+                      <button onClick={exportAllOrders} disabled={isOrderExporting} className={`px-3 py-2 text-sm rounded text-white ${isOrderExporting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{isOrderExporting ? 'Exporting…' : 'Export all CSV'}</button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>handleOrderSort('orderNumber')} className={`inline-flex items-center gap-1 ${ordSortBy==='orderNumber'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Order {ordSortBy==='orderNumber' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>handleOrderSort('customer')} className={`inline-flex items-center gap-1 ${ordSortBy==='customer'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Customer {ordSortBy==='customer' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>handleOrderSort('total')} className={`inline-flex items-center gap-1 ${ordSortBy==='total'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Amount {ordSortBy==='total' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Fee</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>handleOrderSort('date')} className={`inline-flex items-center gap-1 ${ordSortBy==='date'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Date {ordSortBy==='date' && <span>{ordSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -781,11 +1213,26 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {order.customer.name} ({order.customer.email})
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 max-w-xs">
+                            <div className="space-y-1">
+                              {order.items && order.items.length > 0 ? (
+                                order.items.map((item) => (
+                                  <div key={item.id} className="truncate" title={`${item.design.title} ×${item.quantity}`}>
+                                    {item.design.title}
+                                    {item.purchaseType === 'OWNERSHIP' ? ' (Ownership)' : ''}
+                                    {` ×${item.quantity}`}
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${order.totalAmount.toFixed(2)}
+                            {formatPrice(order.totalAmount)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                            ${order.platformFee.toFixed(2)}
+                            {formatPrice(computePlatformFeeUSD(order))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -801,6 +1248,276 @@ export default function AdminDashboard() {
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'exclusive' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Exclusive Sales</h3>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Buyer</label>
+                      <input
+                        type="text"
+                        value={exBuyerQuery}
+                        onChange={(e) => setExBuyerQuery(e.target.value)}
+                        placeholder="Name or email"
+                        title="Filter by buyer name or email"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Seller</label>
+                      <input
+                        type="text"
+                        value={exSellerQuery}
+                        onChange={(e) => setExSellerQuery(e.target.value)}
+                        placeholder="Name or email"
+                        title="Filter by seller name or email"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">From</label>
+                        <input
+                          type="date"
+                          value={exFromDate}
+                          onChange={(e) => setExFromDate(e.target.value)}
+                          title="Start date"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">To</label>
+                        <input
+                          type="date"
+                          value={exToDate}
+                          onChange={(e) => setExToDate(e.target.value)}
+                          title="End date"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-black"
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Order #</label>
+                      <input
+                        type="text"
+                        value={exOrderQuery}
+                        onChange={(e) => setExOrderQuery(e.target.value)}
+                        placeholder="e.g. ORD-10023"
+                        title="Filter by order number"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Min Price (USD)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={exMinPrice}
+                        onChange={(e) => setExMinPrice(e.target.value)}
+                        placeholder="e.g. 50"
+                        title="Minimum price in USD"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Max Price (USD)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={exMaxPrice}
+                        onChange={(e) => setExMaxPrice(e.target.value)}
+                        placeholder="e.g. 500"
+                        title="Maximum price in USD"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-xs text-gray-600">
+                      {exTotal > 0 ? (
+                        (() => {
+                          const start = (exPage - 1) * exPageSize + 1
+                          const end = Math.min(exPage * exPageSize, exTotal)
+                          return <span>Showing {start}-{end} of {exTotal} results</span>
+                        })()
+                      ) : (
+                        <span>Showing results matching your filters</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setExBuyerQuery(''); setExSellerQuery(''); setExFromDate(''); setExToDate(''); setExMinPrice(''); setExMaxPrice(''); setExOrderQuery(''); fetchExclusiveSales(); }}
+                        className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      >
+                        Reset filters
+                      </button>
+                      <button
+                        onClick={() => { setExBuyerQuery(''); setExSellerQuery(''); setExFromDate(''); setExToDate(''); setExMinPrice(''); setExMaxPrice(''); setExOrderQuery(''); setExSortBy('date'); setExSortOrder('desc'); setExPageSize(50); setExPage(1); fetchExclusiveSales(); }}
+                        className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        title="Reset all filters, sort, and paging"
+                      >
+                        Reset all
+                      </button>
+                      <button
+                        onClick={() => { setExSortBy('date'); setExSortOrder('desc'); setExPage(1); fetchExclusiveSales(); }}
+                        className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        title="Reset sort"
+                      >
+                        Reset sort
+                      </button>
+                      <div className="hidden md:flex items-center gap-2">
+                        <label htmlFor="ex-page-size" className="text-xs text-gray-500">Rows per page</label>
+                        <select
+                          id="ex-page-size"
+                          value={exPageSize}
+                          onChange={(e) => { setExPageSize(parseInt(e.target.value, 10) || 50); setExPage(1) }}
+                          className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
+                          title="Rows per page"
+                          aria-label="Rows per page"
+                        >
+                          {[10, 25, 50, 100, 200].map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setExPage(p => Math.max(1, p - 1))}
+                            disabled={exPage <= 1}
+                            className={`px-2 py-1 text-sm rounded ${exPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            aria-label="Previous page"
+                            title="Previous page"
+                          >
+                            Prev
+                          </button>
+                          <span className="text-xs text-gray-600 px-1">
+                            Page {exPage}{exTotal > 0 ? ` of ${Math.max(1, Math.ceil(exTotal / exPageSize))}` : ''}
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={Math.max(1, Math.ceil(exTotal / exPageSize))}
+                            value={exPage}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value || '1', 10)
+                              if (!Number.isNaN(v)) setExPage(Math.min(Math.max(1, v), Math.max(1, Math.ceil(exTotal / exPageSize))))
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const input = e.currentTarget as HTMLInputElement
+                                const v = parseInt(input.value || '1', 10)
+                                if (!Number.isNaN(v)) setExPage(Math.min(Math.max(1, v), Math.max(1, Math.ceil(exTotal / exPageSize))))
+                              }
+                            }}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-black"
+                            title="Go to page"
+                            aria-label="Go to page"
+                          />
+                          <button
+                            onClick={() => setExPage(p => p + 1)}
+                            disabled={exTotal > 0 ? exPage >= Math.ceil(exTotal / exPageSize) : filteredExclusiveSales.length < exPageSize}
+                            className={`px-2 py-1 text-sm rounded ${exTotal > 0 && exPage >= Math.ceil(exTotal / exPageSize) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            aria-label="Next page"
+                            title="Next page"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={exportAllExclusiveSales}
+                        disabled={isExportingAll}
+                        className={`px-3 py-2 text-sm rounded text-white ${isExportingAll ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                      >
+                        {isExportingAll ? 'Exporting…' : 'Export all CSV'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {/* Filtered results table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={() => handleSort('title')} className={`inline-flex items-center gap-1 ${exSortBy === 'title' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Design
+                            {exSortBy === 'title' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          </button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={() => handleSort('buyer')} className={`inline-flex items-center gap-1 ${exSortBy === 'buyer' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Buyer
+                            {exSortBy === 'buyer' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          </button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={() => handleSort('seller')} className={`inline-flex items-center gap-1 ${exSortBy === 'seller' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Seller
+                            {exSortBy === 'seller' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          </button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={() => handleSort('price')} className={`inline-flex items-center gap-1 ${exSortBy === 'price' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Price
+                            {exSortBy === 'price' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          </button>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={() => handleSort('date')} className={`inline-flex items-center gap-1 ${exSortBy === 'date' ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Date
+                            {exSortBy === 'date' && <span>{exSortOrder === 'asc' ? '▲' : '▼'}</span>}
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredExclusiveSales.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No exclusive sales yet</td>
+                        </tr>
+                      ) : (
+                        filteredExclusiveSales.map((ex) => (
+                          <tr key={ex.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {ex.order?.orderNumber || '—'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs">
+                              <Link href={`/designs/${ex.design.id}?admin=true`} className="text-indigo-600 hover:underline" title={ex.design.title}>
+                                {ex.design.title}
+                              </Link>
+                              {!ex.design.isActive && (
+                                <span className="ml-2 inline-flex px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">Removed from marketplace</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {ex.buyer.name || ex.buyer.email}
+                              <div className="text-xs text-gray-500">{ex.buyer.email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {ex.design.designer.name || ex.design.designer.email}
+                              <div className="text-xs text-gray-500">{ex.design.designer.email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatPrice(ex.purchasePrice)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(ex.createdAt).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -846,18 +1563,18 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-green-50 rounded-lg p-6">
                       <h4 className="text-lg font-medium text-green-900">Total Commission Earned</h4>
-                      <p className="text-3xl font-bold text-green-600">${stats.platformEarnings.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-green-600">{formatPrice(stats.platformEarnings)}</p>
                       <p className="text-sm text-green-700">5% of all sales</p>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-6">
                       <h4 className="text-lg font-medium text-blue-900">Total Sales Volume</h4>
-                      <p className="text-3xl font-bold text-blue-600">${stats.totalRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-blue-600">{formatPrice(stats.totalRevenue)}</p>
                       <p className="text-sm text-blue-700">{stats.totalOrders} orders processed</p>
                     </div>
                     <div className="bg-purple-50 rounded-lg p-6">
                       <h4 className="text-lg font-medium text-purple-900">Average Order Value</h4>
                       <p className="text-3xl font-bold text-purple-600">
-                        ${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}
+                        {formatPrice(stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders) : 0)}
                       </p>
                       <p className="text-sm text-purple-700">Per transaction</p>
                     </div>
@@ -890,6 +1607,7 @@ export default function AdminDashboard() {
                             value={selectedMessage.status}
                             onChange={(e) => updateContactMessageStatus(selectedMessage.id, e.target.value)}
                             className="px-3 py-1 border border-gray-300 rounded text-sm text-black"
+                            aria-label="Change message status"
                           >
                             <option value="OPEN">Open</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -1191,10 +1909,10 @@ export default function AdminDashboard() {
             ) : (
               <div>
                 <p className="text-gray-600 mb-4">
-                  <strong>FINAL WARNING:</strong> You are about to permanently delete {deleteConfirm.userEmail}'s account.
+                        <strong>FINAL WARNING:</strong> You are about to permanently delete {deleteConfirm.userEmail}&apos;s account.
                 </p>
                 <p className="text-sm text-red-600 mb-6">
-                  Type "DELETE" to confirm this irreversible action:
+                        Type &quot;DELETE&quot; to confirm this irreversible action:
                 </p>
                 <input
                   type="text"
@@ -1274,7 +1992,7 @@ export default function AdminDashboard() {
                   <strong>FINAL CONFIRMATION:</strong> You are about to {adminConfirm.action === 'makeAdmin' ? 'grant admin privileges to' : 'remove admin privileges from'} {adminConfirm.userEmail}.
                 </p>
                 <p className="text-sm text-amber-600 mb-6">
-                  Type "CONFIRM" to proceed:
+                  Type &quot;CONFIRM&quot; to proceed:
                 </p>
                 <input
                   type="text"

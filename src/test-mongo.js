@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
@@ -15,6 +16,7 @@ try {
       }
     }
   }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 } catch (e) {
   // ignore parsing errors, we'll show a clearer message later
 }

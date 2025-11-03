@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(totalDesigns / limit)
 
     // Format designs with sales count
-    const formattedDesigns = designs.map((design: any) => ({
+    const formattedDesigns = designs.map((design) => ({
       id: design.id,
       title: design.title,
       description: design.description,

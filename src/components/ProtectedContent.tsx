@@ -92,13 +92,13 @@ export default function ProtectedContent({ designId, children, previewContent }:
         await navigator.clipboard.writeText(window.location.href)
         alert('Link copied to clipboard!')
       }
-    } catch (error) {
-      console.error('Share error:', error)
+    } catch {
+      // Sharing via Web Share API failed; fall back to clipboard
       // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(window.location.href)
         alert('Link copied to clipboard!')
-      } catch (clipboardError) {
+      } catch {
         alert('Sharing failed. Please copy the URL manually.')
       }
     }

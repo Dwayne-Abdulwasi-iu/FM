@@ -3,6 +3,29 @@ import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 
+type OrderItem = {
+  designId: string
+  quantity: number
+  price: number
+  purchaseType?: 'REGULAR' | 'OWNERSHIP'
+}
+
+const ps = paystack as {
+  transfer_recipient: {
+    create: (args: { type: 'nuban'; name: string; account_number: string; bank_code: string; currency: 'NGN' }) => Promise<{
+      status: boolean
+      data: { recipient_code?: string }
+      message?: string
+    }>
+  }
+  transfer: {
+    initiate: (args: { source: 'balance'; amount: number; recipient: string; reason: string }) => Promise<{
+      status: boolean
+      message?: string
+    }>
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
@@ -27,15 +50,15 @@ export async function POST(request: NextRequest) {
     const event = JSON.parse(body)
 
     if (event.event === 'charge.success') {
-      const { data } = event
-      const { reference, amount, currency, customer, metadata } = data
+  const { data } = event
+  const { reference, amount, currency, metadata } = data
 
       console.log('Processing Paystack payment:', { reference, amount, currency })
 
       // Get metadata
       const userId = metadata?.userId
-      const platformFee = parseFloat(metadata?.platformFee || '0')
-      const orderItems = JSON.parse(metadata?.orderItems || '[]')
+  // platformFee may be included in NGN via metadata, but we will compute USD equivalent from originalAmountUSD
+  const orderItems: OrderItem[] = (JSON.parse(metadata?.orderItems || '[]') as OrderItem[])
       const originalAmountUSD = parseFloat(metadata?.originalAmountUSD || '0')
 
       if (!userId || !orderItems.length) {
@@ -43,17 +66,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Invalid metadata' }, { status: 400 })
       }
 
-      // Create order in database
+  // Create order in database
       const order = await prisma.order.create({
         data: {
           orderNumber: reference,
           customerId: userId,
           totalAmount: originalAmountUSD, // Store in USD
-          platformFee: platformFee,
+          // Always store platform fee in USD to keep stats consistent across gateways
+          platformFee: Number((originalAmountUSD * 0.05).toFixed(2)),
           status: 'COMPLETED',
           stripePaymentIntentId: reference, // Use reference for tracking
           items: {
-            create: orderItems.map((item: any) => ({
+            create: orderItems.map((item: OrderItem) => ({
               designId: item.designId,
               quantity: item.quantity,
               price: item.price,
@@ -70,13 +94,15 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Create seller earnings, purchase records, and handle ownership for each item  
-      for (const item of order.items) {
+  const splitPaymentEnabled = Boolean(metadata?.splitPaymentEnabled)
+
+  // Create seller earnings, purchase records, and handle ownership for each item  
+  for (const item of order.items) {
         const saleAmount = item.price * item.quantity
         const commission = saleAmount * 0.05 // 5% commission
         const sellerAmount = saleAmount - commission
 
-        await prisma.sellerEarning.create({
+        const earning = await prisma.sellerEarning.create({
           data: {
             saleAmount,
             platformCommission: commission,
@@ -84,12 +110,21 @@ export async function POST(request: NextRequest) {
             quantity: item.quantity,
             sellerId: item.design.designerId,
             orderId: order.id,
-            designId: item.designId
+            designId: item.designId,
+            // If split was enabled, mark payout as skipped (handled by Paystack split)
+            payoutStatus: splitPaymentEnabled ? 'SKIPPED_SPLIT' : undefined,
+            payoutProvider: splitPaymentEnabled ? 'PAYSTACK_SPLIT' : undefined
           }
         })
 
         // Update design statistics and handle ownership
-        const updateData: any = {
+        const updateData: {
+          totalSales: { increment: number }
+          totalRevenue: { increment: number }
+          isOwned?: boolean
+          ownedBy?: string
+          isActive?: boolean
+        } = {
           totalSales: { increment: item.quantity },
           totalRevenue: { increment: saleAmount }
         }
@@ -118,8 +153,13 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        // Auto-transfer earnings to seller account
+        // Auto-transfer earnings to seller account (only when split was NOT used)
         try {
+          if (splitPaymentEnabled) {
+            // When Paystack split is configured at checkout, payouts are handled by Paystack automatically.
+            // Skip manual transfers to prevent double payment.
+            continue
+          }
           const sellerAccount = await prisma.sellerAccount.findUnique({
             where: { userId: item.design.designerId }
           })
@@ -131,7 +171,7 @@ export async function POST(request: NextRequest) {
             if (!recipientCode) {
               try {
                 console.log('Creating recipient code for seller:', item.design.designerId)
-                const recipient = await paystack.transfer_recipient.create({
+                const recipient = await ps.transfer_recipient.create({
                   type: 'nuban',
                   name: sellerAccount.accountName,
                   account_number: sellerAccount.accountNumber,
@@ -140,7 +180,7 @@ export async function POST(request: NextRequest) {
                 })
 
                 if (recipient.status) {
-                  recipientCode = recipient.data.recipient_code
+                  recipientCode = recipient.data.recipient_code ?? recipientCode ?? null
                   
                   // Update the seller account with the recipient code
                   await prisma.sellerAccount.update({
@@ -160,7 +200,7 @@ export async function POST(request: NextRequest) {
               // Convert USD to NGN for transfer
               const transferAmountNGN = Math.round(sellerAmount * 800) // Using 800 exchange rate
 
-              const transfer = await paystack.transfer.initiate({
+              const transfer = await ps.transfer.initiate({
                 source: 'balance',
                 amount: transferAmountNGN * 100, // Convert to kobo
                 recipient: recipientCode,
@@ -169,32 +209,84 @@ export async function POST(request: NextRequest) {
 
               if (transfer.status) {
                 console.log(`Transfer initiated for seller ${item.design.designerId}: ₦${transferAmountNGN}`)
+                // Mark earning as paid
+                await prisma.sellerEarning.update({
+                  where: { id: earning.id },
+                  data: {
+                    payoutStatus: 'PAID',
+                    payoutProvider: 'PAYSTACK',
+                    payoutAttemptedAt: new Date(),
+                    payoutCompletedAt: new Date(),
+                    payoutCurrency: 'NGN',
+                    payoutAmountMinor: transferAmountNGN * 100
+                  }
+                })
               } else {
                 console.error('Transfer failed:', transfer.message)
+                await prisma.sellerEarning.update({
+                  where: { id: earning.id },
+                  data: {
+                    payoutStatus: 'FAILED',
+                    payoutProvider: 'PAYSTACK',
+                    payoutAttemptedAt: new Date(),
+                    payoutError: transfer.message || 'Transfer failed'
+                  }
+                })
               }
             } else {
               console.error('Unable to create recipient code for seller:', item.design.designerId)
+              await prisma.sellerEarning.update({
+                where: { id: earning.id },
+                data: {
+                  payoutStatus: 'FAILED',
+                  payoutProvider: 'PAYSTACK',
+                  payoutAttemptedAt: new Date(),
+                  payoutError: 'Recipient code not available for seller'
+                }
+              })
             }
           } else {
             console.log('Seller account not verified or not found for user:', item.design.designerId)
+            await prisma.sellerEarning.update({
+              where: { id: earning.id },
+              data: {
+                payoutStatus: 'FAILED',
+                payoutProvider: 'PAYSTACK',
+                payoutAttemptedAt: new Date(),
+                payoutError: 'Seller account not verified or not found'
+              }
+            })
           }
         } catch (transferError) {
           console.error('Auto-transfer error:', transferError)
           // Continue processing even if transfer fails
+          await prisma.sellerEarning.update({
+            where: { id: earning.id },
+            data: {
+              payoutStatus: 'FAILED',
+              payoutProvider: 'PAYSTACK',
+              payoutAttemptedAt: new Date(),
+              payoutError: transferError instanceof Error ? transferError.message : String(transferError)
+            }
+          })
         }
       }
 
-      // Transfer platform commission (5%) to platform account
+      // Transfer platform commission (5%) to platform account (only when split was NOT used)
       try {
+        if (splitPaymentEnabled) {
+          // With split, platform share is already routed; skip manual transfer.
+          // Proceed to respond 200.
+        } else {
         const platformRecipientCode = process.env.PAYSTACK_PLATFORM_RECIPIENT
         if (platformRecipientCode) {
-          const totalCommission = order.items.reduce((sum: number, item: any) => {
+          const totalCommission = orderItems.reduce((sum: number, item: OrderItem) => {
             return sum + (item.price * item.quantity * 0.05)
           }, 0)
           
           const commissionNGN = Math.round(totalCommission * 800) // Convert to NGN
 
-          const platformTransfer = await paystack.transfer.initiate({
+          const platformTransfer = await ps.transfer.initiate({
             source: 'balance',
             amount: commissionNGN * 100, // Convert to kobo
             recipient: platformRecipientCode,
@@ -204,6 +296,7 @@ export async function POST(request: NextRequest) {
           if (platformTransfer.status) {
             console.log(`Platform commission transferred: ₦${commissionNGN}`)
           }
+        }
         }
       } catch (platformTransferError) {
         console.error('Platform commission transfer error:', platformTransferError)

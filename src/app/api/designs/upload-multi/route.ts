@@ -36,7 +36,7 @@ async function saveMediaLocally(buffer: Buffer, filename: string, fileType: stri
     const randomId = Math.floor(Math.random() * 1000) + 1
     return fileType === 'VIDEO' 
       ? `/uploads/placeholder-video-${randomId}.mp4`
-      : `/uploads/placeholder-design-${randomId}.jpg`
+      : `/images/placeholder-design.svg`
   }
 }
 
@@ -145,7 +145,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Process media files
-    const mediaFiles: any[] = []
+    interface MediaFileInput {
+      fileName: string
+      fileUrl: string
+      fileType: 'VIDEO' | 'IMAGE'
+      mimeType: string
+      fileSize: number
+      duration: number | null
+      accessType: string
+      sortOrder: number
+    }
+    const mediaFiles: MediaFileInput[] = []
     let primaryImageUrl = ''
     let thumbnailUrl = ''
 
@@ -164,8 +174,8 @@ export async function POST(request: NextRequest) {
       // Upload to Cloudinary if configured, otherwise save locally
       if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
         try {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const uploadOptions: any = {
+          const uploadResult = await new Promise<unknown>((resolve, reject) => {
+            const uploadOptions: Record<string, unknown> = {
               resource_type: fileType === 'VIDEO' ? 'video' : 'image',
               folder: fileType === 'VIDEO' ? 'fashion-designs/videos' : 'fashion-designs',
             }
@@ -185,7 +195,7 @@ export async function POST(request: NextRequest) {
             ).end(buffer)
           })
 
-          fileUrl = (uploadResult as any).secure_url
+          fileUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
         } catch (cloudinaryError) {
           console.error('Cloudinary upload failed:', cloudinaryError)
           // Fall back to local storage
@@ -219,8 +229,8 @@ export async function POST(request: NextRequest) {
 
     // If no image was uploaded, use a placeholder for the primary image
     if (!primaryImageUrl) {
-      primaryImageUrl = '/uploads/placeholder-design-1.jpg'
-      thumbnailUrl = '/uploads/placeholder-design-1.jpg'
+      primaryImageUrl = '/images/placeholder-design.svg'
+      thumbnailUrl = '/images/placeholder-design.svg'
     }
 
     // Create design record in database with media files

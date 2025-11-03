@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -40,10 +40,10 @@ export async function GET(request: NextRequest) {
         },
       }),
       
-      // Platform earnings (5% commission)
-      prisma.order.aggregate({
+      // Platform earnings (5% commission) - sum from SellerEarning to avoid gateway currency mismatches
+      prisma.sellerEarning.aggregate({
         _sum: {
-          platformFee: true,
+          platformCommission: true,
         },
       }),
       
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       totalDesigns,
       totalOrders,
       totalRevenue: totalRevenue._sum.totalAmount || 0,
-      platformEarnings: platformEarnings._sum.platformFee || 0,
+  platformEarnings: platformEarnings._sum.platformCommission || 0,
       activeUsers,
       recentSignups
     }

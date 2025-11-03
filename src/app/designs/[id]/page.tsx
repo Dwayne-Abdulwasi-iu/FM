@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import SafeImage from '@/components/ui/safe-image'
+import { sanitizePlaceholderImageUrl } from '@/lib/images'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Heart, ShoppingCart, Star, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
+import { Heart, ShoppingCart, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
 import { useSession } from 'next-auth/react'
-import ProtectedContent from '@/components/ProtectedContent'
+import { formatPriceLocalized, type SupportedCurrency } from '@/lib/currency'
+// import ProtectedContent from '@/components/ProtectedContent'
 
 interface MediaFile {
   id: string
@@ -23,6 +26,9 @@ interface Design {
   title: string
   description: string | null
   price: number
+  ownershipPrice: number | null
+  buyingTypes: string
+  isOwned: boolean
   imageUrl: string
   thumbnailUrl: string | null
   category: string
@@ -51,6 +57,8 @@ export default function DesignPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
   const [hasAccess, setHasAccess] = useState(false)
+  const [currency, setCurrency] = useState<SupportedCurrency>('USD')
+  const [locale, setLocale] = useState<string>('en-US')
 
   // Check if admin is viewing this page
   const isAdminViewing = searchParams.get('admin') === 'true' && session?.user?.role === 'ADMIN'
@@ -68,14 +76,7 @@ export default function DesignPage() {
     }
   }, [searchParams, session, router])
 
-  useEffect(() => {
-    if (params.id) {
-      fetchDesign(params.id as string)
-      checkAccess(params.id as string)
-    }
-  }, [params.id])
-
-  const checkAccess = async (designId: string) => {
+  const checkAccess = useCallback(async (designId: string) => {
     if (!session) return
     
     try {
@@ -87,7 +88,7 @@ export default function DesignPage() {
     } catch (error) {
       console.error('Failed to check access:', error)
     }
-  }
+  }, [session])
 
   const fetchDesign = async (id: string) => {
     try {
@@ -106,7 +107,32 @@ export default function DesignPage() {
     }
   }
 
-  const handleAddToCart = async () => {
+  useEffect(() => {
+    if (params.id) {
+      fetchDesign(params.id as string)
+      checkAccess(params.id as string)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id, checkAccess])
+
+  // Infer locale/currency from API
+  useEffect(() => {
+    const loadLocale = async () => {
+      try {
+        const res = await fetch('/api/locale', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setLocale(data.locale || 'en-US')
+          setCurrency((data.currency === 'NGN' ? 'NGN' : 'USD'))
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadLocale()
+  }, [])
+
+  const handleAddToCart = async (purchaseType: 'REGULAR' | 'OWNERSHIP' = 'REGULAR') => {
     if (!session) {
       router.push('/api/auth/signin')
       return
@@ -124,7 +150,8 @@ export default function DesignPage() {
         },
         body: JSON.stringify({
           designId: design?.id,
-          quantity: 1
+          quantity: 1,
+          purchaseType
         })
       })
 
@@ -144,12 +171,7 @@ export default function DesignPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
+  const formatPrice = (priceUSD: number) => formatPriceLocalized(priceUSD, currency, locale)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -158,6 +180,8 @@ export default function DesignPage() {
       day: 'numeric'
     })
   }
+
+  // Image sanitization handled by SafeImage; poster uses shared sanitizer
 
   const getTags = (tags: string | null) => {
     if (!tags) return []
@@ -332,7 +356,7 @@ export default function DesignPage() {
                     <video 
                       controls
                       className="w-full h-full object-cover"
-                      poster={design.thumbnailUrl || undefined}
+                      poster={sanitizePlaceholderImageUrl(design.thumbnailUrl) || undefined}
                     >
                       <source src={selectedFile.fileUrl} type={selectedFile.mimeType} />
                       Your browser does not support the video tag.
@@ -340,14 +364,10 @@ export default function DesignPage() {
                   )
                 } else {
                   return (
-                    <img
+                    <SafeImage
                       src={selectedFile.fileUrl}
                       alt={selectedFile.fileName}
                       className="w-full h-full object-cover cursor-zoom-in"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = `data:image/svg+xml;charset=UTF-8,%3Csvg width='800' height='600' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='400' y='300' text-anchor='middle' font-family='Arial' font-size='24' fill='%236b7280'%3E${selectedFile.fileName}%3C/text%3E%3C/svg%3E`
-                      }}
                     />
                   )
                 }
@@ -387,14 +407,10 @@ export default function DesignPage() {
                               </div>
                             </div>
                           ) : (
-                            <img
+                            <SafeImage
                               src={file.fileUrl}
                               alt={file.fileName}
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = `data:image/svg+xml;charset=UTF-8,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='200' height='200' fill='%23f3f4f6'/%3E%3Ctext x='100' y='100' text-anchor='middle' font-family='Arial' font-size='12' fill='%236b7280'%3EIMG%3C/text%3E%3C/svg%3E`
-                              }}
                             />
                           )}
                           
@@ -408,7 +424,7 @@ export default function DesignPage() {
                     })}
                     
                     {/* Locked Premium Files */}
-                    {lockedFiles.map((file, index) => (
+                    {lockedFiles.map((file) => (
                       <div
                         key={`locked-${file.id}`}
                         className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100"
@@ -477,7 +493,7 @@ export default function DesignPage() {
             <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
               <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                 {design.designer.image ? (
-                  <img src={design.designer.image} alt={design.designer.name || ''} className="w-12 h-12 rounded-full" />
+                  <SafeImage src={design.designer.image} alt={design.designer.name || ''} className="w-12 h-12 rounded-full" />
                 ) : (
                   <span className="text-gray-500 font-semibold">
                     {(design.designer.name || 'A')[0].toUpperCase()}
@@ -505,9 +521,9 @@ export default function DesignPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {getTags(design.tags).map((tag, index) => (
+                  {getTags(design.tags).map((tag) => (
                     <span 
-                      key={index}
+                      key={tag}
                       className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
                     >
                       {tag}
@@ -535,7 +551,7 @@ export default function DesignPage() {
                 <h3 className="font-semibold text-gray-900 mb-3">Included Media</h3>
                 <div className="grid grid-cols-1 gap-2">
                   {/* Accessible Files */}
-                  {getAccessibleMediaFiles().map((file, index) => (
+                  {getAccessibleMediaFiles().map((file) => (
                     <div 
                       key={file.id}
                       className="flex items-center justify-between p-2 rounded bg-gray-50"
@@ -570,7 +586,7 @@ export default function DesignPage() {
                   ))}
                   
                   {/* Locked Premium Files */}
-                  {getLockedPremiumFiles().map((file, index) => (
+                  {getLockedPremiumFiles().map((file) => (
                     <div 
                       key={`locked-${file.id}`}
                       className="flex items-center justify-between p-2 rounded bg-purple-50 border border-purple-200"
@@ -610,7 +626,7 @@ export default function DesignPage() {
             <div className="space-y-4">
               <div className="flex space-x-4">
                 <button
-                  onClick={handleAddToCart}
+                  onClick={() => handleAddToCart('REGULAR')}
                   disabled={addingToCart}
                   className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
@@ -619,7 +635,7 @@ export default function DesignPage() {
                   ) : (
                     <ShoppingCart className="h-5 w-5" />
                   )}
-                  {addingToCart ? 'Adding...' : 'Add to Cart'}
+                  {addingToCart ? 'Adding...' : 'Add Regular'}
                 </button>
                 
                 <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Add to favorites">
@@ -634,6 +650,59 @@ export default function DesignPage() {
               <p className="text-sm text-gray-500 text-center">
                 Digital download • Instant access after purchase
               </p>
+
+              {/* Purchase Options */}
+              {design && (
+                <div className="grid gap-4">
+                  {(design.buyingTypes === 'REGULAR' || design.buyingTypes === 'BOTH') && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Regular License</h4>
+                          <p className="text-sm text-gray-600">Standard commercial use, multiple buyers allowed</p>
+                        </div>
+                        <span className="text-lg font-bold text-indigo-600">
+                          {formatPrice(design.price)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleAddToCart('REGULAR')}
+                        className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 font-medium"
+                      >
+                        Add Regular to Cart
+                      </button>
+                    </div>
+                  )}
+
+                  {(design.buyingTypes === 'OWNERSHIP' || design.buyingTypes === 'BOTH') && !design.isOwned && !!design.ownershipPrice && (
+                    <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <div>
+                          <h4 className="font-semibold text-purple-900">Exclusive Ownership</h4>
+                          <p className="text-sm text-purple-700">Exclusive rights, branding allowed; design becomes unavailable</p>
+                        </div>
+                        <span className="text-lg font-bold text-purple-600">
+                          {formatPrice(design.ownershipPrice)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleAddToCart('OWNERSHIP')}
+                        className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 font-medium"
+                      >
+                        Purchase Exclusive Rights
+                      </button>
+                    </div>
+                  )}
+
+                  {design.isOwned && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                      <p className="text-sm text-yellow-800 font-medium">
+                        This design has been exclusively purchased and is no longer available for ownership
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Additional Info */}

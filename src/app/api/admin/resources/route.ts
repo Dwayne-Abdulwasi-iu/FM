@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const featured = searchParams.get('featured')
 
-    let where: any = {}
+  const where: Record<string, unknown> = {}
     
     if (category && category !== 'all') {
       where.category = category

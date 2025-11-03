@@ -43,7 +43,7 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length]
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -89,10 +89,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if Paystack is configured
-    if (!process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET_KEY === 'sk_test_REDACTED') {
+    // Check if Paystack is configured.
+    const paystackConfigured = Boolean(
+      process.env.PAYSTACK_SECRET_KEY && process.env.PAYSTACK_SECRET_KEY !== 'sk_test_REDACTED'
+    )
+
+    // In production, require Paystack to be configured; in dev, proceed in grace mode
+    if (process.env.NODE_ENV === 'production' && !paystackConfigured) {
       return NextResponse.json(
-        { message: 'Payment system not configured. Please contact support.' },
+        { message: 'Payments are not configured. Please contact support.' },
         { status: 503 }
       )
     }
@@ -100,11 +105,19 @@ export async function POST(request: NextRequest) {
     let verifiedAccountName = accountName
     let isVerified = false
 
-    // Verify bank account with Paystack
+    // Verify bank account with Paystack (only if configured)
     try {
+      if (!paystackConfigured) {
+        console.warn('[seller/account] Paystack not configured. Skipping bank verification and proceeding in unverified mode.')
+        throw new Error('PAYSTACK_NOT_CONFIGURED_SKIP_VERIFICATION')
+      }
       console.log('Attempting to verify account:', { accountNumber, bankCode })
+      const ps = paystack as {
+        misc: { resolve_account_number: (args: { account_number: string; bank_code: string }) => Promise<{ status: boolean; data: { account_name: string }; message?: string }> }
+        transfer_recipient: { create: (args: { type: 'nuban'; name: string; account_number: string; bank_code: string; currency: 'NGN' }) => Promise<{ status: boolean; data: { recipient_code?: string }; message?: string }> }
+      }
       
-      const verification = await paystack.misc.resolve_account_number({
+      const verification = await ps.misc.resolve_account_number({
         account_number: accountNumber,
         bank_code: bankCode
       })
@@ -139,41 +152,46 @@ export async function POST(request: NextRequest) {
       verifiedAccountName = verification.data.account_name
       isVerified = true
 
-    } catch (verifyError: any) {
+    } catch (verifyError: unknown) {
       console.error('Bank verification error:', verifyError)
       
       // More specific error messages
-      if (verifyError.message?.includes('Invalid account number')) {
+      const message = verifyError instanceof Error ? verifyError.message : String(verifyError)
+      const code = (verifyError as { code?: string })?.code
+      if (message?.includes('Invalid account number')) {
         return NextResponse.json(
           { message: 'Invalid account number. Please check and try again.' },
           { status: 400 }
         )
       }
       
-      if (verifyError.message?.includes('Invalid bank code')) {
+      if (message?.includes('Invalid bank code')) {
         return NextResponse.json(
           { message: 'Invalid bank code. Please select a different bank and try again.' },
           { status: 400 }
         )
       }
 
-      if (verifyError.message?.includes('network') || verifyError.code === 'ENOTFOUND') {
+      if (message?.includes('network') || code === 'ENOTFOUND') {
         return NextResponse.json(
           { message: 'Network error. Please check your internet connection and try again.' },
           { status: 500 }
         )
       }
 
-      // For development, allow account creation without verification
-      console.log('Skipping verification due to error, creating account anyway...')
+      // For development or when Paystack is not configured, allow account creation without verification
+      console.log('Skipping verification, creating account anyway as unverified...')
       isVerified = false
     }
 
     // Create transfer recipient on Paystack
-    let recipientCode = null
-    if (isVerified) {
+    let recipientCode: string | null = null
+    if (isVerified && paystackConfigured) {
       try {
-        const recipient = await paystack.transfer_recipient.create({
+        const ps = paystack as {
+          transfer_recipient: { create: (args: { type: 'nuban'; name: string; account_number: string; bank_code: string; currency: 'NGN' }) => Promise<{ status: boolean; data: { recipient_code?: string }; message?: string }> }
+        }
+        const recipient = await ps.transfer_recipient.create({
           type: 'nuban',
           name: verifiedAccountName,
           account_number: accountNumber,
@@ -182,7 +200,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (recipient.status) {
-          recipientCode = recipient.data.recipient_code
+          recipientCode = recipient.data.recipient_code ?? null
           console.log('Recipient created successfully:', recipientCode)
         }
       } catch (recipientError) {

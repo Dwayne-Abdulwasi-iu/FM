@@ -1,6 +1,8 @@
-const PayStack = require('paystack')(process.env.PAYSTACK_SECRET_KEY || 'sk_test_REDACTED')
+import paystackFactory from 'paystack'
 
-export { PayStack as paystack }
+const paystack = paystackFactory(process.env.PAYSTACK_SECRET_KEY || 'sk_test_REDACTED')
+
+export { paystack }
 
 export function calculatePaystackFee(amount: number): number {
   // Paystack charges 1.5% + NGN 100 cap at NGN 2,000

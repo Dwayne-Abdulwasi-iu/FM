@@ -37,6 +37,11 @@ export function Navbar() {
   }, [session]);
 
   const fetchCartCount = async () => {
+    // In non-browser/test environments, skip attempting to fetch
+    if (typeof fetch === 'undefined') {
+      setCartCount(0);
+      return;
+    }
     try {
       const response = await fetch('/api/cart');
       if (response.ok) {
@@ -44,16 +49,20 @@ export function Navbar() {
         setCartCount(data.count || 0);
       } else {
         // Silently fail on initial load - cart count will remain 0
-        console.log('Cart API not ready yet, skipping cart count fetch');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Cart API not ready yet, skipping cart count fetch');
+        }
       }
     } catch (error) {
       // Silently handle network errors during development
-      console.log('Cart fetch failed (normal during development):', error instanceof Error ? error.message : 'Unknown error');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Cart fetch failed (normal during development):', error instanceof Error ? error.message : 'Unknown error');
+      }
       setCartCount(0);
     }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
@@ -63,9 +72,14 @@ export function Navbar() {
     setIsSearching(false);
   };
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleSearch(e as any);
+      e.preventDefault();
+      if (!searchQuery.trim()) return;
+      setIsSearching(true);
+      const searchParams = new URLSearchParams({ q: searchQuery.trim() });
+      router.push(`/search?${searchParams.toString()}`);
+      setIsSearching(false);
     }
   };
 

@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
                 1. Introduction
               </h2>
               <p className="text-gray-700 mb-4">
-                Fashion Marketplace ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
+                Fashion Marketplace (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
               </p>
               <p className="text-gray-700">
                 Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
@@ -155,7 +155,7 @@ export default function PrivacyPolicyPage() {
                   <li>Employee training on data protection</li>
                 </ul>
                 <p>
-                  However, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security.
+          However, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security.
                 </p>
               </div>
             </section>
@@ -196,7 +196,7 @@ export default function PrivacyPolicyPage() {
                   <li><strong>Withdraw Consent:</strong> Withdraw consent for processing where applicable</li>
                 </ul>
                 <p>
-                  To exercise these rights, please contact us using the information provided in the "Contact Us" section.
+                  To exercise these rights, please contact us using the information provided in the &quot;Contact Us&quot; section.
                 </p>
               </div>
             </section>
@@ -230,7 +230,7 @@ export default function PrivacyPolicyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <AlertCircle className="h-6 w-6 mr-2 text-orange-600" />
-                10. Children's Privacy
+                10. Children&apos;s Privacy
               </h2>
               <p className="text-gray-700">
                 Our service is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided personal information, please contact us to have it removed.
@@ -249,7 +249,7 @@ export default function PrivacyPolicyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Updates to This Privacy Policy</h2>
               <p className="text-gray-700">
-                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Last updated" date. We encourage you to review this Privacy Policy periodically.
+                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the &quot;Last updated&quot; date. We encourage you to review this Privacy Policy periodically.
               </p>
             </section>
 

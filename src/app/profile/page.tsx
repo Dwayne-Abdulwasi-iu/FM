@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, Heart, Settings, CreditCard, Edit, Trash2, CheckCircle, X } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
+import SafeImage from '@/components/ui/safe-image'
+import Banner from '@/components/ui/banner'
 
 interface UserProfile {
   id: string
@@ -44,10 +46,26 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'designs' | 'earnings' | 'account'>('overview')
+  type ProfileTab = 'overview' | 'designs' | 'earnings' | 'orders' | 'account'
+  const [activeTab, setActiveTab] = useState<ProfileTab>('overview')
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // SafeImage now centralizes sanitization and fallback
+
+  // Shared notifiers for child components to trigger styled messages
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message)
+    // Auto-dismiss after 4s
+    setTimeout(() => setSuccessMessage(null), 4000)
+  }
+
+  const showError = (message: string) => {
+    setErrorMessage(message)
+    // Auto-dismiss after 5s
+    setTimeout(() => setErrorMessage(null), 5000)
+  }
 
   useEffect(() => {
     if (status === 'loading') return
@@ -56,7 +74,7 @@ export default function ProfilePage() {
       return
     }
     fetchProfile()
-  }, [session, status])
+  }, [session, status, router])
 
   const fetchProfile = async () => {
     try {
@@ -137,7 +155,7 @@ export default function ProfilePage() {
         const error = await response.json()
         setErrorMessage(error.message || 'Failed to delete design')
       }
-    } catch (error) {
+    } catch {
       setErrorMessage('An error occurred while deleting the design')
     } finally {
       setDeleteConfirm(null)
@@ -173,38 +191,11 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-              <span className="text-green-800 font-medium">{successMessage}</span>
-            </div>
-            <button
-              onClick={() => setSuccessMessage(null)}
-              className="text-green-600 hover:text-green-800"
-              aria-label="Close success message"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <Banner type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
         )}
-
-        {/* Error Message */}
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <X className="h-5 w-5 text-red-600 mr-3" />
-              <span className="text-red-800 font-medium">{errorMessage}</span>
-            </div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-red-600 hover:text-red-800"
-              aria-label="Close error message"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <Banner type="error" message={errorMessage} onClose={() => setErrorMessage(null)} />
         )}
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -295,11 +286,12 @@ export default function ProfilePage() {
                 { id: 'overview', label: 'Overview', icon: Eye },
                 { id: 'designs', label: 'My Designs', icon: Upload },
                 { id: 'earnings', label: 'Earnings', icon: DollarSign },
+                { id: 'orders', label: 'Orders', icon: ShoppingCart },
                 { id: 'account', label: 'Bank Account', icon: CreditCard }
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as ProfileTab)}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
@@ -336,6 +328,12 @@ export default function ProfilePage() {
                         className="block w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-center"
                       >
                         Upload New Design
+                      </Link>
+                      <Link
+                        href="/profile/orders"
+                        className="block w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-center"
+                      >
+                        View Orders
                       </Link>
                       <Link
                         href="/designs"
@@ -378,19 +376,10 @@ export default function ProfilePage() {
                     {designs.map((design) => (
                       <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="aspect-square bg-gray-100">
-                          <img
+                          <SafeImage
                             src={design.imageUrl}
                             alt={design.title}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              // Try multiple fallback options
-                              if (target.src.includes('placeholder-fallback')) {
-                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNGM0Y0RjYiLz48cGF0aCBkPSJNMjAwIDEwMEMyNzIuMDg3IDEwMCAzMzAgMTU3LjkxMyAzMzAgMjMwUzI3Mi4wODcgMzYwIDIwMCAzNjBTNzAgMzAyLjA4NyA3MCAyMzBTMTI3LjkxMyAxMDAgMjAwIDEwMFoiIGZpbGw9IiNENUQ5REQiLz48dGV4dCB4PSIyMDAiIHk9IjI3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjNkI3MzgwIj5EZXNpZ248L3RleHQ+PC9zdmc+'
-                              } else {
-                                target.src = `data:image/svg+xml;charset=UTF-8,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ctext x='200' y='200' text-anchor='middle' font-family='Arial' font-size='16' fill='%236b7280'%3EDesign Image%3C/text%3E%3C/svg%3E?placeholder-fallback=true`
-                              }
-                            }}
                           />
                         </div>
                         <div className="p-4">
@@ -461,8 +450,22 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {activeTab === 'orders' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Orders</h3>
+                <p className="text-gray-600 mb-4">View your purchase history and open individual order details.</p>
+                <Link
+                  href="/profile/orders"
+                  className="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Open Orders Page
+                </Link>
+              </div>
+            )}
+
             {activeTab === 'account' && (
-              <SellerAccountTab />
+              <SellerAccountTab onSuccess={showSuccess} onError={showError} />
             )}
           </div>
         </div>
@@ -474,7 +477,7 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Design</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete "{deleteConfirm.title}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteConfirm.title}&quot;? This action cannot be undone.
             </p>
             <div className="flex space-x-4">
               <button
@@ -498,9 +501,23 @@ export default function ProfilePage() {
 }
 
 // Seller Account Management Component
-function SellerAccountTab() {
-  const [sellerAccount, setSellerAccount] = useState<any>(null)
-  const [banks, setBanks] = useState<any[]>([])
+function SellerAccountTab({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (message: string) => void
+  onError: (message: string) => void
+}) {
+  interface SellerAccount {
+    accountNumber: string
+    accountName: string
+    bankCode: string
+    bankName: string
+    isVerified?: boolean
+    isActive?: boolean
+  }
+  const [sellerAccount, setSellerAccount] = useState<SellerAccount | null>(null)
+  const [banks, setBanks] = useState<Array<{ code: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [verifying, setVerifying] = useState(false)
@@ -511,6 +528,9 @@ function SellerAccountTab() {
     bankCode: '',
     bankName: ''
   })
+  const [showManualVerifyModal, setShowManualVerifyModal] = useState(false)
+  const [manualVerifyContext, setManualVerifyContext] = useState<{ message: string } | null>(null)
+  const [manualConfirming, setManualConfirming] = useState(false)
 
   useEffect(() => {
     fetchSellerAccount()
@@ -566,14 +586,14 @@ function SellerAccountTab() {
         const data = await response.json()
         setSellerAccount(data.sellerAccount)
         setShowForm(false)
-        alert('Bank account added successfully!')
+        onSuccess(data.message || 'Bank account added successfully!')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.message}`)
+        onError(error.message || 'Failed to save account')
       }
     } catch (error) {
       console.error('Error saving account:', error)
-      alert('Failed to save account. Please try again.')
+      onError('Failed to save account. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -601,27 +621,26 @@ function SellerAccountTab() {
       if (data.success) {
         setSellerAccount(data.sellerAccount)
         if (data.manualVerification) {
-          alert(`${data.message}\n\nNote: ${data.note}`)
+          onSuccess(`${data.message}${data.note ? ` — ${data.note}` : ''}`)
         } else {
-          alert(`Account verified successfully! Bank shows account name as: "${data.verifiedName}"`)
+          onSuccess(
+            data.verifiedName
+              ? `Account verified successfully! Bank shows account name as: "${data.verifiedName}"`
+              : 'Account verified successfully!'
+          )
         }
       } else {
         // Check if manual verification is available
         if (data.manualVerificationAvailable) {
-          const confirmManual = confirm(
-            `${data.message}\n\nWould you like to proceed with manual verification? This will allow you to receive payments, and transfer setup will be completed during your first sale.`
-          )
-          
-          if (confirmManual) {
-            await handleManualVerification()
-          }
+          setManualVerifyContext({ message: data.message })
+          setShowManualVerifyModal(true)
         } else {
-          alert(`Verification failed: ${data.message}`)
+          onError(`Verification failed: ${data.message}`)
         }
       }
     } catch (error) {
       console.error('Error verifying account:', error)
-      alert('Failed to verify account. Please try again.')
+      onError('Failed to verify account. Please try again.')
     } finally {
       setVerifying(false)
     }
@@ -639,13 +658,13 @@ function SellerAccountTab() {
 
       if (data.success) {
         setSellerAccount(data.sellerAccount)
-        alert(`${data.message}\n\nNote: ${data.note}`)
+        onSuccess(`${data.message}${data.note ? ` — ${data.note}` : ''}`)
       } else {
-        alert(`Manual verification failed: ${data.message}`)
+        onError(`Manual verification failed: ${data.message}`)
       }
     } catch (error) {
       console.error('Error with manual verification:', error)
-      alert('Failed to complete manual verification. Please try again.')
+      onError('Failed to complete manual verification. Please try again.')
     }
   }
 
@@ -798,6 +817,73 @@ function SellerAccountTab() {
           <p className="text-gray-600 mb-4">Add your bank account to receive earnings from sales</p>
         </div>
       )}
+
+      {/* Manual verification modal */}
+      <ManualVerifyModal
+        open={showManualVerifyModal}
+        message={manualVerifyContext?.message || 'Proceed with manual verification?'}
+        onCancel={() => {
+          setShowManualVerifyModal(false)
+          setManualVerifyContext(null)
+        }}
+        onConfirm={async () => {
+          try {
+            setManualConfirming(true)
+            await handleManualVerification()
+          } finally {
+            setManualConfirming(false)
+            setShowManualVerifyModal(false)
+            setManualVerifyContext(null)
+          }
+        }}
+        confirming={manualConfirming}
+      />
+    </div>
+  )
+}
+
+// Inline modal for manual verification confirmation
+function ManualVerifyModal({
+  open,
+  message,
+  onCancel,
+  onConfirm,
+  confirming,
+}: {
+  open: boolean
+  message: string
+  onCancel: () => void
+  onConfirm: () => Promise<void> | void
+  confirming?: boolean
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Manual Verification</h3>
+        <p className="text-gray-700 mb-2">{message}</p>
+        <p className="text-sm text-gray-600 mb-6">
+          Would you like to proceed with manual verification now? You can receive payments, and transfer setup will be
+          completed automatically during your first sale.
+        </p>
+        <div className="flex space-x-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Not now
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!!confirming}
+            className={`flex-1 px-4 py-2 rounded-lg text-white ${confirming ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+          >
+            {confirming ? 'Processing…' : 'Proceed'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

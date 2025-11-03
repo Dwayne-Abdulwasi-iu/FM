@@ -1,10 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
 
-export async function POST(request: NextRequest) {
+const ps = paystack as {
+  misc: {
+    resolve_account_number: (args: { account_number: string; bank_code: string }) => Promise<{
+      status: boolean
+      data: { account_name?: string }
+      message?: string
+    }>
+  }
+  transfer_recipient: {
+    create: (args: { type: 'nuban'; name: string; account_number: string; bank_code: string; currency: 'NGN' }) => Promise<{
+      status: boolean
+      data: { recipient_code?: string }
+      message?: string
+    }>
+  }
+  subaccount: {
+    create: (args: { business_name: string; settlement_bank: string; account_number: string; percentage_charge: number; description: string }) => Promise<{
+      status: boolean
+      data: { subaccount_code?: string }
+      message?: string
+    }>
+  }
+}
+
+export async function POST() {
   try {
     const session = await getServerSession(authOptions)
     
@@ -34,8 +58,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Verify bank account with Paystack
-    let verifiedAccountName = sellerAccount.accountName
-    let isVerified = false
+  let verifiedAccountName = sellerAccount.accountName
     let recipientCode = sellerAccount.recipientCode
 
     try {
@@ -45,7 +68,7 @@ export async function POST(request: NextRequest) {
         bank_name: sellerAccount.bankName
       })
 
-      const verification = await paystack.misc.resolve_account_number({
+      const verification = await ps.misc.resolve_account_number({
         account_number: sellerAccount.accountNumber,
         bank_code: sellerAccount.bankCode
       })
@@ -53,14 +76,13 @@ export async function POST(request: NextRequest) {
       console.log('Full Paystack response:', JSON.stringify(verification, null, 2))
 
       if (verification.status) {
-        verifiedAccountName = verification.data.account_name
-        isVerified = true
+  verifiedAccountName = verification.data.account_name || verifiedAccountName
         
         // Create or update transfer recipient if not exists
         if (!recipientCode) {
           try {
             console.log('Creating transfer recipient...')
-            const recipient = await paystack.transfer_recipient.create({
+            const recipient = await ps.transfer_recipient.create({
               type: 'nuban',
               name: verifiedAccountName,
               account_number: sellerAccount.accountNumber,
@@ -71,12 +93,12 @@ export async function POST(request: NextRequest) {
             console.log('Recipient creation response:', JSON.stringify(recipient, null, 2))
 
             if (recipient.status) {
-              recipientCode = recipient.data.recipient_code
+              recipientCode = recipient.data.recipient_code ?? recipientCode ?? null
               console.log('Recipient created successfully:', recipientCode)
             } else {
               console.error('Recipient creation failed:', recipient.message)
             }
-          } catch (recipientError: any) {
+          } catch (recipientError: unknown) {
             console.error('Recipient creation error:', recipientError)
             // Continue even if recipient creation fails
           }
@@ -87,7 +109,7 @@ export async function POST(request: NextRequest) {
         if (!subaccountCode) {
           try {
             console.log('Creating Paystack subaccount for split payments...')
-            const subaccount = await paystack.subaccount.create({
+            const subaccount = await ps.subaccount.create({
               business_name: `${verifiedAccountName} - Fashion Designer`,
               settlement_bank: sellerAccount.bankCode,
               account_number: sellerAccount.accountNumber,
@@ -98,12 +120,12 @@ export async function POST(request: NextRequest) {
             console.log('Subaccount creation response:', JSON.stringify(subaccount, null, 2))
 
             if (subaccount.status) {
-              subaccountCode = subaccount.data.subaccount_code
+              subaccountCode = subaccount.data.subaccount_code ?? subaccountCode ?? null
               console.log('Subaccount created successfully:', subaccountCode)
             } else {
               console.error('Subaccount creation failed:', subaccount.message)
             }
-          } catch (subaccountError: any) {
+          } catch (subaccountError: unknown) {
             console.error('Subaccount creation error:', subaccountError)
             // Continue even if subaccount creation fails
           }
@@ -143,13 +165,20 @@ export async function POST(request: NextRequest) {
         )
       }
 
-    } catch (verifyError: any) {
+    } catch (verifyError: unknown) {
+      const vErr = verifyError as Record<string, unknown> | null
+      const vMessage = vErr && typeof vErr === 'object' && typeof vErr.message === 'string' ? vErr.message : undefined
+      const vCode = vErr && typeof vErr === 'object' && typeof vErr.code === 'string' ? vErr.code : undefined
+      const vResponse = vErr && typeof vErr === 'object' && vErr.response && typeof (vErr.response as Record<string, unknown>).data !== 'undefined'
+        ? (vErr.response as Record<string, unknown>).data
+        : undefined
+      const vStack = vErr && typeof vErr === 'object' && typeof vErr.stack === 'string' ? vErr.stack : undefined
       console.error('Detailed verification error:', {
         error: verifyError,
-        message: verifyError.message,
-        code: verifyError.code,
-        response: verifyError.response?.data,
-        stack: verifyError.stack
+        message: vMessage,
+        code: vCode,
+        response: vResponse,
+        stack: vStack
       })
       
       // For PalmPay and other digital banks, offer manual verification
@@ -178,7 +207,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Specific error handling for other cases
-      if (verifyError.message?.includes('Invalid account number')) {
+      if (typeof vMessage === 'string' && vMessage.includes('Invalid account number')) {
         return NextResponse.json(
           { 
             success: false,
@@ -189,7 +218,7 @@ export async function POST(request: NextRequest) {
         )
       }
       
-      if (verifyError.message?.includes('Invalid bank code')) {
+      if (typeof vMessage === 'string' && vMessage.includes('Invalid bank code')) {
         return NextResponse.json(
           { 
             success: false,
@@ -200,7 +229,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (verifyError.code === 'ENOTFOUND' || verifyError.message?.includes('network')) {
+      if (vCode === 'ENOTFOUND' || (typeof vMessage === 'string' && vMessage.includes('network'))) {
         return NextResponse.json(
           { 
             success: false,
@@ -217,7 +246,7 @@ export async function POST(request: NextRequest) {
           success: false,
           message: 'Automatic verification failed. Would you like to proceed with manual verification?',
           errorCode: 'VERIFICATION_FAILED',
-          error: verifyError.message,
+          error: vMessage,
           manualVerificationAvailable: true
         },
         { status: 500 }

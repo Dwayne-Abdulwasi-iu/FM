@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { CheckCircle, Download, ArrowRight } from 'lucide-react'
+import { useEffect, useState, Suspense } from 'react'
+import SafeImage from '@/components/ui/safe-image'
+import Banner from '@/components/ui/banner'
+import { useSearchParams } from 'next/navigation'
+import { CheckCircle, Download, ArrowRight, Copy, ExternalLink, Mail, Link as LinkIcon } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
 interface OrderDetails {
@@ -26,11 +29,13 @@ interface OrderDetails {
   }>
 }
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessPageInner() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [notifyMessage, setNotifyMessage] = useState<string | null>(null)
   const sessionId = searchParams.get('session_id') || searchParams.get('reference')
 
   useEffect(() => {
@@ -47,11 +52,50 @@ export default function CheckoutSuccessPage() {
       if (response.ok) {
         const data = await response.json()
         setOrder(data.order)
+        setErrorMessage(null)
+      } else if (response.status === 404) {
+        setErrorMessage('Your payment was received. We are finalizing your order; please refresh in a few seconds or check your profile orders shortly.')
       }
     } catch (error) {
       console.error('Failed to fetch order details:', error)
+      setErrorMessage('We could not fetch your order details right now. Please refresh this page in a moment.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const orderLink = order ? `/profile/orders/${order.id}` : ''
+
+  const copyOrderLink = async () => {
+    if (!orderLink) return
+    try {
+      const base = typeof window !== 'undefined' ? window.location.origin : ''
+      await navigator.clipboard.writeText(`${base}${orderLink}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+      toast.success('Order link copied')
+    } catch {
+      setErrorMessage('Could not copy the link. You can open the order and copy from the address bar.')
+    }
+  }
+
+  const sendConfirmationEmail = async () => {
+    if (!order) return
+    try {
+      setNotifyMessage(null)
+      const res = await fetch('/api/orders/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setNotifyMessage(data.message || 'Confirmation email sent (or queued).')
+      } else {
+        setNotifyMessage(data.message || 'Could not send confirmation email. You can copy the order link instead.')
+      }
+    } catch {
+      setNotifyMessage('Could not send confirmation email right now. Please try again later.')
     }
   }
 
@@ -61,6 +105,8 @@ export default function CheckoutSuccessPage() {
       currency: 'USD'
     }).format(price)
   }
+
+    // Image sanitization handled by SafeImage
 
   if (loading) {
     return (
@@ -99,21 +145,36 @@ export default function CheckoutSuccessPage() {
             <div className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
               <span className="font-medium">Order #{order.orderNumber}</span>
             </div>
+            <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+              <LinkIcon className="h-4 w-4 text-gray-500" />
+              <Link href={orderLink} className="text-indigo-600 hover:text-indigo-800 break-all">
+                View your order
+              </Link>
+              <button onClick={copyOrderLink} className="text-gray-600 hover:text-gray-800 inline-flex items-center gap-1">
+                Copy
+                <Copy className="h-3 w-3" />
+              </button>
+            </div>
           </div>
 
           {/* Order Details */}
           <div className="p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Details</h2>
+            {errorMessage && (
+              <Banner type="info" onClose={() => setErrorMessage(null)}>
+                {errorMessage}
+              </Banner>
+            )}
             
             <div className="space-y-4 mb-8">
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                   <div className="w-16 h-16 flex-shrink-0">
-                    <img
-                      src={item.design.imageUrl}
-                      alt={item.design.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+                      <SafeImage
+                        src={item.design.imageUrl}
+                        alt={item.design.title}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                   </div>
                   
                   <div className="flex-1">
@@ -165,7 +226,7 @@ export default function CheckoutSuccessPage() {
 
             {/* Next Steps */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">What's Next?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">What&apos;s Next?</h3>
               
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <div className="p-4 bg-blue-50 rounded-lg">
@@ -173,10 +234,14 @@ export default function CheckoutSuccessPage() {
                   <p className="text-blue-700 text-sm mb-3">
                     Your purchased designs are now available for download. You have lifetime access to these files.
                   </p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+                  <Link
+                    href={`/api/orders/${order.id}/download`}
+                    prefetch={false}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                  >
                     <Download className="h-4 w-4" />
                     Download All
-                  </button>
+                  </Link>
                 </div>
                 
                 <div className="p-4 bg-purple-50 rounded-lg">
@@ -184,9 +249,32 @@ export default function CheckoutSuccessPage() {
                   <p className="text-purple-700 text-sm mb-3">
                     A confirmation email has been sent to your registered email address with all the details.
                   </p>
-                  <Link href="/profile/orders" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
-                    View Order History
-                  </Link>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Link
+                      href={orderLink}
+                      className="inline-flex items-center justify-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                    >
+                      View Order
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={copyOrderLink}
+                      className="inline-flex items-center justify-center gap-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-md hover:bg-purple-200"
+                    >
+                      {copied ? 'Link Copied' : 'Copy Order Link'}
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={sendConfirmationEmail}
+                      className="inline-flex items-center justify-center gap-2 border border-purple-300 text-purple-800 px-4 py-2 rounded-md hover:bg-purple-100"
+                    >
+                      Resend Email
+                      <Mail className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {notifyMessage && (
+                    <p className="mt-2 text-sm text-purple-800">{notifyMessage}</p>
+                  )}
                 </div>
               </div>
               
@@ -211,5 +299,12 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" /> }>
+      <CheckoutSuccessPageInner />
+    </Suspense>
   )
 }

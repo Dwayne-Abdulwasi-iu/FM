@@ -38,10 +38,9 @@ async function saveImageLocally(buffer: Buffer, title: string) {
   } catch (error) {
     console.error('Failed to save image locally:', error)
     // Fall back to placeholder
-    const randomId = Math.floor(Math.random() * 1000) + 1
     return {
-      imageUrl: `/uploads/placeholder-design-${randomId}.jpg`,
-      thumbnailUrl: `/uploads/placeholder-design-${randomId}.jpg`
+      imageUrl: `/images/placeholder-design.svg`,
+      thumbnailUrl: `/images/placeholder-design.svg`
     }
   }
 }
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
     if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
       try {
         // Upload original image
-        const uploadResult = await new Promise((resolve, reject) => {
+        const uploadResult = await new Promise<unknown>((resolve, reject) => {
           cloudinary.uploader.upload_stream(
             {
               resource_type: 'image',
@@ -152,7 +151,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Upload thumbnail
-        const thumbnailResult = await new Promise((resolve, reject) => {
+        const thumbnailResult = await new Promise<unknown>((resolve, reject) => {
           cloudinary.uploader.upload_stream(
             {
               resource_type: 'image',
@@ -168,8 +167,8 @@ export async function POST(request: NextRequest) {
           ).end(buffer)
         })
 
-        imageUrl = (uploadResult as any).secure_url
-        thumbnailUrl = (thumbnailResult as any).secure_url
+        imageUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
+        thumbnailUrl = (thumbnailResult as { secure_url?: string } | null)?.secure_url || ''
       } catch (cloudinaryError) {
         console.error('Cloudinary upload failed:', cloudinaryError)
         // Fall back to local storage

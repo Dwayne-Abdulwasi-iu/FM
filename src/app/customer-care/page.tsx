@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, MoreHorizontal, ArrowLeft, Shield, User } from 'lucide-react'
@@ -34,23 +34,23 @@ export default function CustomerCarePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting')
 
-  useEffect(() => {
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-    initializeChat()
-  }, [session, router])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const initializeChat = async () => {
+  const loadMessages = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/customer-care/messages?sessionId=${sessionId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data.messages)
+      }
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+    }
+  }
+
+  const initializeChat = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/customer-care/session', {
@@ -72,19 +72,20 @@ export default function CustomerCarePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const loadMessages = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/api/customer-care/messages?sessionId=${sessionId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setMessages(data.messages)
-      }
-    } catch (error) {
-      console.error('Failed to load messages:', error)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!session) {
+      router.push('/auth/signin')
+      return
     }
-  }
+    initializeChat()
+  }, [session, router, initializeChat])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,7 +113,7 @@ export default function CustomerCarePage() {
         
         // Simulate admin response after a short delay (for demo purposes)
         setTimeout(() => {
-          simulateAdminResponse(messageText)
+          simulateAdminResponse()
         }, 1500)
       }
     } catch (error) {
@@ -123,7 +124,7 @@ export default function CustomerCarePage() {
     }
   }
 
-  const simulateAdminResponse = (userMessage: string) => {
+  const simulateAdminResponse = () => {
     setIsTyping(true)
     
     setTimeout(() => {
@@ -245,7 +246,7 @@ export default function CustomerCarePage() {
               </div>
               <div>
                 <p className="font-medium text-blue-900">Welcome to Customer Care!</p>
-                <p className="text-sm text-blue-700">We're here to help. Ask us anything about your account, orders, or our platform.</p>
+                <p className="text-sm text-blue-700">We&apos;re here to help. Ask us anything about your account, orders, or our platform.</p>
               </div>
             </div>
           </div>

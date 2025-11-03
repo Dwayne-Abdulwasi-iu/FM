@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import SafeImage from '@/components/ui/safe-image'
+import Banner from '@/components/ui/banner'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
-import { generateDesignPlaceholder } from '@/lib/placeholders'
+// Removed unused placeholder import
 
 interface Design {
   id: string
@@ -30,7 +32,7 @@ interface Design {
   }[]
 }
 
-export default function DesignsPage() {
+function DesignsPageInner() {
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -38,6 +40,8 @@ export default function DesignsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const categories = [
     'all',
@@ -55,10 +59,14 @@ export default function DesignsPage() {
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam)
     }
+    // categories is a static array; safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
   useEffect(() => {
     fetchDesigns()
+    // categories is a static array; safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory])
 
   const fetchDesigns = async () => {
@@ -108,21 +116,22 @@ export default function DesignsPage() {
       })
 
       if (response.ok) {
-        // Show success message and trigger cart refresh
-        alert(`"${designTitle}" added to cart successfully!`)
-        // Trigger a custom event to refresh cart count in navbar
+        setSuccessMessage(`"${designTitle}" added to cart successfully!`)
         window.dispatchEvent(new CustomEvent('cartUpdated'))
+        setTimeout(() => setSuccessMessage(null), 3000)
       } else {
         const error = await response.json()
-        alert(`Failed to add to cart: ${error.message}`)
+        setErrorMessage(`Failed to add to cart: ${error.message}`)
       }
     } catch (error) {
       console.error('Add to cart error:', error)
-      alert('Failed to add to cart. Please try again.')
+      setErrorMessage('Failed to add to cart. Please try again.')
     } finally {
       setAddingToCart(null)
     }
   }
+
+  // Image sanitization is centralized in SafeImage
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,6 +141,18 @@ export default function DesignsPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Fashion Designs</h1>
           <p className="text-gray-700">Discover unique fashion illustrations and designs from talented creators</p>
         </div>
+
+        {/* Notices */}
+        {successMessage && (
+          <Banner type="success" onClose={() => setSuccessMessage(null)}>
+            {successMessage}
+          </Banner>
+        )}
+        {errorMessage && (
+          <Banner type="error" onClose={() => setErrorMessage(null)}>
+            {errorMessage}
+          </Banner>
+        )}
 
         {/* Category Filter */}
         <div className="mb-8">
@@ -182,14 +203,10 @@ export default function DesignsPage() {
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
+                    <SafeImage
                       src={design.thumbnailUrl || design.imageUrl}
                       alt={design.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = generateDesignPlaceholder(400, 400)
-                      }}
+                      className="w-full h-full object-cover"
                     />
                     {/* Premium Badge */}
                     {design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (
@@ -268,5 +285,12 @@ export default function DesignsPage() {
         )}
       </div>
     </div>
+  )
+}
+export default function DesignsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" /> }>
+      <DesignsPageInner />
+    </Suspense>
   )
 }
