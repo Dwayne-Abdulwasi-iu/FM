@@ -5,16 +5,22 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
+// Build providers array conditionally to avoid runtime errors when env vars are missing in prod
+// Providers can be a mix of Credentials and OAuth types
+type AnyProvider = ReturnType<typeof CredentialsProvider> | ReturnType<typeof GoogleProvider>
+const providers: AnyProvider[] = [
+  CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        // If there is no database configured, short-circuit to prevent crashes
+        if (!process.env.DATABASE_URL) {
+          return null;
+        }
+
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -46,11 +52,23 @@ export const authOptions: NextAuthOptions = {
         };
       }
     }),
+];
+
+// Only enable Google provider if both credentials are present
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     })
-  ],
+  );
+}
+
+export const authOptions: NextAuthOptions = {
+  // Only attach the Prisma adapter when a database is configured
+  // This allows session endpoints to work (JWT) even when DATABASE_URL is missing
+  ...(process.env.DATABASE_URL ? { adapter: PrismaAdapter(prisma) } : {}),
+  providers,
   session: {
     strategy: "jwt"
   },
