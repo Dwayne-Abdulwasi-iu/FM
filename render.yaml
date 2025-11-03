@@ -5,7 +5,7 @@ services:
     # region: frankfurt    # optional: set your preferred region (oregon|frankfurt|singapore)
     plan: free            # choose plan (free|starter|standard|pro); adjust as needed
     buildCommand: npm ci && npm run build
-    startCommand: node .next/standalone/server.js
+  startCommand: npm run start
     autoDeploy: true
     healthCheckPath: /api/health
     envVars:
