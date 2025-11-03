@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   },
 };
 
+// Force a desktop-like layout on mobile by reporting a wider viewport width.
+// This mimics the browser's "Request desktop site" behavior so desktop breakpoints apply on phones.
+export const viewport: Viewport = {
+  width: 1024,
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-  <body className={`${inter.className} antialiased overflow-x-hidden`}>
+      <body className={`${inter.className} antialiased`}>
         <Providers>
           <div className="min-h-screen flex flex-col">
             <Navbar />
