@@ -198,7 +198,7 @@ export default function ProfilePage() {
           <Banner type="error" message={errorMessage} onClose={() => setErrorMessage(null)} />
         )}
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+  <div className="bg-white rounded-lg shadow-sm p-4 xs:p-5 md:p-6 mb-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -234,7 +234,7 @@ export default function ProfilePage() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 lg:gap-6 mb-6">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -282,7 +282,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             {/* Make tabs horizontally scrollable on mobile to avoid layout overflow */}
-            <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-4 sm:space-x-8">
+            <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-3 xs:space-x-4 sm:space-x-8">
               {[
                 { id: 'overview', label: 'Overview', icon: Eye },
                 { id: 'designs', label: 'My Designs', icon: Upload },
@@ -306,7 +306,7 @@ export default function ProfilePage() {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 xs:p-5 md:p-6">
             {activeTab === 'overview' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Overview</h3>
@@ -373,7 +373,7 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 lg:gap-6">
                     {designs.map((design) => (
                       <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="aspect-square bg-gray-100">

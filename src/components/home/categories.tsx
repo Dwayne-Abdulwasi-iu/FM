@@ -68,7 +68,7 @@ export function Categories() {
             <button
               key={category.name}
               onClick={() => handleClick(category.name)}
-              className="bg-white rounded-lg shadow-md border border-gray-200 p-6 text-center hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group"
+              className="bg-white rounded-lg shadow-md border border-gray-200 p-4 xs:p-5 md:p-6 text-center hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group"
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{category.image}</div>
               <h3 className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-indigo-700">{category.name}</h3>

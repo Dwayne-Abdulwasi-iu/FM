@@ -5,7 +5,7 @@ import { Stats } from "@/components/home/stats";
 
 export default function Home() {
   return (
-    <div className="space-y-16">
+    <div className="space-y-12 xs:space-y-14 md:space-y-16">
       <Hero />
       <Categories />
       <FeaturedDesigns />

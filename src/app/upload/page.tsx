@@ -201,10 +201,10 @@ export default function EnhancedUploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-6 xs:py-7 md:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 xs:px-5 md:px-6 py-3 xs:py-4 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Upload className="h-6 w-6" />
               Upload New Design
@@ -295,8 +295,8 @@ export default function EnhancedUploadPage() {
           )}
 
           <div className="relative">
-            <form onSubmit={handleSubmit} className={`p-6 ${(bankAccountRequired || bankAccountNeedsVerification) ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className={`p-4 xs:p-5 md:p-6 ${(bankAccountRequired || bankAccountNeedsVerification) ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xs:gap-7 md:gap-8">
               {/* Media Files Upload */}
               <div>
                 <div className="flex items-center justify-between mb-4">

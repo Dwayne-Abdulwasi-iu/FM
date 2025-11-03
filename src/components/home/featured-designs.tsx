@@ -53,7 +53,7 @@ export function FeaturedDesigns() {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
                 <div className="aspect-square bg-gray-200"></div>
-                <div className="p-6">
+                <div className="p-4 xs:p-5 md:p-6">
                   <div className="h-6 bg-gray-200 rounded mb-2"></div>
                   <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
                   <div className="h-8 bg-gray-200 rounded"></div>
@@ -96,15 +96,15 @@ export function FeaturedDesigns() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-indigo-700 line-clamp-1">
+                <div className="p-4 xs:p-5 md:p-6">
+                  <h3 className="font-semibold text-base xs:text-lg mb-2 text-gray-900 group-hover:text-indigo-700 line-clamp-1">
                     {design.title}
                   </h3>
                   <p className="text-gray-600 mb-4">
                     by {design.designer.name || design.designer.email}
                   </p>
                   <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
+                    <span className="text-xl xs:text-2xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
                     <Link 
                       href={`/designs/${design.id}`}
                       className="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg transition-colors font-medium"
