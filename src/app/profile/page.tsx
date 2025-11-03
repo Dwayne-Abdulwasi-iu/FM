@@ -200,26 +200,26 @@ export default function ProfilePage() {
         {/* Header */}
   <div className="bg-white rounded-lg shadow-sm p-4 xs:p-5 md:p-6 mb-6">
           <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 min-w-0">
               <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                 <User className="w-10 h-10 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{profile.name || 'Anonymous User'}</h1>
-                <div className="flex items-center text-gray-600 mt-1">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{profile.name || 'Anonymous User'}</h1>
+                <div className="flex items-center text-gray-600 mt-1 text-sm sm:text-base">
                   <Mail className="w-4 h-4 mr-2" />
                   {profile.email}
                 </div>
-                <div className="flex items-center text-gray-600 mt-1">
+                <div className="flex items-center text-gray-600 mt-1 text-sm sm:text-base">
                   <Calendar className="w-4 h-4 mr-2" />
                   Member since {formatDate(profile.createdAt)}
                 </div>
                 {profile.bio && (
-                  <p className="text-gray-700 mt-2 max-w-md">{profile.bio}</p>
+                  <p className="text-gray-700 mt-2 text-sm sm:text-base max-w-sm sm:max-w-md">{profile.bio}</p>
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {profile.isVerified && (
                 <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
                   Verified

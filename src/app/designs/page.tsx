@@ -175,7 +175,7 @@ function DesignsPageInner() {
 
         {/* Designs Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
@@ -187,7 +187,7 @@ function DesignsPageInner() {
               </div>
             ))}
           </div>
-        ) : designs.length === 0 ? (
+  ) : designs.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No designs found in this category.</p>
             <Link 
@@ -198,7 +198,7 @@ function DesignsPageInner() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
@@ -265,9 +265,9 @@ function DesignsPageInner() {
                   </div>
                   
                   {/* View Details Button */}
-                  <Link 
+                  <Link
                     href={`/designs/${design.id}`}
-                    className="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium mb-2"
+                    className="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors font-medium mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
