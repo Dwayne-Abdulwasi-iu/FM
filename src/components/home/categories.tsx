@@ -63,7 +63,7 @@ export function Categories() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-white text-center mb-4">Browse by Categories</h2>
         <p className="text-white text-center mb-12">Explore different types of fashion designs and illustrations</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {CATEGORY_LIST.map((category) => (
             <button
               key={category.name}

@@ -49,7 +49,7 @@ export function FeaturedDesigns() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Featured Designs</h2>
           <p className="text-gray-700 text-center mb-12">Discover trending and popular fashion designs from our community</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
                 <div className="aspect-square bg-gray-200"></div>
@@ -86,7 +86,7 @@ export function FeaturedDesigns() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-xl transition-shadow">
                 <div className="aspect-square relative">
