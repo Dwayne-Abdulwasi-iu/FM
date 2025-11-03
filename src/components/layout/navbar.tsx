@@ -14,6 +14,16 @@ export function Navbar() {
   const [isSearching, setIsSearching] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Lock body scroll when mobile menu is open to avoid layout shift and blank space
+  useEffect(() => {
+    if (!mobileOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileOpen])
+
   useEffect(() => {
     if (session) {
       fetchCartCount();
@@ -170,7 +180,6 @@ export function Navbar() {
           <button 
             className="md:hidden p-2 rounded hover:bg-gray-100"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={mobileOpen ? 'true' : 'false'}
             aria-controls="mobile-menu"
             onClick={() => setMobileOpen((v) => !v)}
           >
@@ -189,7 +198,8 @@ export function Navbar() {
           />
           <div
             id="mobile-menu"
-            className="md:hidden z-50 relative bg-white border-t border-gray-200 shadow-sm"
+            // Make the mobile panel fixed so it doesn't push page content and cause layout shift
+            className="md:hidden z-50 fixed inset-x-0 top-16 bg-white border-t border-gray-200 shadow-sm"
           >
             <div className="px-4 py-4 space-y-4">
               {/* Search (mobile) */}
@@ -259,3 +269,5 @@ export function Navbar() {
     </nav>
   );
 }
+
+// (scroll lock handled in the component)
