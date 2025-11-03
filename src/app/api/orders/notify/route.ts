@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import nodemailer from 'nodemailer'
 
 export async function POST(req: Request) {
   try {
@@ -50,9 +51,8 @@ export async function POST(req: Request) {
       })
     }
 
-    // Lazy import nodemailer to avoid bundling if unused
-    const nodemailer = await import('nodemailer')
-    const transporter = nodemailer.createTransport({
+  // Create transporter
+  const transporter = nodemailer.createTransport({
       host,
       port: Number(process.env.EMAIL_SERVER_PORT || 587),
       secure: false,

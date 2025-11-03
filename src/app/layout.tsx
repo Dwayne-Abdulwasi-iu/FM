@@ -17,13 +17,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Force a desktop-like layout on mobile by reporting a wider viewport width.
-// This mimics the browser's "Request desktop site" behavior so desktop breakpoints apply on phones.
+// Mobile-friendly responsive viewport
 export const viewport: Viewport = {
-  width: 1024,
+  width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
 };
 
