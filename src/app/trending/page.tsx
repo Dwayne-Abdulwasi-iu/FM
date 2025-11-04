@@ -304,9 +304,11 @@ export default function TrendingPage() {
                   {/* View Details Button */}
                   <Link 
                     href={`/designs/${design.id}`}
-                    className="w-full inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    className="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors font-medium mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 whitespace-nowrap"
+                    title="View design details"
+                    aria-label="View details"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
+                    <Eye className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                     View Details
                   </Link>
                   

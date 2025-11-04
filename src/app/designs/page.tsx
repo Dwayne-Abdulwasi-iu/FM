@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import SafeImage from '@/components/ui/safe-image'
 import Banner from '@/components/ui/banner'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 // Removed unused placeholder import
 
 interface Design {
@@ -116,9 +117,18 @@ function DesignsPageInner() {
       })
 
       if (response.ok) {
-        setSuccessMessage(`"${designTitle}" added to cart successfully!`)
+        const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+        if (isMobile) {
+          toast.success(`Added "${designTitle}" to cart`, {
+            duration: 1500,
+            position: 'top-center',
+            style: { fontSize: '0.875rem', padding: '6px 10px' }
+          })
+        } else {
+          setSuccessMessage(`"${designTitle}" added to cart successfully!`)
+          setTimeout(() => setSuccessMessage(null), 3000)
+        }
         window.dispatchEvent(new CustomEvent('cartUpdated'))
-        setTimeout(() => setSuccessMessage(null), 3000)
       } else {
         const error = await response.json()
         setErrorMessage(`Failed to add to cart: ${error.message}`)
@@ -134,7 +144,7 @@ function DesignsPageInner() {
   // Image sanitization is centralized in SafeImage
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -144,12 +154,12 @@ function DesignsPageInner() {
 
         {/* Notices */}
         {successMessage && (
-          <Banner type="success" onClose={() => setSuccessMessage(null)} className="p-3 text-sm sm:text-base">
+          <Banner type="success" onClose={() => setSuccessMessage(null)} className="hidden sm:block p-3 text-sm sm:text-base">
             {successMessage}
           </Banner>
         )}
         {errorMessage && (
-          <Banner type="error" onClose={() => setErrorMessage(null)} className="p-3 text-sm sm:text-base">
+          <Banner type="error" onClose={() => setErrorMessage(null)} className="p-2 sm:p-3 text-sm sm:text-base">
             {errorMessage}
           </Banner>
         )}
@@ -186,7 +196,7 @@ function DesignsPageInner() {
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
-                <div className="p-4 space-y-2">
+                <div className="p-3 sm:p-4 space-y-2">
                   <div className="h-4 bg-gray-300 rounded" />
                   <div className="h-3 bg-gray-300 rounded w-2/3" />
                   <div className="h-4 bg-gray-300 rounded w-1/3" />
@@ -232,7 +242,7 @@ function DesignsPageInner() {
                   </div>
                 </Link>
                 
-                <div className="p-4">
+                <div className="p-3 sm:p-4">
                   <Link href={`/designs/${design.id}`}>
                     <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-indigo-700">
                       {design.title}
