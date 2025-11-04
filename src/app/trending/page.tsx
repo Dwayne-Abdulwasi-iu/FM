@@ -35,6 +35,7 @@ interface Design {
 
 export default function TrendingPage() {
   const { data: session } = useSession()
+  const isAdmin = ((session?.user as { role?: string } | undefined)?.role === 'ADMIN')
   const router = useRouter()
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
@@ -265,9 +266,11 @@ export default function TrendingPage() {
                         </span>
                       ) : null}
                     </div>
-                    <div className="text-green-600 font-medium">
-                      {formatPrice(design.totalRevenue || 0)} earned
-                    </div>
+                    {isAdmin && (
+                      <div className="text-green-600 font-medium">
+                        {formatPrice(design.totalRevenue || 0)} earned
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import SafeImage from '@/components/ui/safe-image'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -26,7 +26,7 @@ interface CartItem {
   }
 }
 
-export default function CartPage() {
+function CartPageInner() {
   const { data: session } = useSession()
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
@@ -200,7 +200,7 @@ export default function CartPage() {
   // const platformFee = calculatePlatformFee(total) // Fee is displayed in info text; not used in totals
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 overflow-x-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -401,4 +401,42 @@ export default function CartPage() {
       </div>
     </div>
   )
+}
+export default function CartPage() {
+  return (
+    <ErrorBoundary>
+      <CartPageInner />
+    </ErrorBoundary>
+  )
+}
+
+// Minimal error boundary to avoid a blank screen on runtime errors
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch(err: unknown) {
+    console.error('Cart page error:', err)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h1>
+            <p className="text-gray-600 mb-4">Please refresh this page. If the problem persists, return to the homepage.</p>
+            <div className="flex items-center justify-center gap-3">
+              <button onClick={() => (typeof window !== 'undefined' ? window.location.reload() : null)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Refresh</button>
+              <Link href="/" className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Home</Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children as React.ReactElement
+  }
 }

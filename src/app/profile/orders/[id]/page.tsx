@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import SafeImage from '@/components/ui/safe-image'
@@ -86,7 +86,7 @@ function OrderDetailsInner() {
   const subtotal = order.totalAmount - order.platformFee
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 overflow-x-hidden">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-900">← Back</button>
@@ -164,8 +164,40 @@ function OrderDetailsInner() {
 
 export default function OrderDetailsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50" /> }>
-      <OrderDetailsInner />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<div className="min-h-screen bg-gray-50" /> }>
+        <OrderDetailsInner />
+      </Suspense>
+    </ErrorBoundary>
   )
+}
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch(err: unknown) {
+    console.error('Order details page error:', err)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">We couldn&#39;t load the order</h1>
+            <p className="text-gray-600 mb-4">Please refresh this page or go back to your orders list.</p>
+            <div className="flex items-center justify-center gap-3">
+              <button onClick={() => (typeof window !== 'undefined' ? window.location.reload() : null)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Refresh</button>
+              <Link href="/profile/orders" className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">My Orders</Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children as React.ReactElement
+  }
 }
