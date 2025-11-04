@@ -59,11 +59,11 @@ export function Categories() {
   }
 
   return (
-    <section className="py-16">
-  <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-white text-center mb-4">Browse by Categories</h2>
-        <p className="text-white text-center mb-12">Explore different types of fashion designs and illustrations</p>
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+    <section className="py-12 xs:py-14 md:py-16">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Browse by Categories</h2>
+        <p className="text-gray-700 text-center mb-12">Explore different types of fashion designs and illustrations</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
           {CATEGORY_LIST.map((category) => (
             <button
               key={category.name}

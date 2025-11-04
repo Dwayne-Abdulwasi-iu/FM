@@ -124,6 +124,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // If admin is viewing this session, mark any user messages as read
+    if (session.user.role === 'ADMIN') {
+      try {
+        await prisma.chatMessage.updateMany({
+          where: {
+            sessionId,
+            senderRole: 'USER',
+            isRead: false,
+          },
+          data: { isRead: true },
+        })
+      } catch (e) {
+        console.warn('Failed to mark messages as read:', e)
+      }
+    }
+
     const messages = await prisma.chatMessage.findMany({
       where: {
         sessionId

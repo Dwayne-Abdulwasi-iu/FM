@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 py-14 xs:py-16 md:py-20">
+    <section className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 py-12 xs:py-14 md:py-20">
   <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-4xl xs:text-5xl md:text-6xl font-bold text-white mb-5 md:mb-6">

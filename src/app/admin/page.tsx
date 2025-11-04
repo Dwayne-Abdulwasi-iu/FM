@@ -211,6 +211,9 @@ export default function AdminDashboard() {
   const [selectedChatSession, setSelectedChatSession] = useState<AdminChatSession | null>(null)
   const [chatMessages, setChatMessages] = useState<CareMessage[]>([])
   const [replyMessage, setReplyMessage] = useState('')
+  // Unread chat counts for admin
+  const [unreadTotal, setUnreadTotal] = useState<number>(0)
+  const [unreadBySession, setUnreadBySession] = useState<Record<string, number>>({})
 
   // SafeImage centralizes sanitization and onError fallback
 
@@ -265,6 +268,9 @@ export default function AdminDashboard() {
         const chatData = await chatRes.json()
         setChatSessions(chatData.sessions || [])
       }
+
+      // Load unread counts in parallel after sessions
+      await fetchUnreadCounts()
     } catch (error) {
       console.error('Error fetching admin data:', error)
     } finally {
@@ -720,6 +726,8 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json()
         setChatMessages(data.messages || [])
+        // Refresh unread counters because viewing marks as read
+        fetchUnreadCounts()
       }
     } catch (error) {
       console.error('Error fetching chat messages:', error)
@@ -744,6 +752,8 @@ export default function AdminDashboard() {
         setReplyMessage('')
         fetchChatMessages(sessionId)
         showNotification('success', 'Reply sent successfully')
+        // Replies do not change unread from users, but refresh anyway
+        fetchUnreadCounts()
       } else {
         showNotification('error', 'Failed to send reply')
       }
@@ -751,6 +761,31 @@ export default function AdminDashboard() {
       showNotification('error', 'Error sending reply')
     }
   }
+
+  // Fetch unread counts helper
+  const fetchUnreadCounts = async () => {
+    try {
+      const res = await fetch('/api/customer-care/unread', { cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      setUnreadTotal(Number(data.totalUnread || 0))
+      const map: Record<string, number> = {}
+      for (const row of data.sessions || []) {
+        map[row.sessionId] = row.unread || 0
+      }
+      setUnreadBySession(map)
+    } catch {
+      // ignore
+    }
+  }
+
+  // Poll unread counts periodically when on admin page
+  useEffect(() => {
+    fetchUnreadCounts()
+    const t = setInterval(fetchUnreadCounts, 20000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -879,7 +914,14 @@ export default function AdminDashboard() {
                   }`}
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
-                  {tab.label}
+                  <span className="relative inline-flex items-center">
+                    {tab.label}
+                    {tab.id === 'chat' && unreadTotal > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center text-[10px] leading-none font-semibold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
+                        {unreadTotal > 99 ? '99+' : unreadTotal}
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </nav>
@@ -2130,7 +2172,14 @@ export default function AdminDashboard() {
                                   <div className="text-sm text-gray-500">{session.user.email}</div>
                                 </td>
                                 <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {session._count.messages} messages
+                                  <div className="flex items-center gap-2">
+                                    <span>{session._count.messages} messages</span>
+                                    {(unreadBySession[session.id] || 0) > 0 && (
+                                      <span className="inline-flex items-center justify-center text-[10px] leading-none font-semibold px-1.5 py-0.5 rounded-full bg-red-600 text-white" title={`${unreadBySession[session.id]} unread from user`}>
+                                        {unreadBySession[session.id] > 99 ? '99+' : unreadBySession[session.id]}
+                                      </span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
                                   {session.messages[0] ? (

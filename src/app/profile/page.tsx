@@ -53,6 +53,38 @@ export default function ProfilePage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [submittingReqId, setSubmittingReqId] = useState<string | null>(null)
+  // Earnings breakdown state
+  type PayoutStatus = 'PENDING' | 'SKIPPED_SPLIT' | 'PAID' | 'FAILED'
+  interface EarningRow {
+    id: string
+    createdAt: string
+    saleAmount: number
+    platformCommission: number
+    sellerAmount: number
+    quantity: number
+    payoutStatus: PayoutStatus
+    payoutProvider?: string | null
+    payoutAttemptedAt?: string | null
+    payoutCompletedAt?: string | null
+    payoutCurrency?: string | null
+    payoutAmountMinor?: number | null
+    order: { id: string; orderNumber: string; createdAt: string }
+    design: { id: string; title: string; imageUrl: string }
+  }
+  const [earnings, setEarnings] = useState<EarningRow[]>([])
+  const [earningsLoading, setEarningsLoading] = useState<boolean>(false)
+  const [earnPage, setEarnPage] = useState<number>(1)
+  const [earnPageSize, setEarnPageSize] = useState<number>(25)
+  const [earnTotal, setEarnTotal] = useState<number>(0)
+  const [earnSums, setEarnSums] = useState<{ saleAmount: number; platformCommission: number; sellerAmount: number }>({ saleAmount: 0, platformCommission: 0, sellerAmount: 0 })
+  const [earnStatus, setEarnStatus] = useState<'ALL' | PayoutStatus>('ALL')
+  const [earnSearch, setEarnSearch] = useState<string>('')
+  const [earnFrom, setEarnFrom] = useState<string>('')
+  const [earnTo, setEarnTo] = useState<string>('')
+  const [earnTimeframe, setEarnTimeframe] = useState<'7d' | '30d' | 'all'>('all')
+  const [earnSortBy, setEarnSortBy] = useState<'date' | 'amount'>('date')
+  const [earnSortOrder, setEarnSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [exportingCsv, setExportingCsv] = useState<boolean>(false)
 
   // SafeImage now centralizes sanitization and fallback
 
@@ -105,6 +137,107 @@ export default function ProfilePage() {
       console.error('Failed to fetch profile data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Fetch earnings list
+  const fetchEarnings = async () => {
+    try {
+      setEarningsLoading(true)
+      const params = new URLSearchParams()
+      params.set('page', String(earnPage))
+      params.set('pageSize', String(earnPageSize))
+      params.set('sortBy', earnSortBy)
+      params.set('sortOrder', earnSortOrder)
+      if (earnStatus !== 'ALL') params.set('status', earnStatus)
+      if (earnSearch.trim()) params.set('search', earnSearch.trim())
+      if (earnFrom) params.set('from', earnFrom)
+      if (earnTo) params.set('to', earnTo)
+      const res = await fetch(`/api/profile/earnings?${params.toString()}`, { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setEarnings(data.earnings || [])
+        setEarnTotal(Number(data?.meta?.total || 0))
+        setEarnSums({
+          saleAmount: Number(data?.meta?.sums?.saleAmount || 0),
+          platformCommission: Number(data?.meta?.sums?.platformCommission || 0),
+          sellerAmount: Number(data?.meta?.sums?.sellerAmount || 0),
+        })
+      }
+    } catch (e) {
+      console.error('Failed to load earnings:', e)
+    } finally {
+      setEarningsLoading(false)
+    }
+  }
+
+  // Debounce fetch on filters
+  useEffect(() => {
+    if (!session) return
+    const t = setTimeout(fetchEarnings, 300)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, earnPage, earnPageSize, earnStatus, earnSearch, earnFrom, earnTo, earnSortBy, earnSortOrder])
+
+  const exportEarningsCsv = async () => {
+    try {
+      setExportingCsv(true)
+      const base = new URLSearchParams()
+      base.set('sortBy', earnSortBy)
+      base.set('sortOrder', earnSortOrder)
+      if (earnStatus !== 'ALL') base.set('status', earnStatus)
+      if (earnSearch.trim()) base.set('search', earnSearch.trim())
+      if (earnFrom) base.set('from', earnFrom)
+      if (earnTo) base.set('to', earnTo)
+
+      const pageSize = 200
+      let page = 1
+      let total = Infinity
+      const rows: EarningRow[] = []
+
+      while (rows.length < total) {
+        const p = new URLSearchParams(base)
+        p.set('page', String(page))
+        p.set('pageSize', String(pageSize))
+        const res = await fetch(`/api/profile/earnings?${p.toString()}`, { cache: 'no-store' })
+        if (!res.ok) break
+        const data = await res.json()
+        const batch: EarningRow[] = data?.earnings || []
+        if (Number.isFinite(data?.meta?.total)) total = data.meta.total
+        else total = rows.length + batch.length
+        if (batch.length === 0) break
+        rows.push(...batch)
+        if (batch.length < pageSize) break
+        page += 1
+        // slight delay
+        await new Promise(r => setTimeout(r, 40))
+      }
+
+      const header = ['DateISO','OrderNumber','DesignTitle','Quantity','YouEarnUSD','CommissionUSD','SaleUSD','PayoutStatus']
+      const esc = (v: string) => '"' + (v ?? '').replaceAll('"', '""') + '"'
+      const csv = [
+        header.join(','),
+        ...rows.map(r => [
+          new Date(r.createdAt).toISOString(),
+          r.order?.orderNumber || '',
+          r.design?.title || '',
+          String(r.quantity ?? 1),
+          String(r.sellerAmount ?? ''),
+          String(r.platformCommission ?? ''),
+          String(r.saleAmount ?? ''),
+          r.payoutStatus || ''
+        ].map(x => esc(String(x))).join(','))
+      ].join('\n')
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `earnings-${new Date().toISOString().slice(0,10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExportingCsv(false)
     }
   }
 
@@ -485,9 +618,9 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Overview</h3>
                 {stats && (
                   <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Total Revenue Generated</p>
+                        <p className="text-sm text-gray-600">Total Revenue</p>
                         <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                       </div>
                       <div className="text-center">
@@ -495,17 +628,146 @@ export default function ProfilePage() {
                         <p className="text-2xl font-bold text-red-600">-{formatPrice(stats.platformCommission)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Your Earnings (95%)</p>
+                        <p className="text-sm text-gray-600">Your Earnings</p>
                         <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalEarnings)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Avg. per Sale</p>
+                        <p className="text-2xl font-bold text-blue-600">{formatPrice(stats.totalSales > 0 ? stats.totalEarnings / stats.totalSales : 0)}</p>
                       </div>
                     </div>
                   </div>
                 )}
-                
-                <div className="text-center py-8 text-gray-500">
-                  <DollarSign className="w-12 h-12 mx-auto mb-4" />
-                  <p>Detailed earnings breakdown coming soon</p>
-                  <p className="text-sm">Track individual sales and commission details</p>
+
+                {/* Filters */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Time:</span>
+                      <button onClick={() => { setEarnTimeframe('7d'); setEarnFrom(new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='7d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>7d</button>
+                      <button onClick={() => { setEarnTimeframe('30d'); setEarnFrom(new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10)); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='30d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>30d</button>
+                      <button onClick={() => { setEarnTimeframe('all'); setEarnFrom(''); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-gray-500" htmlFor="earn-status">Status:</label>
+                      <select id="earn-status" value={earnStatus} onChange={(e)=>{ setEarnStatus(e.target.value as 'ALL' | 'PENDING' | 'PAID' | 'SKIPPED_SPLIT' | 'FAILED'); setEarnPage(1) }} className="px-2 py-1 border border-gray-300 rounded text-sm text-black" title="Filter by payout status">
+                        <option value="ALL">All</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="SKIPPED_SPLIT">Skipped Split</option>
+                        <option value="FAILED">Failed</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-gray-500" htmlFor="earn-search">Search:</label>
+                      <input id="earn-search" type="text" value={earnSearch} onChange={(e)=>{ setEarnSearch(e.target.value); setEarnPage(1) }} placeholder="Order # or design title" className="px-3 py-1.5 border border-gray-300 rounded text-sm text-black placeholder-gray-500" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                      <label htmlFor="earn-from" className="block text-xs text-gray-600 mb-1">From</label>
+                      <input id="earn-from" type="date" value={earnFrom} onChange={(e)=>{ setEarnFrom(e.target.value); setEarnPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="Start date" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label htmlFor="earn-to" className="block text-xs text-gray-600 mb-1">To</label>
+                      <input id="earn-to" type="date" value={earnTo} onChange={(e)=>{ setEarnTo(e.target.value); setEarnPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="End date" />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 flex items-end gap-2">
+                      <button onClick={()=>{ setEarnSearch(''); setEarnFrom(''); setEarnTo(''); setEarnStatus('ALL'); setEarnSortBy('date'); setEarnSortOrder('desc'); setEarnPageSize(25); setEarnTimeframe('all'); setEarnPage(1); fetchEarnings(); }} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Reset</button>
+                      <label className="text-xs text-gray-500" htmlFor="earn-ps">Rows</label>
+                      <select id="earn-ps" value={earnPageSize} onChange={(e)=>{ setEarnPageSize(parseInt(e.target.value,10)||25); setEarnPage(1) }} className="px-2 py-1 border border-gray-300 rounded text-sm text-black">
+                        {[10,25,50,100].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                      <button onClick={exportEarningsCsv} disabled={exportingCsv} className={`ml-auto px-3 py-2 text-sm rounded text-white ${exportingCsv ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{exportingCsv ? 'Exporting…' : 'Export CSV'}</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Totals summary for current filter */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                    <p className="text-xs text-gray-600">Sales</p>
+                    <p className="text-xl font-semibold text-gray-900">{formatPrice(earnSums.saleAmount)}</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                    <p className="text-xs text-gray-600">Commission</p>
+                    <p className="text-xl font-semibold text-red-600">-{formatPrice(earnSums.platformCommission)}</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                    <p className="text-xs text-gray-600">You Earn</p>
+                    <p className="text-xl font-semibold text-green-600">{formatPrice(earnSums.sellerAmount)}</p>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>{ if(earnSortBy==='date'){ setEarnSortOrder(earnSortOrder==='asc'?'desc':'asc') } else { setEarnSortBy('date'); setEarnSortOrder('desc') } }} className={`inline-flex items-center gap-1 ${earnSortBy==='date'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>Date {earnSortBy==='date' && <span>{earnSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Design</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <button onClick={()=>{ if(earnSortBy==='amount'){ setEarnSortOrder(earnSortOrder==='asc'?'desc':'asc') } else { setEarnSortBy('amount'); setEarnSortOrder('desc') } }} className={`inline-flex items-center gap-1 ${earnSortBy==='amount'?'text-indigo-600':'text-gray-500 hover:text-gray-700'}`}>You Earn {earnSortBy==='amount' && <span>{earnSortOrder==='asc'?'▲':'▼'}</span>}</button>
+                        </th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sale</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payout</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {earningsLoading ? (
+                        <tr><td colSpan={8} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>
+                      ) : earnings.length === 0 ? (
+                        <tr><td colSpan={8} className="px-3 py-6 text-center text-gray-500">No earnings yet</td></tr>
+                      ) : (
+                        earnings.map((row) => (
+                          <tr key={row.id} className="odd:bg-white even:bg-gray-50">
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">{new Date(row.createdAt).toLocaleString()}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                              <Link href={`/profile/orders/${row.order.id}`} className="text-indigo-600 hover:underline">#{row.order.orderNumber}</Link>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 max-w-[16rem]">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                                  <SafeImage src={row.design.imageUrl} alt={row.design.title} className="w-full h-full object-cover" />
+                                </div>
+                                <Link href={`/designs/${row.design.id}`} className="truncate text-indigo-600 hover:underline" title={row.design.title}>{row.design.title}</Link>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">{row.quantity}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-green-700 text-right">{formatPrice(row.sellerAmount)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-red-700 text-right">-{formatPrice(row.platformCommission)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">{formatPrice(row.saleAmount)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">
+                              <span className={`inline-flex px-2 py-1 rounded-full font-semibold ${
+                                row.payoutStatus === 'PAID' ? 'bg-green-100 text-green-800' :
+                                row.payoutStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                row.payoutStatus === 'FAILED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {row.payoutStatus}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Paging */}
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <div className="text-gray-600">
+                    {earnTotal > 0 ? (()=>{ const start=(earnPage-1)*earnPageSize+1; const end=Math.min(earnPage*earnPageSize, earnTotal); return <span>Showing {start}-{end} of {earnTotal}</span>; })() : <span>Showing results</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={()=> setEarnPage(p => Math.max(1, p-1))} disabled={earnPage<=1} className={`px-2 py-1 rounded ${earnPage<=1?'bg-gray-100 text-gray-400 cursor-not-allowed':'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Prev</button>
+                    <span className="text-gray-600">Page {earnPage}{earnTotal>0?` of ${Math.max(1, Math.ceil(earnTotal/earnPageSize))}`:''}</span>
+                    <button onClick={()=> setEarnPage(p => p + 1)} disabled={earnTotal>0 ? earnPage >= Math.ceil(earnTotal/earnPageSize) : earnings.length < earnPageSize} className={`px-2 py-1 rounded ${earnTotal>0 && earnPage >= Math.ceil(earnTotal/earnPageSize) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Next</button>
+                  </div>
                 </div>
               </div>
             )}
