@@ -130,7 +130,7 @@ export default function TrendingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center mb-4">
@@ -172,7 +172,7 @@ export default function TrendingPage() {
 
         {/* Trending Designs Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
@@ -199,9 +199,9 @@ export default function TrendingPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {designs.map((design, index) => (
-              <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group relative">
+              <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group relative transition-transform duration-200 ease-out hover:-translate-y-0.5">
                 {/* Trending Badge */}
                 {index < 3 && (
                   <div className="absolute top-2 left-2 z-10">

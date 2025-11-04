@@ -118,7 +118,7 @@ function SearchPageInner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <Link 
           href="/designs"
@@ -164,7 +164,7 @@ function SearchPageInner() {
 
         {/* Search Results */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
@@ -191,9 +191,9 @@ function SearchPageInner() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {searchResults?.designs.map((design) => (
-              <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
+              <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group transition-transform duration-200 ease-out hover:-translate-y-0.5">
                 <Link href={`/designs/${design.id}`}>
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
                     <SafeImage

@@ -190,7 +190,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
           <Banner type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
         )}
