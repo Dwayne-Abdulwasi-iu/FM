@@ -16,7 +16,7 @@ export function Hero() {
             Start your creative journey or find the perfect design for your next project.
           </p>
           {/* Quick search */}
-          <form action="/designs" method="GET" className="max-w-2xl mx-auto mb-6 xs:mb-7 md:mb-8">
+          <form action="/designs" method="GET" className="w-full max-w-2xl mx-auto mb-6 xs:mb-7 md:mb-8">
             <label htmlFor="hero-search" className="sr-only">Search designs</label>
             <div className="flex items-stretch gap-2 bg-white/95 rounded-lg p-1 shadow-lg">
               <input
@@ -24,12 +24,12 @@ export function Hero() {
                 name="search"
                 type="search"
                 placeholder="Search designs, tags, or categories"
-                className="flex-1 px-4 py-3 rounded-md bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
+                className="flex-1 min-w-0 px-4 py-3 rounded-md bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
                 aria-label="Search designs"
               />
               <button
                 type="submit"
-                className="px-5 py-3 bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-md transition-colors"
+                className="flex-shrink-0 px-3 sm:px-5 py-3 bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-md transition-colors"
               >
                 Search
               </button>
