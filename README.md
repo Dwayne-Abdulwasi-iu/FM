@@ -408,6 +408,26 @@ If you'd like, I can prepare the exact filter-repo or BFG commands tailored to t
 - Implement caching strategies
 - Monitor application performance
 
+### Database Indexes (MongoDB)
+For fast discovery queries in the marketplace (filters and sorting), the schema defines pragmatic indexes on `Design`:
+
+- Composite index: `(isActive, isOwned, createdAt)`
+- Single-field indexes: `category`, `price`, `totalSales`
+
+These align with the API patterns in `src/app/api/designs/route.ts`:
+- Filters: `isActive=true`, `isOwned=false`, optional `category`, optional price range
+- Sorts: newest (`createdAt desc`), best sellers (`totalSales desc`), price asc/desc
+
+To ensure these indexes exist in your MongoDB cluster, push the schema changes:
+
+```powershell
+npm run db:push
+```
+
+Notes:
+- Index creation happens online in MongoDB Atlas but may take a few seconds to complete.
+- If you change query patterns later (e.g., add tag or text search), revisit indexes accordingly.
+
 ### Monitoring
 - Set up error tracking (e.g., Sentry)
 - Configure application monitoring

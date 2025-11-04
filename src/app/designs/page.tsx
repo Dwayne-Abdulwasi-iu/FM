@@ -18,7 +18,7 @@ interface Design {
   imageUrl: string
   thumbnailUrl: string | null
   category: string
-  tags: string | null
+  tags: string[]
   createdAt: string
   designer: {
     id: string
@@ -40,6 +40,10 @@ function DesignsPageInner() {
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [minPrice, setMinPrice] = useState<string>('')
+  const [maxPrice, setMaxPrice] = useState<string>('')
+  const [sort, setSort] = useState<'newest' | 'sales' | 'price_asc' | 'price_desc'>('newest')
+  const [tagsInput, setTagsInput] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -60,6 +64,14 @@ function DesignsPageInner() {
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam)
     }
+    const minP = searchParams.get('minPrice')
+    const maxP = searchParams.get('maxPrice')
+    const sortParam = searchParams.get('sort') as 'newest' | 'sales' | 'price_asc' | 'price_desc' | null
+  const tagsParam = searchParams.get('tags')
+    if (minP) setMinPrice(minP)
+    if (maxP) setMaxPrice(maxP)
+    if (sortParam && ['newest','sales','price_asc','price_desc'].includes(sortParam)) setSort(sortParam)
+  if (tagsParam) setTagsInput(tagsParam)
     // categories is a static array; safe to omit from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
@@ -68,20 +80,40 @@ function DesignsPageInner() {
     fetchDesigns()
     // categories is a static array; safe to omit from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory])
+  }, [selectedCategory, minPrice, maxPrice, sort, tagsInput])
 
   const fetchDesigns = async () => {
     try {
       setLoading(true)
-      const url = selectedCategory === 'all' 
-        ? '/api/designs'
-        : `/api/designs?category=${encodeURIComponent(selectedCategory)}`
+      const params = new URLSearchParams()
+      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+      if (minPrice && !Number.isNaN(parseFloat(minPrice))) params.set('minPrice', String(parseFloat(minPrice)))
+      if (maxPrice && !Number.isNaN(parseFloat(maxPrice))) params.set('maxPrice', String(parseFloat(maxPrice)))
+      if (sort) params.set('sort', sort)
+  if (tagsInput.trim()) params.set('tags', tagsInput.trim())
+      const url = `/api/designs${params.toString() ? `?${params.toString()}` : ''}`
       
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setDesigns(data.designs)
       }
+
+      // Push filters to URL for shareability (client-side only)
+      try {
+        const current = new URLSearchParams(Array.from(searchParams.entries()))
+        if (selectedCategory !== 'all') current.set('category', selectedCategory); else current.delete('category')
+        if (minPrice && !Number.isNaN(parseFloat(minPrice))) current.set('minPrice', String(parseFloat(minPrice))); else current.delete('minPrice')
+        if (maxPrice && !Number.isNaN(parseFloat(maxPrice))) current.set('maxPrice', String(parseFloat(maxPrice))); else current.delete('maxPrice')
+        if (sort) current.set('sort', sort)
+  if (tagsInput.trim()) current.set('tags', tagsInput.trim()); else current.delete('tags')
+        const qs = current.toString()
+        const path = `/designs${qs ? `?${qs}` : ''}`
+        // avoid pushing the same URL repeatedly
+        if (typeof window !== 'undefined' && path !== window.location.pathname + window.location.search) {
+          router.replace(path)
+        }
+      } catch {}
     } catch (error) {
       console.error('Failed to fetch designs:', error)
     } finally {
@@ -164,7 +196,7 @@ function DesignsPageInner() {
           </Banner>
         )}
 
-        {/* Category Filter */}
+        {/* Filters */}
         <div className="mb-8">
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.map((category) => (
@@ -180,6 +212,55 @@ function DesignsPageInner() {
                 {category === 'all' ? 'All Categories' : category}
               </button>
             ))}
+          </div>
+          {/* Price and Sort */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Min</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                className="w-24 px-2 py-1 rounded border border-gray-300 text-sm"
+                placeholder="0"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Max</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                className="w-24 px-2 py-1 rounded border border-gray-300 text-sm"
+                placeholder="1000"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Sort</label>
+              <select
+                className="px-2 py-1 rounded border border-gray-300 text-sm"
+                value={sort}
+                aria-label="Sort"
+                onChange={(e) => setSort(e.target.value as 'newest' | 'sales' | 'price_asc' | 'price_desc')}
+              >
+                <option value="newest">Newest</option>
+                <option value="sales">Best selling</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Tags</label>
+              <input
+                type="text"
+                placeholder="e.g. summer,sketches"
+                className="w-48 px-2 py-1 rounded border border-gray-300 text-sm"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+              />
+            </div>
           </div>
           {selectedCategory !== 'all' && (
             <div className="mt-4 text-center">

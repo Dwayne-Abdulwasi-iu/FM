@@ -19,7 +19,8 @@ import {
   Search,
   Mail,
   MessageCircle,
-  BookOpen
+  BookOpen,
+  AlertTriangle
 } from 'lucide-react'
 
 interface User {
@@ -100,7 +101,7 @@ type ExclusiveSale = {
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  type AdminTab = 'overview' | 'users' | 'designs' | 'orders' | 'exclusive' | 'resources' | 'contact' | 'chat' | 'earnings'
+  type AdminTab = 'overview' | 'users' | 'designs' | 'orders' | 'exclusive' | 'resources' | 'contact' | 'requests' | 'chat' | 'earnings'
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -174,6 +175,10 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified'>('all')
   const [designFilter, setDesignFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [deletableOnly, setDeletableOnly] = useState<boolean>(false)
+  const [filterHasOrders, setFilterHasOrders] = useState<boolean>(false)
+  const [filterOwned, setFilterOwned] = useState<boolean>(false)
+  const [filterInactive, setFilterInactive] = useState<boolean>(false)
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
   const [adminConfirm, setAdminConfirm] = useState<{ step: number; userId: string; userEmail: string; action: 'makeAdmin' | 'removeAdmin' } | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -757,10 +762,18 @@ export default function AdminDashboard() {
   })
 
   const filteredDesigns = designs.filter(design => {
-    return designFilter === 'all' || 
-           (designFilter === 'pending' && design.approvalStatus === 'PENDING') ||
-           (designFilter === 'approved' && design.approvalStatus === 'APPROVED') ||
-           (designFilter === 'rejected' && design.approvalStatus === 'REJECTED')
+    const statusMatch = (
+      designFilter === 'all' ||
+      (designFilter === 'pending' && design.approvalStatus === 'PENDING') ||
+      (designFilter === 'approved' && design.approvalStatus === 'APPROVED') ||
+      (designFilter === 'rejected' && design.approvalStatus === 'REJECTED')
+    )
+    const canDelete = design.totalSales === 0 && !design.isOwned
+    const deletableMatch = deletableOnly ? canDelete : true
+    const hasOrdersMatch = filterHasOrders ? design.totalSales > 0 : true
+    const ownedMatch = filterOwned ? !!design.isOwned : true
+    const inactiveMatch = filterInactive ? !design.isActive : true
+    return statusMatch && deletableMatch && hasOrdersMatch && ownedMatch && inactiveMatch
   })
 
   if (status === 'loading' || loading) {
@@ -852,6 +865,7 @@ export default function AdminDashboard() {
                 { id: 'exclusive', label: 'Exclusive Sales', icon: TrendingUp },
                 { id: 'resources', label: 'Resources', icon: BookOpen },
                 { id: 'contact', label: 'Contact Messages', icon: Mail },
+                { id: 'requests', label: 'Requests', icon: AlertTriangle },
                 { id: 'chat', label: 'Customer Care', icon: MessageCircle },
                 { id: 'earnings', label: 'Earnings Report', icon: DollarSign }
               ].map((tab) => (
@@ -1094,7 +1108,7 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Design Management</h3>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-3">
                     <select
                       value={designFilter}
                       onChange={(e) => setDesignFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
@@ -1106,7 +1120,48 @@ export default function AdminDashboard() {
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>
                     </select>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Show only designs that are safe to delete (no sales and not owned)">
+                      <input
+                        type="checkbox"
+                        checked={deletableOnly}
+                        onChange={(e) => setDeletableOnly(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Show deletable only</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to designs with completed orders">
+                      <input
+                        type="checkbox"
+                        checked={filterHasOrders}
+                        onChange={(e) => setFilterHasOrders(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Has orders</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to owned designs">
+                      <input
+                        type="checkbox"
+                        checked={filterOwned}
+                        onChange={(e) => setFilterOwned(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Owned</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to inactive designs">
+                      <input
+                        type="checkbox"
+                        checked={filterInactive}
+                        onChange={(e) => setFilterInactive(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Inactive</span>
+                    </label>
                   </div>
+                </div>
+                {/* Admin reminder: prefer Deactivate over Delete for sold/owned items */}
+                <div className="mb-4 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                  Reminder: For designs with completed orders or ownership transfers, deletion is disabled. Use <span className="font-medium">Deactivate</span> to remove listings from the marketplace while preserving access for prior purchasers. See{' '}
+                  <Link href="/terms" className="underline">Terms</Link>.
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {filteredDesigns.map((design) => (
@@ -1124,6 +1179,11 @@ export default function AdminDashboard() {
                         }`}>
                           {design.approvalStatus}
                         </div>
+                        {design.totalSales > 0 && (
+                          <div className="absolute top-10 right-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold" title="This design has completed orders">
+                            Has orders
+                          </div>
+                        )}
                         {!design.isActive && (
                           <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
                             <span className="text-white font-semibold">INACTIVE</span>
@@ -1192,11 +1252,18 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => handleDesignAction(design.id, 'delete')}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded"
+                            className={`px-3 py-1 text-xs rounded ${design.totalSales > 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
+                            disabled={design.totalSales > 0}
+                            title={design.totalSales > 0 ? 'Cannot delete a design that has orders. Please deactivate instead.' : 'Delete design'}
                           >
                             Delete
                           </button>
                         </div>
+                        {design.totalSales > 0 && (
+                          <div className="mt-2 text-xs text-gray-600">
+                            Has orders; delete disabled. Use <span className="font-medium">Deactivate</span> to remove from marketplace.
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1863,6 +1930,105 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'requests' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Deactivation Requests</h3>
+                  <div className="text-sm text-gray-600">
+                    {(contactMessages || []).filter(m => (m.subject || '').toLowerCase().startsWith('deactivation request')).length} total requests
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Design</th>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {contactMessages
+                          .filter((m) => (m.subject || '').toLowerCase().startsWith('deactivation request'))
+                          .map((message) => {
+                            // Attempt to extract Design ID from the message body
+                            let designId: string | null = null
+                            try {
+                              const match = message.message.match(/\bID:\s*([^\s]+)/i)
+                              if (match) designId = match[1]
+                            } catch {}
+                            const designTitle = message.subject.replace(/^Deactivation request:\s*/i, '')
+                            return (
+                              <tr key={message.id} className="hover:bg-gray-50">
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900 truncate max-w-xs" title={message.subject}>
+                                    {message.subject}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{message.user?.name || message.name}</div>
+                                  <div className="text-sm text-gray-500">{message.user?.email || message.email}</div>
+                                </td>
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    message.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
+                                    message.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+                                    message.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {message.status}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm">
+                                  <div className="text-gray-900 truncate max-w-[12rem]" title={designTitle}>{designTitle || '—'}</div>
+                                  {designId && (
+                                    <div className="text-xs text-gray-500">ID: {designId}</div>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
+                                  {new Date(message.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
+                                  <div className="flex items-center gap-3">
+                                    <select
+                                      value={message.status}
+                                      onChange={(e) => updateContactMessageStatus(message.id, e.target.value)}
+                                      className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
+                                      aria-label="Update status"
+                                    >
+                                      <option value="OPEN">Open</option>
+                                      <option value="IN_PROGRESS">In Progress</option>
+                                      <option value="RESOLVED">Resolved</option>
+                                      <option value="CLOSED">Closed</option>
+                                    </select>
+                                    {designId ? (
+                                      <Link href={`/designs/${designId}?admin=true`} className="text-indigo-600 hover:underline">View design</Link>
+                                    ) : (
+                                      <span className="text-gray-400">No ID</span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        {contactMessages.filter((m) => (m.subject || '').toLowerCase().startsWith('deactivation request')).length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="px-3 py-6 md:px-6 md:py-8 text-center text-gray-500">
+                              No deactivation requests yet
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 

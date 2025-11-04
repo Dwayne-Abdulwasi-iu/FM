@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadToCloudinary, generateThumbnailUrl } from "@/lib/cloudinary";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
     const category = formData.get("category") as string;
-    const tags = formData.get("tags") as string;
+  const tagsRaw = formData.get("tags") as string;
 
     if (!file || !title || !price || !category) {
       return NextResponse.json(
@@ -66,6 +67,13 @@ export async function POST(request: NextRequest) {
     // Generate thumbnail URL
     const thumbnailUrl = generateThumbnailUrl(uploadResult.public_id);
 
+    // Normalize tags: comma-separated → string[] (lowercased, deduped)
+    const tags: string[] = (tagsRaw || "")
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .filter((t, i, arr) => arr.indexOf(t) === i)
+
     // Save to database
     const design = await prisma.design.create({
       data: {
@@ -75,11 +83,16 @@ export async function POST(request: NextRequest) {
         imageUrl: uploadResult.secure_url,
         thumbnailUrl,
         category,
-        tags: tags || null,
+        tags,
         designerId: session.user.id,
       },
     });
 
+    // Revalidate listings/home after a new design is created
+    try {
+      revalidatePath("/")
+      revalidatePath("/designs")
+    } catch {}
     return NextResponse.json({ design }, { status: 201 });
   } catch (error) {
     console.error("Upload error:", error);
@@ -103,15 +116,19 @@ export async function GET(request: NextRequest) {
         { status: 503 }
       );
     }
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "12");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
     const userId = searchParams.get("userId");
     const featured = searchParams.get("featured") === "true";
     const timeframe = (searchParams.get("timeframe") || "all").toLowerCase(); // all | month | week
-    const userOnly = searchParams.get("userOnly") === "true";
+  const userOnly = searchParams.get("userOnly") === "true";
+  const tagsParam = searchParams.get("tags") || ""; // comma-separated
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+  const sort = (searchParams.get("sort") || "newest").toLowerCase(); // newest | sales | price_asc | price_desc
 
     const skip = (page - 1) * limit;
 
@@ -139,6 +156,15 @@ export async function GET(request: NextRequest) {
         { tags: { has: search } },
       ];
     }
+    // Tags filter (comma-separated). Use hasSome to match any; switch to hasEvery if you want all.
+    const tagList = tagsParam
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .filter((t, i, arr) => arr.indexOf(t) === i)
+    if (tagList.length) {
+      ;(where as Record<string, unknown>).tags = { hasSome: tagList }
+    }
 
     if (userId) {
       where.designerId = userId;
@@ -152,14 +178,41 @@ export async function GET(request: NextRequest) {
       (where as Record<string, unknown>).createdAt = { gte: from };
     }
 
-    // For featured designs, order by totalSales and totalRevenue
-    const orderBy = featured 
-      ? [
-          { totalSales: "desc" as const },
-          { totalRevenue: "desc" as const },
-          { createdAt: "desc" as const }
-        ]
-      : { createdAt: "desc" as const };
+    // Price range filters
+    if (minPrice || maxPrice) {
+      const priceFilter: Record<string, number> = {}
+      if (minPrice && !Number.isNaN(parseFloat(minPrice))) priceFilter.gte = parseFloat(minPrice)
+      if (maxPrice && !Number.isNaN(parseFloat(maxPrice))) priceFilter.lte = parseFloat(maxPrice)
+      ;(where as Record<string, unknown>).price = priceFilter
+    }
+
+    // Sorting
+    let orderBy:
+      | { createdAt?: 'asc' | 'desc'; price?: 'asc' | 'desc' }
+      | Array<{ totalSales?: 'asc' | 'desc'; totalRevenue?: 'asc' | 'desc'; createdAt?: 'asc' | 'desc' }>
+    if (featured) {
+      // Featured prioritizes best sellers by default
+      orderBy = [
+        { totalSales: "desc" as const },
+        { totalRevenue: "desc" as const },
+        { createdAt: "desc" as const }
+      ]
+    } else {
+      switch (sort) {
+        case 'sales':
+          orderBy = [ { totalSales: 'desc' as const }, { createdAt: 'desc' as const } ]
+          break
+        case 'price_asc':
+          orderBy = { price: 'asc' as const }
+          break
+        case 'price_desc':
+          orderBy = { price: 'desc' as const }
+          break
+        case 'newest':
+        default:
+          orderBy = { createdAt: 'desc' as const }
+      }
+    }
 
     const [designs, total] = await Promise.all([
       prisma.design.findMany({

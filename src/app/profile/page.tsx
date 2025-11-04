@@ -37,6 +37,7 @@ interface Design {
   totalSales: number
   totalRevenue: number
   createdAt: string
+  isOwned?: boolean
 }
 
 export default function ProfilePage() {
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [submittingReqId, setSubmittingReqId] = useState<string | null>(null)
 
   // SafeImage now centralizes sanitization and fallback
 
@@ -129,6 +131,27 @@ export default function ProfilePage() {
 
   const handleDeleteDesign = (designId: string, title: string) => {
     setDeleteConfirm({ designId, title })
+  }
+
+  const submitDeactivationRequest = async (design: Design) => {
+    try {
+      setSubmittingReqId(design.id)
+      const res = await fetch('/api/deactivation-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designId: design.id, reason: `Please deactivate: ${design.title}` })
+      })
+      if (res.ok) {
+        setSuccessMessage('Deactivation request submitted. We\'ll review it shortly.')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMessage(data.message || 'Failed to submit request')
+      }
+    } catch {
+      setErrorMessage('Network error while submitting request')
+    } finally {
+      setSubmittingReqId(null)
+    }
   }
 
   const confirmDelete = async () => {
@@ -359,6 +382,16 @@ export default function ProfilePage() {
                     Upload New Design
                   </Link>
                 </div>
+                {/* Policy notice: deletion vs admin deactivation */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                  Once a design has been purchased, deletion is disabled to protect order history and buyer access. If you need a listing taken down, please request an admin deactivation.
+                  <span className="ml-2">
+                    <Link href="/contact" className="underline">Contact support</Link>
+                  </span>
+                  <span className="ml-2">
+                    <Link href="/terms" className="underline">See Terms</Link>
+                  </span>
+                </div>
                 
                 {designs.length === 0 ? (
                   <div className="text-center py-12">
@@ -408,12 +441,38 @@ export default function ProfilePage() {
                             </button>
                             <button
                               onClick={() => handleDeleteDesign(design.id, design.title)}
-                              className="flex-1 bg-red-100 text-red-700 px-3 py-1 rounded text-center text-sm hover:bg-red-200"
+                              className={`flex-1 px-3 py-1 rounded text-center text-sm ${design.totalSales > 0 || design.isOwned ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                              disabled={design.totalSales > 0 || !!design.isOwned}
+                              title={design.totalSales > 0 || design.isOwned ? 'Cannot delete a design that has sales or is owned. Contact admin to request deactivation.' : 'Delete design'}
                             >
                               Delete
                             </button>
                           </div>
+                          {(design.totalSales > 0 || design.isOwned) && (
+                            <div className="mt-2 grid grid-cols-1 gap-2">
+                              <button
+                                onClick={() => submitDeactivationRequest(design)}
+                                disabled={submittingReqId === design.id}
+                                className={`w-full px-3 py-1 rounded text-center text-sm text-white ${submittingReqId === design.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-yellow-600 hover:bg-yellow-700'}`}
+                                title="Submit an in-app deactivation request for this design"
+                              >
+                                {submittingReqId === design.id ? 'Submitting…' : 'Submit deactivation request'}
+                              </button>
+                              <Link
+                                href={`/contact?subject=${encodeURIComponent(`Deactivation request: ${design.title}`)}&message=${encodeURIComponent(`Hello team,\n\nI would like to request admin deactivation for the following design:\n- Title: ${design.title}\n- ID: ${design.id}\n\nI understand prior purchasers will retain access as per the Terms.\n\nThank you.`)}`}
+                                className="block w-full bg-yellow-50 text-yellow-800 border border-yellow-200 px-3 py-1 rounded text-center text-sm hover:bg-yellow-100"
+                                title="Open contact form pre-filled with this request"
+                              >
+                                Or open contact form
+                              </Link>
+                            </div>
+                          )}
                         </div>
+                        {(design.totalSales > 0 || design.isOwned) && (
+                          <div className="mt-2 text-xs text-gray-600">
+                            {design.isOwned ? 'Owned design; delete disabled.' : 'Has sales; delete disabled.'} Contact <Link href="/contact" className="text-indigo-700 underline">support</Link> to request <span className="font-medium">deactivation</span>. Prior purchasers retain access. See <Link href="/terms" className="text-indigo-700 underline">Terms</Link>.
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

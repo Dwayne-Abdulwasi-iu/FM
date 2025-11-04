@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Phone, MapPin, Send, CheckCircle, X, MessageCircle } from 'lucide-react'
 
 export default function ContactPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
@@ -53,6 +54,25 @@ export default function ContactPage() {
       [e.target.name]: e.target.value
     })
   }
+
+  // Prefill subject/message from URL query if provided (e.g., deactivation request shortcut)
+  useEffect(() => {
+    try {
+      const subj = searchParams.get('subject')
+      const msg = searchParams.get('message')
+      if (subj || msg) {
+        setFormData(prev => ({
+          ...prev,
+          subject: subj ?? prev.subject,
+          message: msg ?? prev.message,
+        }))
+      }
+    } catch {
+      // ignore malformed params
+    }
+    // Only react to initial params on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

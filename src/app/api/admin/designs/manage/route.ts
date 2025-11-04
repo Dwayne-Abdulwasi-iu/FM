@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
 
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
           where: { id: designId },
           data: { isActive: true }
         })
+        // Revalidate public listings so changes reflect immediately
+        revalidatePath('/')
+        revalidatePath('/designs')
         break
 
       case 'deactivate':
@@ -40,13 +44,44 @@ export async function POST(request: NextRequest) {
           where: { id: designId },
           data: { isActive: false }
         })
+        // Revalidate public listings so changes reflect immediately
+        revalidatePath('/')
+        revalidatePath('/designs')
         break
 
       case 'delete':
-        // Get design details before deletion to clean up files
-        const design = await prisma.design.findUnique({
-          where: { id: designId }
+        // Get design details and guard conditions first
+        const design = await prisma.design.findUnique({ where: { id: designId } })
+        if (!design) {
+          return NextResponse.json(
+            { error: 'Design not found' },
+            { status: 404 }
+          )
+        }
+
+        // Block deletion for owned designs
+        if (design.isOwned || !!design.ownedBy) {
+          return NextResponse.json(
+            { error: 'Cannot delete an owned design. Please deactivate instead.' },
+            { status: 400 }
+          )
+        }
+
+        // Prevent deleting designs that have any orders for data integrity
+        const orderCount = await prisma.order.count({
+          where: {
+            items: {
+              some: { designId }
+            }
+          }
         })
+
+        if (orderCount > 0) {
+          return NextResponse.json(
+            { error: 'Cannot delete design with existing orders. Please deactivate instead.' },
+            { status: 400 }
+          )
+        }
 
         if (design) {
           // Delete associated records first
@@ -71,6 +106,9 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+        // Revalidate public listings after deletion as a safety
+        revalidatePath('/')
+        revalidatePath('/designs')
         break
 
       default:

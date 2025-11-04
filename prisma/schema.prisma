@@ -82,7 +82,8 @@ model Design {
   ownershipPrice Float?  // Higher price for ownership option
   imageUrl     String   // Primary/thumbnail image for listings
   thumbnailUrl String?
-  tags         String?
+  // Tags: store as array for efficient filtering
+  tags         String[]
   category     String
   isActive     Boolean  @default(true)
   approvalStatus String @default("PENDING") // PENDING, APPROVED, REJECTED
@@ -109,6 +110,14 @@ model Design {
   mediaFiles DesignMedia[]
 
   @@index([designerId])
+  // Query performance indexes for public discovery and sorting
+  // Common filters: isActive=true, isOwned=false, optional category, price range
+  // Common sorts: createdAt desc (newest), totalSales desc (best sellers), price asc/desc
+  @@index([isActive, isOwned, createdAt])
+  @@index([category])
+  @@index([price])
+  @@index([totalSales])
+  @@index([tags])
   @@map("designs")
 }
 

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import archiver from 'archiver'
-import { Readable } from 'stream'
+import { PassThrough } from 'stream'
 
 export async function GET(
   _req: NextRequest,
@@ -61,11 +61,11 @@ export async function GET(
             if (!res.ok || !res.body) {
               continue
             }
-            // Convert Web ReadableStream to Node stream for archiver
-            const nodeStream = Readable.fromWeb(res.body as any)
-            archive.append(nodeStream, { name: `${folder}/${mf.fileName || 'file'}` })
+            // Simpler and type-safe: buffer the response body and append as Buffer
+            const arrayBuffer = await res.arrayBuffer()
+            archive.append(Buffer.from(arrayBuffer), { name: `${folder}/${mf.fileName || 'file'}` })
           }
-        } catch (e) {
+        } catch {
           // Skip problematic file
           continue
         }
@@ -73,15 +73,22 @@ export async function GET(
     }
   }
 
-  // Finalize after next tick so the stream is set up
-  const body = Readable.toWeb(archive as unknown as any) as unknown as ReadableStream
-  // Kick off finalize asynchronously
-  setImmediate(() => {
-    archive.finalize().catch((e) => console.error('zip finalize error', e))
+  // Pipe archive to PassThrough and collect into a single buffer
+  const pass = new PassThrough()
+  const chunks: Buffer[] = []
+  pass.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)))
+  pass.on('error', (e) => console.error('zip stream error', e))
+  archive.pipe(pass)
+
+  await archive.finalize()
+  await new Promise<void>((resolve, reject) => {
+    pass.on('end', () => resolve())
+    pass.on('error', (err) => reject(err))
   })
 
+  const zipBuffer = Buffer.concat(chunks)
   const fileName = `order_${order.orderNumber || order.id}.zip`
-  return new Response(body, {
+  return new Response(new Uint8Array(zipBuffer), {
     headers: {
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${fileName}"`,

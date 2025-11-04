@@ -212,6 +212,21 @@ export default function EnhancedUploadPage() {
             <p className="text-gray-600 mt-1">Share your fashion designs with multiple media files</p>
           </div>
 
+          {/* Policy notice: deletion vs deactivation */}
+          <div className="mx-6 mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-indigo-600 mt-0.5" />
+              <div className="text-sm text-indigo-900">
+                <p className="font-medium">Important:</p>
+                <p className="mt-1">
+                  Once a design has been purchased, it cannot be deleted by the seller. If you need it taken down, please request
+                  an admin <span className="font-medium">deactivation</span> instead. Prior purchasers will retain access.
+                  See our <a href="/terms" className="text-indigo-700 underline">Terms of Service</a> for details.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Success Message */}
           {successMessage && (
             <div className="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">

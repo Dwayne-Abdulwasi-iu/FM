@@ -76,7 +76,7 @@ function OrderDetailsInner() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{error ?? 'Order Not Found'}</h1>
           <Link href="/profile/orders" className="text-indigo-600 hover:text-indigo-800">Back to Orders</Link>
         </div>
       </div>

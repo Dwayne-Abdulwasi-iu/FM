@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
+import { revalidatePath } from 'next/cache'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
     const price = parseFloat(formData.get('price') as string)
     const ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
     const category = formData.get('category') as string
-    const tags = formData.get('tags') as string
+  const tagsRaw = formData.get('tags') as string
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'
 
     // Get all files and metadata
@@ -233,6 +234,13 @@ export async function POST(request: NextRequest) {
       thumbnailUrl = '/images/placeholder-design.svg'
     }
 
+    // Normalize tags to string[]
+    const tags: string[] = (tagsRaw || '')
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .filter((t, i, arr) => arr.indexOf(t) === i)
+
     // Create design record in database with media files
     const design = await prisma.design.create({
       data: {
@@ -243,7 +251,7 @@ export async function POST(request: NextRequest) {
         imageUrl: primaryImageUrl,
         thumbnailUrl,
         category,
-        tags: tags || null,
+        tags,
         buyingTypes,
         designerId: session.user.id,
         approvalStatus: 'PENDING', // All uploads require approval
@@ -263,6 +271,11 @@ export async function POST(request: NextRequest) {
         mediaFiles: true
       }
     })
+
+    try {
+      revalidatePath('/')
+      revalidatePath('/designs')
+    } catch {}
 
     return NextResponse.json({
       id: design.id,

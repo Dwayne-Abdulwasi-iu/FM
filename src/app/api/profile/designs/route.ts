@@ -51,6 +51,9 @@ export async function GET(request: NextRequest) {
       category: design.category,
       tags: design.tags,
       isActive: design.isActive,
+      isOwned: design.isOwned,
+      totalSales: design.totalSales,
+      totalRevenue: design.totalRevenue,
       createdAt: design.createdAt,
       updatedAt: design.updatedAt,
       salesCount: design._count.orderItems
@@ -115,11 +118,11 @@ export async function PATCH(request: NextRequest) {
 
     switch (action) {
       case 'toggle':
-        updatedDesign = await prisma.design.update({
-          where: { id: designId },
-          data: { isActive: !design.isActive }
-        })
-        break
+        // Sellers are not allowed to activate/deactivate designs; admin only
+        return NextResponse.json(
+          { message: 'Only admins can activate/deactivate designs. Please contact support.' },
+          { status: 403 }
+        )
 
       case 'delete':
         // Check if design has any orders
@@ -163,6 +166,101 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     console.error('Design action error:', error)
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+  let body: { designId?: string } | null
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { message: 'Request body required' },
+        { status: 400 }
+      )
+    }
+
+  const { designId } = body || {}
+
+    if (!designId) {
+      return NextResponse.json(
+        { message: 'Design ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify the design belongs to the user
+    const design = await prisma.design.findFirst({
+      where: {
+        id: designId,
+        designerId: session.user.id
+      }
+    })
+
+    if (!design) {
+      return NextResponse.json(
+        { message: 'Design not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    // Prevent deletion if there are any orders containing the design
+    const orderCount = await prisma.order.count({
+      where: {
+        items: {
+          some: { designId }
+        }
+      }
+    })
+
+    if (orderCount > 0) {
+      return NextResponse.json(
+        { message: 'Cannot delete design with existing orders' },
+        { status: 400 }
+      )
+    }
+
+    // Prevent deletion if design has been sold as ownership or is currently owned
+    if (design.isOwned) {
+      return NextResponse.json(
+        { message: 'Cannot delete owned design. Please deactivate instead.' },
+        { status: 400 }
+      )
+    }
+
+    const ownershipPurchases = await prisma.purchase.count({
+      where: { designId, purchaseType: 'OWNERSHIP' }
+    })
+
+    if (ownershipPurchases > 0) {
+      return NextResponse.json(
+        { message: 'Cannot delete design that has been purchased with ownership.' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.design.delete({ where: { id: designId } })
+
+    return NextResponse.json({
+      message: 'Design deleted successfully',
+      deleted: true
+    })
+  } catch (error) {
+    console.error('Design delete error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

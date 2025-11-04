@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
           </div>
           
           <p className="text-gray-600">
-            Last updated: October 27, 2025
+            Last updated: November 4, 2025
           </p>
         </div>
 
@@ -82,6 +82,16 @@ export default function TermsOfServicePage() {
                 <p>
                   <strong>Prohibited Content:</strong> You may not upload content that is illegal, harmful, threatening, abusive, harassing, defamatory, vulgar, obscene, or otherwise objectionable.
                 </p>
+                <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">3.1 Deletion and Deactivation of Designs</h3>
+                  <ul className="list-disc list-inside space-y-2">
+                    <li><strong>Before any sale:</strong> Designers may remove their own listings, subject to moderation and policy compliance.</li>
+                    <li><strong>After a sale occurs:</strong> To preserve order history and purchased access, designers cannot delete a design that has been bought by any customer.</li>
+                    <li><strong>Admin-only deactivation:</strong> If you need a listing taken down after it has been purchased, you may request deactivation by contacting support. Deactivation hides the design from discovery and prevents future purchases, but <em>does not</em> revoke access for prior purchasers or remove the item from their order history.</li>
+                    <li><strong>Ownership purchases:</strong> If a design is sold with ownership, it will be marked accordingly and no longer offered for sale. Deletion is not permitted; deactivation remains an admin function when appropriate.</li>
+                    <li><strong>How to request deactivation:</strong> Submit a request via our <Link href="/contact" className="text-indigo-700 underline">Contact</Link> page including the design title/ID and reason for deactivation.</li>
+                  </ul>
+                </div>
               </div>
             </section>
 

@@ -55,6 +55,25 @@ export async function POST(request: NextRequest) {
 
       console.log('Processing Paystack payment:', { reference, amount, currency })
 
+      // Idempotency: if we've already processed this reference, acknowledge and exit early
+      try {
+        const existing = await prisma.order.findFirst({
+          where: {
+            OR: [
+              { orderNumber: reference },
+              { stripePaymentIntentId: reference }
+            ]
+          },
+          select: { id: true, status: true }
+        })
+        if (existing) {
+          console.log('Duplicate Paystack webhook detected; already processed order:', existing.id)
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+      } catch (checkErr) {
+        console.warn('Idempotency check failed; continuing with caution:', checkErr)
+      }
+
       // Get metadata
       const userId = metadata?.userId
   // platformFee may be included in NGN via metadata, but we will compute USD equivalent from originalAmountUSD
