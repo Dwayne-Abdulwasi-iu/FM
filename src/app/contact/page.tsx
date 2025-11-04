@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Phone, MapPin, Send, CheckCircle, X, MessageCircle } from 'lucide-react'
 
-export default function ContactPage() {
+function ContactContent() {
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -277,5 +277,14 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Wrap useSearchParams usage in a Suspense boundary to satisfy Next.js prerendering
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 py-12" />}> 
+      <ContactContent />
+    </Suspense>
   )
 }
