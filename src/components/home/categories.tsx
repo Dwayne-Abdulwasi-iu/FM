@@ -63,19 +63,19 @@ export function Categories() {
   <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-white text-center mb-4">Browse by Categories</h2>
         <p className="text-white text-center mb-12">Explore different types of fashion designs and illustrations</p>
-  <div className="grid grid-cols-2 gap-6">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
           {CATEGORY_LIST.map((category) => (
             <button
               key={category.name}
               onClick={() => handleClick(category.name)}
-              className="bg-white rounded-lg shadow-md border border-gray-200 p-4 xs:p-5 md:p-6 text-center hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group"
+              className="h-full bg-white rounded-lg shadow-md border border-gray-200 p-4 xs:p-5 md:p-6 text-center hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer group flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{category.image}</div>
               <h3 className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-indigo-700">{category.name}</h3>
               <p className="text-gray-700 font-medium">
                 {loading ? 'Loading...' : `${(counts[category.name] ?? 0).toLocaleString()} designs`}
               </p>
-              <div className="mt-3 text-indigo-700 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-auto pt-3 text-indigo-700 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                 Explore →
               </div>
             </button>

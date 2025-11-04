@@ -115,12 +115,39 @@ export default function AdminDashboard() {
   const [ordMinTotal, setOrdMinTotal] = useState<string>('')
   const [ordMaxTotal, setOrdMaxTotal] = useState<string>('')
   const [ordPurchaseType, setOrdPurchaseType] = useState<'ALL' | 'REGULAR' | 'OWNERSHIP'>('ALL')
+  const [ordTimeframe, setOrdTimeframe] = useState<'7d' | '30d' | 'all'>('all')
   const [ordPage, setOrdPage] = useState<number>(1)
   const [ordPageSize, setOrdPageSize] = useState<number>(50)
   const [ordTotal, setOrdTotal] = useState<number>(0)
   const [ordSortBy, setOrdSortBy] = useState<'date' | 'total' | 'customer' | 'orderNumber'>('date')
   const [ordSortOrder, setOrdSortOrder] = useState<'asc' | 'desc'>('desc')
   const [isOrderExporting, setIsOrderExporting] = useState<boolean>(false)
+
+  // Persist Orders page size across sessions
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('admin.orders.pageSize') : null
+      if (saved) {
+        const n = parseInt(saved, 10)
+        if ([10, 25, 50, 100, 200].includes(n)) {
+          setOrdPageSize(n)
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin.orders.pageSize', String(ordPageSize))
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [ordPageSize])
   const [exclusiveSales, setExclusiveSales] = useState<ExclusiveSale[]>([])
   // Exclusive Sales pagination meta
   const [exPage, setExPage] = useState<number>(1)
@@ -139,6 +166,7 @@ export default function AdminDashboard() {
   const [exSellerQuery, setExSellerQuery] = useState('')
   const [exFromDate, setExFromDate] = useState<string>('')
   const [exToDate, setExToDate] = useState<string>('')
+  const [exTimeframe, setExTimeframe] = useState<'7d' | '30d' | 'all'>('all')
   const [exOrderQuery, setExOrderQuery] = useState<string>('')
   // With server-side filtering, the list received is already filtered
   const filteredExclusiveSales = exclusiveSales
@@ -402,6 +430,21 @@ export default function AdminDashboard() {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 5000) // Auto-hide after 5 seconds
   }
+
+  // Overview quick filters
+  const [ovTimeframe, setOvTimeframe] = useState<'7d' | '30d' | 'all'>('7d')
+  const [ovStatus, setOvStatus] = useState<'ALL' | 'COMPLETED' | 'PENDING' | 'FAILED'>('ALL')
+
+  const overviewOrders = useMemo(() => {
+    const now = Date.now()
+    const minTime = ovTimeframe === '7d' ? now - 7 * 24 * 60 * 60 * 1000
+                  : ovTimeframe === '30d' ? now - 30 * 24 * 60 * 60 * 1000
+                  : 0
+    return (orders || [])
+      .filter(o => (ovStatus === 'ALL' ? true : o.status === ovStatus))
+      .filter(o => (minTime === 0 ? true : new Date(o.createdAt).getTime() >= minTime))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [orders, ovStatus, ovTimeframe])
 
   
 
@@ -845,24 +888,40 @@ export default function AdminDashboard() {
                     <Link href="#orders" onClick={() => setActiveTab('orders')} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Go to Orders</Link>
                   </div>
                 </div>
+                {/* Quick filters for overview */}
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Time:</span>
+                    <button onClick={() => setOvTimeframe('7d')} className={`px-2 py-1 rounded ${ovTimeframe==='7d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>7d</button>
+                    <button onClick={() => setOvTimeframe('30d')} className={`px-2 py-1 rounded ${ovTimeframe==='30d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>30d</button>
+                    <button onClick={() => setOvTimeframe('all')} className={`px-2 py-1 rounded ${ovTimeframe==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Status:</span>
+                    <button onClick={() => setOvStatus('ALL')} className={`px-2 py-1 rounded ${ovStatus==='ALL'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
+                    <button onClick={() => setOvStatus('COMPLETED')} className={`px-2 py-1 rounded ${ovStatus==='COMPLETED'?'bg-green-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Completed</button>
+                    <button onClick={() => setOvStatus('PENDING')} className={`px-2 py-1 rounded ${ovStatus==='PENDING'?'bg-yellow-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Pending</button>
+                    <button onClick={() => setOvStatus('FAILED')} className={`px-2 py-1 rounded ${ovStatus==='FAILED'?'bg-red-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Failed</button>
+                  </div>
+                </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Buyer</label>
-                      <input type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      <label htmlFor="ov-buyer" className="block text-xs text-gray-600 mb-1">Buyer</label>
+                      <input id="ov-buyer" type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" aria-label="Filter recent activity by buyer" />
                     </div>
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Order #</label>
-                      <input type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      <label htmlFor="ov-order" className="block text-xs text-gray-600 mb-1">Order #</label>
+                      <input id="ov-order" type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" aria-label="Filter recent activity by order number" />
                     </div>
                     <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">From</label>
-                        <input type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                        <label htmlFor="ov-from" className="block text-xs text-gray-600 mb-1">From</label>
+                        <input id="ov-from" type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="Start date" aria-label="Start date" />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">To</label>
-                        <input type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                        <label htmlFor="ov-to" className="block text-xs text-gray-600 mb-1">To</label>
+                        <input id="ov-to" type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="End date" aria-label="End date" />
                       </div>
                     </div>
                   </div>
@@ -875,19 +934,40 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {orders.slice(0, 5).map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">Order #{order.orderNumber}</p>
-                        <p className="text-sm text-gray-600">{order.customer.name} - {order.customer.email}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900">{formatPrice(order.totalAmount)}</p>
-                        <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  ))}
+                {/* Compact, scrollable recent orders table */}
+                <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Fee</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {overviewOrders.slice(0, 20).map((order) => (
+                        <tr key={order.id} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                          <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">#{order.orderNumber}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
+                            <div className="truncate max-w-[14rem] md:max-w-[18rem]" title={`${order.customer.name || ''} ${order.customer.email}`}>
+                              {order.customer.name || order.customer.email}
+                              <span className="text-gray-500">{order.customer.name ? ` — ${order.customer.email}` : ''}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-green-700 text-right">{formatPrice(computePlatformFeeUSD(order))}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">{formatPrice(order.totalAmount)}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3 text-right">
+                  <Link href="#orders" onClick={() => setActiveTab('orders')} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    View all orders →
+                  </Link>
                 </div>
               </div>
             )}
@@ -1127,33 +1207,64 @@ export default function AdminDashboard() {
             {activeTab === 'orders' && (
               <div>
                 <h3 id="orders" className="text-lg font-semibold text-gray-900 mb-6">Order Management</h3>
+                {/* Quick chips: timeframe and status */}
+                <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Time:</span>
+                    <button
+                      onClick={() => { setOrdTimeframe('7d'); setOrdFromDate(new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)); setOrdToDate(''); setOrdPage(1) }}
+                      className={`px-2 py-1 rounded ${ordTimeframe==='7d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >7d</button>
+                    <button
+                      onClick={() => { setOrdTimeframe('30d'); setOrdFromDate(new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10)); setOrdToDate(''); setOrdPage(1) }}
+                      className={`px-2 py-1 rounded ${ordTimeframe==='30d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >30d</button>
+                    <button
+                      onClick={() => { setOrdTimeframe('all'); setOrdFromDate(''); setOrdToDate(''); setOrdPage(1) }}
+                      className={`px-2 py-1 rounded ${ordTimeframe==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >All</button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Status:</span>
+                    <button onClick={() => { setOrdStatus('ALL'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordStatus==='ALL'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
+                    <button onClick={() => { setOrdStatus('COMPLETED'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordStatus==='COMPLETED'?'bg-green-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Completed</button>
+                    <button onClick={() => { setOrdStatus('PENDING'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordStatus==='PENDING'?'bg-yellow-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Pending</button>
+                    <button onClick={() => { setOrdStatus('FAILED'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordStatus==='FAILED'?'bg-red-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Failed</button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Type:</span>
+                    <button onClick={() => { setOrdPurchaseType('ALL'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordPurchaseType==='ALL'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
+                    <button onClick={() => { setOrdPurchaseType('REGULAR'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordPurchaseType==='REGULAR'?'bg-blue-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Regular</button>
+                    <button onClick={() => { setOrdPurchaseType('OWNERSHIP'); setOrdPage(1) }} className={`px-2 py-1 rounded ${ordPurchaseType==='OWNERSHIP'?'bg-purple-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Ownership</button>
+                  </div>
+                </div>
                 {/* Filters */}
                 <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Buyer</label>
-                      <input type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      <label htmlFor="ord-buyer" className="block text-xs text-gray-600 mb-1">Buyer</label>
+                      <input id="ord-buyer" type="text" value={ordBuyerQuery} onChange={(e)=>{ setOrdBuyerQuery(e.target.value); setOrdPage(1); }} placeholder="Name or email" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" aria-label="Filter by buyer name or email" />
                     </div>
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Order #</label>
-                      <input type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" />
+                      <label htmlFor="ord-order" className="block text-xs text-gray-600 mb-1">Order #</label>
+                      <input id="ord-order" type="text" value={ordOrderQuery} onChange={(e)=>{ setOrdOrderQuery(e.target.value); setOrdPage(1); }} placeholder="e.g. ORD-10023" className="w-full px-3 py-2 border border-gray-300 rounded text-black placeholder-gray-500" aria-label="Filter by order number" />
                     </div>
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Status</label>
-                      <select value={ordStatus} onChange={(e)=>{ setOrdStatus(e.target.value as 'ALL' | 'PENDING' | 'COMPLETED' | 'FAILED'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black"><option value="ALL">All</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="FAILED">Failed</option></select>
+                      <label htmlFor="ord-status" className="block text-xs text-gray-600 mb-1">Status</label>
+                      <select id="ord-status" value={ordStatus} onChange={(e)=>{ setOrdStatus(e.target.value as 'ALL' | 'PENDING' | 'COMPLETED' | 'FAILED'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="Filter by order status" aria-label="Filter by order status"><option value="ALL">All</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="FAILED">Failed</option></select>
                     </div>
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs text-gray-600 mb-1">Purchase Type</label>
-                      <select value={ordPurchaseType} onChange={(e)=>{ setOrdPurchaseType(e.target.value as 'ALL' | 'REGULAR' | 'OWNERSHIP'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black"><option value="ALL">All</option><option value="REGULAR">Regular</option><option value="OWNERSHIP">Ownership</option></select>
+                      <label htmlFor="ord-purchase-type" className="block text-xs text-gray-600 mb-1">Purchase Type</label>
+                      <select id="ord-purchase-type" value={ordPurchaseType} onChange={(e)=>{ setOrdPurchaseType(e.target.value as 'ALL' | 'REGULAR' | 'OWNERSHIP'); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="Filter by purchase type" aria-label="Filter by purchase type"><option value="ALL">All</option><option value="REGULAR">Regular</option><option value="OWNERSHIP">Ownership</option></select>
                     </div>
                     <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">From</label>
-                        <input type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                        <label htmlFor="ord-from" className="block text-xs text-gray-600 mb-1">From</label>
+                        <input id="ord-from" type="date" value={ordFromDate} onChange={(e)=>{ setOrdFromDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="Start date" aria-label="Start date" />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">To</label>
-                        <input type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" />
+                        <label htmlFor="ord-to" className="block text-xs text-gray-600 mb-1">To</label>
+                        <input id="ord-to" type="date" value={ordToDate} onChange={(e)=>{ setOrdToDate(e.target.value); setOrdPage(1); }} className="w-full px-3 py-2 border border-gray-300 rounded text-black" title="End date" aria-label="End date" />
                       </div>
                     </div>
                     <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-2">
@@ -1172,12 +1283,23 @@ export default function AdminDashboard() {
                       {ordTotal > 0 ? (()=>{ const start=(ordPage-1)*ordPageSize+1; const end=Math.min(ordPage*ordPageSize, ordTotal); return <span>Showing {start}-{end} of {ordTotal} results</span>; })() : <span>Showing results matching your filters</span>}
                     </div>
                     <div className="flex gap-2 items-center">
-                      <button onClick={()=>{ setOrdBuyerQuery(''); setOrdOrderQuery(''); setOrdFromDate(''); setOrdToDate(''); setOrdMinTotal(''); setOrdMaxTotal(''); setOrdStatus('ALL'); setOrdPurchaseType('ALL'); setOrdSortBy('date'); setOrdSortOrder('desc'); setOrdPageSize(50); setOrdPage(1); fetchOrders(); }} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Reset all</button>
+                      <button onClick={()=>{ setOrdBuyerQuery(''); setOrdOrderQuery(''); setOrdFromDate(''); setOrdToDate(''); setOrdMinTotal(''); setOrdMaxTotal(''); setOrdStatus('ALL'); setOrdPurchaseType('ALL'); setOrdSortBy('date'); setOrdSortOrder('desc'); setOrdPageSize(50); setOrdTimeframe('all'); setOrdPage(1); fetchOrders(); }} className="px-3 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200">Reset all</button>
                       <label className="text-xs text-gray-500" htmlFor="ord-page-size">Rows per page</label>
-                      <select id="ord-page-size" value={ordPageSize} onChange={(e)=>{ setOrdPageSize(parseInt(e.target.value,10) || 50); setOrdPage(1); }} className="px-2 py-1 border border-gray-300 rounded text-sm text-black">{[10,25,50,100,200].map(n=> <option key={n} value={n}>{n}</option>)}</select>
+                      <select id="ord-page-size" value={ordPageSize} onChange={(e)=>{ setOrdPageSize(parseInt(e.target.value,10) || 50); setOrdPage(1); }} className="px-2 py-1 border border-gray-300 rounded text-sm text-black" aria-label="Rows per page">{[10,25,50,100,200].map(n=> <option key={n} value={n}>{n}</option>)}</select>
+                      {/* Desktop-only quick size chips */}
+                      <div className="hidden md:flex items-center gap-1 ml-1" aria-label="Quick rows per page">
+                        {[25,50,100].map(sz => (
+                          <button
+                            key={sz}
+                            onClick={() => { setOrdPageSize(sz); setOrdPage(1) }}
+                            className={`px-2 py-1 rounded ${ordPageSize===sz?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            title={`Show ${sz} rows per page`}
+                          >{sz}</button>
+                        ))}
+                      </div>
                       <button onClick={()=> setOrdPage(p => Math.max(1, p-1))} disabled={ordPage<=1} className={`px-2 py-1 text-sm rounded ${ordPage<=1?'bg-gray-100 text-gray-400 cursor-not-allowed':'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Prev</button>
                       <span className="text-xs text-gray-600 px-1">Page {ordPage}{ordTotal>0?` of ${Math.max(1, Math.ceil(ordTotal/ordPageSize))}`:''}</span>
-                      <input type="number" min={1} max={Math.max(1, Math.ceil(ordTotal/ordPageSize))} value={ordPage} onChange={(e)=>{ const v=parseInt(e.target.value||'1',10); if(!Number.isNaN(v)) setOrdPage(Math.min(Math.max(1,v), Math.max(1, Math.ceil(ordTotal/ordPageSize)))) }} className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-black" title="Go to page" />
+                      <input type="number" min={1} max={Math.max(1, Math.ceil(ordTotal/ordPageSize))} value={ordPage} onChange={(e)=>{ const v=parseInt(e.target.value||'1',10); if(!Number.isNaN(v)) setOrdPage(Math.min(Math.max(1,v), Math.max(1, Math.ceil(ordTotal/ordPageSize)))) }} className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-black" title="Go to page" aria-label="Go to page" />
                       <button onClick={()=> setOrdPage(p => p + 1)} disabled={ordTotal>0 ? ordPage >= Math.ceil(ordTotal/ordPageSize) : orders.length < ordPageSize} className={`px-2 py-1 text-sm rounded ${ordTotal>0 && ordPage >= Math.ceil(ordTotal/ordPageSize) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Next</button>
                       <button onClick={exportAllOrders} disabled={isOrderExporting} className={`px-3 py-2 text-sm rounded text-white ${isOrderExporting ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{isOrderExporting ? 'Exporting…' : 'Export all CSV'}</button>
                     </div>
@@ -1257,6 +1379,24 @@ export default function AdminDashboard() {
             {activeTab === 'exclusive' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Exclusive Sales</h3>
+                {/* Quick chips: timeframe */}
+                <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Time:</span>
+                    <button
+                      onClick={() => { setExTimeframe('7d'); setExFromDate(new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)); setExToDate(''); setExPage(1) }}
+                      className={`px-2 py-1 rounded ${exTimeframe==='7d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >7d</button>
+                    <button
+                      onClick={() => { setExTimeframe('30d'); setExFromDate(new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10)); setExToDate(''); setExPage(1) }}
+                      className={`px-2 py-1 rounded ${exTimeframe==='30d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >30d</button>
+                    <button
+                      onClick={() => { setExTimeframe('all'); setExFromDate(''); setExToDate(''); setExPage(1) }}
+                      className={`px-2 py-1 rounded ${exTimeframe==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >All</button>
+                  </div>
+                </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 xs:p-3">
                   <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div className="col-span-1 md:col-span-2">
@@ -1558,25 +1698,25 @@ export default function AdminDashboard() {
 
             {activeTab === 'earnings' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Platform Earnings Report</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Earnings Report</h3>
                 {stats && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-green-50 rounded-lg p-6">
-                      <h4 className="text-lg font-medium text-green-900">Total Commission Earned</h4>
-                      <p className="text-3xl font-bold text-green-600">{formatPrice(stats.platformEarnings)}</p>
-                      <p className="text-sm text-green-700">5% of all sales</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <h4 className="text-base font-medium text-green-900">Total Commission Earned</h4>
+                      <p className="text-2xl font-bold text-green-600">{formatPrice(stats.platformEarnings)}</p>
+                      <p className="text-xs text-green-700">5% of all sales</p>
                     </div>
-                    <div className="bg-blue-50 rounded-lg p-6">
-                      <h4 className="text-lg font-medium text-blue-900">Total Sales Volume</h4>
-                      <p className="text-3xl font-bold text-blue-600">{formatPrice(stats.totalRevenue)}</p>
-                      <p className="text-sm text-blue-700">{stats.totalOrders} orders processed</p>
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h4 className="text-base font-medium text-blue-900">Total Sales Volume</h4>
+                      <p className="text-2xl font-bold text-blue-600">{formatPrice(stats.totalRevenue)}</p>
+                      <p className="text-xs text-blue-700">{stats.totalOrders} orders processed</p>
                     </div>
-                    <div className="bg-purple-50 rounded-lg p-6">
-                      <h4 className="text-lg font-medium text-purple-900">Average Order Value</h4>
-                      <p className="text-3xl font-bold text-purple-600">
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <h4 className="text-base font-medium text-purple-900">Average Order Value</h4>
+                      <p className="text-2xl font-bold text-purple-600">
                         {formatPrice(stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders) : 0)}
                       </p>
-                      <p className="text-sm text-purple-700">Per transaction</p>
+                      <p className="text-xs text-purple-700">Per transaction</p>
                     </div>
                   </div>
                 )}

@@ -49,7 +49,7 @@ export function FeaturedDesigns() {
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Featured Designs</h2>
           <p className="text-gray-700 text-center mb-12">Discover trending and popular fashion designs from our community</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 lg:gap-5 xl:gap-6">
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
                 <div className="aspect-square bg-gray-200"></div>
@@ -86,7 +86,7 @@ export function FeaturedDesigns() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 lg:gap-5 xl:gap-6">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-xl transition-shadow transition-transform duration-200 ease-out hover:-translate-y-0.5">
                 <div className="aspect-square relative">
@@ -107,7 +107,7 @@ export function FeaturedDesigns() {
                     <span className="text-xl xs:text-2xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
                     <Link
                       href={`/designs/${design.id}`}
-                      className="inline-flex items-center rounded-md bg-indigo-700 text-white px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm font-medium shadow-sm hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                      className="inline-flex items-center rounded-md bg-indigo-700 text-white px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm font-medium shadow-sm hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
                     >
                       View Details
                     </Link>
