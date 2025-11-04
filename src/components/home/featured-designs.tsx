@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import SafeImage from '@/components/ui/safe-image'
+import { Eye } from 'lucide-react'
 
 interface Design {
   id: string
@@ -103,16 +104,19 @@ export function FeaturedDesigns() {
                   <p className="text-gray-600 mb-4">
                     by {design.designer.name || design.designer.email}
                   </p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xl xs:text-2xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
-                    <Link
-                      href={`/designs/${design.id}`}
-                      className="inline-flex items-center rounded-md bg-indigo-700 text-white px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm font-medium shadow-sm hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
-                    >
-                      View Details
-                    </Link>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg xs:text-xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
                   </div>
-                  <div className="mt-3 flex justify-between items-center">
+                  {/* View Details Button to match Designs page */}
+                  <Link
+                    href={`/designs/${design.id}`}
+                    aria-label="View details"
+                    className="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors font-medium mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </Link>
+                  <div className="mt-2 flex justify-between items-center">
                     <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded font-medium">
                       {design.category}
                     </span>
