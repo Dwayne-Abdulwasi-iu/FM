@@ -102,8 +102,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let verifiedAccountName = accountName
-    let isVerified = false
+  let verifiedAccountName = accountName
+  let isVerified = false
+  let responseNote: string | undefined
+  let bankSuggestedName: string | undefined
 
     // Verify bank account with Paystack (only if configured)
     try {
@@ -125,32 +127,27 @@ export async function POST(request: NextRequest) {
       console.log('Paystack verification response:', verification)
 
       if (!verification.status) {
-        return NextResponse.json(
-          { message: `Bank verification failed: ${verification.message || 'Invalid account details'}` },
-          { status: 400 }
-        )
+        // Do not hard fail here; proceed to save as unverified and inform the client
+        responseNote = `Bank verification could not be completed: ${verification.message || 'Invalid or unavailable account details'}`
+      } else {
+        // More flexible name matching - remove special characters and extra spaces
+        const normalizedInputName = accountName.toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim()
+        const normalizedBankName = (verification.data.account_name || '').toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim()
+        
+        console.log('Name comparison:', { input: normalizedInputName, bank: normalizedBankName })
+
+        // Check if names are similar (at least 70% match)
+        const similarity = calculateSimilarity(normalizedInputName, normalizedBankName)
+        if (similarity < 0.7) {
+          // Don't block account creation; save as unverified and return suggested bank name for user awareness
+          bankSuggestedName = verification.data.account_name
+          responseNote = `Account name differs from bank records. Bank shows: "${verification.data.account_name}". You can proceed and verify later.`
+        } else {
+          verifiedAccountName = verification.data.account_name
+          isVerified = true
+        }
       }
 
-      // More flexible name matching - remove special characters and extra spaces
-      const normalizedInputName = accountName.toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim()
-      const normalizedBankName = verification.data.account_name.toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim()
-      
-      console.log('Name comparison:', { input: normalizedInputName, bank: normalizedBankName })
-
-      // Check if names are similar (at least 70% match)
-      const similarity = calculateSimilarity(normalizedInputName, normalizedBankName)
-      if (similarity < 0.7) {
-        return NextResponse.json(
-          { 
-            message: `Account name mismatch. Bank shows: "${verification.data.account_name}". Please enter the exact name.`,
-            bankAccountName: verification.data.account_name
-          },
-          { status: 400 }
-        )
-      }
-
-      verifiedAccountName = verification.data.account_name
-      isVerified = true
 
     } catch (verifyError: unknown) {
       console.error('Bank verification error:', verifyError)
@@ -179,9 +176,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // For development or when Paystack is not configured, allow account creation without verification
-      console.log('Skipping verification, creating account anyway as unverified...')
-      isVerified = false
+  // For development or when Paystack is not configured, allow account creation without verification
+  console.log('Skipping verification, creating account anyway as unverified...')
+  isVerified = false
     }
 
     // Create transfer recipient on Paystack
@@ -237,7 +234,8 @@ export async function POST(request: NextRequest) {
       sellerAccount,
       message: isVerified 
         ? 'Bank account verified and added successfully' 
-        : 'Bank account added successfully (verification pending)'
+        : `Bank account added successfully (verification pending)${responseNote ? `. ${responseNote}` : ''}`,
+      bankAccountName: bankSuggestedName
     })
 
   } catch (error) {

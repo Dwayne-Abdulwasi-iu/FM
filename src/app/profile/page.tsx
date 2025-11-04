@@ -529,6 +529,7 @@ function SellerAccountTab({
     bankCode: '',
     bankName: ''
   })
+  const [pendingBankNameSuggestion, setPendingBankNameSuggestion] = useState<string | null>(null)
   const [showManualVerifyModal, setShowManualVerifyModal] = useState(false)
   const [manualVerifyContext, setManualVerifyContext] = useState<{ message: string } | null>(null)
   const [manualConfirming, setManualConfirming] = useState(false)
@@ -586,6 +587,11 @@ function SellerAccountTab({
       if (response.ok) {
         const data = await response.json()
         setSellerAccount(data.sellerAccount)
+        if (data.bankAccountName && data.bankAccountName !== formData.accountName) {
+          setPendingBankNameSuggestion(data.bankAccountName as string)
+        } else {
+          setPendingBankNameSuggestion(null)
+        }
         setShowForm(false)
         onSuccess(data.message || 'Bank account added successfully!')
       } else {
@@ -621,6 +627,7 @@ function SellerAccountTab({
 
       if (data.success) {
         setSellerAccount(data.sellerAccount)
+        setPendingBankNameSuggestion(null)
         if (data.manualVerification) {
           onSuccess(`${data.message}${data.note ? ` — ${data.note}` : ''}`)
         } else {
@@ -704,6 +711,45 @@ function SellerAccountTab({
               {sellerAccount.isVerified ? 'Verified' : 'Pending Verification'}
             </span>
           </div>
+          {(!sellerAccount.isVerified && pendingBankNameSuggestion && pendingBankNameSuggestion !== sellerAccount.accountName) && (
+            <div className="mb-4 p-3 rounded-lg border border-yellow-200 bg-yellow-50 text-yellow-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Bank suggested a different account name</p>
+                  <p className="text-sm mt-1">Bank shows: <span className="font-semibold">{pendingBankNameSuggestion}</span></p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/seller/account', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          accountNumber: sellerAccount.accountNumber,
+                          bankCode: sellerAccount.bankCode,
+                          bankName: sellerAccount.bankName,
+                          accountName: pendingBankNameSuggestion
+                        })
+                      })
+                      const data = await res.json()
+                      if (res.ok) {
+                        setSellerAccount(data.sellerAccount)
+                        setPendingBankNameSuggestion(null)
+                        onSuccess('Updated to bank’s account name. You can now try verifying again.')
+                      } else {
+                        onError(data.message || 'Could not update account name.')
+                      }
+                    } catch {
+                      onError('Could not update account name. Please try again.')
+                    }
+                  }}
+                  className="shrink-0 inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-yellow-600 text-white hover:bg-yellow-700"
+                >
+                  Use bank’s name
+                </button>
+              </div>
+            </div>
+          )}
           <div className="space-y-2 text-sm">
             <p><span className="font-medium">Account Name:</span> {sellerAccount.accountName}</p>
             <p><span className="font-medium">Account Number:</span> {sellerAccount.accountNumber}</p>
@@ -772,10 +818,15 @@ function SellerAccountTab({
             <input
               type="text"
               value={formData.accountNumber}
-              onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+              onChange={(e) => {
+                const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                setFormData({ ...formData, accountNumber: onlyDigits })
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
               placeholder="1234567890"
               maxLength={10}
+              inputMode="numeric"
+              pattern="\\d{10}"
               required
             />
           </div>
