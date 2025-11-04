@@ -155,12 +155,70 @@ export async function POST() {
 
       } else {
         console.error('Paystack verification failed:', verification)
+        // Handle known invalid inputs explicitly
+        const vMsg = verification.message?.toLowerCase() || ''
+        if (vMsg.includes('invalid account number')) {
+          return NextResponse.json(
+            { success: false, message: 'Invalid account number. Please check your account number and try again.', errorCode: 'INVALID_ACCOUNT' },
+            { status: 400 }
+          )
+        }
+        if (vMsg.includes('invalid bank code')) {
+          return NextResponse.json(
+            { success: false, message: 'Bank code issue. Please try re-adding your account with a different bank.', errorCode: 'INVALID_BANK' },
+            { status: 400 }
+          )
+        }
+
+        // Offer manual verification for digital banks even when Paystack responds with status=false
+        const bankNameLc = sellerAccount.bankName.toLowerCase()
+        const digitalBank = bankNameLc.includes('palmpay') || bankNameLc.includes('opay') || bankNameLc.includes('kuda')
+        if (digitalBank) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `Automatic verification isn’t supported for ${sellerAccount.bankName}. Would you like to proceed with manual verification?`,
+              manualVerificationAvailable: true
+            },
+            { status: 200 }
+          )
+        }
+
+        // If bank returned an account name but it doesn't match closely, surface a clearer message
+        const bankAccountName = verification.data?.account_name
+        if (bankAccountName) {
+          const normalize = (s: string) => s.toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim()
+          const similarity = (() => {
+            try {
+              const a = normalize(sellerAccount.accountName)
+              const b = normalize(bankAccountName)
+              // Lightweight similarity using common length ratio (fallback if helper not available here)
+              const maxLen = Math.max(a.length, b.length)
+              if (!maxLen) return 1
+              let matches = 0
+              for (let i = 0; i < Math.min(a.length, b.length); i++) {
+                if (a[i] === b[i]) matches++
+              }
+              return matches / maxLen
+            } catch {
+              return 0
+            }
+          })()
+          if (similarity < 0.7) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: `Account name mismatch. Bank shows: "${bankAccountName}". Please update your saved account name and try again.`,
+                bankAccountName
+              },
+              { status: 400 }
+            )
+          }
+        }
+
+        // Generic failure fallback
         return NextResponse.json(
-          { 
-            success: false,
-            message: `Verification failed: ${verification.message || 'Invalid account details'}`,
-            details: verification
-          },
+          { success: false, message: `Verification failed: ${verification.message || 'Unable to verify at this time'}` },
           { status: 400 }
         )
       }
