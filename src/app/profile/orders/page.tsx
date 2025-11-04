@@ -102,29 +102,34 @@ export default function OrdersPage() {
             <div className="space-y-4">
               {current.map((order) => (
                 <div key={order.id} className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <Link href={`/profile/orders/${order.id}`} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                        Order #{order.orderNumber}
-                      </Link>
-                      <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                  <div className="flex items-start justify-between mb-3 gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link href={`/profile/orders/${order.id}`} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium truncate max-w-[18rem]">
+                          {order.orderNumber}
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const base = typeof window !== 'undefined' ? window.location.origin : ''
+                              await navigator.clipboard.writeText(`${base}/profile/orders/${order.id}`)
+                              toast.success('Order link copied')
+                            } catch {
+                              /* ignore */
+                            }
+                          }}
+                          aria-label="Copy order link"
+                          title="Copy order link"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-gray-900">{formatPrice(order.totalAmount)}</div>
-                      <button
-                        onClick={async () => {
-                          try {
-                            const base = typeof window !== 'undefined' ? window.location.origin : ''
-                            await navigator.clipboard.writeText(`${base}/profile/orders/${order.id}`)
-                            toast.success('Order link copied')
-                          } catch {
-                            /* ignore */
-                          }
-                        }}
-                        className="mt-1 inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800"
-                      >
-                        <Copy className="w-3 h-3" /> Copy link
-                      </button>
+                    <div className="flex-shrink-0 text-right">
+                      <div className="font-semibold text-gray-900 text-lg">{formatPrice(order.totalAmount)}</div>
+                      <p className="text-xs text-gray-500">including fees</p>
                     </div>
                   </div>
                   <Link href={`/profile/orders/${order.id}`} className="flex -space-x-2">
