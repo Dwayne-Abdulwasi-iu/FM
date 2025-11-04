@@ -156,7 +156,7 @@ function DesignsPageInner() {
 
         {/* Category Filter */}
         <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {categories.map((category) => (
               <button
                 key={category}
@@ -171,6 +171,13 @@ function DesignsPageInner() {
               </button>
             ))}
           </div>
+          {selectedCategory !== 'all' && (
+            <div className="mt-4 text-center">
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium border border-indigo-100">
+                {selectedCategory}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Designs Grid */}

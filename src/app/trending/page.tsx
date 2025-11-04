@@ -141,7 +141,7 @@ export default function TrendingPage() {
           <p className="text-gray-700 mb-6">
             Discover the most popular fashion designs based on sales, views, and community engagement
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {timeFrames.map((frame) => (
               <button
                 key={frame.value}
