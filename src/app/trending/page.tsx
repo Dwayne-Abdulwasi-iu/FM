@@ -161,12 +161,12 @@ export default function TrendingPage() {
 
         {/* Notices */}
         {successMessage && (
-          <Banner type="success" onClose={() => setSuccessMessage(null)}>
+          <Banner type="success" onClose={() => setSuccessMessage(null)} className="p-3 text-sm sm:text-base">
             {successMessage}
           </Banner>
         )}
         {errorMessage && (
-          <Banner type="error" onClose={() => setErrorMessage(null)}>
+          <Banner type="error" onClose={() => setErrorMessage(null)} className="p-3 text-sm sm:text-base">
             {errorMessage}
           </Banner>
         )}

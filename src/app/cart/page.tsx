@@ -238,10 +238,10 @@ function CartPageInner() {
             </div>
           ) : (
             <div className="p-6">
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 sm:space-y-4 mb-8">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="w-20 h-20 flex-shrink-0">
+                  <div key={item.id} className="p-3 sm:p-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                       <SafeImage
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
@@ -251,89 +251,91 @@ function CartPageInner() {
                     
                     <div className="flex-1 min-w-0">
                       <Link href={`/designs/${item.design.id}`}>
-                        <h3 className="font-semibold text-gray-900 hover:text-indigo-600 truncate">
+                        <h3 className="font-semibold text-gray-900 hover:text-indigo-600 truncate text-sm sm:text-base">
                           {item.design.title}
                         </h3>
                       </Link>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs sm:text-sm text-gray-600">
                           by {item.design.designer.name || 'Anonymous'}
                         </p>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                           item.purchaseType === 'OWNERSHIP' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'
                         }`}>
                           {item.purchaseType === 'OWNERSHIP' ? 'Exclusive Ownership' : 'Regular License'}
                         </span>
                       </div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base">
                         {formatPrice(getUnitPrice(item))}
                       </p>
                     </div>
-                    
-                    {item.purchaseType === 'OWNERSHIP' ? (
-                      <div className="flex items-center justify-center w-24 text-sm text-gray-500">
-                        Qty: 1
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
+
+                    {/* Quantity and Total Row (compact on mobile) */}
+                    <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3">
+                      {item.purchaseType === 'OWNERSHIP' ? (
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          Qty: 1
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={updating === item.id}
+                            className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            disabled={updating === item.id}
+                            className="h-7 w-7 flex items-center justify-center rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-3 sm:block sm:text-right">
+                        <p className="font-semibold text-gray-900 text-base sm:text-lg">
+                          {formatPrice(getUnitPrice(item) * item.quantity)}
+                        </p>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => removeFromCart(item.id)}
                           disabled={updating === item.id}
-                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                          aria-label="Decrease quantity"
+                          className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                          aria-label="Remove from cart"
+                          title="Remove"
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          disabled={updating === item.id}
-                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                    )}
-                    
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
-                        {formatPrice(getUnitPrice(item) * item.quantity)}
-                      </p>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        disabled={updating === item.id}
-                        className="mt-2 text-red-600 hover:text-red-800 disabled:opacity-50"
-                        aria-label="Remove from cart"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Order Summary */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+              <div className="border-t border-gray-200 pt-5 sm:pt-6">
+                <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Order Summary</h3>
                   
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex justify-between text-sm sm:text-base">
                       <span className="text-gray-600">Items Total</span>
                       <span className="font-medium">{formatPrice(total)}</span>
                     </div>
                     
                     <div className="border-t border-gray-300 pt-2 mt-2">
                       <div className="flex justify-between">
-                        <span className="text-lg font-semibold text-gray-900">You Pay</span>
-                        <span className="text-lg font-semibold text-gray-900">
+                        <span className="text-base sm:text-lg font-semibold text-gray-900">You Pay</span>
+                        <span className="text-base sm:text-lg font-semibold text-gray-900">
                           {formatPrice(total)}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 space-y-1">
+                      <div className="text-[11px] sm:text-xs text-gray-500 mt-1 space-y-1">
                         <p>• No additional fees charged to you</p>
                         <p>• Platform takes 5% commission from sellers</p>
                         <p>• Sellers receive 95% of the sale price</p>
@@ -342,8 +344,8 @@ function CartPageInner() {
                   </div>
                   
                   {/* Payment Method Selection */}
-                  <div className="mt-6 border-t border-gray-200 pt-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">Payment Method</h3>
+                  <div className="mt-5 sm:mt-6 border-t border-gray-200 pt-3 sm:pt-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2 sm:mb-3">Payment Method</h3>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
@@ -379,7 +381,7 @@ function CartPageInner() {
                   <button
                     onClick={handleCheckout}
                     disabled={checkingOut}
-                    className="w-full mt-6 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full mt-5 sm:mt-6 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {checkingOut ? (
                       <>
