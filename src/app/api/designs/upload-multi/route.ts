@@ -15,7 +15,7 @@ cloudinary.config({
 })
 
 // Helper function to save media files locally
-async function saveMediaLocally(buffer: Buffer, filename: string, fileType: string) {
+async function saveMediaLocally(buffer: Buffer, filename: string, mimeType: string, fileKind: 'IMAGE' | 'VIDEO' | 'FILE') {
   try {
     // Create uploads directory if it doesn't exist
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
@@ -23,8 +23,11 @@ async function saveMediaLocally(buffer: Buffer, filename: string, fileType: stri
 
     // Generate unique filename
     const timestamp = Date.now()
-    const extension = fileType === 'VIDEO' ? 'mp4' : 'jpg'
-    const uniqueFilename = `${timestamp}_${filename.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.${extension}`
+    const originalExt = path.extname(filename).replace('.', '').toLowerCase()
+    const baseName = path.basename(filename, path.extname(filename)).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || 'file'
+    const fallbackExt = mimeType?.split('/')[1]?.toLowerCase() || (fileKind === 'VIDEO' ? 'mp4' : fileKind === 'IMAGE' ? 'jpg' : 'bin')
+    const extension = originalExt || fallbackExt
+    const uniqueFilename = `${timestamp}_${baseName}.${extension}`
     const filepath = path.join(uploadsDir, uniqueFilename)
 
     // Save the file
@@ -35,7 +38,7 @@ async function saveMediaLocally(buffer: Buffer, filename: string, fileType: stri
     console.error('Failed to save media file locally:', error)
     // Fall back to placeholder
     const randomId = Math.floor(Math.random() * 1000) + 1
-    return fileType === 'VIDEO' 
+    return fileKind === 'VIDEO' 
       ? `/uploads/placeholder-video-${randomId}.mp4`
       : `/images/placeholder-design.svg`
   }
@@ -145,11 +148,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validation rules
+    const isAllowedType = (mime: string) => (
+      mime.startsWith('image/') ||
+      mime.startsWith('video/') ||
+      [
+        'application/pdf',
+        'application/zip', 'application/x-zip-compressed',
+        'application/postscript',
+        'image/vnd.adobe.photoshop',
+        'image/svg+xml',
+        'text/plain',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ].includes(mime)
+    )
+    const maxBytes = (mime: string) => mime.startsWith('image/') ? 15 * 1024 * 1024 : mime.startsWith('video/') ? 200 * 1024 * 1024 : 200 * 1024 * 1024
+    const fmt = (n: number) => {
+      const sizes = ['B','KB','MB','GB']
+      if (n === 0) return '0 B'
+      const i = Math.floor(Math.log(n)/Math.log(1024))
+      return `${(n/Math.pow(1024,i)).toFixed(i===0?0:1)} ${sizes[i]}`
+    }
+
     // Process media files
     interface MediaFileInput {
       fileName: string
       fileUrl: string
-      fileType: 'VIDEO' | 'IMAGE'
+      fileType: 'VIDEO' | 'IMAGE' | 'FILE'
       mimeType: string
       fileSize: number
       duration: number | null
@@ -157,28 +184,48 @@ export async function POST(request: NextRequest) {
       sortOrder: number
     }
     const mediaFiles: MediaFileInput[] = []
-    let primaryImageUrl = ''
-    let thumbnailUrl = ''
+  let primaryImageUrl = ''
+  let thumbnailUrl = ''
+  let primaryChosen = false
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       const metadataStr = fileMetadataStrings[i]
-      const metadata = JSON.parse(metadataStr)
+  const metadata = JSON.parse(metadataStr)
       
       // Convert file to buffer
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
+      // Server-side validation
+      if (!isAllowedType(file.type)) {
+        return NextResponse.json(
+          { message: `Unsupported file type: ${file.type || file.name}` },
+          { status: 400 }
+        )
+      }
+      const limit = maxBytes(file.type)
+      if (buffer.length > limit) {
+        return NextResponse.json(
+          { message: `File too large (${fmt(buffer.length)}). Limit for ${file.type.startsWith('image/')?'images 15MB':file.type.startsWith('video/')?'videos 200MB':'files 200MB'}.` },
+          { status: 400 }
+        )
+      }
+
       let fileUrl = ''
-      const fileType = file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE'
+      const fileType: 'VIDEO' | 'IMAGE' | 'FILE' = file.type.startsWith('image/')
+        ? 'IMAGE'
+        : file.type.startsWith('video/')
+          ? 'VIDEO'
+          : 'FILE'
       
       // Upload to Cloudinary if configured, otherwise save locally
       if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
         try {
           const uploadResult = await new Promise<unknown>((resolve, reject) => {
             const uploadOptions: Record<string, unknown> = {
-              resource_type: fileType === 'VIDEO' ? 'video' : 'image',
-              folder: fileType === 'VIDEO' ? 'fashion-designs/videos' : 'fashion-designs',
+              resource_type: fileType === 'VIDEO' ? 'video' : (fileType === 'IMAGE' ? 'image' : 'raw'),
+              folder: fileType === 'VIDEO' ? 'fashion-designs/videos' : (fileType === 'IMAGE' ? 'fashion-designs' : 'fashion-designs/files'),
             }
 
             if (fileType === 'IMAGE') {
@@ -200,17 +247,23 @@ export async function POST(request: NextRequest) {
         } catch (cloudinaryError) {
           console.error('Cloudinary upload failed:', cloudinaryError)
           // Fall back to local storage
-          fileUrl = await saveMediaLocally(buffer, file.name, fileType)
+          fileUrl = await saveMediaLocally(buffer, file.name, file.type, fileType)
         }
       } else {
         // Save locally for development
-        fileUrl = await saveMediaLocally(buffer, file.name, fileType)
+        fileUrl = await saveMediaLocally(buffer, file.name, file.type, fileType)
       }
 
-      // Set primary image and thumbnail from first image file
-      if (!primaryImageUrl && fileType === 'IMAGE') {
-        primaryImageUrl = fileUrl
-        thumbnailUrl = fileUrl
+      // Set primary image based on metadata.primary if provided; otherwise fallback to first image
+      if (fileType === 'IMAGE') {
+        if (!primaryChosen && metadata?.primary) {
+          primaryImageUrl = fileUrl
+          thumbnailUrl = fileUrl
+          primaryChosen = true
+        } else if (!primaryImageUrl) {
+          primaryImageUrl = fileUrl
+          thumbnailUrl = fileUrl
+        }
       }
 
       // Get video duration if it's a video

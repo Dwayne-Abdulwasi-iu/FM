@@ -6,12 +6,21 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock } from 'lucide-react'
 
+// UI behavior toggles for easy product tuning
+const UI_CONFIG = {
+  showAdvancedOptionsDefault: false,       // Buying options (Ownership/Both)
+  showAdvancedMediaControlsDefault: false, // Per-media Access and Primary buttons
+  requireFreePreview: true,                // Ensure at least one FREE image is sent
+  allowGenericFiles: true,                 // Allow non-image/video files
+}
+
 interface MediaFile {
   id: string
   file: File | null
   preview: string | null
   accessType: 'FREE' | 'PREMIUM'
-  fileType: 'IMAGE' | 'VIDEO'
+  fileType: 'IMAGE' | 'VIDEO' | 'FILE'
+  isPrimary?: boolean
 }
 
 export default function EnhancedUploadPage() {
@@ -23,8 +32,9 @@ export default function EnhancedUploadPage() {
   const [bankAccountRequired, setBankAccountRequired] = useState(false)
   const [bankAccountNeedsVerification, setBankAccountNeedsVerification] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([
-    { id: '1', file: null, preview: null, accessType: 'PREMIUM', fileType: 'IMAGE' }
+    { id: '1', file: null, preview: null, accessType: 'PREMIUM', fileType: 'IMAGE', isPrimary: true }
   ])
+  const [draggingId, setDraggingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -34,6 +44,8 @@ export default function EnhancedUploadPage() {
     tags: '',
     buyingTypes: 'REGULAR'
   })
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
+  const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
 
   const categories = [
     'Fashion Illustrations',
@@ -69,6 +81,47 @@ export default function EnhancedUploadPage() {
     }
   }
 
+  // Helpers
+  const formatBytes = (bytes?: number) => {
+    if (!bytes && bytes !== 0) return ''
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    if (bytes === 0) return '0 B'
+    const i = Math.floor(Math.log(bytes) / Math.log(1024))
+    return `${(bytes / Math.pow(1024, i)).toFixed( i === 0 ? 0 : 1 )} ${sizes[i]}`
+  }
+
+  const isAllowedType = (mime: string) => {
+    return (
+      mime.startsWith('image/') ||
+      mime.startsWith('video/') ||
+      [
+        'application/pdf',
+        'application/zip', 'application/x-zip-compressed',
+        'application/postscript', // .ai/.eps can vary
+        'image/vnd.adobe.photoshop', // .psd
+        'image/svg+xml',
+        'text/plain',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ].includes(mime)
+    )
+  }
+
+  const validateFile = (file: File): { ok: boolean; message?: string } => {
+    if (!isAllowedType(file.type)) {
+      return { ok: false, message: `Unsupported file type: ${file.type || file.name}` }
+    }
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    const max = isImage ? 15 * 1024 * 1024 : isVideo ? 200 * 1024 * 1024 : 200 * 1024 * 1024
+    if (file.size > max) {
+      const kind = isImage ? 'image (max 15MB)' : isVideo ? 'video (max 200MB)' : 'file (max 200MB)'
+      return { ok: false, message: `File too large for ${kind}: ${formatBytes(file.size)}` }
+    }
+    return { ok: true }
+  }
+
   const addMediaSection = () => {
     const newId = (mediaFiles.length + 1).toString()
     setMediaFiles([...mediaFiles, {
@@ -76,7 +129,8 @@ export default function EnhancedUploadPage() {
       file: null,
       preview: null,
       accessType: 'PREMIUM',
-      fileType: 'IMAGE'
+      fileType: 'IMAGE',
+      isPrimary: mediaFiles.length === 0
     }])
   }
 
@@ -87,17 +141,74 @@ export default function EnhancedUploadPage() {
   }
 
   const handleFileChange = (id: string, file: File) => {
-    const fileType = file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE'
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
+    const v = validateFile(file)
+    if (!v.ok) {
+      setErrorMessage(v.message || 'Invalid file')
+      setSuccessMessage(null)
+      return
+    }
+    const fileType: 'IMAGE' | 'VIDEO' | 'FILE' = file.type.startsWith('image/')
+      ? 'IMAGE'
+      : file.type.startsWith('video/')
+        ? 'VIDEO'
+        : 'FILE'
+
+    if (fileType === 'IMAGE' || fileType === 'VIDEO') {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setMediaFiles(mediaFiles.map(media => 
+          media.id === id 
+            ? { ...media, file, preview: e.target?.result as string, fileType, isPrimary: fileType === 'IMAGE' ? (mediaFiles.every(m => !m.isPrimary) ? true : media.isPrimary) : media.isPrimary }
+            : media
+        ))
+      }
+      reader.readAsDataURL(file)
+    } else {
+      // Generic file: no preview, just store file and mark as FILE
       setMediaFiles(mediaFiles.map(media => 
         media.id === id 
-          ? { ...media, file, preview: e.target?.result as string, fileType }
+          ? { ...media, file, preview: null, fileType }
           : media
       ))
     }
-    reader.readAsDataURL(file)
+  }
+
+  const setPrimaryImage = (id: string) => {
+    setMediaFiles(prev => prev.map(m => ({
+      ...m,
+      isPrimary: m.id === id && m.fileType === 'IMAGE'
+    })))
+  }
+
+  const moveMedia = (id: string, direction: 'up' | 'down') => {
+    setMediaFiles(prev => {
+      const idx = prev.findIndex(m => m.id === id)
+      if (idx === -1) return prev
+      const newArr = [...prev]
+      const swapWith = direction === 'up' ? idx - 1 : idx + 1
+      if (swapWith < 0 || swapWith >= newArr.length) return prev
+      const tmp = newArr[idx]
+      newArr[idx] = newArr[swapWith]
+      newArr[swapWith] = tmp
+      return newArr
+    })
+  }
+
+  // Drag-and-drop handlers
+  const onDragStart = (id: string) => setDraggingId(id)
+  const onDragOver = (e: React.DragEvent) => e.preventDefault()
+  const onDrop = (targetId: string) => {
+    if (!draggingId || draggingId === targetId) return
+    setMediaFiles(prev => {
+      const srcIdx = prev.findIndex(m => m.id === draggingId)
+      const dstIdx = prev.findIndex(m => m.id === targetId)
+      if (srcIdx < 0 || dstIdx < 0) return prev
+      const arr = [...prev]
+      const [item] = arr.splice(srcIdx, 1)
+      arr.splice(dstIdx, 0, item)
+      return arr
+    })
+    setDraggingId(null)
   }
 
   const updateMediaAccessType = (id: string, accessType: 'FREE' | 'PREMIUM') => {
@@ -135,13 +246,29 @@ export default function EnhancedUploadPage() {
       uploadFormData.append('buyingTypes', formData.buyingTypes)
 
       // Add media files with metadata
+      // Optionally ensure at least one FREE image (prefer primary)
+      let freeIndex = -1
+      if (UI_CONFIG.requireFreePreview) {
+        const hasFreeImage = filesWithContent.some(m => m.fileType === 'IMAGE' && m.accessType === 'FREE')
+        if (!hasFreeImage) {
+          const primaryIdx = filesWithContent.findIndex(m => m.fileType === 'IMAGE' && m.isPrimary)
+          if (primaryIdx >= 0) freeIndex = primaryIdx
+          else {
+            const firstImageIdx = filesWithContent.findIndex(m => m.fileType === 'IMAGE')
+            if (firstImageIdx >= 0) freeIndex = firstImageIdx
+          }
+        }
+      }
+
       filesWithContent.forEach((media, index) => {
         if (media.file) {
+          const computedAccess = index === freeIndex ? 'FREE' : media.accessType
           uploadFormData.append(`files`, media.file)
           uploadFormData.append(`fileMetadata`, JSON.stringify({
-            accessType: media.accessType,
+            accessType: computedAccess,
             fileType: media.fileType,
-            sortOrder: index
+            sortOrder: index,
+            primary: !!media.isPrimary
           }))
         }
       })
@@ -317,24 +444,44 @@ export default function EnhancedUploadPage() {
                 <div className="flex items-center justify-between mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     <ImageIcon className="inline h-4 w-4 mr-1" />
-                    Media Files (Images & Videos)
+                    Media Files (Images, Videos & Files)
                   </label>
-                  <button
-                    type="button"
-                    onClick={addMediaSection}
-                    className="inline-flex items-center px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add File
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedMediaControls(v => !v)}
+                      className="inline-flex items-center px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      title="Toggle advanced media controls"
+                    >
+                      {showAdvancedMediaControls ? 'Hide media controls' : 'Show media controls'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={addMediaSection}
+                      className="inline-flex items-center px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add File
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   {mediaFiles.map((media, index) => (
-                    <div key={media.id} className="border border-gray-200 rounded-lg p-4">
+                    <div
+                      key={media.id}
+                      className={`border border-gray-200 rounded-lg p-4 ${draggingId === media.id ? 'opacity-70' : ''}`}
+                      draggable
+                      onDragStart={() => onDragStart(media.id)}
+                      onDragOver={onDragOver}
+                      onDrop={() => onDrop(media.id)}
+                    >
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
                           File {index + 1}
+                          {media.isPrimary && media.fileType === 'IMAGE' && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Primary image</span>
+                          )}
                         </span>
                         {mediaFiles.length > 1 && (
                           <button
@@ -348,22 +495,58 @@ export default function EnhancedUploadPage() {
                         )}
                       </div>
 
+                      {/* Reorder Controls */}
+                      {mediaFiles.length > 1 && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <button
+                            type="button"
+                            onClick={() => moveMedia(media.id, 'up')}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            disabled={index === 0}
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveMedia(media.id, 'down')}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            disabled={index === mediaFiles.length - 1}
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      )}
+
                       {/* File Upload */}
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-500 transition-colors relative mb-3">
-                        {media.preview ? (
+                        {media.preview || (media.file && media.fileType === 'FILE') ? (
                           <div className="space-y-2">
                             {media.fileType === 'VIDEO' ? (
                               <video 
-                                src={media.preview} 
+                                src={media.preview || undefined} 
                                 className="max-h-32 mx-auto rounded"
                                 controls
                               />
-                            ) : (
+                            ) : media.fileType === 'IMAGE' ? (
                               <SafeImage 
                                 src={media.preview || ''} 
                                 alt="Preview" 
                                 className="max-h-32 mx-auto rounded"
                               />
+                            ) : (
+                              <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                                <span className="font-medium">{media.file?.name || 'Selected file'}</span>
+                              </div>
+                            )}
+                            {/* file meta badges */}
+                            {media.file && (
+                              <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+                                <span className="px-2 py-0.5 rounded bg-gray-100 border border-gray-200">{media.file.type || 'file'}</span>
+                                <span className="px-2 py-0.5 rounded bg-gray-100 border border-gray-200">{formatBytes(media.file.size)}</span>
+                              </div>
                             )}
                             <button
                               type="button"
@@ -385,12 +568,14 @@ export default function EnhancedUploadPage() {
                               <Upload className="h-8 w-8 text-gray-400" />
                             </div>
                             <p className="text-gray-600 text-sm mb-1">Click to upload or drag and drop</p>
-                            <p className="text-xs text-gray-500">Images: PNG, JPG, GIF | Videos: MP4, MOV, AVI</p>
+                            <p className="text-xs text-gray-500">
+                              Images: PNG, JPG, GIF | Videos: MP4, MOV, AVI | Files: PDF, ZIP, PSD, AI, SVG, EPS, DOCX, XLSX, PPTX, TXT
+                            </p>
                           </div>
                         )}
                         <input
                           type="file"
-                          accept="image/*,video/*"
+                          accept={UI_CONFIG.allowGenericFiles ? "image/*,video/*,.pdf,.zip,.psd,.ai,.svg,.eps,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" : "image/*,video/*"}
                           onChange={(e) => {
                             const file = e.target.files?.[0]
                             if (file) handleFileChange(media.id, file)
@@ -400,36 +585,50 @@ export default function EnhancedUploadPage() {
                         />
                       </div>
 
-                      {/* Access Type Selection */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Access Type:</span>
-                        <div className="flex space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => updateMediaAccessType(media.id, 'FREE')}
-                            className={`inline-flex items-center px-3 py-1 text-xs rounded ${
-                              media.accessType === 'FREE'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-600 hover:bg-green-50'
-                            }`}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Free View
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateMediaAccessType(media.id, 'PREMIUM')}
-                            className={`inline-flex items-center px-3 py-1 text-xs rounded ${
-                              media.accessType === 'PREMIUM'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
-                            }`}
-                          >
-                            <Lock className="h-3 w-3 mr-1" />
-                            Premium
-                          </button>
+                      {/* Access Type Selection and Primary Toggle (Advanced) */}
+                      {showAdvancedMediaControls && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Access Type:</span>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => updateMediaAccessType(media.id, 'FREE')}
+                              className={`inline-flex items-center px-3 py-1 text-xs rounded ${
+                                media.accessType === 'FREE'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-green-50'
+                              }`}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Free View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateMediaAccessType(media.id, 'PREMIUM')}
+                              className={`inline-flex items-center px-3 py-1 text-xs rounded ${
+                                media.accessType === 'PREMIUM'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
+                              }`}
+                            >
+                              <Lock className="h-3 w-3 mr-1" />
+                              Premium
+                            </button>
+                            {media.fileType === 'IMAGE' && (
+                              <button
+                                type="button"
+                                onClick={() => setPrimaryImage(media.id)}
+                                className={`inline-flex items-center px-3 py-1 text-xs rounded border ${
+                                  media.isPrimary ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'
+                                }`}
+                                title="Set as primary image"
+                              >
+                                Primary
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -483,43 +682,60 @@ export default function EnhancedUploadPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Buying Options
-                  </label>
-                  <select
-                    value={formData.buyingTypes}
-                    onChange={(e) => setFormData({...formData, buyingTypes: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                    title="Select buying options"
-                  >
-                    <option value="REGULAR">Regular Only (Multiple buyers allowed)</option>
-                    <option value="OWNERSHIP">Ownership Only (Single buyer, exclusive)</option>
-                    <option value="BOTH">Both Options Available</option>
-                  </select>
-                </div>
-
-                {(formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <DollarSign className="inline h-4 w-4 mr-1" />
-                      Ownership Price (USD)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.ownershipPrice}
-                      onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                      placeholder="0.00"
-                      required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Higher price for exclusive ownership and branding rights
-                    </p>
+                {/* Advanced Options (Buying types, ownership) */}
+                <div className="border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3">
+                    <span className="text-sm font-medium text-gray-700">Advanced options</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedOptions(v => !v)}
+                      className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    >
+                      {showAdvancedOptions ? 'Hide' : 'Show'}
+                    </button>
                   </div>
-                )}
+                  {showAdvancedOptions && (
+                    <div className="p-3 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Buying Options
+                        </label>
+                        <select
+                          value={formData.buyingTypes}
+                          onChange={(e) => setFormData({...formData, buyingTypes: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                          title="Select buying options"
+                        >
+                          <option value="REGULAR">Regular Only (Multiple buyers allowed)</option>
+                          <option value="OWNERSHIP">Ownership Only (Single buyer, exclusive)</option>
+                          <option value="BOTH">Both Options Available</option>
+                        </select>
+                      </div>
+
+                      {(formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <DollarSign className="inline h-4 w-4 mr-1" />
+                            Ownership Price (USD)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={formData.ownershipPrice}
+                            onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                            placeholder="0.00"
+                            required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
+                          />
+                          <p className="text-sm text-gray-500 mt-1">
+                            Higher price for exclusive ownership and branding rights
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
