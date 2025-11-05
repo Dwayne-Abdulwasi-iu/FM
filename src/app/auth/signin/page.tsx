@@ -172,16 +172,7 @@ function SignInPageInner() {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="text-center text-sm text-gray-600">
-              <strong>Demo Accounts:</strong>
-            </div>
-            <div className="mt-2 space-y-1 text-xs text-gray-500">
-              <div>Admin: admin@fashionmarketplace.com / admin123</div>
-              <div>Designer: alice@example.com / designer123</div>
-              <div>Customer: customer@example.com / customer123</div>
-            </div>
-          </div>
+          {/* Demo account examples removed for security/privacy */}
         </div>
       </div>
     </div>

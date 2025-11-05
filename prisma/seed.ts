@@ -111,9 +111,7 @@ async function main() {
   })
 
   console.log('✅ Database seeded successfully!')
-  console.log('👤 Admin user: admin@fashionmarketplace.com / admin123')
-  console.log('🎨 Designer users: alice@example.com / designer123, bob@example.com / designer123')
-  console.log('🛒 Customer user: customer@example.com / customer123')
+  // Credentials for seeded users are not printed for security.
 }
 
 main()
