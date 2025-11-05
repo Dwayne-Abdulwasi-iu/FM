@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react'
 
 interface SellerAccountTabProps {
-  onSuccess: (message: string) => void
-  onError: (message: string) => void
+  onSuccess?: (message: string) => void
+  onError?: (message: string) => void
 }
 
 interface SellerAccount {
@@ -16,7 +16,7 @@ interface SellerAccount {
   isActive?: boolean
 }
 
-export default function SellerAccountTab({ onSuccess, onError }: SellerAccountTabProps) {
+export default function SellerAccountTab({ onSuccess = () => {}, onError = () => {} }: SellerAccountTabProps) {
   const [sellerAccount, setSellerAccount] = useState<SellerAccount | null>(null)
   const [banks, setBanks] = useState<Array<{ code: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
