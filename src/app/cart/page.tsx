@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'react-hot-toast'
 import { formatPriceLocalized, type SupportedCurrency } from '@/lib/currency'
 
 interface CartItem {
@@ -37,6 +38,8 @@ function CartPageInner() {
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paystack'>('stripe')
   const [currency, setCurrency] = useState<SupportedCurrency>('USD')
   const [locale, setLocale] = useState<string>('en-US')
+  const [wishlist, setWishlist] = useState<Array<{ id: string; title: string; imageUrl: string; price: number; designerName: string | null }>>([])
+  const [loadingWishlist, setLoadingWishlist] = useState(true)
 
   useEffect(() => {
     if (session) {
@@ -45,6 +48,60 @@ function CartPageInner() {
       setLoading(false)
     }
   }, [session])
+
+  useEffect(() => {
+    // load wishlist from localStorage (client-side only)
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          setWishlist(parsed)
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingWishlist(false)
+    }
+  }, [])
+
+  const persistWishlist = (items: typeof wishlist) => {
+    try {
+      localStorage.setItem('wishlist', JSON.stringify(items))
+    } catch {
+      // ignore
+    }
+  }
+
+  const removeFromWishlist = (designId: string) => {
+    const updated = wishlist.filter(w => w.id !== designId)
+    setWishlist(updated)
+    persistWishlist(updated)
+  }
+
+  const addWishlistToCart = async (designId: string, purchaseType: 'REGULAR' | 'OWNERSHIP' = 'REGULAR') => {
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designId, quantity: 1, purchaseType })
+      })
+      if (res.ok) {
+        // remove from wishlist when added to cart
+        removeFromWishlist(designId)
+        // refresh cart
+        fetchCart()
+        toast.success('Added to cart')
+      } else {
+        const data = await res.json()
+        toast.error(data?.message || 'Failed to add to cart')
+      }
+    } catch (err) {
+      console.error('Wishlist add to cart error', err)
+      toast.error('Failed to add to cart')
+    }
+  }
 
   useEffect(() => {
     const loadLocale = async () => {
@@ -239,6 +296,49 @@ function CartPageInner() {
           ) : (
             <div className="p-6">
               <div className="space-y-3 sm:space-y-4 mb-8">
+                {/* Wishlist preview (compact) */}
+                <div className="mb-6">
+                  <h2 className="text-sm font-semibold text-gray-900 mb-2">Your Wishlist</h2>
+                  <div className="bg-white border border-gray-200 rounded-lg p-3">
+                    {loadingWishlist ? (
+                      <div className="text-sm text-gray-500">Loading wishlist…</div>
+                    ) : wishlist.length === 0 ? (
+                      <div className="text-sm text-gray-600">No favorites yet. Add designs to your wishlist to see them here.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {wishlist.map(w => (
+                          <div key={w.id} className="flex items-center justify-between gap-3">
+                            <Link href={`/designs/${w.id}`} className="flex items-center gap-3 min-w-0">
+                              <div className="w-12 h-12 rounded overflow-hidden border border-gray-200 bg-gray-100">
+                                <SafeImage src={w.imageUrl} alt={w.title} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium truncate text-gray-900">{w.title}</div>
+                                <div className="text-xs text-gray-600">{w.designerName || 'Anonymous'}</div>
+                              </div>
+                            </Link>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-gray-900">{formatPrice(w.price)}</div>
+                              <button
+                                onClick={() => addWishlistToCart(w.id)}
+                                className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700"
+                              >
+                                Add
+                              </button>
+                              <button
+                                onClick={() => removeFromWishlist(w.id)}
+                                className="px-2 py-1 border rounded text-xs text-gray-700 hover:bg-gray-50"
+                                title="Remove from wishlist"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 {cartItems.map((item) => (
                   <div key={item.id} className="p-3 sm:p-4 border border-gray-200 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">

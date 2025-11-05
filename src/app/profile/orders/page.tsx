@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import SafeImage from '@/components/ui/safe-image'
-import { Copy, Search } from 'lucide-react'
+import { Copy, Search, MoreHorizontal } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 interface OrderListItem {
@@ -25,6 +25,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 10
 
@@ -46,6 +47,33 @@ export default function OrdersPage() {
     }
     run()
   }, [])
+
+  useEffect(() => {
+    const onDocClick = () => setOpenMenuId(null)
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [])
+
+  const downloadInvoice = async (orderId: string, orderNumber: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/invoice`, { cache: 'no-store' })
+      if (!res.ok) {
+        toast.error('Invoice not available')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${orderNumber}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Failed to download invoice')
+    }
+  }
 
   const formatPrice = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
   const formatDate = (d: string) => new Date(d).toLocaleString()
@@ -101,7 +129,7 @@ export default function OrdersPage() {
 
             <div className="space-y-4">
               {current.map((order) => (
-                <div key={order.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                <div key={order.id} className="bg-white rounded-lg border border-gray-200 p-4 relative">
                   <div className="flex items-start justify-between mb-3 gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -124,6 +152,38 @@ export default function OrdersPage() {
                         >
                           <Copy className="w-4 h-4" />
                         </button>
+
+                        {/* Quick actions dropdown toggle */}
+                        <div className="relative inline-block">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === order.id ? null : order.id) }}
+                            aria-haspopup="true"
+                            aria-expanded={openMenuId === order.id ? 'true' : 'false'}
+                            title="Quick actions"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                            onMouseDown={(e) => e.preventDefault()}
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+
+                          {openMenuId === order.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-sm z-20"
+                            >
+                              <div className="py-1">
+                                <Link href={`/profile/orders/${order.id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View order</Link>
+                                <button
+                                  onClick={() => downloadInvoice(order.id, order.orderNumber)}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                  Download invoice
+                                </button>
+                                <Link href={`/customer-care?orderId=${order.id}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Contact support</Link>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">{formatDate(order.createdAt)}</p>
                     </div>
