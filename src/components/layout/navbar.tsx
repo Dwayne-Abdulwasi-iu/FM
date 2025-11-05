@@ -254,7 +254,11 @@ export function Navbar() {
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node | null
       if (!notificationsOpen) return
-      if (notifRef.current && !notifRef.current.contains(target) && notifTriggerRef.current && !notifTriggerRef.current.contains(target)) {
+      // If the click was outside the notifications panel and not on any of the notification triggers, close it.
+      const clickedInsidePanel = notifRef.current && notifRef.current.contains(target)
+      const notificationTriggerEls = Array.from(document.querySelectorAll('[aria-label="Open notifications"]')) as HTMLElement[]
+      const clickedOnTrigger = notificationTriggerEls.some((el) => el.contains(target as Node))
+      if (!clickedInsidePanel && !clickedOnTrigger) {
         setNotificationsOpen(false)
       }
     }
@@ -263,7 +267,10 @@ export function Navbar() {
       if (!notificationsOpen) return
       if (e.key === 'Escape') {
         setNotificationsOpen(false)
-        notifTriggerRef.current?.focus()
+        // Focus one of the notification trigger buttons (prefer the desktop ref if available)
+        const notificationTriggerEls = Array.from(document.querySelectorAll('[aria-label="Open notifications"]')) as HTMLElement[]
+        const toFocus = notifTriggerRef.current ?? notificationTriggerEls[0] ?? null
+        toFocus?.focus()
       }
     }
 
@@ -628,13 +635,9 @@ export function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <div className="flex items-center md:hidden gap-2">
-            {/* Mobile notifications quick link (opens dropdown) */}
+            {/* Mobile notifications quick link (navigates to notifications page) */}
             <button
-              ref={notifTriggerRef}
-              onClick={async () => {
-                setNotificationsOpen(v => !v)
-                if (!notificationsOpen) await fetchNotificationsPreview()
-              }}
+              onClick={() => router.push('/notifications')}
               aria-label="Open notifications"
               className="relative p-2 rounded hover:bg-gray-100"
             >
