@@ -32,21 +32,57 @@ export async function POST(request: NextRequest) {
       case 'activate':
         result = await prisma.design.update({
           where: { id: designId },
-          data: { isActive: true }
+          data: { isActive: true },
+          include: { designer: { select: { id: true, name: true, email: true } } }
         })
         // Revalidate public listings so changes reflect immediately
         revalidatePath('/')
         revalidatePath('/designs')
+        // Create notification for designer
+        try {
+          const userId = result?.designer?.id
+          if (userId) {
+            const created = await prisma.notification.create({
+              data: {
+                userId,
+                title: 'Design activated',
+                message: `Your design "${result?.title}" has been activated and is visible on the marketplace.`,
+                url: `/designs/${result?.id}`,
+              }
+            })
+            try { const pub = await import('@/lib/notificationsPubSub'); pub.publish(userId, created) } catch {}
+          }
+        } catch (e) {
+          console.error('Failed to create activation notification', e)
+        }
         break
 
       case 'deactivate':
         result = await prisma.design.update({
           where: { id: designId },
-          data: { isActive: false }
+          data: { isActive: false },
+          include: { designer: { select: { id: true, name: true, email: true } } }
         })
         // Revalidate public listings so changes reflect immediately
         revalidatePath('/')
         revalidatePath('/designs')
+        // Create notification for designer
+        try {
+          const userId = result?.designer?.id
+          if (userId) {
+            const created = await prisma.notification.create({
+              data: {
+                userId,
+                title: 'Design deactivated',
+                message: `Your design "${result?.title}" has been deactivated by an admin and is no longer visible on the marketplace.`,
+                url: `/profile/designs`,
+              }
+            })
+            try { const pub = await import('@/lib/notificationsPubSub'); pub.publish(userId, created) } catch {}
+          }
+        } catch (e) {
+          console.error('Failed to create deactivation notification', e)
+        }
         break
 
       case 'delete':

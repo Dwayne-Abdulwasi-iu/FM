@@ -56,6 +56,32 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Create an in-app notification for the designer to inform them of approval/rejection
+    try {
+      const userId = design?.designer?.id
+      if (userId) {
+        const title = action === 'approve' ? 'Design approved' : 'Design rejected'
+        const message = action === 'approve'
+          ? `Your design "${design.title}" has been approved and is now visible on the marketplace.`
+          : `Your design "${design.title}" was rejected by an admin. Reason: ${updateData.rejectionReason || 'Not specified'}`
+
+        const created = await prisma.notification.create({
+          data: {
+            userId,
+            title,
+            message,
+            url: `/profile/designs`,
+          }
+        })
+        try {
+          const pub = await import('@/lib/notificationsPubSub')
+          pub.publish(userId, created)
+        } catch {}
+      }
+    } catch (notifErr) {
+      console.error('Failed to create admin approval notification', notifErr)
+    }
+
     // Revalidate public pages so approval status reflects immediately
     revalidatePath('/')
     revalidatePath('/designs')

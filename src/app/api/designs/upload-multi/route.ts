@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 import { revalidatePath } from 'next/cache'
+import nodemailer from 'nodemailer'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
@@ -325,10 +326,75 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Create in-app notification for uploader (pending approval)
+    try {
+      const createdNotif = await prisma.notification.create({
+        data: {
+          userId: session.user.id,
+          title: 'Design pending approval',
+          message: `Your design "${design.title}" has been submitted and is pending review. It will appear on the marketplace once approved.`,
+          url: `/profile/designs`,
+        }
+      })
+      try {
+        // publish to any SSE subscribers for this user
+        const pub = await import('@/lib/notificationsPubSub')
+        pub.publish(session.user.id, createdNotif)
+      } catch {}
+    } catch (notifErr) {
+      console.error('Failed to create in-app notification', notifErr)
+    }
+
     try {
       revalidatePath('/')
       revalidatePath('/designs')
     } catch {}
+
+    // Send email notification to uploader if email is configured
+    try {
+      const host = process.env.EMAIL_SERVER_HOST
+      const user = process.env.EMAIL_SERVER_USER
+      const pass = process.env.EMAIL_SERVER_PASSWORD
+      const from = process.env.EMAIL_FROM
+      if (host && user && pass && from && design.designer?.email) {
+        const transporter = nodemailer.createTransport({
+          host,
+          port: Number(process.env.EMAIL_SERVER_PORT || 587),
+          secure: false,
+          auth: { user, pass },
+        })
+
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        const designUrl = `${baseUrl}/profile/designs`
+
+        const mailOptions = {
+          from,
+          to: design.designer.email,
+          subject: `Your design "${design.title}" is pending approval`,
+          text: `Hi ${design.designer?.name || ''},\n\nThanks for submitting your design titled "${design.title}". Our moderation team will review it and once approved it will be visible on the site. You can view your uploads at: ${designUrl}\n\n— Fashion Marketplace`,
+          html: `
+            <div style="background:#f6f7fb;padding:20px;font-family:Arial,Helvetica,sans-serif;color:#111">
+              <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #eaeaea">
+                <div style="padding:16px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px">
+                  <strong style="font-size:15px">Fashion Marketplace</strong>
+                </div>
+                <div style="padding:18px">
+                  <p style="margin:0 0 12px">Hi ${design.designer?.name || ''},</p>
+                  <p style="margin:0 0 12px">Thanks for submitting your design <strong>${design.title}</strong>. Our team will review it shortly. Once it's approved it will be displayed on the marketplace.</p>
+                  <p style="margin:0 0 16px"><a href="${designUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 14px;border-radius:6px">View your uploads</a></p>
+                  <p style="font-size:12px;color:#666;margin:0">If the button doesn't work, copy and paste this link into your browser:<br/><span style="word-break:break-all">${designUrl}</span></p>
+                </div>
+                <div style="padding:12px 20px;border-top:1px solid #eee;font-size:12px;color:#666">© ${new Date().getFullYear()} Fashion Marketplace</div>
+              </div>
+            </div>
+          `,
+        }
+
+  transporter.sendMail(mailOptions).catch((err: unknown) => console.error('Upload notification email failed', err))
+      }
+    } catch (emailErr) {
+      console.error('Upload notification email error', emailErr)
+    }
 
     return NextResponse.json({
       id: design.id,

@@ -663,6 +663,7 @@ export default function AdminDashboard() {
       if (response.ok) {
         fetchAdminData()
         showNotification('success', `Design ${action} completed successfully`)
+        try { window.dispatchEvent(new Event('notificationsUpdated')) } catch {}
       } else {
         showNotification('error', `Failed to ${action} design`)
       }
@@ -692,6 +693,7 @@ export default function AdminDashboard() {
           'success'
         )
         await fetchData()
+        try { window.dispatchEvent(new Event('notificationsUpdated')) } catch {}
       } else {
         const error = await response.json()
         showToast(`Failed to ${action} design: ${error.message}`, 'error')
