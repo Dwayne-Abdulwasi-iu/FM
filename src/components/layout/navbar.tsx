@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, User, Search, Menu, Upload, Shield } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, Upload, Shield, Heart } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import SafeImage from '@/components/ui/safe-image'
+import { toast } from 'react-hot-toast'
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -13,6 +15,8 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false)
+  const [wishlistItems, setWishlistItems] = useState<Array<{ id: string; title: string; imageUrl: string; price: number }>>([])
 
   // Lock body scroll when mobile menu is open to avoid layout shift and blank space
   useEffect(() => {
@@ -46,6 +50,35 @@ export function Navbar() {
     window.addEventListener('cartUpdated', handleCartUpdate);
     return () => window.removeEventListener('cartUpdated', handleCartUpdate);
   }, [session]);
+
+  useEffect(() => {
+    // load wishlist for flyout
+    const load = async () => {
+      try {
+        if (session?.user?.id) {
+          const res = await fetch('/api/favorites')
+          if (res.ok) {
+            const data = await res.json()
+            setWishlistItems((data.items || []).slice(0,5))
+          }
+        } else {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) setWishlistItems(parsed.slice(0,5))
+          }
+        }
+      } catch {
+          // ignore
+        }
+    }
+    load()
+
+    const onUpdate = () => load()
+    window.addEventListener('wishlistUpdated', onUpdate)
+    return () => window.removeEventListener('wishlistUpdated', onUpdate)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   const fetchCartCount = async () => {
     // In non-browser/test environments, skip attempting to fetch
@@ -149,6 +182,79 @@ export function Navbar() {
                 </span>
               )}
             </Link>
+            {/* Wishlist flyout trigger */}
+            <div className="relative">
+              <button
+                onClick={() => setWishlistOpen(v => !v)}
+                className="ml-4 text-gray-800 hover:text-indigo-700 relative"
+                aria-expanded={wishlistOpen ? 'true' : 'false'}
+                aria-label="Open wishlist"
+              >
+                <Heart className="w-5 h-5" />
+              </button>
+
+              {wishlistOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">Your wishlist</h4>
+                      <Link href="/wishlist" className="text-sm text-indigo-600">View all</Link>
+                    </div>
+                    {wishlistItems.length === 0 ? (
+                      <div className="text-sm text-gray-500">No favorites yet.</div>
+                    ) : (
+                      <div className="space-y-2 max-h-60 overflow-auto">
+                        {wishlistItems.map((w) => (
+                          <div key={w.id} className="flex items-center justify-between gap-3">
+                            <Link href={`/designs/${w.id}`} className="flex items-center gap-3 min-w-0">
+                              <div className="w-12 h-12 rounded overflow-hidden border border-gray-200 bg-gray-100">
+                                <SafeImage src={w.imageUrl} alt={w.title} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium truncate">{w.title}</div>
+                              </div>
+                            </Link>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm text-gray-700">${w.price?.toFixed(2)}</div>
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault()
+                                  try {
+                                    const res = await fetch('/api/cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: w.id, quantity: 1, purchaseType: 'REGULAR' }) })
+                                    if (res.ok) {
+                                      window.dispatchEvent(new Event('cartUpdated'))
+                                      // remove from favorites
+                                      if (session?.user?.id) await fetch(`/api/favorites?designId=${w.id}`, { method: 'DELETE' })
+                                      else {
+                                        const raw = localStorage.getItem('wishlist')
+                                        if (raw) {
+                                          const parsed = JSON.parse(raw)
+                                          const updated = parsed.filter((p: { id: string }) => p.id !== w.id)
+                                          localStorage.setItem('wishlist', JSON.stringify(updated))
+                                          window.dispatchEvent(new Event('wishlistUpdated'))
+                                        }
+                                      }
+                                      toast.success('Added to cart')
+                                    } else {
+                                      toast.error('Failed to add to cart')
+                                    }
+                                  } catch {
+                                    toast.error('Failed to add to cart')
+                                  }
+                                }}
+                                className="px-2 py-1 bg-indigo-600 text-white text-xs rounded"
+                              >
+                                Add
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {session ? (
               <div className="flex items-center space-x-4">
                 {session.user?.role === 'ADMIN' && (

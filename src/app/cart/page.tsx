@@ -49,6 +49,36 @@ function CartPageInner() {
     }
   }, [session])
 
+  // Sync local wishlist to server when user logs in
+  useEffect(() => {
+    const sync = async () => {
+      if (!session?.user?.id) return
+      if (!wishlist || wishlist.length === 0) return
+
+      try {
+        // send each local wishlist designId to server
+        for (const w of wishlist) {
+          await fetch('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ designId: w.id })
+          })
+        }
+        // now fetch server favorites to replace local list
+        const res = await fetch('/api/favorites')
+        if (res.ok) {
+          const data = await res.json()
+          setWishlist(data.items || [])
+          persistWishlist(data.items || [])
+        }
+      } catch {
+        // ignore
+      }
+    }
+    sync()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
+
   useEffect(() => {
     // load wishlist from localStorage (client-side only)
     try {
@@ -261,10 +291,17 @@ function CartPageInner() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShoppingBag className="h-6 w-6" />
-              Shopping Cart ({cartItems.length})
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <ShoppingBag className="h-6 w-6" />
+                Shopping Cart ({cartItems.length})
+              </h1>
+              <div>
+                <Link href="/wishlist" className="inline-flex items-center gap-2 px-3 py-1 border rounded text-sm text-gray-700 hover:bg-gray-50">
+                  View wishlist
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Error Message */}

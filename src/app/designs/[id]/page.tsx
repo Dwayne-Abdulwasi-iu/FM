@@ -5,6 +5,7 @@ import SafeImage from '@/components/ui/safe-image'
 import { sanitizePlaceholderImageUrl } from '@/lib/images'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Heart, ShoppingCart, ArrowLeft, Share2, CheckCircle, X, Shield } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 import { formatPriceLocalized, type SupportedCurrency } from '@/lib/currency'
 // import ProtectedContent from '@/components/ProtectedContent'
@@ -55,6 +56,7 @@ export default function DesignPage() {
   const [addingToCart, setAddingToCart] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isFavorited, setIsFavorited] = useState(false)
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
   const [hasAccess, setHasAccess] = useState(false)
   const [currency, setCurrency] = useState<SupportedCurrency>('USD')
@@ -114,6 +116,75 @@ export default function DesignPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, checkAccess])
+
+  // load favorite state
+  useEffect(() => {
+    const loadFav = async () => {
+      if (!params.id) return
+      try {
+        if (session?.user?.id) {
+          const res = await fetch('/api/favorites')
+          if (res.ok) {
+            const data = await res.json()
+            const found = (data.items || []).some((i: { id: string }) => i.id === params.id)
+            setIsFavorited(!!found)
+          }
+        } else {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) setIsFavorited(parsed.some((p: { id: string }) => p.id === params.id))
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadFav()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id, session?.user?.id])
+
+  const toggleFavorite = async () => {
+    if (!design) return
+    try {
+      if (session?.user?.id) {
+        if (isFavorited) {
+          await fetch(`/api/favorites?designId=${design.id}`, { method: 'DELETE' })
+          setIsFavorited(false)
+          toast.success('Removed from wishlist')
+        } else {
+          await fetch('/api/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: design.id }) })
+          setIsFavorited(true)
+          toast.success('Added to wishlist')
+        }
+      } else {
+        // guest: persist to localStorage
+        const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
+  let parsed: Array<{ id: string; title?: string; imageUrl?: string; price?: number; designerName?: string | null }> = []
+        if (raw) {
+          try { parsed = JSON.parse(raw) } catch { parsed = [] }
+        }
+        if (isFavorited) {
+          const updated = parsed.filter(p => p.id !== design.id)
+          localStorage.setItem('wishlist', JSON.stringify(updated))
+          setIsFavorited(false)
+          toast.success('Removed from wishlist')
+        } else {
+          const entry = { id: design.id, title: design.title, imageUrl: design.thumbnailUrl || design.imageUrl, price: design.price, designerName: design.designer?.name || null }
+          parsed.unshift(entry)
+          localStorage.setItem('wishlist', JSON.stringify(parsed))
+          setIsFavorited(true)
+          toast.success('Added to wishlist')
+        }
+      }
+
+      // notify header flyout to refresh
+      window.dispatchEvent(new Event('wishlistUpdated'))
+    } catch {
+      console.error('Toggle favorite error')
+      toast.error('Failed to update wishlist')
+    }
+  }
 
   // Infer locale/currency from API
   useEffect(() => {
@@ -624,23 +695,27 @@ export default function DesignPage() {
 
             {/* Actions */}
             <div className="space-y-4">
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => handleAddToCart('REGULAR')}
-                  disabled={addingToCart}
-                  className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {addingToCart ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  ) : (
-                    <ShoppingCart className="h-5 w-5" />
-                  )}
-                  {addingToCart ? 'Adding...' : 'Add Regular'}
-                </button>
-                
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Add to favorites">
-                  <Heart className="h-5 w-5 text-gray-600" />
-                </button>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => handleAddToCart('REGULAR')}
+                    disabled={addingToCart}
+                    className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {addingToCart ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    ) : (
+                      <ShoppingCart className="h-5 w-5" />
+                    )}
+                    {addingToCart ? 'Adding...' : 'Add Regular'}
+                  </button>
+
+                  <button
+                    onClick={toggleFavorite}
+                    className={`p-3 border rounded-lg hover:bg-gray-50 ${isFavorited ? 'border-red-200 bg-red-50' : 'border-gray-300'}`}
+                    aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorited ? 'text-red-500' : 'text-gray-600'}`} />
+                  </button>
                 
                 <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Share design">
                   <Share2 className="h-5 w-5 text-gray-600" />
