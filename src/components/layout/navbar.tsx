@@ -627,14 +627,37 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden p-2 rounded hover:bg-gray-100"
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            aria-controls="mobile-menu"
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+          <div className="flex items-center md:hidden gap-2">
+            {/* Mobile notifications quick link (opens dropdown) */}
+            <button
+              ref={notifTriggerRef}
+              onClick={async () => {
+                setNotificationsOpen(v => !v)
+                if (!notificationsOpen) await fetchNotificationsPreview()
+              }}
+              aria-label="Open notifications"
+              className="relative p-2 rounded hover:bg-gray-100"
+            >
+              <Bell className="w-6 h-6" />
+              {notificationsCount > 0 && (
+                <span
+                  className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center"
+                  data-testid="mobile-notif-badge"
+                  aria-label={`Mobile unread notifications: ${notificationsCount}`}
+                >
+                  {notificationsCount}
+                </span>
+              )}
+            </button>
+            <button 
+              className="p-2 rounded hover:bg-gray-100"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-controls="mobile-menu"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -686,6 +709,7 @@ export function Navbar() {
                     </span>
                   )}
                 </Link>
+                {/* Notifications link removed from mobile menu (header quick bell available) */}
                 {session ? (
                   <>
                     {session.user?.role === 'ADMIN' && (
