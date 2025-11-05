@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingBag, User, Search, Menu, Upload, Shield, Heart } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+type PartialWishlistItem = { id: string; title?: string; imageUrl?: string; price?: number }
 import SafeImage from '@/components/ui/safe-image'
 import { toast } from 'react-hot-toast'
 
@@ -17,6 +19,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false)
   const [wishlistItems, setWishlistItems] = useState<Array<{ id: string; title: string; imageUrl: string; price: number }>>([])
+  const flyoutRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   // Lock body scroll when mobile menu is open to avoid layout shift and blank space
   useEffect(() => {
@@ -76,7 +80,31 @@ export function Navbar() {
 
     const onUpdate = () => load()
     window.addEventListener('wishlistUpdated', onUpdate)
-    return () => window.removeEventListener('wishlistUpdated', onUpdate)
+
+    const onDocumentClick = (e: MouseEvent) => {
+      const target = e.target as Node | null
+      if (!wishlistOpen) return
+      if (flyoutRef.current && !flyoutRef.current.contains(target) && triggerRef.current && !triggerRef.current.contains(target)) {
+        setWishlistOpen(false)
+      }
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!wishlistOpen) return
+      if (e.key === 'Escape') {
+        setWishlistOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('mousedown', onDocumentClick)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      window.removeEventListener('wishlistUpdated', onUpdate)
+      document.removeEventListener('mousedown', onDocumentClick)
+      document.removeEventListener('keydown', onKeyDown)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id])
 
@@ -185,16 +213,17 @@ export function Navbar() {
             {/* Wishlist flyout trigger */}
             <div className="relative">
               <button
+                ref={triggerRef}
                 onClick={() => setWishlistOpen(v => !v)}
                 className="ml-4 text-gray-800 hover:text-indigo-700 relative"
-                aria-expanded={wishlistOpen ? 'true' : 'false'}
+                aria-haspopup="menu"
                 aria-label="Open wishlist"
               >
                 <Heart className="w-5 h-5" />
               </button>
 
               {wishlistOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded shadow-lg z-50">
+                <div ref={flyoutRef} role="dialog" aria-label="Wishlist" aria-modal="false" className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded shadow-lg z-50">
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold">Your wishlist</h4>
@@ -223,16 +252,37 @@ export function Navbar() {
                                     const res = await fetch('/api/cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: w.id, quantity: 1, purchaseType: 'REGULAR' }) })
                                     if (res.ok) {
                                       window.dispatchEvent(new Event('cartUpdated'))
-                                      // remove from favorites
+                                      // remove from favorites after adding to cart
                                       if (session?.user?.id) await fetch(`/api/favorites?designId=${w.id}`, { method: 'DELETE' })
                                       else {
                                         const raw = localStorage.getItem('wishlist')
                                         if (raw) {
-                                          const parsed = JSON.parse(raw)
-                                          const updated = parsed.filter((p: { id: string }) => p.id !== w.id)
+                                          const parsed = JSON.parse(raw) as Array<{ id: string }>
+                                          const updated = parsed.filter((p) => p.id !== w.id)
                                           localStorage.setItem('wishlist', JSON.stringify(updated))
                                           window.dispatchEvent(new Event('wishlistUpdated'))
                                         }
+                                      }
+                                      // refresh flyout items
+                                      const reload = await fetch(session?.user?.id ? '/api/favorites' : '/api/favorites')
+                                      if (reload.ok) {
+                                        const data = await reload.json()
+                                        setWishlistItems((data.items || []).slice(0,5))
+                                      } else {
+                                        // for guest, reload from localStorage
+                                          const raw = localStorage.getItem('wishlist')
+                                          if (raw) {
+                                            const parsed = JSON.parse(raw) as Array<PartialWishlistItem>
+                                              if (Array.isArray(parsed)) {
+                                                const full = parsed.map((p) => ({
+                                                  id: p.id,
+                                                  title: p.title ?? 'Untitled',
+                                                  imageUrl: p.imageUrl ?? '/placeholder.png',
+                                                  price: typeof p.price === 'number' ? p.price : 0,
+                                                }))
+                                                setWishlistItems(full.slice(0,5))
+                                              }
+                                          }
                                       }
                                       toast.success('Added to cart')
                                     } else {
@@ -245,6 +295,36 @@ export function Navbar() {
                                 className="px-2 py-1 bg-indigo-600 text-white text-xs rounded"
                               >
                                 Add
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault()
+                                  try {
+                                    if (session?.user?.id) {
+                                      await fetch(`/api/favorites?designId=${w.id}`, { method: 'DELETE' })
+                                      const res = await fetch('/api/favorites')
+                                      if (res.ok) {
+                                        const data = await res.json()
+                                        setWishlistItems((data.items || []).slice(0,5))
+                                      }
+                                    } else {
+                                      const raw = localStorage.getItem('wishlist')
+                                      if (raw) {
+                                        const parsed = JSON.parse(raw) as Array<PartialWishlistItem>
+                                        const updated = parsed.filter((p) => p.id !== w.id)
+                                        localStorage.setItem('wishlist', JSON.stringify(updated))
+                                        setWishlistItems((prev) => prev.filter((p) => p.id !== w.id).slice(0,5))
+                                      }
+                                    }
+                                    window.dispatchEvent(new Event('wishlistUpdated'))
+                                    toast.success('Removed')
+                                  } catch {
+                                    toast.error('Failed to remove')
+                                  }
+                                }}
+                                className="px-2 py-1 border rounded text-xs"
+                              >
+                                Remove
                               </button>
                             </div>
                           </div>

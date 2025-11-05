@@ -33,6 +33,8 @@ interface Design {
   }[]
 }
 
+type PartialWishlistItem = { id: string; title?: string; imageUrl?: string; price?: number }
+
 function DesignsPageInner() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -47,6 +49,7 @@ function DesignsPageInner() {
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
 
   const categories = [
     'all',
@@ -81,6 +84,30 @@ function DesignsPageInner() {
     // categories is a static array; safe to omit from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, minPrice, maxPrice, sort, tagsInput])
+
+  // load favorites ids for listing toggles
+  useEffect(() => {
+    const loadFavs = async () => {
+      try {
+        if (session?.user?.id) {
+          const res = await fetch('/api/favorites?idsOnly=true')
+          if (res.ok) {
+            const data = await res.json()
+            setFavoriteIds(new Set(data.ids || []))
+          }
+        } else {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
+          if (raw) {
+            const parsed = JSON.parse(raw) as Array<PartialWishlistItem>
+            if (Array.isArray(parsed)) setFavoriteIds(new Set(parsed.map((p) => p.id)))
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadFavs()
+  }, [session?.user?.id])
 
   const fetchDesigns = async () => {
     try {
@@ -174,6 +201,62 @@ function DesignsPageInner() {
   }
 
   // Image sanitization is centralized in SafeImage
+
+  const toggleFavorite = async (e: React.MouseEvent, design: Design) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const isFav = favoriteIds.has(design.id)
+
+    if (!session) {
+      const raw = localStorage.getItem('wishlist')
+      const parsed = raw ? (JSON.parse(raw) as Array<PartialWishlistItem>) : []
+      if (isFav) {
+        const updated = parsed.filter((p) => p.id !== design.id)
+        localStorage.setItem('wishlist', JSON.stringify(updated))
+        setFavoriteIds(new Set(updated.map((p) => p.id)))
+        window.dispatchEvent(new Event('wishlistUpdated'))
+        toast.success('Removed from wishlist')
+        return
+      }
+
+      const item = { id: design.id, title: design.title ?? 'Untitled', imageUrl: design.thumbnailUrl || design.imageUrl, price: design.price }
+      const updated = [item, ...parsed]
+      localStorage.setItem('wishlist', JSON.stringify(updated))
+      setFavoriteIds(new Set(updated.map((p) => p.id)))
+      window.dispatchEvent(new Event('wishlistUpdated'))
+      toast.success('Added to wishlist')
+      return
+    }
+
+    try {
+      if (isFav) {
+        const res = await fetch(`/api/favorites?designId=${design.id}`, { method: 'DELETE' })
+        if (res.ok) {
+          setFavoriteIds((prev) => {
+            const next = new Set(prev)
+            next.delete(design.id)
+            return next
+          })
+          window.dispatchEvent(new Event('wishlistUpdated'))
+          toast.success('Removed from wishlist')
+        } else {
+          toast.error('Failed to remove')
+        }
+      } else {
+        const res = await fetch('/api/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: design.id }) })
+        if (res.ok) {
+          setFavoriteIds((prev) => new Set(prev).add(design.id))
+          window.dispatchEvent(new Event('wishlistUpdated'))
+          toast.success('Added to wishlist')
+        } else {
+          toast.error('Failed to add')
+        }
+      }
+    } catch (err) {
+      console.error('Favorite toggle error', err)
+      toast.error('Failed to update wishlist')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -316,8 +399,12 @@ function DesignsPageInner() {
                       </div>
                     )}
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-50" aria-label="Add to favorites">
-                        <Heart className="h-4 w-4 text-gray-600" />
+                      <button
+                        onClick={(e) => toggleFavorite(e, design)}
+                        className={`p-2 rounded-full shadow-sm ${favoriteIds.has(design.id) ? 'bg-red-50' : 'bg-white'} hover:bg-gray-50`}
+                        aria-label={favoriteIds.has(design.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        <Heart className={`h-4 w-4 ${favoriteIds.has(design.id) ? 'text-red-500' : 'text-gray-600'}`} />
                       </button>
                     </div>
                   </div>

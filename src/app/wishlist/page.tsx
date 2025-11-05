@@ -19,6 +19,9 @@ export default function WishlistPage() {
   const { data: session } = useSession()
   const [items, setItems] = useState<WishItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
+  const [total, setTotal] = useState(0)
   const [currency, setCurrency] = useState<SupportedCurrency>('USD')
   const [locale, setLocale] = useState('en-US')
 
@@ -41,12 +44,14 @@ export default function WishlistPage() {
       setLoading(true)
       try {
         if (session?.user?.id) {
-          const res = await fetch('/api/favorites')
+          const res = await fetch(`/api/favorites?page=${page}&pageSize=${pageSize}`)
           if (res.ok) {
             const data = await res.json()
             setItems(data.items || [])
+            setTotal(data.total || 0)
           } else {
             setItems([])
+            setTotal(0)
           }
         } else {
           // load from localStorage
@@ -63,7 +68,8 @@ export default function WishlistPage() {
       }
     }
     load()
-  }, [session?.user?.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, page, pageSize])
 
   const formatPrice = (p: number) => formatPriceLocalized(p, currency, locale)
 
@@ -71,10 +77,12 @@ export default function WishlistPage() {
     try {
       if (session?.user?.id) {
         await fetch(`/api/favorites?designId=${id}`, { method: 'DELETE' })
-        const res = await fetch('/api/favorites')
+        // reload current page
+        const res = await fetch(`/api/favorites?page=${page}&pageSize=${pageSize}`)
         if (res.ok) {
           const data = await res.json()
           setItems(data.items || [])
+          setTotal(data.total || 0)
         }
       } else {
         const updated = items.filter(i => i.id !== id)
@@ -139,6 +147,28 @@ export default function WishlistPage() {
                   </div>
                 </div>
               ))}
+              {/* Pagination for server-backed favorites */}
+              {session?.user?.id && total > pageSize && (
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Page {page} of {Math.max(1, Math.ceil(total / pageSize))}</div>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setPage(p => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+                      disabled={page >= Math.ceil(total / pageSize)}
+                      className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
