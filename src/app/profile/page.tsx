@@ -1143,11 +1143,19 @@ function SellerAccountTab({
                 const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
                 setFormData({ ...formData, accountNumber: onlyDigits })
               }}
+              onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                // Prevent the raw paste so the browser doesn't insert formatting characters.
+                e.preventDefault()
+                const pasted = e.clipboardData?.getData('text') || ''
+                const onlyDigits = pasted.replace(/\D/g, '').slice(0, 10)
+                // Merge with existing value up to 10 chars to mimic natural paste behaviour
+                const merged = (formData.accountNumber + onlyDigits).slice(0, 10)
+                setFormData({ ...formData, accountNumber: merged })
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
               placeholder="1234567890"
               maxLength={10}
               inputMode="numeric"
-              pattern="\\d{10}"
               required
             />
           </div>
@@ -1260,3 +1268,6 @@ function ManualVerifyModal({
     </div>
   )
 }
+
+// Export the SellerAccountTab for testing and reuse
+export { SellerAccountTab }
