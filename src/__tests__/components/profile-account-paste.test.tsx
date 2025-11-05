@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { SellerAccountTab } from '../../app/profile/page'
+import SellerAccountTab from '../../components/profile/SellerAccountTab'
 
 // Minimal fetch mocking for the seller account tab loads
 beforeEach(() => {

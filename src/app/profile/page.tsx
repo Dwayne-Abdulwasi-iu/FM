@@ -1,464 +1,60 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, ShoppingCart } from 'lucide-react'
-import Link from 'next/link'
-import SafeImage from '@/components/ui/safe-image'
-import Banner from '@/components/ui/banner'
-
-interface UserProfile {
-  id: string
-  name: string | null
-  email: string
-  bio: string | null
-  website: string | null
-  location: string | null
-  role: string
-  createdAt: string
-  isVerified: boolean
-}
-
-interface UserStats {
-  totalDesigns: number
-  totalSales: number
-  totalRevenue: number
-  totalEarnings: number
-  platformCommission: number
-}
-
-interface Design {
-  id: string
-  title: string
-  price: number
-  imageUrl: string
-  category: string
-  totalSales: number
-  totalRevenue: number
-  createdAt: string
-  isOwned?: boolean
-}
+import React from 'react'
+import SellerAccountTab from '@/components/profile/SellerAccountTab'
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [stats, setStats] = useState<UserStats | null>(null)
-  const [designs, setDesigns] = useState<Design[]>([])
-  const [loading, setLoading] = useState(true)
-  type ProfileTab = 'overview' | 'designs' | 'earnings' | 'orders' | 'account'
-  const [activeTab, setActiveTab] = useState<ProfileTab>('overview')
-  const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [submittingReqId, setSubmittingReqId] = useState<string | null>(null)
-  // Earnings breakdown state
-  type PayoutStatus = 'PENDING' | 'SKIPPED_SPLIT' | 'PAID' | 'FAILED'
-  interface EarningRow {
-    id: string
-    createdAt: string
-    saleAmount: number
-    platformCommission: number
-    sellerAmount: number
-    quantity: number
-    payoutStatus: PayoutStatus
-    payoutProvider?: string | null
-    payoutAttemptedAt?: string | null
-    payoutCompletedAt?: string | null
-    payoutCurrency?: string | null
-    payoutAmountMinor?: number | null
-    order: { id: string; orderNumber: string; createdAt: string }
-    design: { id: string; title: string; imageUrl: string }
-  }
-  const [earnings, setEarnings] = useState<EarningRow[]>([])
-  const [earningsLoading, setEarningsLoading] = useState<boolean>(false)
-  const [earnPage, setEarnPage] = useState<number>(1)
-  const [earnPageSize, setEarnPageSize] = useState<number>(25)
-  const [earnTotal, setEarnTotal] = useState<number>(0)
-  const [earnSums, setEarnSums] = useState<{ saleAmount: number; platformCommission: number; sellerAmount: number }>({ saleAmount: 0, platformCommission: 0, sellerAmount: 0 })
-  const [earnStatus, setEarnStatus] = useState<'ALL' | PayoutStatus>('ALL')
-  const [earnSearch, setEarnSearch] = useState<string>('')
-  const [earnFrom, setEarnFrom] = useState<string>('')
-  const [earnTo, setEarnTo] = useState<string>('')
-  const [earnTimeframe, setEarnTimeframe] = useState<'7d' | '30d' | 'all'>('all')
-  const [earnSortBy, setEarnSortBy] = useState<'date' | 'amount'>('date')
-  const [earnSortOrder, setEarnSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [exportingCsv, setExportingCsv] = useState<boolean>(false)
+  return (
+    <div className="min-h-screen w-full overflow-x-hidden bg-gray-50">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm p-4 xs:p-5 md:p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Profile</h1>
+          </div>
+        </div>
 
-  // SafeImage now centralizes sanitization and fallback
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="border-b border-gray-200">
+            <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-3 xs:space-x-4 sm:space-x-8">
+              <span className="py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">Bank Account</span>
+            </nav>
+          </div>
 
-  // Shared notifiers for child components to trigger styled messages
-  const showSuccess = (message: string) => {
-    setSuccessMessage(message)
-    // Auto-dismiss after 4s
-    setTimeout(() => setSuccessMessage(null), 4000)
-  }
-
-  const showError = (message: string) => {
-    setErrorMessage(message)
-    // Auto-dismiss after 5s
-    setTimeout(() => setErrorMessage(null), 5000)
-  }
-
-  useEffect(() => {
-    if (status === 'loading') return
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-    fetchProfile()
-  }, [session, status, router])
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true)
-      const [profileRes, statsRes, designsRes] = await Promise.all([
-        fetch('/api/profile'),
-        fetch('/api/profile/stats'),
-        fetch('/api/profile/designs')
-      ])
-
-      if (profileRes.ok) {
-        const profileData = await profileRes.json()
-        setProfile(profileData.user)
-      }
-
-      if (statsRes.ok) {
-        const statsData = await statsRes.json()
-        setStats(statsData.stats)
-      }
-
-      if (designsRes.ok) {
-        const designsData = await designsRes.json()
-        setDesigns(designsData.designs)
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Fetch earnings list
-  const fetchEarnings = async () => {
-    try {
-      setEarningsLoading(true)
-      const params = new URLSearchParams()
-      params.set('page', String(earnPage))
-      params.set('pageSize', String(earnPageSize))
-      params.set('sortBy', earnSortBy)
-      params.set('sortOrder', earnSortOrder)
-      if (earnStatus !== 'ALL') params.set('status', earnStatus)
-      if (earnSearch.trim()) params.set('search', earnSearch.trim())
-      if (earnFrom) params.set('from', earnFrom)
-      if (earnTo) params.set('to', earnTo)
-      const res = await fetch(`/api/profile/earnings?${params.toString()}`, { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        setEarnings(data.earnings || [])
-        setEarnTotal(Number(data?.meta?.total || 0))
-        setEarnSums({
-          saleAmount: Number(data?.meta?.sums?.saleAmount || 0),
-          platformCommission: Number(data?.meta?.sums?.platformCommission || 0),
-          sellerAmount: Number(data?.meta?.sums?.sellerAmount || 0),
-        })
-      }
-    } catch (e) {
-      console.error('Failed to load earnings:', e)
-    } finally {
-      setEarningsLoading(false)
-    }
-  }
-
-  // Debounce fetch on filters
-  useEffect(() => {
-    if (!session) return
-    const t = setTimeout(fetchEarnings, 300)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, earnPage, earnPageSize, earnStatus, earnSearch, earnFrom, earnTo, earnSortBy, earnSortOrder])
-
-  const exportEarningsCsv = async () => {
-    try {
-      setExportingCsv(true)
-      const base = new URLSearchParams()
-      base.set('sortBy', earnSortBy)
-      base.set('sortOrder', earnSortOrder)
-      if (earnStatus !== 'ALL') base.set('status', earnStatus)
-      if (earnSearch.trim()) base.set('search', earnSearch.trim())
-      if (earnFrom) base.set('from', earnFrom)
-      if (earnTo) base.set('to', earnTo)
-
-      const pageSize = 200
-      let page = 1
-      let total = Infinity
-      const rows: EarningRow[] = []
-
-      while (rows.length < total) {
-        const p = new URLSearchParams(base)
-        p.set('page', String(page))
-        p.set('pageSize', String(pageSize))
-        const res = await fetch(`/api/profile/earnings?${p.toString()}`, { cache: 'no-store' })
-        if (!res.ok) break
-        const data = await res.json()
-        const batch: EarningRow[] = data?.earnings || []
-        if (Number.isFinite(data?.meta?.total)) total = data.meta.total
-        else total = rows.length + batch.length
-        if (batch.length === 0) break
-        rows.push(...batch)
-        if (batch.length < pageSize) break
-        page += 1
-        // slight delay
-        await new Promise(r => setTimeout(r, 40))
-      }
-
-      const header = ['DateISO','OrderNumber','DesignTitle','Quantity','YouEarnUSD','CommissionUSD','SaleUSD','PayoutStatus']
-      const esc = (v: string) => '"' + (v ?? '').replaceAll('"', '""') + '"'
-      const csv = [
-        header.join(','),
-        ...rows.map(r => [
-          new Date(r.createdAt).toISOString(),
-          r.order?.orderNumber || '',
-          r.design?.title || '',
-          String(r.quantity ?? 1),
-          String(r.sellerAmount ?? ''),
-          String(r.platformCommission ?? ''),
-          String(r.saleAmount ?? ''),
-          r.payoutStatus || ''
-        ].map(x => esc(String(x))).join(','))
-      ].join('\n')
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `earnings-${new Date().toISOString().slice(0,10)}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
-    } finally {
-      setExportingCsv(false)
-    }
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const handleEditDesign = (designId: string) => {
-    // For now, redirect to upload page with edit mode
-    // In a full implementation, you'd create an edit page
-    router.push(`/upload?edit=${designId}`)
-  }
-
-  const handleDeleteDesign = (designId: string, title: string) => {
-    setDeleteConfirm({ designId, title })
-  }
-
-  const submitDeactivationRequest = async (design: Design) => {
-    try {
-      setSubmittingReqId(design.id)
-      const res = await fetch('/api/deactivation-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ designId: design.id, reason: `Please deactivate: ${design.title}` })
-      })
-      if (res.ok) {
-        setSuccessMessage('Deactivation request submitted. We\'ll review it shortly.')
-      } else {
-        const data = await res.json().catch(() => ({}))
-        setErrorMessage(data.message || 'Failed to submit request')
-      }
-    } catch {
-      setErrorMessage('Network error while submitting request')
-    } finally {
-      setSubmittingReqId(null)
-    }
-  }
-
-  const confirmDelete = async () => {
-    if (!deleteConfirm) return
-
-    try {
-      const response = await fetch('/api/profile/designs', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'delete',
-          designId: deleteConfirm.designId
-        })
-      })
-
-      if (response.ok) {
-        setSuccessMessage('Design deleted successfully')
-        setDesigns(designs.filter(d => d.id !== deleteConfirm.designId))
-        // Update stats
-        fetchProfile()
-      } else {
-        const error = await response.json()
-        setErrorMessage(error.message || 'Failed to delete design')
-      }
-    } catch {
-      setErrorMessage('An error occurred while deleting the design')
-    } finally {
-      setDeleteConfirm(null)
-      // Auto-clear messages after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage(null)
-        setErrorMessage(null)
-      }, 3000)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full" />
-      </div>
-    )
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
-          <Link href="/" className="text-indigo-600 hover:text-indigo-800">
-            Go Home
-          </Link>
+          <div className="p-4 xs:p-5 md:p-6">
+            <SellerAccountTab onSuccess={() => {}} onError={() => {}} />
+          </div>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
+ 'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import SellerAccountTab from '@/components/profile/SellerAccountTab'
+
+export default function ProfilePage() {
+  const [activeTab, setActiveTab] = useState<'overview' | 'designs' | 'earnings' | 'orders' | 'account'>('overview')
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gray-50">
-  <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {successMessage && (
-          <Banner type="success" message={successMessage} onClose={() => setSuccessMessage(null)} />
-        )}
-        {errorMessage && (
-          <Banner type="error" message={errorMessage} onClose={() => setErrorMessage(null)} />
-        )}
-        {/* Header */}
-  <div className="bg-white rounded-lg shadow-sm p-4 xs:p-5 md:p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4 min-w-0">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{profile.name || 'Anonymous User'}</h1>
-                <div className="flex items-center text-gray-600 mt-1 text-sm sm:text-base">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {profile.email}
-                </div>
-                <div className="flex items-center text-gray-600 mt-1 text-sm sm:text-base">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Member since {formatDate(profile.createdAt)}
-                </div>
-                {profile.bio && (
-                  <p className="text-gray-700 mt-2 text-sm sm:text-base max-w-sm sm:max-w-md">{profile.bio}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              {profile.isVerified && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                  Verified
-                </span>
-              )}
-              <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
-                {profile.role.toLowerCase()}
-              </span>
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm p-4 xs:p-5 md:p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Profile</h1>
+            <div className="flex items-center space-x-2">
+              <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">Seller</span>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 lg:gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Designs</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalDesigns}</p>
-                </div>
-                <Upload className="w-8 h-8 text-indigo-600" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSales}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Your Earnings</p>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalEarnings)}</p>
-                  <p className="text-xs text-gray-500">After 5% platform fee</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            {/* Make tabs horizontally scrollable on mobile to avoid layout overflow */}
             <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-3 xs:space-x-4 sm:space-x-8">
-              {[
-                { id: 'overview', label: 'Overview', icon: Eye },
-                { id: 'designs', label: 'My Designs', icon: Upload },
-                { id: 'earnings', label: 'Earnings', icon: DollarSign },
-                { id: 'orders', label: 'Orders', icon: ShoppingCart },
-                { id: 'account', label: 'Bank Account', icon: CreditCard }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as ProfileTab)}
-                  className={`flex flex-none items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4 mr-2" />
-                  {tab.label}
-                </button>
-              ))}
+              <button onClick={() => setActiveTab('overview')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab==='overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'}`}>Overview</button>
+              <button onClick={() => setActiveTab('designs')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab==='designs' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'}`}>My Designs</button>
+              <button onClick={() => setActiveTab('earnings')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab==='earnings' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'}`}>Earnings</button>
+              <button onClick={() => setActiveTab('orders')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab==='orders' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'}`}>Orders</button>
+              <button onClick={() => setActiveTab('account')} className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab==='account' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'}`}>Bank Account</button>
             </nav>
           </div>
 
@@ -466,184 +62,41 @@ export default function ProfilePage() {
             {activeTab === 'overview' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Profile Information</h4>
-                    <div className="space-y-2 text-sm text-gray-900">
-                      <p><span className="font-medium">Email:</span> {profile.email}</p>
-                      <p><span className="font-medium">Role:</span> {profile.role}</p>
-                      <p><span className="font-medium">Verified:</span> {profile.isVerified ? 'Yes' : 'No'}</p>
-                      {profile.location && <p><span className="font-medium">Location:</span> {profile.location}</p>}
-                      {profile.website && <p><span className="font-medium">Website:</span> {profile.website}</p>}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Quick Actions</h4>
-                    <div className="space-y-2">
-                      <Link
-                        href="/upload"
-                        className="block w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-center"
-                      >
-                        Upload New Design
-                      </Link>
-                      <Link
-                        href="/profile/orders"
-                        className="block w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-center"
-                      >
-                        View Orders
-                      </Link>
-                      <Link
-                        href="/designs"
-                        className="block w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-center"
-                      >
-                        Browse Designs
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-gray-600">Basic profile information is available here.</p>
+                <Link href="/upload" className="text-indigo-600 hover:underline">Upload new design</Link>
               </div>
             )}
 
             {activeTab === 'designs' && (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">My Designs</h3>
-                  <Link
-                    href="/upload"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
-                  >
-                    Upload New Design
-                  </Link>
-                </div>
-                {/* Policy notice: deletion vs admin deactivation */}
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
-                  Once a design has been purchased, deletion is disabled to protect order history and buyer access. If you need a listing taken down, please request an admin deactivation.
-                  <span className="ml-2">
-                    <Link href="/contact" className="underline">Contact support</Link>
-                  </span>
-                  <span className="ml-2">
-                    <Link href="/terms" className="underline">See Terms</Link>
-                  </span>
-                </div>
-                
-                {designs.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">No designs yet</h4>
-                    <p className="text-gray-600 mb-4">Start by uploading your first design to the marketplace</p>
-                    <Link
-                      href="/upload"
-                      className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
-                    >
-                      Upload First Design
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4 md:gap-6">
-                    {designs.map((design) => (
-                      <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="aspect-square bg-gray-100">
-                          <SafeImage
-                            src={design.imageUrl}
-                            alt={design.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h4 className="font-medium text-gray-900 mb-1">{design.title}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{design.category}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-indigo-600">{formatPrice(design.price)}</span>
-                            <span className="text-sm text-gray-500">{design.totalSales} sales</span>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            Revenue: {formatPrice(design.totalRevenue || 0)}
-                          </div>
-                          <div className="mt-2 flex space-x-2">
-                            <Link
-                              href={`/designs/${design.id}`}
-                              className="flex-1 bg-gray-100 text-gray-700 px-3 py-1 rounded text-center text-sm hover:bg-gray-200"
-                            >
-                              View Details
-                            </Link>
-                            <button
-                              onClick={() => handleEditDesign(design.id)}
-                              className="flex-1 bg-indigo-100 text-indigo-700 px-3 py-1 rounded text-center text-sm hover:bg-indigo-200"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDesign(design.id, design.title)}
-                              className={`flex-1 px-3 py-1 rounded text-center text-sm ${design.totalSales > 0 || design.isOwned ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
-                              disabled={design.totalSales > 0 || !!design.isOwned}
-                              title={design.totalSales > 0 || design.isOwned ? 'Cannot delete a design that has sales or is owned. Contact admin to request deactivation.' : 'Delete design'}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                          {(design.totalSales > 0 || design.isOwned) && (
-                            <div className="mt-2 grid grid-cols-1 gap-2">
-                              <button
-                                onClick={() => submitDeactivationRequest(design)}
-                                disabled={submittingReqId === design.id}
-                                className={`w-full px-3 py-1 rounded text-center text-sm text-white ${submittingReqId === design.id ? 'bg-gray-400 cursor-not-allowed' : 'bg-yellow-600 hover:bg-yellow-700'}`}
-                                title="Submit an in-app deactivation request for this design"
-                              >
-                                {submittingReqId === design.id ? 'Submitting…' : 'Submit deactivation request'}
-                              </button>
-                              <Link
-                                href={`/contact?subject=${encodeURIComponent(`Deactivation request: ${design.title}`)}&message=${encodeURIComponent(`Hello team,\n\nI would like to request admin deactivation for the following design:\n- Title: ${design.title}\n- ID: ${design.id}\n\nI understand prior purchasers will retain access as per the Terms.\n\nThank you.`)}`}
-                                className="block w-full bg-yellow-50 text-yellow-800 border border-yellow-200 px-3 py-1 rounded text-center text-sm hover:bg-yellow-100"
-                                title="Open contact form pre-filled with this request"
-                              >
-                                Or open contact form
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-                        {(design.totalSales > 0 || design.isOwned) && (
-                          <div className="mt-2 text-xs text-gray-600">
-                            {design.isOwned ? 'Owned design; delete disabled.' : 'Has sales; delete disabled.'} Contact <Link href="/contact" className="text-indigo-700 underline">support</Link> to request <span className="font-medium">deactivation</span>. Prior purchasers retain access. See <Link href="/terms" className="text-indigo-700 underline">Terms</Link>.
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">My Designs</h3>
+                <p className="text-gray-600">Your uploaded designs will appear here.</p>
               </div>
             )}
 
             {activeTab === 'earnings' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Overview</h3>
-                {stats && (
-                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Total Revenue</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Platform Commission (5%)</p>
-                        <p className="text-2xl font-bold text-red-600">-{formatPrice(stats.platformCommission)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Your Earnings</p>
-                        <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalEarnings)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Avg. per Sale</p>
-                        <p className="text-2xl font-bold text-blue-600">{formatPrice(stats.totalSales > 0 ? stats.totalEarnings / stats.totalSales : 0)}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <p className="text-gray-600">Payouts and earnings history.</p>
+              </div>
+            )}
 
-                {/* Filters */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                  <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500">Time:</span>
+            {activeTab === 'orders' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Orders</h3>
+                <p className="text-gray-600">Order history and details.</p>
+              </div>
+            )}
+
+            {activeTab === 'account' && (
+              <SellerAccountTab onSuccess={() => {}} onError={() => {}} />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
                       <button onClick={() => { setEarnTimeframe('7d'); setEarnFrom(new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='7d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>7d</button>
                       <button onClick={() => { setEarnTimeframe('30d'); setEarnFrom(new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10)); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='30d'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>30d</button>
                       <button onClick={() => { setEarnTimeframe('all'); setEarnFrom(''); setEarnTo(''); setEarnPage(1) }} className={`px-2 py-1 rounded ${earnTimeframe==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</button>
