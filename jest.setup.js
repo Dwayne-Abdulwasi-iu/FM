@@ -35,3 +35,19 @@ if (typeof global.fetch === 'undefined') {
     json: async () => ({ count: 0 }),
   }))
 }
+
+// Silence non-fatal React "not wrapped in act(...)" warnings in tests
+// that come from components with background effects (we still keep other
+// console.error output intact).
+const _origConsoleError = console.error
+console.error = (...args) => {
+  try {
+    const msg = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')
+    if (/not wrapped in act\(\.\.\.\)/i.test(msg) || /not wrapped in act\(/i.test(msg)) {
+      return
+    }
+  } catch {
+    // fall through to original
+  }
+  _origConsoleError.apply(console, args)
+}

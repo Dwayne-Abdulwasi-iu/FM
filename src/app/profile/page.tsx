@@ -1,5 +1,5 @@
 import React from 'react'
-import SellerAccountTab from '@/components/profile/SellerAccountTab'
+import ProfileTabs from '@/components/profile/ProfileTabs'
 
 export default function ProfilePage() {
   return (
@@ -14,12 +14,12 @@ export default function ProfilePage() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex overflow-x-auto px-4 sm:px-6 space-x-3 xs:space-x-4 sm:space-x-8">
-              <span className="py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">Bank Account</span>
+              {/* Tab navigation is handled inside the client component so interactions are client-side only */}
             </nav>
           </div>
 
           <div className="p-4 xs:p-5 md:p-6">
-            <SellerAccountTab />
+            <ProfileTabs />
           </div>
         </div>
       </div>
