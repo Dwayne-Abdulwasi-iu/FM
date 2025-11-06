@@ -1152,7 +1152,7 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Design Management</h3>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 xs:flex-col xs:items-start">
                     <select
                       value={designFilter}
                       onChange={(e) => setDesignFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
@@ -1164,7 +1164,7 @@ export default function AdminDashboard() {
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>
                     </select>
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Show only designs that are safe to delete (no sales and not owned)">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Show only designs that are safe to delete (no sales and not owned)">
                       <input
                         type="checkbox"
                         checked={deletableOnly}
@@ -1173,7 +1173,7 @@ export default function AdminDashboard() {
                       />
                       <span>Show deletable only</span>
                     </label>
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to designs with completed orders">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Filter to designs with completed orders">
                       <input
                         type="checkbox"
                         checked={filterHasOrders}
@@ -1182,7 +1182,7 @@ export default function AdminDashboard() {
                       />
                       <span>Has orders</span>
                     </label>
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to owned designs">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Filter to owned designs">
                       <input
                         type="checkbox"
                         checked={filterOwned}
@@ -1191,7 +1191,7 @@ export default function AdminDashboard() {
                       />
                       <span>Owned</span>
                     </label>
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700" title="Filter to inactive designs">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Filter to inactive designs">
                       <input
                         type="checkbox"
                         checked={filterInactive}
