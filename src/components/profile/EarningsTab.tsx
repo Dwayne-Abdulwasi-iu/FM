@@ -7,14 +7,15 @@ type Stats = {
   totalEarnings: number
   totalRevenue: number
   platformCommission: number
-  monthlyEarnings: Monthly[]
+  monthlyEarnings?: Monthly[]
 }
 
-export default function EarningsTab() {
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function EarningsTab({ initialStats }: { initialStats?: Partial<Stats> | null }) {
+  const [stats, setStats] = useState<Partial<Stats> | null>(initialStats ?? null)
+  const [loading, setLoading] = useState<boolean>(initialStats ? false : true)
 
   useEffect(() => {
+    if (initialStats) return // already have SSR data
     let mounted = true
     const run = async () => {
       try {
@@ -30,7 +31,7 @@ export default function EarningsTab() {
     }
     run()
     return () => { mounted = false }
-  }, [])
+  }, [initialStats])
 
   const formatPrice = (p: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p)
 

@@ -61,9 +61,14 @@ test('renders profile totals and payout info', async () => {
   const salesValue = salesLabel.nextElementSibling?.textContent
   expect(salesValue).toBe('2')
 
-  // Currency formatted values
-  expect(screen.getByText(/\$250(?:\.00)?/)).toBeInTheDocument()
-  expect(screen.getByText(/\$200(?:\.00)?/)).toBeInTheDocument()
+  // Currency formatted values - find values next to their labels to avoid collisions
+  const revenueLabel = screen.getByText(/Total revenue/i)
+  const revenueValue = revenueLabel.nextElementSibling?.textContent || ''
+  expect(revenueValue).toMatch(/\$250(?:\.00)?/)
+
+  const earningsLabel = screen.getByText(/Your earnings/i)
+  const earningsValue = earningsLabel.nextElementSibling?.textContent || ''
+  expect(earningsValue).toMatch(/\$200(?:\.00)?/)
 
   // Avg order value = 250 / 5 = 50
   expect(screen.getByText(/\$50(?:\.00)?/)).toBeInTheDocument()

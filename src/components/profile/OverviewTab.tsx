@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 
-export default function OverviewTab({ designsCount, ordersCount, loading }: { designsCount: number | null, ordersCount: number | null, loading?: boolean }) {
+export default function OverviewTab({ designsCount, ordersCount, loading, balance, balanceLoading }: { designsCount: number | null, ordersCount: number | null, loading?: boolean, balance?: number | null, balanceLoading?: boolean }) {
   return (
     <div>
       <h2 className="sr-only">Overview</h2>
@@ -28,8 +28,9 @@ export default function OverviewTab({ designsCount, ordersCount, loading }: { de
 
         <div className="p-4 bg-white border rounded-md">
           <div className="text-sm text-gray-500">Balance</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">—</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">{(balanceLoading ?? loading) ? '…' : (balance != null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(balance) : '—')}</div>
           <div className="mt-3">
+            {/* Use the earnings route which redirects to the profile Earnings tab to be robust */}
             <Link href="/profile/earnings" className="text-indigo-600 underline">View earnings</Link>
           </div>
         </div>

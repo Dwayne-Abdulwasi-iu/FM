@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import SellerAccountTab from '@/components/profile/SellerAccountTab'
 // Link removed; individual tabs import Link when needed
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -17,20 +18,20 @@ const TABS = [
   'Bank Account',
 ]
 
-export default function ProfileTabs() {
+export default function ProfileTabs({ initialProfile, initialStats, initialPayoutSummary }: { initialProfile?: { id: string; name?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null; initialStats?: { totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null; initialPayoutSummary?: { lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [active, setActive] = useState<string>(() => (searchParams?.get('tab') as string) || 'Overview')
-  const [designsCount, setDesignsCount] = useState<number | null>(null)
-  const [ordersCount, setOrdersCount] = useState<number | null>(null)
-  const [countsLoading, setCountsLoading] = useState(true)
-  const [profileUser, setProfileUser] = useState<{ id: string; name?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | null } | null>(null)
-  const [profileLoading, setProfileLoading] = useState(true)
-  const [stats, setStats] = useState<{ totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number } | null>(null)
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [designsCount, setDesignsCount] = useState<number | null>(initialStats?.totalDesigns ?? null)
+  const [ordersCount, setOrdersCount] = useState<number | null>(initialStats?.totalSales ?? null)
+  const [countsLoading, setCountsLoading] = useState<boolean>(initialStats ? false : true)
+  const [profileUser, setProfileUser] = useState<{ id: string; name?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null>(initialProfile ?? null)
+  const [profileLoading, setProfileLoading] = useState<boolean>(initialProfile ? false : true)
+  const [stats, setStats] = useState<{ totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null>(initialStats ?? null)
+  const [statsLoading, setStatsLoading] = useState<boolean>(initialStats ? false : true)
   const [avgOrderValue, setAvgOrderValue] = useState<number | null>(null)
-  const [payoutSummary, setPayoutSummary] = useState<{ lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null>(null)
-  const [payoutLoading, setPayoutLoading] = useState(true)
+  const [payoutSummary, setPayoutSummary] = useState<{ lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null>(initialPayoutSummary ?? null)
+  const [payoutLoading, setPayoutLoading] = useState<boolean>(initialPayoutSummary ? false : true)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -61,17 +62,25 @@ export default function ProfileTabs() {
       setCountsLoading(true)
       try {
         // Designs: request 1 item but inspect pagination.total
-        const dres = await fetch('/api/designs?userOnly=true&page=1&limit=1', { signal: abort.signal })
-        if (dres.ok) {
-          const ddata = await dres.json()
-          if (mounted && ddata?.pagination?.total != null) setDesignsCount(Number(ddata.pagination.total))
-        }
+        // If we already have initialStats from SSR, skip re-fetching counts
+        if (initialStats) {
+          if (mounted) {
+            setDesignsCount(initialStats.totalDesigns ?? null)
+            setOrdersCount(initialStats.totalSales ?? null)
+          }
+        } else {
+          const dres = await fetch('/api/designs?userOnly=true&page=1&limit=1', { signal: abort.signal })
+          if (dres.ok) {
+            const ddata = await dres.json()
+            if (mounted && ddata?.pagination?.total != null) setDesignsCount(Number(ddata.pagination.total))
+          }
 
-        // Orders: fetch list and count length
-        const ores = await fetch('/api/orders', { signal: abort.signal })
-        if (ores.ok) {
-          const odata = await ores.json()
-          if (mounted && Array.isArray(odata.orders)) setOrdersCount(odata.orders.length)
+          // Orders: fetch list and count length
+          const ores = await fetch('/api/orders', { signal: abort.signal })
+          if (ores.ok) {
+            const odata = await ores.json()
+            if (mounted && Array.isArray(odata.orders)) setOrdersCount(odata.orders.length)
+          }
         }
       } catch {
         // ignore; keep null counts
@@ -84,12 +93,18 @@ export default function ProfileTabs() {
       mounted = false
       abort.abort()
     }
-  }, [])
+  }, [initialStats])
 
   useEffect(() => {
     let mounted = true
     const ac = new AbortController()
     const run = async () => {
+      // If initialProfile was provided from SSR, skip client fetch
+      if (initialProfile) {
+        setProfileLoading(false)
+        return
+      }
+
       setProfileLoading(true)
       try {
         const res = await fetch('/api/profile', { signal: ac.signal })
@@ -105,12 +120,18 @@ export default function ProfileTabs() {
     }
     run()
     return () => { mounted = false; ac.abort() }
-  }, [])
+  }, [initialProfile])
 
   useEffect(() => {
     let mounted = true
     const ac = new AbortController()
     const run = async () => {
+      // If initialStats was provided by SSR, use it and skip client fetch
+      if (initialStats) {
+        setStatsLoading(false)
+        return
+      }
+
       setStatsLoading(true)
       try {
         const res = await fetch('/api/profile/stats', { signal: ac.signal })
@@ -126,7 +147,7 @@ export default function ProfileTabs() {
     }
     run()
     return () => { mounted = false; ac.abort() }
-  }, [])
+  }, [initialStats])
 
   // compute average order value and fetch last payout info
   useEffect(() => {
@@ -139,6 +160,13 @@ export default function ProfileTabs() {
   }, [stats])
 
   useEffect(() => {
+    // If SSR provided a payout summary, skip client fetch
+    if (initialPayoutSummary) {
+      setPayoutSummary(initialPayoutSummary)
+      setPayoutLoading(false)
+      return
+    }
+
     let mounted = true
     const ac = new AbortController()
     const run = async () => {
@@ -171,7 +199,7 @@ export default function ProfileTabs() {
     }
     run()
     return () => { mounted = false; ac.abort() }
-  }, [])
+  }, [initialPayoutSummary])
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -247,7 +275,12 @@ export default function ProfileTabs() {
               </div>
             </div>
           ) : (
-            <div className="text-sm text-gray-500">No profile data</div>
+            <div className="text-sm text-gray-500">
+              <div>Not signed in.</div>
+              <div className="mt-2">
+                <Link href="/auth/signin?callbackUrl=/profile" className="text-indigo-600 underline">Sign in to view your profile and balance</Link>
+              </div>
+            </div>
           )}
         </div>
       </aside>
@@ -284,9 +317,9 @@ export default function ProfileTabs() {
         </div>
 
         <div className="mt-6" ref={panelRef} tabIndex={-1}>
-          {active === 'Overview' && <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview"><OverviewTab designsCount={designsCount} ordersCount={ordersCount} loading={countsLoading} /></div>}
+          {active === 'Overview' && <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview"><OverviewTab designsCount={designsCount} ordersCount={ordersCount} loading={countsLoading} balance={stats?.totalEarnings ?? null} balanceLoading={statsLoading} /></div>}
           {active === 'Designs' && <div role="tabpanel" id="panel-designs" aria-labelledby="tab-designs"><DesignsTab /></div>}
-          {active === 'Earnings' && <div role="tabpanel" id="panel-earnings" aria-labelledby="tab-earnings"><EarningsTab /></div>}
+          {active === 'Earnings' && <div role="tabpanel" id="panel-earnings" aria-labelledby="tab-earnings"><EarningsTab initialStats={stats ?? undefined} /></div>}
           {active === 'Orders' && <div role="tabpanel" id="panel-orders" aria-labelledby="tab-orders"><OrdersTab /></div>}
           {active === 'Bank Account' && <div role="tabpanel" id="panel-bank-account" aria-labelledby="tab-bank-account"><SellerAccountTab /></div>}
         </div>
