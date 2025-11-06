@@ -65,8 +65,7 @@ export default async function ProfilePage() {
         monthlyEarnings.push({ month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), earnings: monthEarnings })
       }
 
-      // compute payout summary from sellerEarnings
-      let initialPayoutSummary: { lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null = null
+      // compute payout summary from sellerEarnings (assign to outer variable so it is passed to the client)
       if (sellerEarnings && sellerEarnings.length > 0) {
         type SE = { createdAt: Date | string; payoutStatus?: string | null; payoutCompletedAt?: Date | null; payoutAttemptedAt?: Date | null }
         const list = sellerEarnings as SE[]

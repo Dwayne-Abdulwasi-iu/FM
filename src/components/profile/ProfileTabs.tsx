@@ -232,7 +232,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                 {profileUser.location && <span className="px-2 py-1 text-xs text-gray-600">{profileUser.location}</span>}
               </div>
 
-              <div className="mt-3 text-xs text-gray-500">Joined {profileUser.createdAt ? new Date(profileUser.createdAt).toLocaleDateString() : '—'}</div>
+              <div className="mt-3 text-xs text-gray-500">Joined {profileUser.createdAt ? new Date(profileUser.createdAt).toISOString().split('T')[0] : '—'}</div>
 
               {/* Key totals under profile */}
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -270,7 +270,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
 
                 <div className="p-3 bg-gray-50 rounded text-center">
                   <div className="text-xs text-gray-500">Last payout date</div>
-                  <div className="text-sm font-medium text-gray-900">{payoutLoading ? '…' : (payoutSummary?.lastPayoutDate ? new Date(payoutSummary.lastPayoutDate).toLocaleString() : '—')}</div>
+                  <div className="text-sm font-medium text-gray-900">{payoutLoading ? '…' : (payoutSummary?.lastPayoutDate ? new Date(payoutSummary.lastPayoutDate).toISOString().split('T')[0] : '—')}</div>
                 </div>
               </div>
             </div>
