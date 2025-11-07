@@ -216,7 +216,16 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-semibold text-indigo-700">
                   {/* initials avatar from name */}
-                  {(profileUser.name || profileUser.email || '?').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
+                  {(() => {
+                    const nameVal = profileUser.name
+                    const emailVal = profileUser.email
+                    const source = typeof nameVal === 'string' && nameVal.trim() !== ''
+                      ? nameVal
+                      : typeof emailVal === 'string' && emailVal.trim() !== ''
+                        ? emailVal
+                        : '?'
+                    return source.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()
+                  })()}
                 </div>
                 <div>
                   <div className="text-lg font-semibold text-gray-900">{profileUser.name || '—'}</div>
@@ -232,7 +241,16 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                 {profileUser.location && <span className="px-2 py-1 text-xs text-gray-600">{profileUser.location}</span>}
               </div>
 
-              <div className="mt-3 text-xs text-gray-500">Joined {profileUser.createdAt ? new Date(profileUser.createdAt).toISOString().split('T')[0] : '—'}</div>
+              <div className="mt-3 text-xs text-gray-500">Joined {(() => {
+                try {
+                  if (!profileUser.createdAt) return '—'
+                  const d = new Date(profileUser.createdAt)
+                  if (Number.isNaN(d.getTime())) return '—'
+                  return d.toISOString().split('T')[0]
+                } catch {
+                  return '—'
+                }
+              })()}</div>
 
               {/* Key totals under profile */}
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -270,7 +288,17 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
 
                 <div className="p-3 bg-gray-50 rounded text-center">
                   <div className="text-xs text-gray-500">Last payout date</div>
-                  <div className="text-sm font-medium text-gray-900">{payoutLoading ? '…' : (payoutSummary?.lastPayoutDate ? new Date(payoutSummary.lastPayoutDate).toISOString().split('T')[0] : '—')}</div>
+                  <div className="text-sm font-medium text-gray-900">{payoutLoading ? '…' : (() => {
+                    try {
+                      const v = payoutSummary?.lastPayoutDate
+                      if (!v) return '—'
+                      const d = new Date(v)
+                      if (Number.isNaN(d.getTime())) return '—'
+                      return d.toISOString().split('T')[0]
+                    } catch {
+                      return '—'
+                    }
+                  })()}</div>
                 </div>
               </div>
             </div>

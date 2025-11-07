@@ -254,9 +254,21 @@ export default function DesignPage() {
 
   // Image sanitization handled by SafeImage; poster uses shared sanitizer
 
-  const getTags = (tags: string | null) => {
+  const getTags = (tags: string | string[] | null) => {
     if (!tags) return []
-    return tags.split(',').map(tag => tag.trim()).filter(Boolean)
+    // If tags are already an array (some APIs return string[]), normalize and return
+    if (Array.isArray(tags)) {
+      return tags.map(t => (t == null ? '' : String(t).trim())).filter(Boolean)
+    }
+
+    // Normalize anything that isn't an array by coercing to a string first.
+    // This avoids calling `.split` on non-string values directly.
+    try {
+      const coerced = Array.isArray(tags) ? '' : String(tags)
+      return coerced.split(',').map(tag => tag.trim()).filter(Boolean)
+    } catch {
+      return []
+    }
   }
 
   const getAccessibleMediaFiles = () => {
