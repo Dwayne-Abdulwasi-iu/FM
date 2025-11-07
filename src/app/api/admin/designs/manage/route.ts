@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
                 userId,
                 title: 'Design deactivated',
                 message: `Your design "${result?.title}" has been deactivated by an admin and is no longer visible on the marketplace.`,
-                url: `/profile/designs`,
+                url: `/profile#designs`,
               }
             })
             try { const pub = await import('@/lib/notificationsPubSub'); pub.publish(userId, created) } catch {}

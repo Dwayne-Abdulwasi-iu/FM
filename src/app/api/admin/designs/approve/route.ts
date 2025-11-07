@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
             userId,
             title,
             message,
-            url: `/profile/designs`,
+            // point to profile with designs tab anchor
+            url: `/profile#designs`,
           }
         })
         try {

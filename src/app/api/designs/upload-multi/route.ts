@@ -328,12 +328,13 @@ export async function POST(request: NextRequest) {
 
     // Create in-app notification for uploader (pending approval)
     try {
-      const createdNotif = await prisma.notification.create({
+        const createdNotif = await prisma.notification.create({
         data: {
           userId: session.user.id,
           title: 'Design pending approval',
           message: `Your design "${design.title}" has been submitted and is pending review. It will appear on the marketplace once approved.`,
-          url: `/profile/designs`,
+          // profile is a single page with tabs — link to the profile page and the designs tab
+          url: `/profile#designs`,
         }
       })
       try {
@@ -365,7 +366,8 @@ export async function POST(request: NextRequest) {
         })
 
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-        const designUrl = `${baseUrl}/profile/designs`
+  // Link to the profile page with the designs tab anchor so the client route exists
+  const designUrl = `${baseUrl}/profile#designs`
 
         const mailOptions = {
           from,
