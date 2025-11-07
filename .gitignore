@@ -4,3 +4,8 @@ node_modules/
 .env*
 .DS_Store
 .cache/
+
+# Ignore uploaded media (user uploads) so large files aren't committed
+/public/uploads/
+# preserve an optional placeholder if you want the folder kept in repo
+!/.gitkeep
