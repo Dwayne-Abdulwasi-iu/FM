@@ -20,22 +20,22 @@ model User {
   bio        String?
   website    String?
   location   String?
-  isVerified Boolean  @default(false)
-  isAdmin    Boolean  @default(false)
+  isVerified Boolean @default(false)
+  isAdmin    Boolean @default(false)
 
-  designs   Design[]
-  ownedDesigns Design[] @relation("DesignOwnership")
-  orders    Order[]
-  reviews   Review[]
-  favorites Favorite[]
-  cart      CartItem[]
-  earnings  SellerEarning[]
-  sellerAccount SellerAccount?
-  purchases Purchase[]
-  contactMessages ContactMessage[]
-  chatSessions ChatSession[]
-  notifications Notification[]
-  resources Resource[]
+  designs             Design[]
+  ownedDesigns        Design[]             @relation("DesignOwnership")
+  orders              Order[]
+  reviews             Review[]
+  favorites           Favorite[]
+  cart                CartItem[]
+  earnings            SellerEarning[]
+  sellerAccount       SellerAccount?
+  purchases           Purchase[]
+  contactMessages     ContactMessage[]
+  chatSessions        ChatSession[]
+  notifications       Notification[]
+  resources           Resource[]
   passwordResetTokens PasswordResetToken[]
 
   accounts Account[]
@@ -77,31 +77,31 @@ model Session {
 }
 
 model Design {
-  id           String   @id @default(cuid()) @map("_id")
-  title        String
-  description  String?
-  price        Float
-  ownershipPrice Float?  // Higher price for ownership option
-  imageUrl     String   // Primary/thumbnail image for listings
-  thumbnailUrl String?
+  id              String   @id @default(cuid()) @map("_id")
+  title           String
+  description     String?
+  price           Float
+  ownershipPrice  Float? // Higher price for ownership option
+  imageUrl        String // Primary/thumbnail image for listings
+  thumbnailUrl    String?
   // Tags: store as array for efficient filtering
-  tags         String[]
-  category     String
-  isActive     Boolean  @default(true)
-  approvalStatus String @default("PENDING") // PENDING, APPROVED, REJECTED
+  tags            String[]
+  category        String
+  isActive        Boolean  @default(true)
+  approvalStatus  String   @default("PENDING") // PENDING, APPROVED, REJECTED
   rejectionReason String?
-  buyingTypes  String   @default("REGULAR") // REGULAR, OWNERSHIP, BOTH
-  isOwned      Boolean  @default(false)
-  ownedBy      String?  // User ID who owns the design (for ownership purchases)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  buyingTypes     String   @default("REGULAR") // REGULAR, OWNERSHIP, BOTH
+  isOwned         Boolean  @default(false)
+  ownedBy         String? // User ID who owns the design (for ownership purchases)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   designerId String
   designer   User   @relation(fields: [designerId], references: [id], onDelete: Cascade)
   owner      User?  @relation("DesignOwnership", fields: [ownedBy], references: [id])
 
-  totalSales   Int    @default(0)
-  totalRevenue Float  @default(0)
+  totalSales   Int   @default(0)
+  totalRevenue Float @default(0)
 
   orderItems OrderItem[]
   reviews    Review[]
@@ -124,16 +124,16 @@ model Design {
 }
 
 model DesignMedia {
-  id          String   @id @default(cuid()) @map("_id")
-  fileName    String   // Original filename
-  fileUrl     String   // Storage URL
-  fileType    String   // IMAGE, VIDEO
-  mimeType    String   // image/jpeg, video/mp4, etc.
-  fileSize    Int      // File size in bytes
-  duration    Int?     // For videos - duration in seconds
-  accessType  String   @default("FREE") // FREE, PREMIUM
-  sortOrder   Int      @default(0) // Display order
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid()) @map("_id")
+  fileName   String // Original filename
+  fileUrl    String // Storage URL
+  fileType   String // IMAGE, VIDEO
+  mimeType   String // image/jpeg, video/mp4, etc.
+  fileSize   Int // File size in bytes
+  duration   Int? // For videos - duration in seconds
+  accessType String   @default("FREE") // FREE, PREMIUM
+  sortOrder  Int      @default(0) // Display order
+  createdAt  DateTime @default(now())
 
   designId String
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
@@ -142,13 +142,13 @@ model DesignMedia {
 }
 
 model Order {
-  id            String   @id @default(cuid()) @map("_id")
-  orderNumber   String   @unique
-  status        String   @default("PENDING")
-  totalAmount   Float
-  platformFee   Float    
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid()) @map("_id")
+  orderNumber String   @unique
+  status      String   @default("PENDING")
+  totalAmount Float
+  platformFee Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   customerId String
   customer   User   @relation(fields: [customerId], references: [id])
@@ -156,7 +156,7 @@ model Order {
   stripePaymentIntentId String?
   stripeFeeId           String?
 
-  items OrderItem[]
+  items    OrderItem[]
   earnings SellerEarning[]
 
   @@index([customerId])
@@ -229,22 +229,22 @@ model CartItem {
 }
 
 model SellerEarning {
-  id               String   @id @default(cuid()) @map("_id")
-  saleAmount       Float    // Original sale amount (what customer paid)
-  platformCommission Float  // 5% commission taken by platform
-  sellerAmount     Float    // Amount seller receives (95% of sale)
-  quantity         Int      @default(1)
-  createdAt        DateTime @default(now())
+  id                 String   @id @default(cuid()) @map("_id")
+  saleAmount         Float // Original sale amount (what customer paid)
+  platformCommission Float // 5% commission taken by platform
+  sellerAmount       Float // Amount seller receives (95% of sale)
+  quantity           Int      @default(1)
+  createdAt          DateTime @default(now())
 
   // Payout audit fields
-  payoutStatus       PayoutStatus @default(PENDING) // PENDING, SKIPPED_SPLIT, PAID, FAILED
-  payoutProvider     String?                        // e.g., PAYSTACK, PAYSTACK_SPLIT, MANUAL
-  payoutTransferId   String?                        // gateway transfer/reference code
-  payoutAttemptedAt  DateTime?
-  payoutCompletedAt  DateTime?
-  payoutError        String?
-  payoutCurrency     String?                        // e.g., NGN, USD
-  payoutAmountMinor  Int?                           // e.g., amount in kobo/cents
+  payoutStatus      PayoutStatus @default(PENDING) // PENDING, SKIPPED_SPLIT, PAID, FAILED
+  payoutProvider    String? // e.g., PAYSTACK, PAYSTACK_SPLIT, MANUAL
+  payoutTransferId  String? // gateway transfer/reference code
+  payoutAttemptedAt DateTime?
+  payoutCompletedAt DateTime?
+  payoutError       String?
+  payoutCurrency    String? // e.g., NGN, USD
+  payoutAmountMinor Int? // e.g., amount in kobo/cents
 
   sellerId String
   seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
@@ -268,7 +268,7 @@ enum PayoutStatus {
 
 model Purchase {
   id            String   @id @default(cuid()) @map("_id")
-  purchaseType  String   // REGULAR or OWNERSHIP
+  purchaseType  String // REGULAR or OWNERSHIP
   accessGranted Boolean  @default(true)
   purchasePrice Float
   createdAt     DateTime @default(now())
@@ -284,17 +284,17 @@ model Purchase {
 }
 
 model SellerAccount {
-  id               String   @id @default(cuid()) @map("_id")
-  accountNumber    String   // Bank account number
-  accountName      String   // Account holder name
-  bankName         String   // Bank name
-  bankCode         String   // Bank code for transfers
-  recipientCode    String?  // Paystack recipient code for transfers
-  subaccountCode   String?  // Paystack subaccount code for split payments
-  isVerified       Boolean  @default(false)
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id             String   @id @default(cuid()) @map("_id")
+  accountNumber  String // Bank account number
+  accountName    String // Account holder name
+  bankName       String // Bank name
+  bankCode       String // Bank code for transfers
+  recipientCode  String? // Paystack recipient code for transfers
+  subaccountCode String? // Paystack subaccount code for split payments
+  isVerified     Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -309,7 +309,7 @@ model ContactMessage {
   subject   String
   message   String
   priority  String   @default("medium") // low, medium, high, urgent
-  status    String   @default("OPEN")   // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -337,7 +337,7 @@ model ChatMessage {
   message    String
   senderId   String
   senderName String
-  senderRole String   // USER, ADMIN
+  senderRole String // USER, ADMIN
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
 
@@ -351,10 +351,10 @@ model Resource {
   id          String   @id @default(cuid()) @map("_id")
   title       String
   description String
-  type        String   // guide, template, tool, tutorial, reference, inspiration
-  category    String   // design-fundamentals, color-theory, technical-drawing, pattern-making, digital-tools, photography
-  difficulty  String   // beginner, intermediate, advanced
-  format      String   // pdf, video, web, download, article
+  type        String // guide, template, tool, tutorial, reference, inspiration
+  category    String // design-fundamentals, color-theory, technical-drawing, pattern-making, digital-tools, photography
+  difficulty  String // beginner, intermediate, advanced
+  format      String // pdf, video, web, download, article
   url         String?
   downloadUrl String?
   thumbnail   String   @default("/api/placeholder/300/200")
