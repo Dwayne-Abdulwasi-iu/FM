@@ -36,6 +36,7 @@ model User {
   chatSessions ChatSession[]
   notifications Notification[]
   resources Resource[]
+  passwordResetTokens PasswordResetToken[]
 
   accounts Account[]
   sessions Session[]
