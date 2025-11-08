@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Server-side test: ensure ProfilePage computes and passes a non-null initialPayoutSummary
  * when prisma.sellerEarning returns entries.

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import crypto from 'crypto'
 import redisHelper from '@/lib/redis'
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
       const unreadOnly = url.searchParams.get('unreadOnly') === 'true'
       const limit = Number(url.searchParams.get('limit') || 20)
 
-      const where: any = { userId: session.user.id }
+  const where: Prisma.NotificationWhereInput = { userId: session.user.id }
       if (unreadOnly) where.isRead = false
 
       // Prefer Redis-backed rate limiter when available
