@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import { v2 as cloudinary } from 'cloudinary'
 import { revalidatePath } from 'next/cache'
 import { writeFile, mkdir } from 'fs/promises'
@@ -231,6 +232,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

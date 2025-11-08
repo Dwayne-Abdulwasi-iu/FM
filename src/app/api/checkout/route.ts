@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { stripe, calculatePlatformFee } from '@/lib/stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST(request: NextRequest) {
   try {
@@ -241,10 +242,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Checkout error:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

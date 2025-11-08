@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET() {
   try {
@@ -51,10 +52,8 @@ export async function GET() {
 
   } catch (error: unknown) {
     console.error('Get cart error:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -219,10 +218,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Add to cart error:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -272,10 +269,8 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Remove from cart error:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

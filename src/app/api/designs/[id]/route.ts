@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -77,11 +78,8 @@ export async function GET(
 
   } catch (error: unknown) {
     console.error('Fetch design error:', error)
-  const e = error as { code?: string; name?: string; [k: string]: unknown }
-    // Prisma server selection timeouts surface as P2010 — return 503 for transient DB unavailability
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

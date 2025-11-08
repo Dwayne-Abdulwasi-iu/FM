@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET() {
   try {
@@ -24,7 +25,9 @@ export async function GET() {
       designCount,
       timestamp: new Date().toISOString(),
     })
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unexpected error' }, { status: 500 })
-  }
+    } catch (error) {
+      const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+      if (prismaResp) return prismaResp
+      return NextResponse.json({ ok: false, error: 'Unexpected error' }, { status: 500 })
+    }
 }

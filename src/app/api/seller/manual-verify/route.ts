@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,10 +64,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Manual verification error:', error)
+    const maybe = prismaErrorResponse(error)
+    if (maybe) return maybe
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: 'Failed to complete manual verification' 
+        message: 'Failed to complete manual verification'
       },
       { status: 500 }
     )

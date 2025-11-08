@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,6 +73,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Profile designs error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -166,6 +169,8 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     console.error('Design action error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -261,6 +266,8 @@ export async function DELETE(request: NextRequest) {
     })
   } catch (error) {
     console.error('Design delete error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

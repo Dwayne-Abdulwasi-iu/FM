@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,10 +53,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: contactMessage.id, message: 'Request submitted' }, { status: 201 })
   } catch (error: unknown) {
     console.error('Deactivation request error:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Failed to submit request' }, { status: 500 })
   }
 }

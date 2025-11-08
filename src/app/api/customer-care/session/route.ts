@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST() {
   try {
@@ -52,6 +53,8 @@ export async function POST() {
 
   } catch (error) {
     console.error('Chat session error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Failed to create chat session' },
       { status: 500 }
@@ -118,6 +121,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Get chat sessions error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Failed to fetch chat sessions' },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +41,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ resources })
   } catch (error) {
     console.error('Failed to fetch resources:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Failed to fetch resources' },
       { status: 500 }
@@ -118,6 +121,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ resource }, { status: 201 })
   } catch (error) {
     console.error('Failed to create resource:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Failed to create resource' },
       { status: 500 }
@@ -172,6 +177,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ resource })
   } catch (error) {
     console.error('Failed to update resource:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Failed to update resource' },
       { status: 500 }
@@ -220,6 +227,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to delete resource:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Failed to delete resource' },
       { status: 500 }

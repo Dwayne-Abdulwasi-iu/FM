@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import type { Prisma } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
@@ -156,6 +157,8 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error managing user:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Failed to manage user' },
       { status: 500 }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 const ps = paystack as {
   misc: {
@@ -313,6 +314,8 @@ export async function POST() {
 
   } catch (error) {
     console.error('Verify account error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { 
         success: false,

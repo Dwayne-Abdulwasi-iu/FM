@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(request: NextRequest) {
   try {
@@ -93,6 +94,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Search error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: 'Search failed' },
       { status: 500 }

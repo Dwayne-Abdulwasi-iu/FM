@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import type Stripe from 'stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Webhook error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Webhook error' },
       { status: 500 }
@@ -177,6 +180,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.log(`Order ${orderNumber} created successfully`)
   } catch (error) {
     console.error('Error handling checkout completion:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return
   }
 }
 
@@ -195,5 +200,7 @@ async function handlePaymentSucceeded(paymentIntent: StripePaymentIntent) {
     console.log(`Payment ${paymentIntent.id} succeeded`)
   } catch (error) {
     console.error('Error handling payment success:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return
   }
 }

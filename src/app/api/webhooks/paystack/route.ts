@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import crypto from 'crypto'
 
 type OrderItem = {
@@ -339,6 +340,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Paystack webhook error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Webhook error' },
       { status: 500 }

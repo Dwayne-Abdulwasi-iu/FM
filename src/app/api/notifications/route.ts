@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import crypto from 'crypto'
 import redisHelper from '@/lib/redis'
 const RATE_LIMIT_WINDOW_MS = 60_000 // 1 minute
@@ -56,6 +57,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ items, unreadCount }, { headers: { 'ETag': etag, 'Cache-Control': 'private, max-age=0, must-revalidate' } })
   } catch (err) {
     console.error('Notification GET error', err)
+    const prismaResp = prismaErrorResponse(err, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ items: [], unreadCount: 0 }, { status: 500 })
   }
 }
@@ -78,6 +81,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Notification PATCH error', err)
+    const prismaResp = prismaErrorResponse(err, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Failed' }, { status: 500 })
   }
 }

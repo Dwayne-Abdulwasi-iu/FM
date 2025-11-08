@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
@@ -160,10 +161,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     console.error('Error managing design:', error)
-    const e = error as { code?: string; name?: string; [k: string]: unknown }
-    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
-      return NextResponse.json({ error: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
-    }
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ error: 'Failed to manage design' }, { status: 500 })
   }
 }

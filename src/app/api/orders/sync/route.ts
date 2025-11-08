@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Unsupported provider' }, { status: 400 })
   } catch (error) {
     console.error('Order sync error:', error)
+    const maybe = prismaErrorResponse(error)
+    if (maybe) return maybe
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

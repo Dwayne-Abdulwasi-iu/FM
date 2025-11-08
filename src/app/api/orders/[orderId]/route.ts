@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ orderId: string }> }) {
   try {
@@ -37,6 +38,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
     return NextResponse.json({ order })
   } catch (error) {
     console.error('Get order details error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

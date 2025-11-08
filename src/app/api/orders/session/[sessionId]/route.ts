@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { stripe } from '@/lib/stripe'
 import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(
   request: NextRequest,
@@ -364,6 +365,8 @@ export async function GET(
 
   } catch (error: unknown) {
     console.error('Get order by session error:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { message: 'Internal server error', error: error instanceof Error ? error.message : String(error) },
       { status: 500 }

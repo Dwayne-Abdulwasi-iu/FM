@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { uploadToCloudinary, generateThumbnailUrl } from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function POST(request: NextRequest) {
   try {
@@ -257,6 +258,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Get designs error:", error);
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable, please try again later.')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
