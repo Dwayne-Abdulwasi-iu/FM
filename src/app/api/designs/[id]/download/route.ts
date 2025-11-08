@@ -100,11 +100,12 @@ export async function GET(
       },
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Download error:', error)
-    return NextResponse.json(
-      { error: 'Download failed' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ error: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ error: 'Download failed' }, { status: 500 })
   }
 }

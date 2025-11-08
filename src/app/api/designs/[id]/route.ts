@@ -75,11 +75,13 @@ export async function GET(
 
     return NextResponse.json({ design })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Fetch design error:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+  const e = error as { code?: string; name?: string; [k: string]: unknown }
+    // Prisma server selection timeouts surface as P2010 — return 503 for transient DB unavailability
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

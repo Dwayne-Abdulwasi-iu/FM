@@ -50,8 +50,12 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ id: contactMessage.id, message: 'Request submitted' }, { status: 201 })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Deactivation request error:', error)
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
     return NextResponse.json({ message: 'Failed to submit request' }, { status: 500 })
   }
 }

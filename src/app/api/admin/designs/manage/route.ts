@@ -158,11 +158,12 @@ export async function POST(request: NextRequest) {
       message: `Design ${action} successful`,
       design: result 
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error managing design:', error)
-    return NextResponse.json(
-      { error: 'Failed to manage design' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ error: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ error: 'Failed to manage design' }, { status: 500 })
   }
 }

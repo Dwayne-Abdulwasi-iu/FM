@@ -98,11 +98,12 @@ export async function GET(
       }
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Access check error:', error)
-    return NextResponse.json(
-      { hasAccess: false, reason: 'Internal server error' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ hasAccess: false, reason: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ hasAccess: false, reason: 'Internal server error' }, { status: 500 })
   }
 }

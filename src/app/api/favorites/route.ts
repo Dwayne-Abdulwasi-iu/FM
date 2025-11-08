@@ -44,8 +44,12 @@ export async function GET(request: NextRequest) {
     }))
 
     return NextResponse.json({ items: mapped, total, page, pageSize })
-  } catch {
-    console.error('Get favorites error')
+  } catch (error: unknown) {
+    console.error('Get favorites error', error)
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -75,12 +79,16 @@ export async function POST(request: NextRequest) {
         data: { userId: session.user.id, designId },
       })
       return NextResponse.json({ message: 'Added', fav })
-    } catch (err) {
+    } catch {
       // unique constraint -> already exists
       return NextResponse.json({ message: 'Already added' }, { status: 200 })
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Add favorite error:', error)
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -100,8 +108,12 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.favorite.deleteMany({ where: { userId: session.user.id, designId } })
     return NextResponse.json({ message: 'Removed' })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Remove favorite error:', error)
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

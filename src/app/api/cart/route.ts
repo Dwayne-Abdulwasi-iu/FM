@@ -49,12 +49,13 @@ export async function GET() {
       count: cartItems.length
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Get cart error:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -216,12 +217,13 @@ export async function POST(request: NextRequest) {
       item: cartItem
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Add to cart error:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -268,11 +270,12 @@ export async function DELETE(request: NextRequest) {
       message: 'Item removed from cart successfully'
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Remove from cart error:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    const e = error as { code?: string; name?: string; [k: string]: unknown }
+    if (e && (e.code === 'P2010' || e?.name === 'PrismaClientKnownRequestError')) {
+      return NextResponse.json({ message: 'Database temporarily unavailable, please try again later.' }, { status: 503 })
+    }
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
