@@ -21,6 +21,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:email": "node ./scripts/test-email.js",
+    "find:reset-token": "node ./scripts/find-reset-token.js",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
