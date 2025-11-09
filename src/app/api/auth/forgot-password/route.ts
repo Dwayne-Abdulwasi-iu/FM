@@ -66,13 +66,40 @@ export async function POST(request: NextRequest) {
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         })
       } else if (process.env.SENDGRID_API_KEY) {
-        // Use SendGrid SMTP relay without extra dependency
-        transporter = nodemailer.createTransport({
-          host: 'smtp.sendgrid.net',
-          port: 587,
-          secure: false,
-          auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY }
-        })
+        // Prefer SendGrid Web API (more reliable than SMTP relay in some accounts).
+        // We'll attempt a Web API send here and skip creating an SMTP transporter.
+        const sgApiKey = process.env.SENDGRID_API_KEY
+        try {
+          const payload = {
+            personalizations: [{ to: [{ email }], subject: 'Password reset' }],
+            from: { email: process.env.EMAIL_FROM || 'no-reply@example.com' },
+            content: [
+              { type: 'text/plain', value: `Reset your password: ${resetUrl}` },
+              { type: 'text/html', value: `<p>Reset your password: <a href="${resetUrl}">${resetUrl}</a></p>` }
+            ]
+          }
+
+          const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${sgApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          })
+
+          if (!res.ok) {
+            const body = await res.text().catch(() => '')
+            console.error('SendGrid Web API send failed', res.status, res.statusText, body)
+            // fall through so we still return ok:true to the client (avoid enumeration)
+          } else {
+            // success via Web API — skip SMTP send
+            return NextResponse.json({ ok: true })
+          }
+        } catch (e) {
+          console.error('SendGrid Web API error', e)
+          // fall back to SMTP below if configured
+        }
       }
 
       if (transporter) {
