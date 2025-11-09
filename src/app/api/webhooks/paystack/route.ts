@@ -86,12 +86,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Invalid metadata' }, { status: 400 })
       }
 
-  // Create order in database
+  const saleCurrency = (currency as string || 'USD').toUpperCase()
+
+  // Create order in database (cast data/include to any to avoid transient generated-client typing mismatches)
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const order = await prisma.order.create({
         data: {
           orderNumber: reference,
           customerId: userId,
           totalAmount: originalAmountUSD, // Store in USD
+          currency: saleCurrency,
           // Always store platform fee in USD to keep stats consistent across gateways
           platformFee: Number((originalAmountUSD * 0.05).toFixed(2)),
           status: 'COMPLETED',
@@ -104,20 +108,23 @@ export async function POST(request: NextRequest) {
               purchaseType: item.purchaseType || 'REGULAR'
             }))
           }
-        },
+        } as any,
         include: {
           items: {
             include: {
               design: true
             }
           }
-        }
+        } as any
       })
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const splitPaymentEnabled = Boolean(metadata?.splitPaymentEnabled)
 
-  // Create seller earnings, purchase records, and handle ownership for each item  
-  for (const item of order.items) {
+  // Create seller earnings, purchase records, and handle ownership for each item
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orderAny = order as any
+  for (const item of orderAny.items) {
         const saleAmount = item.price * item.quantity
         const commission = saleAmount * 0.05 // 5% commission
         const sellerAmount = saleAmount - commission
@@ -134,6 +141,8 @@ export async function POST(request: NextRequest) {
             // If split was enabled, mark payout as skipped (handled by Paystack split)
             payoutStatus: splitPaymentEnabled ? 'SKIPPED_SPLIT' : undefined,
             payoutProvider: splitPaymentEnabled ? 'PAYSTACK_SPLIT' : undefined
+            ,
+            saleCurrency: saleCurrency
           }
         })
 

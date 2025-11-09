@@ -71,31 +71,34 @@ async function syncStripeOrder(checkoutSessionId: string, userId: string) {
     }
 
     const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-    const amountTotalCents = checkoutSession.amount_total ?? 0
+  const amountTotalCents = checkoutSession.amount_total ?? 0
+  const currency = (checkoutSession.currency as string | undefined)?.toUpperCase() || 'USD'
 
-    order = await prisma.order.create({
-      data: {
-        orderNumber,
-        status: 'COMPLETED',
-        totalAmount: amountTotalCents / 100,
-        platformFee: platformFeeCents / 100,
-        customerId: userId,
-        stripePaymentIntentId: paymentIntentId,
-        items: {
-          create: orderItemsMeta.map((item) => ({
-            designId: item.designId,
-            quantity: item.quantity,
-            price: item.price,
-            purchaseType: item.purchaseType || 'REGULAR'
-          }))
-        }
-      },
-      include: { items: { include: { design: { include: { designer: true } } } } }
-    })
+    // build order payload as `any` to avoid transient generated-client type mismatches
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderPayload: any = {
+      orderNumber,
+      status: 'COMPLETED',
+      totalAmount: amountTotalCents / 100,
+      currency,
+      platformFee: platformFeeCents / 100,
+      customerId: userId,
+      stripePaymentIntentId: paymentIntentId,
+      items: {
+        create: orderItemsMeta.map((item) => ({
+          designId: item.designId,
+          quantity: item.quantity,
+          price: item.price,
+          purchaseType: item.purchaseType || 'REGULAR'
+        }))
+      }
+    }
+
+    order = await prisma.order.create({ data: orderPayload, include: { items: { include: { design: { include: { designer: true } } } } } })
     created = true
 
     // Update design stats, earnings, and purchases
-    for (const item of order.items) {
+  for (const item of order!.items) {
       const saleAmount = item.price * item.quantity
       const platformCommission = saleAmount * 0.05
       const sellerEarning = saleAmount - platformCommission
@@ -119,23 +122,25 @@ async function syncStripeOrder(checkoutSessionId: string, userId: string) {
 
       await prisma.design.update({ where: { id: item.designId }, data: updateData })
 
-      await prisma.sellerEarning.create({
-        data: {
-          sellerId: item.design.designerId,
-          orderId: order.id,
-          designId: item.designId,
-          saleAmount,
-          platformCommission,
-          sellerAmount: sellerEarning,
-          quantity: item.quantity,
-        }
-      })
+      // build earning payload as any to avoid transient typing issues
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const earningPayload: any = {
+        sellerId: item.design.designerId,
+        orderId: order!.id,
+        designId: item.designId,
+        saleAmount,
+        platformCommission,
+        sellerAmount: sellerEarning,
+        quantity: item.quantity,
+        saleCurrency: currency
+      }
+      await prisma.sellerEarning.create({ data: earningPayload })
 
       await prisma.purchase.create({
         data: {
           userId,
           designId: item.designId,
-          orderId: order.id,
+          orderId: order!.id,
           purchaseType: item.purchaseType || 'REGULAR',
           purchasePrice: item.price,
           accessGranted: true,
@@ -194,25 +199,29 @@ async function syncPaystackOrder(reference: string, userId: string) {
   })
 
   if (!order) {
-    order = await prisma.order.create({
-      data: {
-        orderNumber: reference,
-        customerId: userId,
-        totalAmount: originalAmountUSD,
-        platformFee: platformFee,
-        status: 'COMPLETED',
-        stripePaymentIntentId: reference,
-        items: {
-          create: orderItems.map((item) => ({
-            designId: item.designId,
-            quantity: item.quantity,
-            price: item.price,
-            purchaseType: item.purchaseType || 'REGULAR'
-          }))
-        }
-      },
-      include: { items: { include: { design: { include: { designer: true } } } } }
-    })
+    // determine sale currency from charge
+    const saleCurrency = (charge.currency as string | undefined)?.toUpperCase() || 'USD'
+    // build order payload as any to avoid transient generated-client typing mismatches
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const psOrderPayload: any = {
+      orderNumber: reference,
+      customerId: userId,
+      totalAmount: originalAmountUSD,
+      currency: saleCurrency,
+      platformFee: platformFee,
+      status: 'COMPLETED',
+      stripePaymentIntentId: reference,
+      items: {
+        create: orderItems.map((item) => ({
+          designId: item.designId,
+          quantity: item.quantity,
+          price: item.price,
+          purchaseType: item.purchaseType || 'REGULAR'
+        }))
+      }
+    }
+
+    order = await prisma.order.create({ data: psOrderPayload, include: { items: { include: { design: { include: { designer: true } } } } } })
 
     // Update stats, earnings, and purchases
     for (const item of order.items) {
@@ -239,17 +248,18 @@ async function syncPaystackOrder(reference: string, userId: string) {
 
       await prisma.design.update({ where: { id: item.designId }, data: updateData })
 
-      await prisma.sellerEarning.create({
-        data: {
-          saleAmount,
-          platformCommission: commission,
-          sellerAmount,
-          quantity: item.quantity,
-          sellerId: item.design.designerId,
-          orderId: order.id,
-          designId: item.designId,
-        }
-      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const psEarningPayload: any = {
+        saleAmount,
+        platformCommission: commission,
+        sellerAmount,
+        quantity: item.quantity,
+        sellerId: item.design.designerId,
+        orderId: order!.id,
+        designId: item.designId,
+        saleCurrency: saleCurrency
+      }
+      await prisma.sellerEarning.create({ data: psEarningPayload })
 
       await prisma.purchase.create({
         data: {

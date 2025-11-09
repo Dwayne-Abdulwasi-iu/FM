@@ -38,12 +38,15 @@ export default function EnhancedUploadPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    price: '',
-    ownershipPrice: '',
+  price: '',
+  ownershipPrice: '',
+  currency: 'USD',
     category: 'Fashion Illustrations',
     tags: '',
     buyingTypes: 'REGULAR'
   })
+
+  const currencyOptions = ['USD', 'EUR', 'GBP', 'NGN', 'GHS', 'KES']
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
   const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
 
@@ -239,6 +242,7 @@ export default function EnhancedUploadPage() {
       const uploadFormData = new FormData()
       uploadFormData.append('title', formData.title)
       uploadFormData.append('description', formData.description)
+        uploadFormData.append('currency', formData.currency)
       uploadFormData.append('price', formData.price)
       uploadFormData.append('ownershipPrice', formData.ownershipPrice)
       uploadFormData.append('category', formData.category)
@@ -668,18 +672,30 @@ export default function EnhancedUploadPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <DollarSign className="inline h-4 w-4 mr-1" />
-                    Regular Price (USD)
+                    Regular Price
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                    placeholder="0.00"
-                    required
-                  />
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                      placeholder="0.00"
+                      required
+                    />
+                    <select
+                      value={formData.currency}
+                      onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                      className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                      title="Select currency"
+                    >
+                      {currencyOptions.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Advanced Options (Buying types, ownership) */}
@@ -716,18 +732,30 @@ export default function EnhancedUploadPage() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             <DollarSign className="inline h-4 w-4 mr-1" />
-                            Ownership Price (USD)
+                            Ownership Price
                           </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.ownershipPrice}
-                            onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                            placeholder="0.00"
-                            required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
-                          />
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.ownershipPrice}
+                              onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
+                              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                              placeholder="0.00"
+                              required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
+                            />
+                            <select
+                              value={formData.currency}
+                              onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                              className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                              title="Select currency"
+                            >
+                              {currencyOptions.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </select>
+                          </div>
                           <p className="text-sm text-gray-500 mt-1">
                             Higher price for exclusive ownership and branding rights
                           </p>

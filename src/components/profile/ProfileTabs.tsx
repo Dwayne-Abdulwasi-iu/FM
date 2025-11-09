@@ -41,6 +41,18 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   }, [searchParams])
 
   useEffect(() => {
+    // Handle hash navigation (e.g. /profile#bank-account) from other pages
+    if (typeof window !== 'undefined') {
+      const h = window.location.hash
+      if (h === '#bank-account' || h === '#bank-verification') {
+        setActive('Bank Account')
+        // remove the hash from history so subsequent navigation is clean
+        history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     // update URL when active tab changes
     const params = new URLSearchParams(Array.from(searchParams?.entries() || []))
     if (active) params.set('tab', active)

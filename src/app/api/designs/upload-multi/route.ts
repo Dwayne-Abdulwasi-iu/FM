@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
     const description = formData.get('description') as string
     const price = parseFloat(formData.get('price') as string)
     const ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
+    const currencyRaw = (formData.get('currency') as string) || 'USD'
+    const allowedCurrencies = ['USD','EUR','GBP','NGN','GHS','KES']
+    const currency = allowedCurrencies.includes(currencyRaw.toUpperCase()) ? currencyRaw.toUpperCase() : 'USD'
     const category = formData.get('category') as string
   const tagsRaw = formData.get('tags') as string
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'
@@ -296,13 +299,16 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .filter((t, i, arr) => arr.indexOf(t) === i)
 
-    // Create design record in database with media files
+    // Create design record in database with media files and currency
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const design = await prisma.design.create({
+      // cast data as any because generated client types may not be fully in sync in this environment
       data: {
         title,
         description: description || null,
         price,
         ownershipPrice,
+        currency,
         imageUrl: primaryImageUrl,
         thumbnailUrl,
         category,
@@ -314,18 +320,12 @@ export async function POST(request: NextRequest) {
         mediaFiles: {
           create: mediaFiles
         }
-      },
+      } as any,
       include: {
-        designer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        },
         mediaFiles: true
       }
     })
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // Create in-app notification for uploader (pending approval)
     try {
@@ -354,17 +354,17 @@ export async function POST(request: NextRequest) {
 
     // Send email notification to uploader if email is configured
     try {
-      const host = process.env.EMAIL_SERVER_HOST
-      const user = process.env.EMAIL_SERVER_USER
-      const pass = process.env.EMAIL_SERVER_PASSWORD
-      const from = process.env.EMAIL_FROM
-      if (host && user && pass && from && design.designer?.email) {
-        const transporter = nodemailer.createTransport({
-          host,
-          port: Number(process.env.EMAIL_SERVER_PORT || 587),
-          secure: false,
-          auth: { user, pass },
-        })
+        const host = process.env.EMAIL_SERVER_HOST
+        const emailUser = process.env.EMAIL_SERVER_USER
+        const pass = process.env.EMAIL_SERVER_PASSWORD
+        const from = process.env.EMAIL_FROM
+    if (host && emailUser && pass && from && user?.email) {
+          const transporter = nodemailer.createTransport({
+            host,
+            port: Number(process.env.EMAIL_SERVER_PORT || 587),
+            secure: false,
+            auth: { user: emailUser, pass },
+          })
 
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
   // Link to the profile page with the designs tab anchor so the client route exists
@@ -372,9 +372,9 @@ export async function POST(request: NextRequest) {
 
         const mailOptions = {
           from,
-          to: design.designer.email,
+          to: user.email,
           subject: `Your design "${design.title}" is pending approval`,
-          text: `Hi ${design.designer?.name || ''},\n\nThanks for submitting your design titled "${design.title}". Our moderation team will review it and once approved it will be visible on the site. You can view your uploads at: ${designUrl}\n\n— Fashion Marketplace`,
+          text: `Hi ${user?.name || ''},\n\nThanks for submitting your design titled "${design.title}". Our moderation team will review it and once approved it will be visible on the site. You can view your uploads at: ${designUrl}\n\n— Fashion Marketplace`,
           html: `
             <div style="background:#f6f7fb;padding:20px;font-family:Arial,Helvetica,sans-serif;color:#111">
               <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #eaeaea">
@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
                   <strong style="font-size:15px">Fashion Marketplace</strong>
                 </div>
                 <div style="padding:18px">
-                  <p style="margin:0 0 12px">Hi ${design.designer?.name || ''},</p>
+                  <p style="margin:0 0 12px">Hi ${user?.name || ''},</p>
                   <p style="margin:0 0 12px">Thanks for submitting your design <strong>${design.title}</strong>. Our team will review it shortly. Once it's approved it will be displayed on the marketplace.</p>
                   <p style="margin:0 0 16px"><a href="${designUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 14px;border-radius:6px">View your uploads</a></p>
                   <p style="font-size:12px;color:#666;margin:0">If the button doesn't work, copy and paste this link into your browser:<br/><span style="word-break:break-all">${designUrl}</span></p>

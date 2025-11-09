@@ -117,7 +117,8 @@ export async function GET(
         if (userIdMeta && userIdMeta === session.user.id && checkoutSession.payment_status === 'paid' && orderItemsMeta.length > 0) {
           const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
           const amountTotalCents = checkoutSession.amount_total ?? 0
-          const orderCreated = await prisma.order.create({
+              const currency = (checkoutSession.currency as string | undefined)?.toUpperCase() || 'USD'
+              const orderCreated = await prisma.order.create({
             data: {
               orderNumber,
               status: 'COMPLETED',
@@ -146,6 +147,10 @@ export async function GET(
               }
             }
           })
+
+          // Ensure the order has the currency set (use update with a narrow any cast to avoid
+          // temporary type mismatches until the Prisma client/types are fully in sync).
+          await prisma.order.update({ where: { id: orderCreated.id }, data: { currency } })
 
           // Post-create effects to mirror webhook behavior
           for (const item of orderCreated.items) {
@@ -182,6 +187,10 @@ export async function GET(
                 sellerAmount: sellerEarning,
                 quantity: item.quantity
               }
+            })
+            await prisma.sellerEarning.updateMany({
+              where: { orderId: orderCreated.id, designId: item.designId },
+              data: { saleCurrency: currency }
             })
 
             await prisma.purchase.create({
@@ -286,6 +295,12 @@ export async function GET(
               }
             })
 
+            // Determine currency from Paystack response if available, else default to USD
+            // Prefer currency provided in metadata; fallback to top-level data.currency if present
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const saleCurrency = (md?.currency as string | undefined)?.toUpperCase() || ((data as any)?.currency as string | undefined)?.toUpperCase() || 'USD'
+            await prisma.order.update({ where: { id: orderCreated.id }, data: { currency: saleCurrency } })
+
             // Mirror webhook side-effects
             for (const item of orderCreated.items) {
               const saleAmount = item.price * item.quantity
@@ -322,7 +337,7 @@ export async function GET(
                   quantity: item.quantity
                 }
               })
-
+              await prisma.sellerEarning.updateMany({ where: { orderId: orderCreated.id, designId: item.designId }, data: { saleCurrency } })
               await prisma.purchase.create({
                 data: {
                   userId: session.user.id,

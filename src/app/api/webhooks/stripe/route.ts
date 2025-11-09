@@ -80,11 +80,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         ? (session.payment_intent as { id: string }).id
         : '')
 
+    const currency = (session.currency as string | undefined)?.toUpperCase() || 'USD'
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
         status: 'COMPLETED',
         totalAmount: amountTotalCents / 100, // Convert from cents
+        currency,
         platformFee: platformFee / 100, // Convert from cents
         customerId: userId,
         stripePaymentIntentId: paymentIntentId,
@@ -149,7 +152,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           saleAmount: saleAmount,
           platformCommission: platformCommission,
           sellerAmount: sellerEarning,
-          quantity: item.quantity
+          quantity: item.quantity,
+          saleCurrency: currency
         }
       })
 

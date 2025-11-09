@@ -81,6 +81,7 @@ model Design {
   title           String
   description     String?
   price           Float
+  currency        String   @default("USD")
   ownershipPrice  Float? // Higher price for ownership option
   imageUrl        String // Primary/thumbnail image for listings
   thumbnailUrl    String?
@@ -146,6 +147,7 @@ model Order {
   orderNumber String   @unique
   status      String   @default("PENDING")
   totalAmount Float
+  currency    String   @default("USD")
   platformFee Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -245,6 +247,7 @@ model SellerEarning {
   payoutError       String?
   payoutCurrency    String? // e.g., NGN, USD
   payoutAmountMinor Int? // e.g., amount in kobo/cents
+  saleCurrency      String? // currency of the sale e.g., USD, NGN
 
   sellerId String
   seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
