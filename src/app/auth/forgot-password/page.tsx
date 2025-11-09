@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
     try {
       const res = await fetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }), headers: { 'Content-Type': 'application/json' } })
       if (res.ok) {
-        setMessage('If an account exists for that email, a reset link has been sent.')
+        setMessage('If an account exists for that email, a 6-digit reset code was sent. Check your email and use the code to reset your password.')
       } else {
         const j = await res.json()
         setMessage(j?.message || 'Failed to send reset link')
@@ -27,8 +27,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white p-8 rounded shadow">
-        <h2 className="text-center text-2xl font-bold">Forgot your password?</h2>
-  <p className="mt-2 text-sm text-gray-600">Enter your email and we will send a link to reset your password.</p>
+    <h2 className="text-center text-2xl font-bold">Forgot your password?</h2>
+  <p className="mt-2 text-sm text-gray-600">Enter your email and we will send a 6-digit code to reset your password.</p>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           {message && <div className="text-sm text-green-700">{message}</div>}
@@ -38,11 +38,14 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <button type="submit" disabled={loading} className="w-full py-2 px-4 bg-indigo-600 text-white rounded disabled:opacity-50">{loading ? 'Sending...' : 'Send reset link'}</button>
+            <button type="submit" disabled={loading} className="w-full py-2 px-4 bg-indigo-600 text-white rounded disabled:opacity-50">{loading ? 'Sending...' : 'Send reset code'}</button>
           </div>
 
           <div className="text-sm text-center">
             <a href="/auth/signin" className="text-indigo-600">Back to sign in</a>
+            <div className="mt-2">
+              <a href="/auth/reset-otp" className="text-indigo-600">I already have a reset code</a>
+            </div>
           </div>
         </form>
       </div>

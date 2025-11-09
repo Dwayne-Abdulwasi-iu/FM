@@ -170,6 +170,64 @@ EMAIL_SERVER_PASSWORD="your-app-password"
 EMAIL_FROM="noreply@yourapp.com"
 ```
 
+Additional recommended variables (branding, transactional email, rate-limiting, monitoring):
+
+```env
+# App branding (used in email templates and UI)
+NEXT_PUBLIC_APP_NAME="Fashion Marketplace"
+APP_SUPPORT_URL="https://example.com/support"
+# Optional: set your support email address. If you don't have a dedicated support inbox,
+# you can leave this empty (""), use a generic contact alias, or rely on APP_SUPPORT_URL
+# to point users to a help page or contact form.
+APP_SUPPORT_EMAIL=""
+
+# SendGrid (preferred) — set either SENDGRID_API_KEY or SMTP_* above
+SENDGRID_API_KEY="SG.xxxxx"
+
+# Email FROM address used by SendGrid/SMTP. MUST be verified in SendGrid when using their API.
+EMAIL_FROM="no-reply@yourdomain.com"
+
+# Redis (optional but recommended for distributed rate-limiting and session stores)
+REDIS_URL="redis://:password@redis-host:6379"
+
+# Sentry (optional for error tracking)
+SENTRY_DSN="https://<key>@sentry.io/<project>"
+SENTRY_AUTH_TOKEN="<sentry-cli-token-for-releases>"
+```
+
+Notes:
+- If you use SendGrid, verify the `EMAIL_FROM` sender identity in the SendGrid dashboard — otherwise SendGrid will reject messages with a 550 error.
+- The app prefers the SendGrid Web API (`SENDGRID_API_KEY`) and falls back to SMTP (`SMTP_*`). If you use SMTP, ensure `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` are set.
+- `REDIS_URL` is recommended for production for rate-limiting (resend and OTP attempts) and other cross-process counters. Without Redis the app falls back to an in-memory, process-local limiter which is not suitable for multi-instance deployments.
+- Keep secrets out of version control. Use your hosting provider's secret manager (Vercel/Render/GCP/AWS) or GitHub Actions repository secrets for CI.
+
+### Local Redis helper
+
+If you want a quick local Redis for development (recommended to match production behavior for rate-limiting), the repo includes a docker-compose and helper scripts to start Redis and automatically add `REDIS_URL` to your `.env.local`.
+
+What I'll ask you when you run the helper:
+- Do you want a password for Redis? (yes/no). If yes I'll ask you for the password value and configure Redis `requirepass`.
+
+How to run (Windows PowerShell / pwsh):
+```powershell
+.\scripts\setup-redis.ps1
+```
+
+How to run (macOS / Linux / WSL):
+```bash
+./scripts/setup-redis.sh
+```
+
+What the helper does:
+- Starts Redis using `docker compose -f docker-compose.redis.yml up -d`
+- If you provide a password, it sets `requirepass` inside the container and writes `REDIS_URL="redis://:PASSWORD@localhost:6379"` into `.env.local`.
+- If you leave it blank, it writes `REDIS_URL="redis://localhost:6379"` into `.env.local`.
+
+Notes:
+- You need Docker installed and running locally.
+- The helper updates `.env.local` in the repository root. It will create the file if it doesn't exist. The `.env.local` file is already gitignored in this repo by convention — double-check before committing.
+- In production, use your managed Redis provider (Azure Cache, AWS Elasticache, Redis Cloud, Upstash, etc.) and set `REDIS_URL` in your host's environment variables.
+
 ### Testing MongoDB locally
 
 If you want to test a MongoDB connection locally (for example to verify Prisma + Atlas), follow these steps.

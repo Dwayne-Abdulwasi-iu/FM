@@ -1,0 +1,9 @@
+
+{{title}}
+
+Your password reset code is: {{code}}
+
+{{footer}}
+
+Thanks,
+{{appName}}

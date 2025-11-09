@@ -1,0 +1,66 @@
+name: Sentry Release Upload
+
+on:
+  push:
+    branches:
+      - master
+  # optionally run on tag creation for releases
+  create:
+    tags:
+      - 'v*'
+
+jobs:
+  sentry_release:
+    name: Create Sentry release and upload sourcemaps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create and upload Sentry release (requires repo secrets)
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          # Determine a release name: prefer tag name (refs/tags/vX), otherwise use commit SHA
+          if [[ "$GITHUB_REF" =~ refs/tags/ ]]; then
+            RELEASE="${GITHUB_REF#refs/tags/}"
+          else
+            RELEASE="$GITHUB_SHA"
+          fi
+
+          echo "Using release: $RELEASE"
+
+          # Fail fast if SENTRY_AUTH_TOKEN not provided
+          if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+            echo "SENTRY_AUTH_TOKEN is not set. Add it to repository Secrets as SENTRY_AUTH_TOKEN." >&2
+            exit 1
+          fi
+
+          # Install sentry-cli (will use the provided auth token)
+          npm install -g @sentry/cli
+
+          # Create a release, set commits, and upload sourcemaps from .next
+          sentry-cli releases new "$RELEASE"
+          sentry-cli releases set-commits --auto "$RELEASE" || true
+
+          # Upload browser sourcemaps from Next build output
+          # Adjust --url-prefix if your app serves assets from a different prefix
+          sentry-cli releases files "$RELEASE" upload-sourcemaps .next --url-prefix "~/_next" --validate
+          sentry-cli releases finalize "$RELEASE"
+
+        # Note: Set SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT in the GitHub repo's Secrets.

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+import Sentry from '@/lib/sentry.server'
 import redisHelper from '@/lib/redis'
+import { sendMail } from '@/lib/mail'
 
 // In-memory fallback rate limiter (per-email) for environments without Redis.
 const fpMemoryLimiter = new Map<string, { count: number; firstSeen: number }>()
@@ -45,75 +46,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-  // Create a secure token
-  const token = crypto.randomBytes(32).toString('hex')
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60) // 1 hour
+  // Create a one-time numeric OTP (6 digits)
+  const otp = String(crypto.randomInt(100000, 1000000))
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 10) // 10 minutes
 
-  // Persist token
-  await prisma.passwordResetToken.create({ data: { token, userId: user.id, expiresAt } })
+  // Hash the OTP before storing for safety
+  const hashed = crypto.createHash('sha256').update(otp).digest('hex')
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || ''}/auth/reset/${token}`
+  // Persist hashed OTP in password reset tokens table
+  await prisma.passwordResetToken.create({ data: { token: hashed, userId: user.id, expiresAt } })
+
+    const resetInstructions = `Your password reset code is: ${otp}. It expires in 10 minutes.`
 
     // Attempt email send: prefer SMTP config, fall back to SendGrid SMTP if SENDGRID_API_KEY is present,
     // otherwise log the link for manual delivery
     try {
-      let transporter
-      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-        transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT || 587),
-          secure: (process.env.SMTP_SECURE === 'true'),
-          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        })
-      } else if (process.env.SENDGRID_API_KEY) {
-        // Prefer SendGrid Web API (more reliable than SMTP relay in some accounts).
-        // We'll attempt a Web API send here and skip creating an SMTP transporter.
-        const sgApiKey = process.env.SENDGRID_API_KEY
+      const result = await sendMail({ to: email, subject: 'Password reset code', text: resetInstructions, html: `<p>${resetInstructions}</p>` })
+      if (!result.ok) {
+        console.error('Send reset code failed', result.status, result.body)
         try {
-          const payload = {
-            personalizations: [{ to: [{ email }], subject: 'Password reset' }],
-            from: { email: process.env.EMAIL_FROM || 'no-reply@example.com' },
-            content: [
-              { type: 'text/plain', value: `Reset your password: ${resetUrl}` },
-              { type: 'text/html', value: `<p>Reset your password: <a href="${resetUrl}">${resetUrl}</a></p>` }
-            ]
-          }
-
-          const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${sgApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          })
-
-          if (!res.ok) {
-            const body = await res.text().catch(() => '')
-            console.error('SendGrid Web API send failed', res.status, res.statusText, body)
-            // fall through so we still return ok:true to the client (avoid enumeration)
-          } else {
-            // success via Web API — skip SMTP send
-            return NextResponse.json({ ok: true })
-          }
-        } catch (e) {
-          console.error('SendGrid Web API error', e)
-          // fall back to SMTP below if configured
-        }
-      }
-
-      if (transporter) {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM || 'no-reply@example.com',
-          to: email,
-          subject: 'Password reset',
-          text: `Reset your password: ${resetUrl}`,
-          html: `<p>Reset your password: <a href="${resetUrl}">${resetUrl}</a></p>`
-        })
+          const sentryClient = Sentry as unknown as { captureException?: (err: unknown, ctx?: unknown) => void }
+          if (sentryClient?.captureException) sentryClient.captureException(new Error('Password reset send failed'), { extra: { result, email } })
+        } catch {}
       } else {
-        // In non-SMTP environments we intentionally avoid sending emails; log the URL only for developers.
-        // Removed noisy console.log in production flow; keep minimal logging via debug flag if needed.
-        if (process.env.DEBUG_RESET === 'true') console.debug('Password reset link for', email, resetUrl)
+        return NextResponse.json({ ok: true })
       }
     } catch (mailErr) {
       console.error('Failed to send reset email:', mailErr)
