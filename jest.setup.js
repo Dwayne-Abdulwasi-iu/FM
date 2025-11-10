@@ -27,6 +27,15 @@ process.env.NEXTAUTH_URL = 'http://localhost:3000'
 process.env.NEXTAUTH_SECRET = 'test-secret'
 process.env.DATABASE_URL = 'file:./test.db'
 
+// Provide a safe default mock for the redis helper so tests running without a
+// real Redis instance don't attempt to connect or emit noisy console warnings.
+jest.mock('@/lib/redis', () => ({
+  getRedis: jest.fn(() => null),
+  createSubscriber: jest.fn(async () => null),
+  isRedisEnabled: false,
+  isRedisConnected: jest.fn(() => false),
+}))
+
 // Provide a basic fetch mock to avoid console noise from components that
 // optimistically fetch in client effects (e.g., Navbar cart count)
 if (typeof global.fetch === 'undefined') {

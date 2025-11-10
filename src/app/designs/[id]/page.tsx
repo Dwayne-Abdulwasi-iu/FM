@@ -28,6 +28,8 @@ interface Design {
   description: string | null
   price: number
   ownershipPrice: number | null
+  submittedPrice?: number | null
+  submittedCurrency?: string | null
   buyingTypes: string
   isOwned: boolean
   imageUrl: string
@@ -244,6 +246,15 @@ export default function DesignPage() {
   }
 
   const formatPrice = (priceUSD: number) => formatPriceLocalized(priceUSD, currency, locale)
+
+  const formatSellerEntered = (price?: number | null, curr?: string | null) => {
+    if (!price || !curr) return null
+    try {
+      return new Intl.NumberFormat(locale || 'en-US', { style: 'currency', currency: curr }).format(price)
+    } catch {
+      return `${curr} ${Number(price).toFixed(2)}`
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -571,6 +582,9 @@ export default function DesignPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{design.title}</h1>
               <p className="text-2xl font-bold text-indigo-600">{formatPrice(design.price)}</p>
+              {design.submittedPrice && design.submittedCurrency && design.submittedCurrency !== 'USD' && (
+                <p className="text-sm text-gray-500 mt-1">Seller entered: {formatSellerEntered(design.submittedPrice, design.submittedCurrency)}</p>
+              )}
             </div>
 
             {/* Designer Info */}

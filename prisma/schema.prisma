@@ -83,6 +83,9 @@ model Design {
   price           Float
   currency        String   @default("USD")
   ownershipPrice  Float? // Higher price for ownership option
+  // Preserve original seller-submitted price & currency for auditing and display
+  submittedPrice   Float?
+  submittedCurrency String?
   imageUrl        String // Primary/thumbnail image for listings
   thumbnailUrl    String?
   // Tags: store as array for efficient filtering

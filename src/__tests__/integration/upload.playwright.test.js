@@ -2,13 +2,14 @@
  * @jest-environment node
  */
 
-// Playwright integration is opt-in. To run locally set RUN_PLAYWRIGHT_INTEGRATION=1
+// Playwright integration is opt-in. To run locally set RUN_INTEGRATION=1 or
+// RUN_PLAYWRIGHT_INTEGRATION=1 for backward compatibility.
 // Example (PowerShell):
-//  $env:RUN_PLAYWRIGHT_INTEGRATION = '1'
+//  $env:RUN_INTEGRATION = '1'
 //  npx jest src/__tests__/integration/upload.playwright.test.js -i --runInBand
 import { chromium } from 'playwright'
 
-const runIntegration = !!process.env.RUN_PLAYWRIGHT_INTEGRATION
+const runIntegration = !!(process.env.RUN_INTEGRATION || process.env.RUN_PLAYWRIGHT_INTEGRATION)
 
 if (!runIntegration) {
   test.skip('playwright integration (skipped by default)', () => {})

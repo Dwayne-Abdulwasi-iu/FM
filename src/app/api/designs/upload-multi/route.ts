@@ -319,7 +319,11 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .filter((t, i, arr) => arr.indexOf(t) === i)
 
-    // Create design record in database with media files and currency
+  // Preserve seller-submitted price/currency for audit/display, then normalize and store price as USD
+  const submittedPriceVal = price
+  const submittedCurrencyVal = currency
+
+  // Create design record in database with media files and currency
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const design = await prisma.design.create({
       // cast data as any because generated client types may not be fully in sync in this environment
@@ -329,6 +333,8 @@ export async function POST(request: NextRequest) {
         price,
         ownershipPrice,
         currency,
+        submittedPrice: submittedPriceVal,
+        submittedCurrency: submittedCurrencyVal,
         imageUrl: primaryImageUrl,
         thumbnailUrl,
         category,

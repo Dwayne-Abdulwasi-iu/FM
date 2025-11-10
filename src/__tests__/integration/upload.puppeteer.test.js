@@ -1,13 +1,14 @@
-// Puppeteer integration is opt-in. To run locally set RUN_PUPPETEER_INTEGRATION=1
+// Puppeteer integration is opt-in. To run locally set RUN_INTEGRATION=1 or
+// RUN_PUPPETEER_INTEGRATION=1 for backward compatibility.
 // Example (PowerShell):
-//  $env:RUN_PUPPETEER_INTEGRATION = '1'
+//  $env:RUN_INTEGRATION = '1'
 //  npx jest src/__tests__/integration/upload.puppeteer.test.js -i --runInBand
 import puppeteer from 'puppeteer'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
-const runIntegration = !!process.env.RUN_PUPPETEER_INTEGRATION
+const runIntegration = !!(process.env.RUN_INTEGRATION || process.env.RUN_PUPPETEER_INTEGRATION)
 
 if (!runIntegration) {
   test.skip('puppeteer integration (skipped by default)', () => {})

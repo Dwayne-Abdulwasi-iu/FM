@@ -4,7 +4,10 @@ let client: Redis | null = null
 let connected = false
 let errorLogged = false
 
-export const isRedisEnabled = Boolean(process.env.REDIS_URL)
+// Only treat Redis as enabled when the URL looks like a real Redis URI.
+// This avoids attempts to connect when the env contains placeholders (e.g. <%REPLACE%>),
+// which can cause noisy connection errors during tests.
+export const isRedisEnabled = typeof process.env.REDIS_URL === 'string' && /^(rediss?:)\/\//i.test(process.env.REDIS_URL)
 
 function createClient() {
   // conservative options: avoid infinite retry storms and disable offline queue to fail fast

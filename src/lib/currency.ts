@@ -2,11 +2,27 @@
 
 export type SupportedCurrency = 'USD' | 'NGN'
 
-// Static display conversion; align with server's convertUSDToNGN (800)
+// Static display conversion; align with server's convertUSDToNGN (fallback)
 const USD_TO_NGN = 800
 
+// Attempt to read a cached network-fetched rate synchronously. Returns undefined if no fresh cached value.
+function getCachedRateSync(from: string, to: string): number | undefined {
+  const key = `${from}_${to}`
+  const entry = rateCache.get(key)
+  if (entry && entry.expiresAt > Date.now()) return entry.rate
+  return undefined
+}
+
 export function convertFromUSD(amountUSD: number, currency: SupportedCurrency): number {
-  if (currency === 'NGN') return Math.round(amountUSD * USD_TO_NGN)
+  if (currency === 'NGN') {
+    // Prefer a recently cached live rate when available (populated by prior calls to getConversionRate)
+    const liveRate = getCachedRateSync('USD', 'NGN')
+    if (typeof liveRate === 'number') {
+      return Math.round(amountUSD * liveRate)
+    }
+    // Fallback to static approximation when live rate not available
+    return Math.round(amountUSD * USD_TO_NGN)
+  }
   return amountUSD
 }
 

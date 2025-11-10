@@ -69,12 +69,46 @@ export function applyRate(amount, rate) {
 // Keep logic consistent with server-side helpers: simple static conversion for NGN
 const USD_TO_NGN = 800
 
+// Background warm-up for common currencies so formatting can use near-live cached rates
+const COMMON_CURRENCIES_WARMUP = ['NGN', 'GHS', 'KES', 'EUR', 'GBP']
+let warmupStarted = false
+function warmupRates() {
+  if (warmupStarted) return
+  warmupStarted = true
+  ;(async () => {
+    try {
+      for (const cur of COMMON_CURRENCIES_WARMUP) {
+        try {
+          // best-effort: populate rateCache for USD->cur
+          await getConversionRate('USD', cur)
+        } catch {}
+      }
+    } catch {}
+  })()
+}
+
+// Kick off warmup on module load (non-blocking)
+warmupRates()
+
 export function formatPriceLocalized(amountUSD, currency = 'USD', locale = 'en-US') {
   let amount = amountUSD
   try {
-    if (currency === 'NGN') {
-      // mimic server-side rounding: convert then round to nearest integer (local currency)
-      amount = Math.round(amountUSD * USD_TO_NGN)
+    if (currency === 'USD') {
+      // keep as-is
+      amount = amountUSD
+    } else {
+      // try to use cached live rate (USD -> currency)
+      const key = `USD_${currency}`
+      const cached = rateCache.get(key)
+      if (cached && cached.rate && cached.expiresAt > Date.now()) {
+        amount = amountUSD * cached.rate
+      } else if (currency === 'NGN') {
+        // fallback legacy constant when no live rate is available
+        amount = amountUSD * USD_TO_NGN
+      } else {
+        // if no cached rate, just leave amount as USD to avoid wildly incorrect formatting
+        amount = amountUSD
+      }
     }
     return new Intl.NumberFormat(locale || 'en-US', {
       style: 'currency',
