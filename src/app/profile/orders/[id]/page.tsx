@@ -117,14 +117,15 @@ function OrderDetailsInner() {
               <div className="text-sm text-gray-600">Total Paid</div>
               <div className="text-lg font-semibold text-gray-900">{formatPrice(order.totalAmount)}</div>
               <div className="mt-2">
-                <Link
+                <a
                   href={`/api/orders/${order.id}/download`}
-                  prefetch={false}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M12 2.25a.75.75 0 01.75.75v9.69l2.47-2.47a.75.75 0 111.06 1.06l-3.75 3.75a.75.75 0 01-1.06 0l-3.75-3.75a.75.75 0 111.06-1.06l2.47 2.47V3a.75.75 0 01.75-.75z" clipRule="evenodd" /><path d="M3 13.5a.75.75 0 01.75.75v3.75A2.25 2.25 0 006 20.25h12a2.25 2.25 0 002.25-2.25v-3.75a.75.75 0 011.5 0v3.75A3.75 3.75 0 0118 21.75H6A3.75 3.75 0 012.25 18v-3.75a.75.75 0 01.75-.75z" /></svg>
                   Download All
-                </Link>
+                </a>
               </div>
             </div>
           </div>

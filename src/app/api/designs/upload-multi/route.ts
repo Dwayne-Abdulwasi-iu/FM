@@ -126,11 +126,31 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const title = formData.get('title') as string
     const description = formData.get('description') as string
-    const price = parseFloat(formData.get('price') as string)
-    const ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
-    const currencyRaw = (formData.get('currency') as string) || 'USD'
+  let price = parseFloat(formData.get('price') as string)
+  let ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
+  const currencyRaw = (formData.get('currency') as string) || 'USD'
     const allowedCurrencies = ['USD','EUR','GBP','NGN','GHS','KES']
-    const currency = allowedCurrencies.includes(currencyRaw.toUpperCase()) ? currencyRaw.toUpperCase() : 'USD'
+    let currency = allowedCurrencies.includes(currencyRaw.toUpperCase()) ? currencyRaw.toUpperCase() : 'USD'
+
+    // Normalize incoming price to USD for storage if user submitted in another currency.
+    // This ensures the database price value is consistently in USD and avoids UI confusion
+    // where other parts of the app format amounts using USD assumptions.
+    if (currency !== 'USD' && typeof price === 'number' && !Number.isNaN(price)) {
+      try {
+        const mod = await import('@/lib/currency')
+        const rateRes = await mod.getConversionRate(currency, 'USD')
+        const rate = rateRes?.rate
+        if (rate && typeof rate === 'number') {
+          price = mod.applyRate(price, rate)
+          if (ownershipPrice && !Number.isNaN(ownershipPrice)) ownershipPrice = mod.applyRate(ownershipPrice, rate)
+          // store normalized currency as USD
+          currency = 'USD'
+        }
+      } catch (e) {
+        // If conversion fails we keep the submitted values; conversion is best-effort
+        console.warn('Price normalization to USD failed:', e)
+      }
+    }
     const category = formData.get('category') as string
   const tagsRaw = formData.get('tags') as string
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'

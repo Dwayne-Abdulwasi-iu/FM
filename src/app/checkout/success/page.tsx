@@ -189,10 +189,15 @@ function CheckoutSuccessPageInner() {
                     <p className="font-semibold text-gray-900">
                       {formatPrice(item.price * item.quantity)}
                     </p>
-                    <button className="mt-2 text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1">
+                    <a
+                      href={`/api/orders/${order.id}/download/item/${item.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1"
+                    >
                       <Download className="h-4 w-4" />
                       Download
-                    </button>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -234,14 +239,15 @@ function CheckoutSuccessPageInner() {
                   <p className="text-blue-700 text-sm mb-3">
                     Your purchased designs are now available for download. You have lifetime access to these files.
                   </p>
-                  <Link
-                    href={`/api/orders/${order.id}/download`}
-                    prefetch={false}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download All
-                  </Link>
+                    <a
+                      href={`/api/orders/${order.id}/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download All
+                    </a>
                 </div>
                 
                 <div className="p-4 bg-purple-50 rounded-lg">
