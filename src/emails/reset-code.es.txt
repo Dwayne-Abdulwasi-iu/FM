@@ -1,6 +1,0 @@
-Tu código para restablecer la contraseña es: {{code}}
-
-Este código expira en 10 minutos. Si no solicitaste este cambio, puedes ignorar este correo.
-
-Gracias,
-{{appName}} Support

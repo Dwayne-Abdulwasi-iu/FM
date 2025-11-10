@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import SafeImage from '@/components/ui/safe-image'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 // UI behavior toggles for easy product tuning
 const UI_CONFIG = {
@@ -57,6 +58,10 @@ export default function EnhancedUploadPage() {
   }
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
   const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
+  const [isConverting, setIsConverting] = useState(false)
+  const [conversionNote, setConversionNote] = useState<string | null>(null)
+  const conversionTimerRef = useRef<number | null>(null)
+  const CONVERSION_DEBOUNCE_MS = 600
 
   const categories = [
     'Fashion Illustrations',
@@ -132,6 +137,67 @@ export default function EnhancedUploadPage() {
     }
     return { ok: true }
   }
+
+  // Currency conversion: use exchangerate.host (free, no API key)
+  const handleCurrencyChange = (newCurrency: string) => {
+    const prevCurrency = formData.currency
+    if (!newCurrency || newCurrency === prevCurrency) {
+      setFormData(prev => ({ ...prev, currency: newCurrency }))
+      return
+    }
+
+    // optimistic update of the select
+    setFormData(prev => ({ ...prev, currency: newCurrency }))
+    setConversionNote(null)
+
+    // parse amounts to capture at scheduling time
+    const rawPrice = parseFloat(formData.price || '0') || 0
+    const rawOwnership = parseFloat(formData.ownershipPrice || '0') || 0
+    if (rawPrice === 0 && rawOwnership === 0) return
+
+    // debounce conversions to avoid rapid repeated requests
+    if (conversionTimerRef.current) {
+      clearTimeout(conversionTimerRef.current)
+      conversionTimerRef.current = null
+    }
+
+    conversionTimerRef.current = window.setTimeout(async () => {
+      conversionTimerRef.current = null
+      setIsConverting(true)
+      try {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
+  // load util dynamically so TypeScript doesn't require static JS exports at compile-time
+  const mod: any = await import('@/lib/currency')
+  const rate = await mod.getConversionRate(prevCurrency, newCurrency, controller.signal)
+  clearTimeout(timeout)
+
+  const newPrice = mod.applyRate(rawPrice, rate)
+  const newOwnership = mod.applyRate(rawOwnership, rate)
+
+        setFormData(prev => ({ ...prev, price: newPrice ? String(newPrice.toFixed(2)) : '', ownershipPrice: newOwnership ? String(newOwnership.toFixed(2)) : prev.ownershipPrice }))
+        const note = `Converted using 1 ${prevCurrency} = ${rate.toFixed(4)} ${newCurrency}`
+        setConversionNote(note)
+        toast.success(note)
+      } catch (err: unknown) {
+        console.error('Currency conversion failed', err)
+        setConversionNote('Conversion failed — amounts kept as entered')
+        toast.error('Conversion failed — amounts kept as entered')
+      } finally {
+        setIsConverting(false)
+      }
+    }, CONVERSION_DEBOUNCE_MS)
+  }
+
+  // cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (conversionTimerRef.current) {
+        clearTimeout(conversionTimerRef.current)
+        conversionTimerRef.current = null
+      }
+    }
+  }, [])
 
   const addMediaSection = () => {
     const newId = (mediaFiles.length + 1).toString()
@@ -684,29 +750,47 @@ export default function EnhancedUploadPage() {
                   </label>
                   <div className="flex items-center gap-3">
                     <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                      <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                        <span className="text-xs text-gray-500 uppercase" title="Currency code">{formData.currency}</span>
+                      </div>
                     </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                      placeholder="0.00"
-                      required
-                    />
-                    <select
-                      value={formData.currency}
-                      onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                      className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
-                      title="Select currency"
-                    >
-                      {currencyOptions.map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.price}
+                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-14 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                        placeholder="0.00"
+                        required
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">{formData.currency}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <select
+                        value={formData.currency}
+                        onChange={(e) => handleCurrencyChange(e.target.value)}
+                        className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                        title="Select currency"
+                      >
+                        {currencyOptions.map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      {isConverting && (
+                        <div className="ml-2 h-4 w-4 rounded-full border-2 border-t-transparent border-indigo-600 animate-spin" aria-hidden="true" />
+                      )}
+                    </div>
                   </div>
+                  {/* Conversion status / note */}
+                  {isConverting && (
+                    <p className="text-sm text-gray-500 mt-2">Converting amounts…</p>
+                  )}
+                  {conversionNote && !isConverting && (
+                    <p className="text-sm text-gray-500 mt-2">{conversionNote}</p>
+                  )}
                 </div>
 
                 {/* Advanced Options (Buying types, ownership) */}
@@ -747,28 +831,39 @@ export default function EnhancedUploadPage() {
                           </label>
                           <div className="flex items-center gap-3">
                             <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                              <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                                <span className="text-xs text-gray-500 uppercase" title="Currency code">{formData.currency}</span>
+                              </div>
                             </div>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={formData.ownershipPrice}
-                              onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
-                              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                              placeholder="0.00"
-                              required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
-                            />
-                            <select
-                              value={formData.currency}
-                              onChange={(e) => setFormData({...formData, currency: e.target.value})}
-                              className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
-                              title="Select currency"
-                            >
-                              {currencyOptions.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
+                            <div className="relative flex-1">
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={formData.ownershipPrice}
+                                onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-14 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                                placeholder="0.00"
+                                required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">{formData.currency}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <select
+                                value={formData.currency}
+                                onChange={(e) => handleCurrencyChange(e.target.value)}
+                                className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                                title="Select currency"
+                              >
+                                {currencyOptions.map(c => (
+                                  <option key={c} value={c}>{c}</option>
+                                ))}
+                              </select>
+                              {isConverting && (
+                                <div className="ml-2 h-4 w-4 rounded-full border-2 border-t-transparent border-indigo-600 animate-spin" aria-hidden="true" />
+                              )}
+                            </div>
                           </div>
                           <p className="text-sm text-gray-500 mt-1">
                             Higher price for exclusive ownership and branding rights
