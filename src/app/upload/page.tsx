@@ -47,6 +47,14 @@ export default function EnhancedUploadPage() {
   })
 
   const currencyOptions = ['USD', 'EUR', 'GBP', 'NGN', 'GHS', 'KES']
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    NGN: '₦',
+    GHS: '₵',
+    KES: 'KSh',
+  }
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
   const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
 
@@ -675,6 +683,9 @@ export default function EnhancedUploadPage() {
                     Regular Price
                   </label>
                   <div className="flex items-center gap-3">
+                    <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                      <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                    </div>
                     <input
                       type="number"
                       step="0.01"
@@ -735,6 +746,9 @@ export default function EnhancedUploadPage() {
                             Ownership Price
                           </label>
                           <div className="flex items-center gap-3">
+                            <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                              <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
+                            </div>
                             <input
                               type="number"
                               step="0.01"
