@@ -100,9 +100,30 @@ export async function GET(request: NextRequest, context: unknown) {
     })
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException)?.code
+    // If the file is missing, serve a placeholder image instead of returning 404 JSON.
+    // This reduces noisy 404 errors in the browser console while keeping a visual fallback.
     if (code === 'ENOENT') {
-      return NextResponse.json({ message: 'File not found' }, { status: 404 })
+      try {
+        const placeholderPath = path.join(process.cwd(), 'public', 'images', 'placeholder-design.svg')
+        const stat = await fsp.stat(placeholderPath)
+        const stream = createReadStream(placeholderPath)
+        const webStream = Readable.toWeb(stream) as unknown as ReadableStream
+
+        return new Response(webStream, {
+          status: 200,
+          headers: {
+            'Content-Type': 'image/svg+xml',
+            'Content-Length': String(stat.size),
+            'Cache-Control': 'public, max-age=3600',
+          },
+        })
+      } catch (placeholderErr) {
+        // If placeholder missing, fall back to a small JSON message to avoid crashing
+        console.error('Placeholder missing or unreadable:', placeholderErr)
+        return NextResponse.json({ message: 'File not found' }, { status: 404 })
+      }
     }
+
     console.error('File serve error:', err)
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }

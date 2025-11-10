@@ -63,13 +63,13 @@ export default function DesignPage() {
   const [locale, setLocale] = useState<string>('en-US')
 
   // Check if admin is viewing this page
-  const isAdminViewing = searchParams.get('admin') === 'true' && session?.user?.role === 'ADMIN'
+  const isAdminViewing = (searchParams?.get('admin') === 'true') && session?.user?.role === 'ADMIN'
   
   // Redirect non-admin users who try to access admin mode
   useEffect(() => {
-    if (searchParams.get('admin') === 'true' && session && session.user?.role !== 'ADMIN') {
+    if (searchParams?.get('admin') === 'true' && session && session.user?.role !== 'ADMIN') {
       // Remove the admin parameter and redirect
-      const newSearchParams = new URLSearchParams(searchParams)
+      const newSearchParams = new URLSearchParams(searchParams?.toString() ?? '')
       newSearchParams.delete('admin')
       const newUrl = newSearchParams.toString() 
         ? `${window.location.pathname}?${newSearchParams.toString()}`
@@ -110,17 +110,18 @@ export default function DesignPage() {
   }
 
   useEffect(() => {
-    if (params.id) {
-      fetchDesign(params.id as string)
-      checkAccess(params.id as string)
+    const id = params?.id
+    if (id) {
+      fetchDesign(id as string)
+      checkAccess(id as string)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id, checkAccess])
+  }, [params?.id, checkAccess])
 
   // load favorite state
   useEffect(() => {
     const loadFav = async () => {
-      if (!params.id) return
+      if (!params?.id) return
       try {
         if (session?.user?.id) {
           const res = await fetch('/api/favorites')
@@ -133,7 +134,7 @@ export default function DesignPage() {
           const raw = typeof window !== 'undefined' ? localStorage.getItem('wishlist') : null
           if (raw) {
             const parsed = JSON.parse(raw)
-            if (Array.isArray(parsed)) setIsFavorited(parsed.some((p: { id: string }) => p.id === params.id))
+            if (Array.isArray(parsed)) setIsFavorited(parsed.some((p: { id: string }) => p.id === params?.id))
           }
         }
       } catch {
@@ -142,7 +143,7 @@ export default function DesignPage() {
     }
     loadFav()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id, session?.user?.id])
+  }, [params?.id, session?.user?.id])
 
   const toggleFavorite = async () => {
     if (!design) return

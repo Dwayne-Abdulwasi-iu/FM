@@ -58,8 +58,8 @@ function ContactContent() {
   // Prefill subject/message from URL query if provided (e.g., deactivation request shortcut)
   useEffect(() => {
     try {
-      const subj = searchParams.get('subject')
-      const msg = searchParams.get('message')
+      const subj = searchParams?.get('subject')
+      const msg = searchParams?.get('message')
       if (subj || msg) {
         setFormData(prev => ({
           ...prev,

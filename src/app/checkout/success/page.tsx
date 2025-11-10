@@ -36,7 +36,7 @@ function CheckoutSuccessPageInner() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [notifyMessage, setNotifyMessage] = useState<string | null>(null)
-  const sessionId = searchParams.get('session_id') || searchParams.get('reference')
+  const sessionId = searchParams?.get('session_id') || searchParams?.get('reference')
 
   useEffect(() => {
     if (sessionId) {

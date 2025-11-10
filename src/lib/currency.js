@@ -64,3 +64,26 @@ export function applyRate(amount, rate) {
   const value = amount * rate
   return Math.round((value + Number.EPSILON) * 100) / 100
 }
+
+// Minimal localized formatter expected by TS pages that import formatPriceLocalized
+// Keep logic consistent with server-side helpers: simple static conversion for NGN
+const USD_TO_NGN = 800
+
+export function formatPriceLocalized(amountUSD, currency = 'USD', locale = 'en-US') {
+  let amount = amountUSD
+  try {
+    if (currency === 'NGN') {
+      // mimic server-side rounding: convert then round to nearest integer (local currency)
+      amount = Math.round(amountUSD * USD_TO_NGN)
+    }
+    return new Intl.NumberFormat(locale || 'en-US', {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'symbol'
+    }).format(amount)
+  } catch {
+    // Fallback: simple fixed 2 decimals with symbol prefix for USD
+    if (currency === 'NGN') return `₦${Math.round(amount)}`
+    return `${currency} ${Number(amount).toFixed(2)}`
+  }
+}

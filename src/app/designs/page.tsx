@@ -63,14 +63,14 @@ function DesignsPageInner() {
 
   // Set category from URL parameter on initial load
   useEffect(() => {
-    const categoryParam = searchParams.get('category')
+    const categoryParam = searchParams?.get('category')
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam)
     }
-    const minP = searchParams.get('minPrice')
-    const maxP = searchParams.get('maxPrice')
-    const sortParam = searchParams.get('sort') as 'newest' | 'sales' | 'price_asc' | 'price_desc' | null
-  const tagsParam = searchParams.get('tags')
+    const minP = searchParams?.get('minPrice')
+    const maxP = searchParams?.get('maxPrice')
+    const sortParam = searchParams?.get('sort') as 'newest' | 'sales' | 'price_asc' | 'price_desc' | null
+  const tagsParam = searchParams?.get('tags')
     if (minP) setMinPrice(minP)
     if (maxP) setMaxPrice(maxP)
     if (sortParam && ['newest','sales','price_asc','price_desc'].includes(sortParam)) setSort(sortParam)
@@ -127,8 +127,8 @@ function DesignsPageInner() {
       }
 
       // Push filters to URL for shareability (client-side only)
-      try {
-        const current = new URLSearchParams(Array.from(searchParams.entries()))
+  try {
+  const current = new URLSearchParams(Array.from((searchParams?.entries() ?? [])))
         if (selectedCategory !== 'all') current.set('category', selectedCategory); else current.delete('category')
         if (minPrice && !Number.isNaN(parseFloat(minPrice))) current.set('minPrice', String(parseFloat(minPrice))); else current.delete('minPrice')
         if (maxPrice && !Number.isNaN(parseFloat(maxPrice))) current.set('maxPrice', String(parseFloat(maxPrice))); else current.delete('maxPrice')

@@ -178,7 +178,7 @@ export default function EnhancedUploadPage() {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 5000)
   // load util dynamically so TypeScript doesn't require static JS exports at compile-time
-  const mod: any = await import('@/lib/currency')
+  const mod = (await import('@/lib/currency')) as typeof import('@/lib/currency')
     const res = await mod.getConversionRate(prevCurrency, newCurrency, controller.signal)
     clearTimeout(timeout)
 

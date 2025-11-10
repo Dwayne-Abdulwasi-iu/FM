@@ -48,8 +48,8 @@ function SearchPageInner() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   
-  const query = searchParams.get('q')
-  const page = parseInt(searchParams.get('page') || '1')
+  const query = searchParams?.get('q') || ''
+  const page = parseInt(searchParams?.get('page') || '1')
 
   const categories = [
     'all',
