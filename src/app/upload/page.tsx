@@ -26,6 +26,16 @@ interface MediaFile {
 
 export default function EnhancedUploadPage() {
   const { data: session } = useSession()
+  // Test auth override: allow tests to set a cookie named TEST_AUTH=1 and enable test auth via NEXT_PUBLIC_ENABLE_TEST_AUTH=1
+  const [testAuthActive, setTestAuthActive] = useState(false)
+  useEffect(() => {
+    try {
+      const enabled = typeof process !== 'undefined' && (process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH === '1')
+      if (!session && enabled && typeof document !== 'undefined' && document.cookie.includes('TEST_AUTH=1')) {
+        setTestAuthActive(true)
+      }
+    } catch {}
+  }, [session])
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -169,14 +179,16 @@ export default function EnhancedUploadPage() {
   const timeout = setTimeout(() => controller.abort(), 5000)
   // load util dynamically so TypeScript doesn't require static JS exports at compile-time
   const mod: any = await import('@/lib/currency')
-  const rate = await mod.getConversionRate(prevCurrency, newCurrency, controller.signal)
-  clearTimeout(timeout)
+    const res = await mod.getConversionRate(prevCurrency, newCurrency, controller.signal)
+    clearTimeout(timeout)
 
-  const newPrice = mod.applyRate(rawPrice, rate)
-  const newOwnership = mod.applyRate(rawOwnership, rate)
+    const rate = res?.rate
+    const provider = res?.provider || 'unknown'
+    const newPrice = mod.applyRate(rawPrice, rate)
+    const newOwnership = mod.applyRate(rawOwnership, rate)
 
-        setFormData(prev => ({ ...prev, price: newPrice ? String(newPrice.toFixed(2)) : '', ownershipPrice: newOwnership ? String(newOwnership.toFixed(2)) : prev.ownershipPrice }))
-        const note = `Converted using 1 ${prevCurrency} = ${rate.toFixed(4)} ${newCurrency}`
+      setFormData(prev => ({ ...prev, price: newPrice ? String(newPrice.toFixed(2)) : '', ownershipPrice: newOwnership ? String(newOwnership.toFixed(2)) : prev.ownershipPrice }))
+      const note = `Converted using ${provider} — 1 ${prevCurrency} = ${rate.toFixed(4)} ${newCurrency}`
         setConversionNote(note)
         toast.success(note)
       } catch (err: unknown) {
@@ -388,7 +400,7 @@ export default function EnhancedUploadPage() {
     }
   }
 
-  if (!session) {
+  if (!session && !testAuthActive) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -748,14 +760,14 @@ export default function EnhancedUploadPage() {
                     <DollarSign className="inline h-4 w-4 mr-1" />
                     Regular Price
                   </label>
-                  <div className="flex items-center gap-3">
-                    <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="w-full sm:w-auto inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
                       <div className="flex items-baseline gap-2">
                         <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
                         <span className="text-xs text-gray-500 uppercase" title="Currency code">{formData.currency}</span>
                       </div>
                     </div>
-                    <div className="relative flex-1">
+                    <div className="relative flex-1 w-full">
                       <input
                         type="number"
                         step="0.01"
@@ -768,11 +780,11 @@ export default function EnhancedUploadPage() {
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">{formData.currency}</span>
                     </div>
-                    <div className="flex items-center">
+                    <div className="w-full sm:w-auto flex items-center">
                       <select
                         value={formData.currency}
                         onChange={(e) => handleCurrencyChange(e.target.value)}
-                        className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                        className="w-full sm:w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
                         title="Select currency"
                       >
                         {currencyOptions.map(c => (
@@ -829,14 +841,14 @@ export default function EnhancedUploadPage() {
                             <DollarSign className="inline h-4 w-4 mr-1" />
                             Ownership Price
                           </label>
-                          <div className="flex items-center gap-3">
-                            <div className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <div className="w-full sm:w-auto inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
                               <div className="flex items-baseline gap-2">
                                 <span className="text-sm font-medium">{currencySymbols[formData.currency] || formData.currency}</span>
                                 <span className="text-xs text-gray-500 uppercase" title="Currency code">{formData.currency}</span>
                               </div>
                             </div>
-                            <div className="relative flex-1">
+                            <div className="relative flex-1 w-full">
                               <input
                                 type="number"
                                 step="0.01"
@@ -849,11 +861,11 @@ export default function EnhancedUploadPage() {
                               />
                               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">{formData.currency}</span>
                             </div>
-                            <div className="flex items-center">
+                            <div className="w-full sm:w-auto flex items-center">
                               <select
                                 value={formData.currency}
                                 onChange={(e) => handleCurrencyChange(e.target.value)}
-                                className="w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
+                                className="w-full sm:w-36 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
                                 title="Select currency"
                               >
                                 {currencyOptions.map(c => (

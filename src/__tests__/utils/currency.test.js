@@ -13,16 +13,18 @@ describe('currency util', () => {
   test('getConversionRate returns rate from info.rate', async () => {
     const fake = { info: { rate: 2.5 } }
     global.fetch.mockResolvedValueOnce({ ok: true, json: async () => fake })
-    const rate = await getConversionRate('USD', 'NGN')
-    expect(rate).toBe(2.5)
+    const res = await getConversionRate('USD', 'NGN')
+    expect(res.rate).toBe(2.5)
+    expect(res.provider).toBe('exchangerate.host')
     expect(global.fetch).toHaveBeenCalled()
   })
 
   test('getConversionRate returns rate from result fallback', async () => {
     const fake = { result: 1.234 }
     global.fetch.mockResolvedValueOnce({ ok: true, json: async () => fake })
-    const rate = await getConversionRate('EUR', 'GBP')
-    expect(rate).toBe(1.234)
+    const res = await getConversionRate('EUR', 'GBP')
+    expect(res.rate).toBe(1.234)
+    expect(res.provider).toBe('exchangerate.host')
   })
 
   test('applyRate computes and rounds correctly', () => {
