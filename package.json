@@ -26,6 +26,7 @@
     "test:email": "node ./scripts/test-email.js",
     "find:reset-token": "node ./scripts/find-reset-token.js",
     "type-check": "tsc --noEmit",
+  "monitor:thumbnail": "node -r dotenv/config scripts/monitor-thumbnail.mjs dotenv_config_path=.env.local",
     "sentry:release-local": "node -e \"console.error('Run sentry-cli locally: set SENTRY_AUTH_TOKEN and then run: sentry-cli releases new <release> && sentry-cli releases files <release> upload-sourcemaps .next --url-prefix ~/_next && sentry-cli releases finalize <release>')\"",
     "sentry:release": "bash ./scripts/sentry-release.sh",
     "sentry:release-pwsh": "pwsh ./scripts/sentry-release.ps1"
