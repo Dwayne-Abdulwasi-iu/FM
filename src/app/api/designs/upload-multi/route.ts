@@ -8,6 +8,8 @@ import { revalidatePath } from 'next/cache'
 import nodemailer from 'nodemailer'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { generatePlaceholderSVG } from '@/lib/placeholders'
+import { spawn } from 'child_process'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -269,6 +271,27 @@ export async function POST(request: NextRequest) {
           })
 
           fileUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
+          // If this was a video upload, also attempt to generate a Cloudinary-hosted thumbnail/poster
+          try {
+            const pubId = (uploadResult as { public_id?: string } | null)?.public_id
+            if (fileType === 'VIDEO' && pubId) {
+              try {
+                const poster = cloudinary.url(pubId, {
+                  resource_type: 'video',
+                  format: 'jpg',
+                  transformation: [
+                    { width: 1280, height: 720, crop: 'fill', start_offset: '1', quality: 'auto' }
+                  ]
+                })
+                // Use the generated poster as thumbnail if we don't already have one
+                if (!thumbnailUrl) thumbnailUrl = poster
+              } catch {
+                // ignore poster generation errors
+              }
+            }
+          } catch {
+            // ignore any poster-related errors
+          }
         } catch (cloudinaryError) {
           console.error('Cloudinary upload failed:', cloudinaryError)
           // Fall back to local storage
@@ -277,6 +300,39 @@ export async function POST(request: NextRequest) {
       } else {
         // Save locally for development
         fileUrl = await saveMediaLocally(buffer, file.name, file.type, fileType)
+        // If locally saved video, try to extract a thumbnail using ffmpeg (if available)
+        if (fileType === 'VIDEO') {
+          try {
+            const localFullPath = path.join(process.cwd(), 'public', fileUrl.replace(/^\//, ''))
+            const thumb = await (async function extractVideoThumbnail(localPath: string): Promise<string | null> {
+              return new Promise((resolve) => {
+                const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+                const base = path.basename(localPath, path.extname(localPath))
+                const thumbName = `${base}_thumb.jpg`
+                const thumbPath = path.join(uploadsDir, thumbName)
+                const ffmpegCmd = process.env.FFMPEG_PATH || 'ffmpeg'
+                const args = ['-y', '-i', localPath, '-ss', '00:00:01.000', '-vframes', '1', '-q:v', '2', thumbPath]
+                const p = spawn(ffmpegCmd, args)
+                p.on('error', (err) => {
+                  console.warn('ffmpeg spawn failed (thumbnail extraction not available):', err?.message || err)
+                  resolve(null)
+                })
+                p.on('close', (code) => {
+                  if (code === 0) resolve(`/uploads/${thumbName}`)
+                  else {
+                    // non-zero exit
+                    resolve(null)
+                  }
+                })
+              })
+            })(localFullPath)
+            if (thumb) {
+              if (!thumbnailUrl) thumbnailUrl = thumb
+            }
+          } catch {
+            // ignore ffmpeg errors and fall back to SVG placeholder
+          }
+        }
       }
 
       // Set primary image based on metadata.primary if provided; otherwise fallback to first image
@@ -306,10 +362,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // If no image was uploaded, use a placeholder for the primary image
+    // If no image was uploaded, use a placeholder for the primary image.
+    // If the uploaded media contains a video, generate a video-specific SVG placeholder
+    // so the video poster shows a clear "VIDEO"/play-style thumbnail instead of the generic design SVG.
+    const hasVideo = mediaFiles.some(m => m.fileType === 'VIDEO')
     if (!primaryImageUrl) {
-      primaryImageUrl = '/images/placeholder-design.svg'
-      thumbnailUrl = '/images/placeholder-design.svg'
+      if (hasVideo) {
+        // Use a data-uri SVG sized for an aspect-video poster
+        primaryImageUrl = generatePlaceholderSVG(1280, 720, 'VIDEO')
+        thumbnailUrl = primaryImageUrl
+      } else {
+        primaryImageUrl = '/images/placeholder-design.svg'
+        thumbnailUrl = '/images/placeholder-design.svg'
+      }
     }
 
     // Normalize tags to string[]
@@ -324,8 +389,8 @@ export async function POST(request: NextRequest) {
   const submittedCurrencyVal = currency
 
   // Create design record in database with media files and currency
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const design = await prisma.design.create({
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const design = await prisma.design.create({
       // cast data as any because generated client types may not be fully in sync in this environment
       data: {
         title,
@@ -352,6 +417,14 @@ export async function POST(request: NextRequest) {
       }
     })
     /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    // Enqueue thumbnail generation jobs for any locally-stored videos
+    try {
+      const { enqueueThumbnailJobsForDesign } = await import('@/lib/thumbnailQueue')
+      enqueueThumbnailJobsForDesign(design).catch(() => {})
+    } catch (e) {
+      // best-effort only
+    }
 
     // Create in-app notification for uploader (pending approval)
     try {
