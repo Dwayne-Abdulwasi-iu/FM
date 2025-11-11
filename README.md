@@ -73,6 +73,8 @@ npm install
 
 # Setup database
 npx prisma generate
+
+Important: In production this application requires Cloudinary for uploads. The app no longer persists uploads to the local filesystem in production deployments (ephemeral filesystems would lose files). Make sure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET` are configured in your host environment. If you have existing files in `public/uploads`, run `node scripts/migrate-uploads-to-cloudinary.mjs` (or `npm run migrate:cloudinary`) to migrate them.
 npx prisma db push
 
 # Seed database

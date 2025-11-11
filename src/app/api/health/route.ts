@@ -17,6 +17,12 @@ export async function GET() {
       nextAuthUrl: hasNextAuthUrl,
       cloudinary: hasCloudinary,
     },
+    productionReady: hasDb && hasNextAuthSecret && hasCloudinary,
+    warnings: [
+      ...(hasDb ? [] : ['DATABASE_URL is missing']),
+      ...(hasNextAuthSecret ? [] : ['NEXTAUTH_SECRET is missing']),
+      ...(hasCloudinary ? [] : ['Cloudinary is not configured — uploads will fail in production']),
+    ],
     note: hasDb
       ? 'Database URL is present. If you still see DB errors, try restarting the server.'
       : 'Database URL missing. Set DATABASE_URL in .env.local to enable DB-backed features.',

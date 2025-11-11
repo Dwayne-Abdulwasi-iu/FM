@@ -6,10 +6,8 @@ import { prismaErrorResponse } from '@/lib/prismaError'
 import { v2 as cloudinary } from 'cloudinary'
 import { revalidatePath } from 'next/cache'
 import nodemailer from 'nodemailer'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+// removed local file helpers — Cloudinary is required for uploads
 import { generatePlaceholderSVG } from '@/lib/placeholders'
-import { spawn } from 'child_process'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -18,35 +16,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-// Helper function to save media files locally
-async function saveMediaLocally(buffer: Buffer, filename: string, mimeType: string, fileKind: 'IMAGE' | 'VIDEO' | 'FILE') {
-  try {
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadsDir, { recursive: true })
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const originalExt = path.extname(filename).replace('.', '').toLowerCase()
-    const baseName = path.basename(filename, path.extname(filename)).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || 'file'
-    const fallbackExt = mimeType?.split('/')[1]?.toLowerCase() || (fileKind === 'VIDEO' ? 'mp4' : fileKind === 'IMAGE' ? 'jpg' : 'bin')
-    const extension = originalExt || fallbackExt
-    const uniqueFilename = `${timestamp}_${baseName}.${extension}`
-    const filepath = path.join(uploadsDir, uniqueFilename)
-
-    // Save the file
-    await writeFile(filepath, buffer)
-
-    return `/uploads/${uniqueFilename}`
-  } catch (error) {
-    console.error('Failed to save media file locally:', error)
-    // Fall back to placeholder
-    const randomId = Math.floor(Math.random() * 1000) + 1
-    return fileKind === 'VIDEO' 
-      ? `/uploads/placeholder-video-${randomId}.mp4`
-      : `/images/placeholder-design.svg`
-  }
-}
 
 // Helper function to get video duration with better estimation
 function getVideoDuration(buffer: Buffer, mimeType: string): Promise<number> {
@@ -246,8 +216,13 @@ export async function POST(request: NextRequest) {
           ? 'VIDEO'
           : 'FILE'
       
-      // Upload to Cloudinary if configured, otherwise save locally
-      if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
+      // Require Cloudinary to be configured — do not fall back to local storage.
+      if (!process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME === 'your-cloudinary-cloud-name') {
+        return NextResponse.json({ message: 'Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.' }, { status: 500 })
+      }
+
+      // Upload to Cloudinary
+      if (process.env.CLOUDINARY_CLOUD_NAME) {
         try {
           const uploadResult = await new Promise<unknown>((resolve, reject) => {
             const uploadOptions: Record<string, unknown> = {
@@ -294,44 +269,10 @@ export async function POST(request: NextRequest) {
           }
         } catch (cloudinaryError) {
           console.error('Cloudinary upload failed:', cloudinaryError)
-          // Fall back to local storage
-          fileUrl = await saveMediaLocally(buffer, file.name, file.type, fileType)
-        }
-      } else {
-        // Save locally for development
-        fileUrl = await saveMediaLocally(buffer, file.name, file.type, fileType)
-        // If locally saved video, try to extract a thumbnail using ffmpeg (if available)
-        if (fileType === 'VIDEO') {
-          try {
-            const localFullPath = path.join(process.cwd(), 'public', fileUrl.replace(/^\//, ''))
-            const thumb = await (async function extractVideoThumbnail(localPath: string): Promise<string | null> {
-              return new Promise((resolve) => {
-                const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-                const base = path.basename(localPath, path.extname(localPath))
-                const thumbName = `${base}_thumb.jpg`
-                const thumbPath = path.join(uploadsDir, thumbName)
-                const ffmpegCmd = process.env.FFMPEG_PATH || 'ffmpeg'
-                const args = ['-y', '-i', localPath, '-ss', '00:00:01.000', '-vframes', '1', '-q:v', '2', thumbPath]
-                const p = spawn(ffmpegCmd, args)
-                p.on('error', (err) => {
-                  console.warn('ffmpeg spawn failed (thumbnail extraction not available):', err?.message || err)
-                  resolve(null)
-                })
-                p.on('close', (code) => {
-                  if (code === 0) resolve(`/uploads/${thumbName}`)
-                  else {
-                    // non-zero exit
-                    resolve(null)
-                  }
-                })
-              })
-            })(localFullPath)
-            if (thumb) {
-              if (!thumbnailUrl) thumbnailUrl = thumb
-            }
-          } catch {
-            // ignore ffmpeg errors and fall back to SVG placeholder
-          }
+          return NextResponse.json(
+            { message: 'Cloudinary upload failed. Please try again later.' },
+            { status: 500 }
+          )
         }
       }
 
@@ -422,7 +363,7 @@ export async function POST(request: NextRequest) {
     try {
       const { enqueueThumbnailJobsForDesign } = await import('@/lib/thumbnailQueue')
       enqueueThumbnailJobsForDesign(design).catch(() => {})
-    } catch (e) {
+    } catch {
       // best-effort only
     }
 

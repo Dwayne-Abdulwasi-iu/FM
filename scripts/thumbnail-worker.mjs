@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Worker process that listens for thumbnail jobs and extracts thumbnails for local videos.
+// Background worker: extract thumbnails for local videos, upload thumbnails to Cloudinary and update DB.
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import prisma from '../src/lib/prisma.mjs'
+import { v2 as cloudinary } from 'cloudinary'
 
 const redisUrl = process.env.REDIS_URL
 if (!redisUrl) {
@@ -11,69 +12,94 @@ if (!redisUrl) {
   process.exit(1)
 }
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
+
 ;(async () => {
   try {
     const { Worker } = await import('bullmq')
     const worker = new Worker('thumbnails', async (job) => {
-      const { mediaId, designId, fileUrl } = job.data
-      if (!fileUrl || !fileUrl.startsWith('/uploads/')) return
+      const { designId, fileUrl } = job.data
+      if (!fileUrl) return
 
-      const localPath = path.join(process.cwd(), 'public', fileUrl.replace(/^\//, ''))
-      if (!fs.existsSync(localPath)) return
-
-      const uploadsDir = path.dirname(localPath)
-      const base = path.basename(localPath, path.extname(localPath))
-      const thumbName = `${base}_thumb.jpg`
-      const thumbPath = path.join(uploadsDir, thumbName)
-
-      // Use ffprobe to pick a frame at ~10% of duration (or at least 1s) for a better thumbnail
-      const ffmpegCmd = process.env.FFMPEG_PATH || 'ffmpeg'
-      const ffprobeCmd = process.env.FFPROBE_PATH || 'ffprobe'
-      let offsetSeconds = '1'
+      // If fileUrl is a Cloudinary asset, derive a poster URL and update DB directly.
       try {
-        const probeArgs = ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', localPath]
-        const probe = spawn(ffprobeCmd, probeArgs)
-        let out = ''
-        for await (const chunk of probe.stdout) out += chunk.toString()
-        await new Promise((res, rej) => {
-          probe.on('error', (err) => rej(err))
-          probe.on('close', (code) => code === 0 ? res(null) : res(null))
-        }).catch(() => {})
-        const dur = parseFloat(out || '0')
-        if (dur > 2) {
-          const candidate = Math.floor(dur * 0.1)
-          offsetSeconds = String(Math.max(1, candidate))
+        const cloudMatch = String(fileUrl).match(/\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i)
+        if (cloudMatch && cloudMatch[1] && fileUrl.includes('res.cloudinary.com')) {
+          const publicId = cloudMatch[1]
+          // Attempt to build a video poster first; fallback to image transform
+          let poster = cloudinary.url(publicId, { resource_type: 'video', format: 'jpg', transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto', start_offset: '1' }] })
+          // If that fails for images, try as image
+          try {
+            await prisma.design.update({ where: { id: designId }, data: { thumbnailUrl: poster } })
+            return
+          } catch {
+            // Try image transform
+            poster = cloudinary.url(publicId, { resource_type: 'image', format: 'jpg', width: 400, height: 400, crop: 'fill', quality: 'auto' })
+            try { await prisma.design.update({ where: { id: designId }, data: { thumbnailUrl: poster } }); return } catch {}
+          }
         }
       } catch {
-        // ffprobe not available or failed — fall back to 1s
+        // ignore and proceed to local processing
       }
 
-      const args = ['-y', '-ss', offsetSeconds, '-i', localPath, '-vframes', '1', '-q:v', '2', thumbPath]
-      await new Promise((resolve, reject) => {
-        const p = spawn(ffmpegCmd, args)
-        p.on('error', (err) => reject(err))
-        p.on('close', (code) => code === 0 ? resolve(null) : reject(new Error('ffmpeg exit ' + code)))
-      }).catch((err) => {
-        console.warn('ffmpeg thumbnail extraction failed', err?.message || err)
-        return null
-      })
+      // If local file (e.g., /uploads/...), extract frame then upload to Cloudinary
+      if (String(fileUrl).startsWith('/uploads/')) {
+        const localPath = path.join(process.cwd(), 'public', fileUrl.replace(/^\//, ''))
+        if (!fs.existsSync(localPath)) return
 
-      if (fs.existsSync(thumbPath)) {
-        const thumbUrl = `/uploads/${path.basename(thumbPath)}`
+        const uploadsDir = path.dirname(localPath)
+        const base = path.basename(localPath, path.extname(localPath))
+        const thumbName = `${base}_thumb.jpg`
+        const thumbPath = path.join(uploadsDir, thumbName)
+
+        const ffmpegCmd = process.env.FFMPEG_PATH || 'ffmpeg'
+        const ffprobeCmd = process.env.FFPROBE_PATH || 'ffprobe'
+        let offsetSeconds = '1'
         try {
-          // Update design thumbnail if not set
-          await prisma.design.update({ where: { id: designId }, data: { thumbnailUrl: thumbUrl } })
-        } catch (dbErr) {
-          console.warn('Failed to update design thumbnail in DB', dbErr)
+          const probeArgs = ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', localPath]
+          const probe = spawn(ffprobeCmd, probeArgs)
+          let out = ''
+          for await (const chunk of probe.stdout) out += chunk.toString()
+          await new Promise((res) => { probe.on('close', () => res(null)) }).catch(() => {})
+          const dur = parseFloat(out || '0')
+          if (dur > 2) {
+            const candidate = Math.floor(dur * 0.1)
+            offsetSeconds = String(Math.max(1, candidate))
+          }
+        } catch {}
+
+        const args = ['-y', '-ss', offsetSeconds, '-i', localPath, '-vframes', '1', '-q:v', '2', thumbPath]
+        try {
+          await new Promise((resolve, reject) => {
+            const p = spawn(ffmpegCmd, args)
+            p.on('error', (err) => reject(err))
+            p.on('close', (code) => code === 0 ? resolve(null) : reject(new Error('ffmpeg exit ' + code)))
+          })
+        } catch (err) {
+          console.warn('ffmpeg thumbnail extraction failed', err?.message || err)
+          return
         }
-      } else {
-        // ffmpeg/ffprobe may not be available in this environment. Fall back to a safe placeholder
-        const placeholderUrl = '/images/placeholder-design.svg'
-        console.warn('Thumbnail not generated; falling back to placeholder:', placeholderUrl)
-        try {
-          await prisma.design.update({ where: { id: designId }, data: { thumbnailUrl: placeholderUrl } })
-        } catch (dbErr) {
-          console.warn('Failed to update design thumbnail in DB with placeholder', dbErr)
+
+        if (fs.existsSync(thumbPath)) {
+          try {
+            // Upload thumbnail to Cloudinary
+            const res = await new Promise((resolve, reject) => {
+              cloudinary.uploader.upload(thumbPath, { folder: 'fashion-designs/thumbnails', resource_type: 'image' }, (err, r) => {
+                if (err) reject(err); else resolve(r)
+              })
+            })
+            const secureUrl = res.secure_url
+            // Update design thumbnail URL in DB
+            await prisma.design.update({ where: { id: designId }, data: { thumbnailUrl: secureUrl } })
+            // Optionally remove local thumb to avoid clutter
+            try { fs.unlinkSync(thumbPath) } catch {}
+          } catch (err) {
+            console.warn('Failed to upload thumbnail to Cloudinary or update DB', err?.message || err)
+          }
         }
       }
     }, { connection: { url: redisUrl } })
@@ -82,7 +108,7 @@ if (!redisUrl) {
       console.error('Thumbnail job failed', job.id, err)
     })
 
-    console.log('Thumbnail worker started')
+    console.log('Thumbnail worker started (uploads thumbnails to Cloudinary)')
   } catch (err) {
     console.error('Failed to start thumbnail worker (bullmq missing or connection failed):', err)
     process.exit(1)
