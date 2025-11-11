@@ -13,33 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Cloudinary check
-        env:
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-        run: node scripts/check-cloudinary-mongo-client.mjs --fail-on-http
-name: Check Cloudinary thumbnails
-
-on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: '0 2 * * *' # daily at 02:00 UTC, adjust as needed
-
-jobs:
-  check:
-    name: Check Cloudinary URLs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Use Node 20
         uses: actions/setup-node@v4
         with:
