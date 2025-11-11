@@ -73,6 +73,8 @@ npm install
 
 # Setup database
 npx prisma generate
+
+Important: In production this application requires Cloudinary for uploads. The app no longer persists uploads to the local filesystem in production deployments (ephemeral filesystems would lose files). Make sure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET` are configured in your host environment. If you have existing files in `public/uploads`, run `node scripts/migrate-uploads-to-cloudinary.mjs` (or `npm run migrate:cloudinary`) to migrate them.
 npx prisma db push
 
 # Seed database
@@ -518,3 +520,13 @@ For support and questions:
 - [ ] Social features (following, sharing)
 - [ ] Bulk upload tools
 - [ ] API for third-party integrations
+
+## Cloudinary HTTP->HTTPS check
+
+This repository includes a CI-first check and a small runbook to detect and safely fix any stored Cloudinary URLs that use `http://` instead of `https://`.
+
+- Documentation: `docs/cloudinary-check.md` (step-by-step commands and safe-fix runbook).
+- Scripts: `scripts/check-cloudinary-mongo-client.mjs` (read-only scanner) and `scripts/fix-cloudinary-mongo-client.mjs` (direct Mongo fixer).
+- Recommended flow: add the `PROD_DATABASE_URL` repository secret, run the `check-cloudinary` workflow manually (or wait for its scheduled run), and only run the fixer during a maintenance window after taking a backup.
+
+If you'd like, I can open a small PR to add an inline link from this README to the docs or add notifications to the workflow (Slack/email).

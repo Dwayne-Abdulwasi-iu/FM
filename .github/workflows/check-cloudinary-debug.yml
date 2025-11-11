@@ -1,0 +1,38 @@
+name: Debug Cloudinary Check
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Show environment
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Node: $(node -v)"
+          echo "NPM: $(npm -v)"
+          echo "Listing repo files:"
+          ls -la
+
+      - name: Show scripts folder
+        run: |
+          echo "Scripts dir listing:" 
+          ls -la scripts || true
+          echo "--- check script content ---"
+          sed -n '1,200p' scripts/check-cloudinary-mongo-client.mjs || true
+
+      - name: Run check (debug)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          node --version
+          node scripts/check-cloudinary-mongo-client.mjs || true

@@ -1,0 +1,52 @@
+name: Check Cloudinary URLs
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
+
+jobs:
+  check:
+    name: Run Cloudinary HTTP->HTTPS check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cloudinary URL check (fail on http)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          node scripts/check-cloudinary-mongo-client.mjs --fail-on-http
+
+      - name: Notify Slack on failure
+        if: ${{ failure() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping Slack notification.";
+            exit 0;
+          fi
+          payload="{\"text\":\"[ALERT] Cloudinary check failed for $GITHUB_REPOSITORY on $GITHUB_REF. See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+          curl -s -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL" || echo "Slack notification failed"
+
+      - name: Notify Slack on success
+        if: ${{ success() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping Slack notification.";
+            exit 0;
+          fi
+          payload="{\"text\":\"[OK] Cloudinary check passed for $GITHUB_REPOSITORY on $GITHUB_REF. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+          curl -s -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL" || echo "Slack notification failed"

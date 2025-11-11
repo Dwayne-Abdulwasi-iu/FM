@@ -5,8 +5,6 @@ import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import { v2 as cloudinary } from 'cloudinary'
 import { revalidatePath } from 'next/cache'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -15,37 +13,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-// Helper function to save images locally
-async function saveImageLocally(buffer: Buffer, title: string) {
-  try {
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadsDir, { recursive: true })
-
-    // Generate unique filename
-    const timestamp = Date.now()
-    const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
-    const filename = `${timestamp}_${sanitizedTitle}.jpg`
-    const filepath = path.join(uploadsDir, filename)
-
-    // Save the original image
-    await writeFile(filepath, buffer)
-
-    // For now, use the same image for both full size and thumbnail
-    // In production, you'd want to resize the thumbnail
-    const imageUrl = `/uploads/${filename}`
-    const thumbnailUrl = `/uploads/${filename}`
-
-    return { imageUrl, thumbnailUrl }
-  } catch (error) {
-    console.error('Failed to save image locally:', error)
-    // Fall back to placeholder
-    return {
-      imageUrl: `/images/placeholder-design.svg`,
-      thumbnailUrl: `/images/placeholder-design.svg`
-    }
-  }
-}
+// No local fallback: Cloudinary is required for uploads
 
 export async function POST(request: NextRequest) {
   try {
@@ -132,9 +100,12 @@ export async function POST(request: NextRequest) {
     let imageUrl = ''
     let thumbnailUrl = ''
 
-    // Upload to Cloudinary if configured, otherwise save locally
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloudinary-cloud-name') {
-      try {
+    // Require Cloudinary configuration
+    if (!process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME === 'your-cloudinary-cloud-name') {
+      return NextResponse.json({ message: 'Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.' }, { status: 500 })
+    }
+
+    try {
         // Upload original image
         const uploadResult = await new Promise<unknown>((resolve, reject) => {
           cloudinary.uploader.upload_stream(
@@ -171,18 +142,12 @@ export async function POST(request: NextRequest) {
 
         imageUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
         thumbnailUrl = (thumbnailResult as { secure_url?: string } | null)?.secure_url || ''
-      } catch (cloudinaryError) {
-        console.error('Cloudinary upload failed:', cloudinaryError)
-        // Fall back to local storage
-        const { imageUrl: localImageUrl, thumbnailUrl: localThumbnailUrl } = await saveImageLocally(buffer, title)
-        imageUrl = localImageUrl
-        thumbnailUrl = localThumbnailUrl
-      }
-    } else {
-      // Save images locally for development
-      const { imageUrl: localImageUrl, thumbnailUrl: localThumbnailUrl } = await saveImageLocally(buffer, title)
-      imageUrl = localImageUrl
-      thumbnailUrl = localThumbnailUrl
+    } catch (cloudinaryError) {
+      console.error('Cloudinary upload failed:', cloudinaryError)
+      return NextResponse.json(
+        { message: 'Cloudinary upload failed. Please try again later.' },
+        { status: 500 }
+      )
     }
 
     // Normalize tags to string[]

@@ -23,6 +23,7 @@
     "test:watch": "jest --watch",
   "test:integration": "node scripts/run-integration.mjs",
   "thumbnail:worker": "node scripts/thumbnail-worker.mjs",
+    "migrate:cloudinary": "node -r dotenv/config scripts/migrate-uploads-to-cloudinary.mjs dotenv_config_path=.env.local",
     "test:email": "node ./scripts/test-email.js",
     "find:reset-token": "node ./scripts/find-reset-token.js",
     "type-check": "tsc --noEmit",
