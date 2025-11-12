@@ -22,9 +22,10 @@ interface OrderDetails {
       id: string
       title: string
       imageUrl: string
-      designer: {
-        name: string | null
-      }
+        designer: {
+          name: string | null
+          username?: string | null
+        }
     }
   }>
 }
@@ -180,7 +181,7 @@ function CheckoutSuccessPageInner() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{item.design.title}</h3>
                     <p className="text-sm text-gray-600">
-                      by {item.design.designer.name || 'Anonymous'}
+                      by {item.design.designer.username || item.design.designer.name || 'Anonymous'}
                     </p>
                     <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                   </div>

@@ -40,6 +40,7 @@ interface Design {
   designer: {
     id: string
     name: string | null
+    username?: string | null
     bio: string | null
     image: string | null
   }
@@ -421,12 +422,12 @@ export default function DesignPage() {
                   return (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-50">
                       <div className="text-center p-8">
-                        <div className="w-20 h-20 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                          <span className="text-purple-600 text-3xl">🔒</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Premium Content</h3>
-                        <p className="text-gray-600 mb-4">This design contains {lockedFiles.length} premium file{lockedFiles.length > 1 ? 's' : ''}</p>
-                        <p className="text-sm text-gray-500">Purchase to unlock all content</p>
+                                <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <span className="text-gray-700 text-3xl">🔒</span>
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">Locked Content</h3>
+                              <p className="text-gray-600 mb-4">This design contains {lockedFiles.length} locked file{lockedFiles.length > 1 ? 's' : ''}</p>
+                              <p className="text-sm text-gray-500">Purchase to unlock all content</p>
                       </div>
                     </div>
                   )
@@ -533,9 +534,9 @@ export default function DesignPage() {
                           </div>
                         </div>
                         
-                        <div className="absolute inset-0 bg-purple-500 bg-opacity-20 flex items-center justify-center">
-                          <div className="text-purple-900 text-xs font-bold">PREMIUM</div>
-                        </div>
+                                <div className="absolute inset-0 bg-gray-700 bg-opacity-10 flex items-center justify-center">
+                                  <div className="text-gray-900 text-xs font-bold">Locked</div>
+                                </div>
                       </div>
                     ))}
                   </div>
@@ -566,7 +567,7 @@ export default function DesignPage() {
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {selectedFile.accessType}
+                          {selectedFile.accessType === 'PREMIUM' ? 'Locked' : selectedFile.accessType}
                         </span>
                       </div>
                     </div>
@@ -599,7 +600,7 @@ export default function DesignPage() {
                 )}
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">{design.designer.name || 'Anonymous'}</h3>
+                <h3 className="font-semibold text-gray-900">{design.designer.username || design.designer.name || 'Anonymous'}</h3>
                 {design.designer.bio && (
                   <p className="text-sm text-gray-600">{design.designer.bio}</p>
                 )}
@@ -703,7 +704,7 @@ export default function DesignPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          PREMIUM
+                          Locked
                         </span>
                         <span className="text-xs text-purple-600">🔒</span>
                       </div>
@@ -712,9 +713,9 @@ export default function DesignPage() {
                 </div>
                 <div className="mt-3 text-xs text-gray-500">
                   {getAccessibleMediaFiles().length} accessible • {' '}
-                  {getLockedPremiumFiles().length} locked premium files
+                  {getLockedPremiumFiles().length} locked files
                   {getLockedPremiumFiles().length > 0 && (
-                    <span className="text-purple-600 font-medium"> • Purchase to unlock all content</span>
+                    <span className="text-gray-700 font-medium"> • Purchase to unlock all content</span>
                   )}
                 </div>
               </div>

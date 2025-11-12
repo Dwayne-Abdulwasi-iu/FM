@@ -85,16 +85,17 @@ interface Design {
   designer: {
     name: string | null
     email: string
+    username?: string | null
   }
 }
 
 // Row shape for Exclusive Sales table and CSV export
-type ExclusiveSale = {
+  type ExclusiveSale = {
   id: string
   createdAt: string
   purchasePrice: number
   buyer: { id: string; name: string | null; email: string }
-  design: { id: string; title: string; imageUrl: string; isActive: boolean; ownedBy: string | null; designer: { id: string; name: string | null; email: string } }
+    design: { id: string; title: string; imageUrl: string; isActive: boolean; ownedBy: string | null; designer: { id: string; name: string | null; email: string; username?: string | null } }
   order: { id?: string; orderNumber?: string; createdAt?: string } | null
 }
 
@@ -547,7 +548,7 @@ export default function AdminDashboard() {
           r.design.title || '',
           r.buyer.name || r.buyer.email || '',
           r.buyer.email || '',
-          r.design.designer.name || r.design.designer.email || '',
+          r.design.designer.username || r.design.designer.name || r.design.designer.email || '',
           r.design.designer.email || '',
           String(r.purchasePrice ?? ''),
           new Date(r.createdAt).toISOString()
@@ -1241,7 +1242,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="p-3 md:p-4">
                         <h4 className="font-semibold text-gray-900 truncate">{design.title}</h4>
-                        <p className="text-sm text-gray-600 mb-2">by {design.designer.name || design.designer.email}</p>
+                        <p className="text-sm text-gray-600 mb-2">by {design.designer.username || design.designer.name || design.designer.email}</p>
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-lg font-bold text-indigo-600">{formatPrice(design.price)}</span>
                           <span className="text-sm text-gray-500">{design.totalSales} sales</span>
@@ -1757,7 +1758,7 @@ export default function AdminDashboard() {
                               <div className="text-xs text-gray-500">{ex.buyer.email}</div>
                             </td>
                             <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700">
-                              {ex.design.designer.name || ex.design.designer.email}
+                              {ex.design.designer.username || ex.design.designer.name || ex.design.designer.email}
                               <div className="text-xs text-gray-500">{ex.design.designer.email}</div>
                             </td>
                             <td className="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-900">

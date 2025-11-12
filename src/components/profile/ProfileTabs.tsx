@@ -18,15 +18,26 @@ const TABS = [
   'Bank Account',
 ]
 
-export default function ProfileTabs({ initialProfile, initialStats, initialPayoutSummary }: { initialProfile?: { id: string; name?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null; initialStats?: { totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null; initialPayoutSummary?: { lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null }) {
+export default function ProfileTabs({ initialProfile, initialStats, initialPayoutSummary }: { initialProfile?: { id: string; name?: string | null; username?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null; initialStats?: { totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null; initialPayoutSummary?: { lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [active, setActive] = useState<string>(() => (searchParams?.get('tab') as string) || 'Overview')
   const [designsCount, setDesignsCount] = useState<number | null>(initialStats?.totalDesigns ?? null)
   const [ordersCount, setOrdersCount] = useState<number | null>(initialStats?.totalSales ?? null)
   const [countsLoading, setCountsLoading] = useState<boolean>(initialStats ? false : true)
-  const [profileUser, setProfileUser] = useState<{ id: string; name?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null>(initialProfile ?? null)
+  const [profileUser, setProfileUser] = useState<{ id: string; name?: string | null; username?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null>(initialProfile ?? null)
   const [profileLoading, setProfileLoading] = useState<boolean>(initialProfile ? false : true)
+  const [editing, setEditing] = useState<boolean>(false)
+  const [formName, setFormName] = useState<string>('')
+  const [formUsername, setFormUsername] = useState<string>('')
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const [checkingUsername, setCheckingUsername] = useState<boolean>(false)
+  const usernameCheckRef = useRef<number | null>(null)
+  const [formBio, setFormBio] = useState<string>('')
+  const [formWebsite, setFormWebsite] = useState<string>('')
+  const [formLocation, setFormLocation] = useState<string>('')
+  const [saving, setSaving] = useState<boolean>(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [stats, setStats] = useState<{ totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null>(initialStats ?? null)
   const [statsLoading, setStatsLoading] = useState<boolean>(initialStats ? false : true)
   const [avgOrderValue, setAvgOrderValue] = useState<number | null>(null)
@@ -239,9 +250,109 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                     return source.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()
                   })()}
                 </div>
-                <div>
-                  <div className="text-lg font-semibold text-gray-900">{profileUser.name || '—'}</div>
-                  <div className="text-sm text-gray-600">{profileUser.email || '—'}</div>
+                <div className="flex-1">
+                  {!editing ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-lg font-semibold text-gray-900">{profileUser.name || '—'}</div>
+                          {profileUser.username ? (
+                            <div className="text-sm text-gray-600">@{profileUser.username}</div>
+                          ) : (
+                            <div className="text-sm text-gray-600">{profileUser.email || '—'}</div>
+                          )}
+                        </div>
+                        <div>
+                          <button onClick={() => {
+                            // initialize form fields and enter edit mode
+                            setFormName(profileUser.name || '')
+                            setFormUsername(profileUser.username || '')
+                            setFormBio(profileUser.bio || '')
+                            setFormWebsite(profileUser.website || '')
+                            setFormLocation(profileUser.location || '')
+                            setSaveError(null)
+                            setEditing(true)
+                          }} className="text-sm text-indigo-600 hover:underline">Edit</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <div className="grid grid-cols-1 gap-2">
+                        <input aria-label="Full name" className="block w-full px-3 py-2 border border-gray-300 rounded" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Full name" />
+                        <div>
+                          <input aria-label="Username" className="block w-full px-3 py-2 border border-gray-300 rounded" value={formUsername} onChange={(e) => {
+                            const v = e.target.value
+                            setFormUsername(v)
+                            setUsernameAvailable(null)
+                            if (usernameCheckRef.current) window.clearTimeout(usernameCheckRef.current)
+                            // debounce
+                            usernameCheckRef.current = window.setTimeout(async () => {
+                              if (!v || v.length < 3) return
+                              setCheckingUsername(true)
+                              try {
+                                const res = await fetch(`/api/profile/username-check?username=${encodeURIComponent(v)}`)
+                                if (res.ok) {
+                                  const j = await res.json()
+                                  setUsernameAvailable(Boolean(j?.available))
+                                } else {
+                                  setUsernameAvailable(false)
+                                }
+                              } catch {
+                                setUsernameAvailable(false)
+                              } finally {
+                                setCheckingUsername(false)
+                              }
+                            }, 400)
+                          }} placeholder="Username (letters, numbers, - or _)" />
+                          <div className="text-xs mt-1">
+                            {checkingUsername ? <span className="text-gray-500">Checking availability…</span> : (
+                              usernameAvailable === null ? <span className="text-gray-500">Available status unknown</span> : usernameAvailable ? <span className="text-green-600">Username available</span> : <span className="text-red-600">Username taken</span>
+                            )}
+                          </div>
+                        </div>
+                        <input aria-label="Location" className="block w-full px-3 py-2 border border-gray-300 rounded" value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="Location" />
+                        <input aria-label="Website" className="block w-full px-3 py-2 border border-gray-300 rounded" value={formWebsite} onChange={(e) => setFormWebsite(e.target.value)} placeholder="Website" />
+                        <textarea aria-label="Bio" className="block w-full px-3 py-2 border border-gray-300 rounded" value={formBio} onChange={(e) => setFormBio(e.target.value)} placeholder="Short bio" />
+                        {saveError && <div className="text-sm text-red-600">{saveError}</div>}
+                        <div className="flex gap-2">
+                          <button disabled={saving} onClick={async () => {
+                            setSaveError(null)
+                            // client-side validation for username if provided
+                            if (formUsername && formUsername.length > 0) {
+                              const usernameRegex = /^[A-Za-z0-9_-]{3,30}$/
+                              if (!usernameRegex.test(formUsername)) {
+                                setSaveError('Invalid username. Use 3-30 characters: letters, numbers, - or _.')
+                                return
+                              }
+                            }
+                            try {
+                              setSaving(true)
+                              const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formName || null, username: formUsername || null, bio: formBio || null, website: formWebsite || null, location: formLocation || null }) })
+                              if (!res.ok) {
+                                const j = await res.json().catch(() => ({}))
+                                setSaveError(j?.message || 'Failed to save profile')
+                                return
+                              }
+                              const data = await res.json()
+                              if (data?.user) {
+                                setProfileUser(data.user)
+                                setEditing(false)
+                              } else {
+                                setSaveError('Unexpected response from server')
+                              }
+                            } catch (err) {
+                              console.error('Save profile error', err)
+                              setSaveError('Failed to save profile')
+                            } finally {
+                              setSaving(false)
+                            }
+                          }} className="px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
+                          <button disabled={saving} onClick={() => { setEditing(false); setSaveError(null) }} className="px-3 py-1 border rounded">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -334,7 +445,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               <button
                 key={tab}
                 role="tab"
-                aria-selected={isActive ? 'true' : 'false'}
+                aria-selected={isActive ? true : false}
                 aria-controls={`panel-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 id={`tab-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => setActive(tab)}

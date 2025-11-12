@@ -29,6 +29,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            username: true,
           }
         },
         mediaFiles: {
@@ -85,7 +86,7 @@ export async function GET(
         description: design.description,
         category: design.category,
         tags: design.tags,
-        designer: design.designer.name,
+    designer: design.designer.username || design.designer.name,
       },
       files: fileList,
       downloadDate: new Date().toISOString(),

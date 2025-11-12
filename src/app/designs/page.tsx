@@ -23,6 +23,7 @@ interface Design {
   designer: {
     id: string
     name: string | null
+    username?: string | null
   }
   totalSales: number
   _count?: {
@@ -31,6 +32,8 @@ interface Design {
   mediaFiles?: {
     accessType: string
   }[]
+  buyingTypes?: string
+  ownershipPrice?: number | null
 }
 
 type PartialWishlistItem = { id: string; title?: string; imageUrl?: string; price?: number }
@@ -389,12 +392,19 @@ function DesignsPageInner() {
                       alt={design.title}
                       className="w-full h-full object-cover"
                     />
-                    {/* Premium Badge */}
-                    {design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (
+                    {/* Locked / Exclusive Badge */}
+                    {(design.buyingTypes === 'OWNERSHIP' || design.buyingTypes === 'BOTH') && design.ownershipPrice ? (
                       <div className="absolute top-2 left-2">
-                        <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-xs font-medium rounded-full shadow-sm">
+                        <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-xs font-medium rounded-full shadow-sm">
                           <Crown className="h-3 w-3 mr-1" />
-                          Premium
+                          Exclusive
+                        </div>
+                      </div>
+                    ) : design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (
+                      <div className="absolute top-2 left-2">
+                        <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-medium rounded-full shadow-sm">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Locked
                         </div>
                       </div>
                     )}
@@ -418,7 +428,7 @@ function DesignsPageInner() {
                   </Link>
                   
                   <p className="text-sm text-gray-600 mb-2">
-                    by {design.designer.name || 'Anonymous'}
+                    by {design.designer.username || design.designer.name || 'Anonymous'}
                   </p>
                   
                   <div className="flex items-center justify-between mb-3">

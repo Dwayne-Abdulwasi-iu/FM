@@ -697,12 +697,12 @@ export default function EnhancedUploadPage() {
                               onClick={() => updateMediaAccessType(media.id, 'PREMIUM')}
                               className={`inline-flex items-center px-3 py-1 text-xs rounded ${
                                 media.accessType === 'PREMIUM'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-yellow-50'
                               }`}
                             >
                               <Lock className="h-3 w-3 mr-1" />
-                              Premium
+                              Locked
                             </button>
                             {media.fileType === 'IMAGE' && (
                               <button

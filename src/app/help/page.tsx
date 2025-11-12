@@ -112,7 +112,7 @@ export default function HelpPage() {
     {
       id: 'upload-process',
       question: 'How do I upload a design?',
-      answer: 'Go to the Upload page, select your design files, add a title, description, category, and tags. Set your price and choose whether it\'s a free or premium design. Click "Upload Design" to publish it to the marketplace.',
+      answer: 'Go to the Upload page, select your design files, add a title, description, category, and tags. Set your price and choose whether files should be Free or Locked (paywalled). You can also offer Exclusive ownership under Advanced options. Click "Upload Design" to publish it to the marketplace.',
       category: 'uploads'
     },
     {
@@ -130,7 +130,7 @@ export default function HelpPage() {
     {
       id: 'pricing-designs',
       question: 'How should I price my designs?',
-      answer: 'Consider factors like complexity, time invested, uniqueness, and market demand. Research similar designs for pricing guidance. You can offer both free designs to build followers and premium designs for revenue.',
+      answer: 'Consider factors like complexity, time invested, uniqueness, and market demand. Research similar designs for pricing guidance. You can offer both free designs to build followers and locked (paywalled) designs for revenue. Consider offering Exclusive ownership for a higher one-time price if you want to sell sole rights.',
       category: 'uploads'
     },
 

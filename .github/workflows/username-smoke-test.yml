@@ -1,0 +1,29 @@
+name: Username uniqueness smoke test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0' # weekly at 03:00 UTC
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: |
+          npm ci
+
+      - name: Run username uniqueness smoke test
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DOTENV_CONFIG_PATH: ''
+        run: |
+          node -r dotenv/config scripts/test-username-uniqueness.mjs

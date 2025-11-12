@@ -23,6 +23,7 @@ interface CartItem {
     designer: {
       id: string
       name: string | null
+      username?: string | null
     }
   }
 }
@@ -394,7 +395,7 @@ function CartPageInner() {
                       </Link>
                       <div className="flex items-center gap-2">
                         <p className="text-xs sm:text-sm text-gray-600">
-                          by {item.design.designer.name || 'Anonymous'}
+                          by {item.design.designer.username || item.design.designer.name || 'Anonymous'}
                         </p>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                           item.purchaseType === 'OWNERSHIP' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'

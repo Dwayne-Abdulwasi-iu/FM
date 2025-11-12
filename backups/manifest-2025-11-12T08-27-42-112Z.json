@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2025-11-12T08:27:42.173Z",
+  "files": [
+    {
+      "file": "accounts-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\accounts-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "cart_items-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\cart_items-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "chat_messages-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\chat_messages-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "chat_sessions-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\chat_sessions-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "contact_messages-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\contact_messages-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "designs-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\designs-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "design_media-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\design_media-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "favorites-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\favorites-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "notifications-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\notifications-2025-11-12T08-23-42.json.gz",
+      "size": 1271,
+      "sha256": "c80e88ed0302badda257c28b3bccaeefd8878eabc252f5854f5d0d9e84983a6a",
+      "docs": 30
+    },
+    {
+      "file": "orders-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\orders-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "order_items-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\order_items-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "password_reset_tokens-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\password_reset_tokens-2025-11-12T08-23-42.json.gz",
+      "size": 1676,
+      "sha256": "3c5e9937a659d6cb603a422e5cf64cd8fa4853a09e0665879a003cd43cfffe66",
+      "docs": 22
+    },
+    {
+      "file": "purchases-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\purchases-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "resources-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\resources-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "reviews-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\reviews-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "seller_accounts-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\seller_accounts-2025-11-12T08-23-42.json.gz",
+      "size": 667,
+      "sha256": "cd097be950b39a0ce5d1dda7f3a5f249ce772f288332e25df0feebcca659c589",
+      "docs": 6
+    },
+    {
+      "file": "seller_earnings-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\seller_earnings-2025-11-12T08-23-42.json.gz",
+      "size": 257,
+      "sha256": "1d6cb85196baaba6d20eac46ee8dcb1c57520f22b6cac3c8d1cde7571ca65000",
+      "docs": 1
+    },
+    {
+      "file": "sessions-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\sessions-2025-11-12T08-23-42.json.gz",
+      "size": 20,
+      "sha256": "9e72928e7a01615b4cf090daa617b4ca9d68531748f887f323f695eb4ca3ef63",
+      "docs": 0
+    },
+    {
+      "file": "users-2025-11-12T08-23-42.json.gz",
+      "path": "C:\\Users\\Dwayne\\OneDrive\\Desktop\\fashion-marketplace\\backups\\users-2025-11-12T08-23-42.json.gz",
+      "size": 765,
+      "sha256": "388c8d43b2c5ddf28d5725f7515404d341c66ba602842d3a03f0d6daa2ba4e07",
+      "docs": 6
+    }
+  ]
+}

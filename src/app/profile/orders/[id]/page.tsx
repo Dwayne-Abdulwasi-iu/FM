@@ -15,7 +15,7 @@ interface OrderItem {
     id: string
     title: string
     imageUrl: string
-    designer: { id: string; name: string | null }
+    designer: { id: string; name: string | null; username?: string | null }
   }
 }
 
@@ -138,7 +138,7 @@ function OrderDetailsInner() {
                 </div>
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{item.design.title}</div>
-                  <div className="text-sm text-gray-600">by {item.design.designer.name || 'Anonymous'}</div>
+                  <div className="text-sm text-gray-600">by {item.design.designer.username || item.design.designer.name || 'Anonymous'}</div>
                   <div className="text-sm text-gray-600">Quantity: {item.quantity}</div>
                 </div>
                 <div className="text-right font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</div>

@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
+import { MongoClient } from 'mongodb'
+import fs from 'fs'
+import path from 'path'
 
 export async function GET() {
   try {
@@ -21,6 +24,7 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
+        username: true,
         bio: true,
         website: true,
         location: true,
@@ -62,12 +66,56 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const { name, bio, website, location } = await request.json()
+    const { name, username, bio, website, location } = await request.json()
+
+    // validate username if provided
+    if (username != null && username !== '') {
+      const usernameRegex = /^[A-Za-z0-9_-]{3,30}$/
+      if (!usernameRegex.test(username)) {
+        return NextResponse.json({ message: 'Invalid username. Use 3-30 characters: letters, numbers, - or _.' }, { status: 400 })
+      }
+    }
+
+    // server-side case-insensitive uniqueness check (use Mongo directly for reliable regex search)
+    if (username != null && username !== '') {
+      // load DATABASE_URL from .env.local if necessary (same logic as scripts)
+      let dbUrl = process.env.DATABASE_URL
+      if (!dbUrl) {
+        try {
+          const dotenv = await import('dotenv')
+          const envPath = path.join(process.cwd(), '.env.local')
+          if (fs.existsSync(envPath)) dotenv.config({ path: envPath })
+        } catch {}
+        dbUrl = process.env.DATABASE_URL
+      }
+
+      if (!dbUrl) {
+        // cannot validate safely; reject to be conservative
+        return NextResponse.json({ message: 'Server misconfiguration: cannot validate username uniqueness' }, { status: 500 })
+      }
+
+      const corrected = dbUrl.replace(/^(mongo\+srv:\/\/)/i, 'mongodb+srv://').replace(/^(mongo:\/\/)/i, 'mongodb://')
+      const client = new MongoClient(corrected)
+      await client.connect()
+      try {
+        let dbName = null
+        try { const m = corrected.match(/\/([^/?]+)(?:\?|$)/); if (m) dbName = m[1] } catch {}
+        const db = dbName ? client.db(dbName) : client.db()
+        const usersCol = db.collection('users')
+        const existing = await usersCol.findOne({ username: { $regex: `^${username.replace(/[-\\/\\^$*+?.()|[\]{}]/g,'\\$&')}$`, $options: 'i' } })
+        if (existing && existing._id?.toString() !== session.user.id) {
+          return NextResponse.json({ message: 'Username already taken' }, { status: 409 })
+        }
+      } finally {
+        await client.close()
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         name: name || null,
+        username: username || null,
         bio: bio || null,
         website: website || null,
         location: location || null,
@@ -76,6 +124,7 @@ export async function PUT(request: NextRequest) {
         id: true,
         email: true,
         name: true,
+        username: true,
         bio: true,
         website: true,
         location: true,

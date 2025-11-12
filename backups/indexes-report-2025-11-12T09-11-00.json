@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2025-11-12T09:11:00.000Z",
+  "summary": {
+    "total_collections": 26,
+    "collections_with_non_id_indexes": 20,
+    "important_notes": [
+      "Partial, case-insensitive unique index 'username_ci_unique' was created on 'users' with partialFilterExpression { username: { $type: 'string' } } and collation { locale: 'en', strength: 2 }.",
+      "Several uniqueness constraints were created for application integrity (email, provider/providerAccountId, orderNumber, token, etc.).",
+      "Index creation completed without fatal errors during the apply run."
+    ]
+  },
+  "indexes_by_collection": {
+    "users": [
+      { "name": "users_email_key", "key": { "email": 1 }, "unique": true },
+      { "name": "username_ci_unique", "key": { "username": 1 }, "unique": true, "partialFilterExpression": { "username": { "$type": "string" } }, "collation": { "locale": "en", "strength": 2 } }
+    ],
+    "designs": [
+      "designs_designerId_idx",
+      "designs_isActive_isOwned_createdAt_idx",
+      "designs_category_idx",
+      "designs_price_idx",
+      "designs_totalSales_idx",
+      "designs_tags_idx"
+    ],
+    "reviews": [
+      "reviews_userId_designId_key (unique)",
+      "reviews_userId_idx",
+      "reviews_designId_idx"
+    ],
+    "purchases": [
+      "purchases_userId_designId_purchaseType_key (unique)"
+    ],
+    "cart_items": [
+      "cart_items_userId_designId_purchaseType_key (unique)",
+      "cart_items_userId_idx",
+      "cart_items_designId_idx"
+    ],
+    "orders": [
+      "orders_orderNumber_key (unique)",
+      "orders_customerId_idx"
+    ],
+    "accounts": [
+      "accounts_provider_providerAccountId_key (unique)",
+      "accounts_userId_idx"
+    ],
+    "sessions": [
+      "sessions_sessionToken_key (unique)",
+      "sessions_userId_idx"
+    ],
+    "favorites": [
+      "favorites_userId_designId_key (unique)",
+      "favorites_userId_idx",
+      "favorites_designId_idx"
+    ],
+    "seller_accounts": [
+      "seller_accounts_userId_key (unique)"
+    ],
+    "password_reset_tokens": [
+      "password_reset_tokens_token_key (unique)",
+      "password_reset_tokens_userId_idx"
+    ],
+    "notifications": [
+      "notifications_userId_idx"
+    ],
+    "seller_earnings": [
+      "seller_earnings_sellerId_idx",
+      "seller_earnings_orderId_idx",
+      "seller_earnings_designId_idx"
+    ]
+  },
+  "recommendations": [
+    "Run a quick application smoke test focusing on signup/profile username changes to verify uniqueness enforcement and expected UX behavior.",
+    "Store the backup files (EJSON + manifest + indexes) in secure offsite storage (S3/GCS) and rotate access keys as needed.",
+    "Optionally add an idempotent index-apply path (skip existing index names) to the restore script to avoid noisy errors on repeated runs.",
+    "Review the partial index definition for 'username_ci_unique' if you expect non-string usernames to be indexed or if you later add empty-string handling."
+  ]
+}

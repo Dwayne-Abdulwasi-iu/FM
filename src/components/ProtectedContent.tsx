@@ -233,7 +233,7 @@ export default function ProtectedContent({ designId, children, previewContent }:
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
           <div className="text-center text-white p-6">
             <Lock className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Premium Content</h3>
+            <h3 className="text-xl font-bold mb-2">Locked Content</h3>
             <p className="text-sm opacity-90 mb-6">
               Purchase this design to access full details, high-resolution images, and additional content.
             </p>

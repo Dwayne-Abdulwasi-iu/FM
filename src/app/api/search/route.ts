@@ -39,6 +39,12 @@ export async function GET(request: NextRequest) {
             name: { contains: searchTerm, mode: 'insensitive' }
           }
         }
+        ,
+        {
+          designer: {
+            username: { contains: searchTerm, mode: 'insensitive' }
+          }
+        }
       ]
     }
 
@@ -60,6 +66,7 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
+              username: true,
               email: true,
               image: true,
             },

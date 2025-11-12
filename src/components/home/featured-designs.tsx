@@ -15,6 +15,7 @@ interface Design {
   totalSales: number
   designer: {
     name: string | null
+    username?: string | null
     email: string
     role: string
   }
@@ -102,7 +103,7 @@ export function FeaturedDesigns() {
                     {design.title}
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    by {design.designer.name || design.designer.email}
+                    by {design.designer.username || design.designer.name || design.designer.email}
                   </p>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-lg xs:text-xl font-bold text-gray-900">${design.price.toFixed(2)}</span>
