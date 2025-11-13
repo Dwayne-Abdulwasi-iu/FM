@@ -4,7 +4,6 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true, // force HTTPS URLs
 });
 
 export interface UploadResult {
@@ -56,7 +55,6 @@ export function generateThumbnailUrl(publicId: string): string {
     crop: 'fit',
     quality: 'auto',
     format: 'auto',
-    secure: true,
   });
 }
 

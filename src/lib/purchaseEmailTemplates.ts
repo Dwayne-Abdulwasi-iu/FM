@@ -1,4 +1,6 @@
-import { Design, Order } from '@/types';
+// Minimal local types to avoid dependency on a global `@/types` module
+type Order = { orderNumber: string; totalAmount: number }
+type Design = { name?: string | null }
 
 export function renderBuyerEmail(order: Order) {
   return {
@@ -8,10 +10,11 @@ export function renderBuyerEmail(order: Order) {
   };
 }
 
-export function renderSellerEmail(design: Design, price: number, type: string) {
+export function renderSellerEmail(design: unknown, price: number, type: string) {
+  const name = (design && typeof design === 'object' && 'name' in design) ? (design as any).name ?? 'your design' : 'your design'
   return {
     subject: `Your design has been sold!`,
-    text: `Congratulations! Your design "${design.name}" has been bought.\nPrice: $${price}\nType: ${type}`,
-    html: `<h2>Congratulations!</h2><p>Your design <b>${design.name}</b> has been bought.</p><p>Price: <b>$${price}</b></p><p>Type: <b>${type}</b></p>`
+    text: `Congratulations! Your design "${name}" has been bought.\nPrice: $${price}\nType: ${type}`,
+    html: `<h2>Congratulations!</h2><p>Your design <b>${name}</b> has been bought.</p><p>Price: <b>$${price}</b></p><p>Type: <b>${type}</b></p>`
   };
 }
