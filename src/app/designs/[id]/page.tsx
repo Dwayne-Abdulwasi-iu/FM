@@ -558,14 +558,14 @@ export default function DesignPage() {
                 return (
                   <div className="bg-white rounded-lg shadow-sm p-4">
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="overflow-guard">
                         <h4 className="font-medium text-gray-900">{selectedFile.fileName}</h4>
                         <p className="text-sm text-gray-500">
                           {selectedFile.fileType} • {formatFileSize(selectedFile.fileSize)}
                           {selectedFile.duration && ` • ${formatDuration(selectedFile.duration)}`}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           selectedFile.accessType === 'FREE' 
                             ? 'bg-green-100 text-green-800' 
@@ -667,7 +667,7 @@ export default function DesignPage() {
                         }`}>
                           {file.fileType === 'VIDEO' ? '▶' : '🖼'}
                         </div>
-                        <div>
+                        <div className="overflow-guard">
                           <p className="text-sm font-medium text-gray-900">{file.fileName}</p>
                           <p className="text-xs text-gray-500">
                             {formatFileSize(file.fileSize)}
@@ -675,7 +675,7 @@ export default function DesignPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           file.accessType === 'FREE' 
                             ? 'bg-green-100 text-green-800' 
@@ -698,7 +698,7 @@ export default function DesignPage() {
                         <div className="w-8 h-8 rounded flex items-center justify-center text-xs font-medium bg-purple-100 text-purple-800">
                           🔒
                         </div>
-                        <div>
+                        <div className="overflow-guard">
                           <p className="text-sm font-medium text-gray-900">{file.fileName}</p>
                           <p className="text-xs text-gray-500">
                             {formatFileSize(file.fileSize)}
@@ -706,7 +706,7 @@ export default function DesignPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                           Locked
                         </span>

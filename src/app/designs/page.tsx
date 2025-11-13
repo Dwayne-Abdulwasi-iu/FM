@@ -262,7 +262,7 @@ function DesignsPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -300,33 +300,33 @@ function DesignsPageInner() {
             ))}
           </div>
           {/* Price and Sort */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <div className="flex items-center gap-2">
+          <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-3">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <label className="text-sm text-gray-600">Min</label>
               <input
                 type="number"
                 inputMode="decimal"
-                className="w-24 px-2 py-1 rounded border border-gray-300 text-sm"
+                className="w-full sm:w-24 px-2 py-1 rounded border border-gray-300 text-sm"
                 placeholder="0"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <label className="text-sm text-gray-600">Max</label>
               <input
                 type="number"
                 inputMode="decimal"
-                className="w-24 px-2 py-1 rounded border border-gray-300 text-sm"
+                className="w-full sm:w-24 px-2 py-1 rounded border border-gray-300 text-sm"
                 placeholder="1000"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <label className="text-sm text-gray-600">Sort</label>
               <select
-                className="px-2 py-1 rounded border border-gray-300 text-sm"
+                className="w-full sm:w-auto px-2 py-1 rounded border border-gray-300 text-sm"
                 value={sort}
                 aria-label="Sort"
                 onChange={(e) => setSort(e.target.value as 'newest' | 'sales' | 'price_asc' | 'price_desc')}
@@ -337,12 +337,12 @@ function DesignsPageInner() {
                 <option value="price_desc">Price: High to Low</option>
               </select>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <label className="text-sm text-gray-600">Tags</label>
               <input
                 type="text"
                 placeholder="e.g. summer,sketches"
-                className="w-48 px-2 py-1 rounded border border-gray-300 text-sm"
+                className="w-full sm:w-48 px-2 py-1 rounded border border-gray-300 text-sm"
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
               />
@@ -359,7 +359,7 @@ function DesignsPageInner() {
 
         {/* Designs Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
@@ -382,7 +382,7 @@ function DesignsPageInner() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group transition-transform duration-200 ease-out hover:-translate-y-0.5">
                 <Link href={`/designs/${design.id}`}>

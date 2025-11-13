@@ -14,11 +14,13 @@ export default function SafeImage({ src, alt, fallbackSrc = '/images/placeholder
   const initial = useMemo(() => sanitizePlaceholderImageUrl(src), [src])
   const [currentSrc, setCurrentSrc] = useState<string>(initial)
 
+  const mergedClass = [className, 'max-w-full', 'block'].filter(Boolean).join(' ')
+
   return (
     <img
       src={currentSrc}
       alt={alt}
-      className={className}
+      className={mergedClass}
       onError={(e) => {
         const target = e.currentTarget
         if (target.dataset.fallbackApplied === 'true') return

@@ -20,6 +20,37 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Prevent accidental horizontal overflow on small screens */
+/* Avoid forcing global overflow hidden which can clip content.
+   Rely on sensible defaults for images and fixed elements instead. */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Allow flex and grid children to shrink to prevent them forcing horizontal scroll */
+.flex > *,
+.grid > * {
+  min-width: 0;
+}
+
+/* Guard against long inline content (filenames, badges) overflowing */
+.overflow-guard {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Ensure media elements cover their containers without exceeding viewport */
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
