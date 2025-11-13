@@ -33,6 +33,10 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
   const [showBankList, setShowBankList] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
   const bankListRef = React.useRef<HTMLDivElement | null>(null)
+  const inputDebounceRef = React.useRef<number | null>(null)
+  const inputId = 'bank-search-input'
+  const activedescId = (i: number) => `bank-option-${i}`
+  const [announceMessage, setAnnounceMessage] = useState<string>('')
   const [pendingBankNameSuggestion, setPendingBankNameSuggestion] = useState<string | null>(null)
   const [showManualVerifyModal, setShowManualVerifyModal] = useState(false)
   const [manualVerifyContext, setManualVerifyContext] = useState<{ message: string } | null>(null)
@@ -117,6 +121,11 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
       bankCode,
       bankName: selectedBank?.name || ''
     })
+    if (selectedBank?.name) {
+      setAnnounceMessage(`Selected bank ${selectedBank.name}`)
+      // clear after a short time
+      window.setTimeout(() => setAnnounceMessage(''), 3000)
+    }
   }
 
   const handleVerifyAccount = async () => {
@@ -178,6 +187,35 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
       onError('Failed to complete manual verification. Please try again.')
     }
   }
+
+  // Keep aria-selected attributes in sync and ensure highlighted option is scrolled into view
+  React.useEffect(() => {
+    const q = bankQuery.trim().toLowerCase()
+    const filtered = q ? banks.filter(b => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q)) : banks
+    for (let i = 0; i < filtered.length; i++) {
+      const id = activedescId(i)
+      const el = document.getElementById(id)
+      if (el) el.setAttribute('aria-selected', i === highlightedIndex ? 'true' : 'false')
+    }
+    if (highlightedIndex >= 0) {
+      const el = document.getElementById(activedescId(highlightedIndex))
+      if (el) el.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlightedIndex, bankQuery, banks])
+
+  // announce number of results to screen readers when query changes
+  React.useEffect(() => {
+    const q = bankQuery.trim()
+    const filtered = q ? banks.filter(b => b.name.toLowerCase().includes(q.toLowerCase()) || b.code.toLowerCase().includes(q.toLowerCase())) : banks
+    if (q.length === 0) {
+      setAnnounceMessage('')
+      return
+    }
+    const msg = `${filtered.length} ${filtered.length === 1 ? 'bank' : 'banks'} found`;
+    setAnnounceMessage(msg)
+    const t = window.setTimeout(() => setAnnounceMessage(''), 2000)
+    return () => window.clearTimeout(t)
+  }, [bankQuery, banks])
 
   if (loading) {
     return (
@@ -298,19 +336,30 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
             </label>
             <div className="relative">
               <input
+                id={inputId}
+                aria-controls="bank-listbox"
+                aria-expanded={showBankList ? 'true' : 'false'}
+                aria-activedescendant={highlightedIndex >= 0 ? activedescId(highlightedIndex) : ''}
+                role="combobox"
                 type="text"
                 value={bankQuery}
                 onChange={(e) => {
-                  setBankQuery(e.target.value)
-                  setShowBankList(true)
-                  setHighlightedIndex(-1)
+                  // debounce user typing to avoid rapid state churn
+                  if (inputDebounceRef.current) window.clearTimeout(inputDebounceRef.current)
+                  const v = e.target.value
+                  inputDebounceRef.current = window.setTimeout(() => {
+                    setBankQuery(v)
+                    setHighlightedIndex(-1)
+                    setShowBankList(true)
+                  }, 150) as unknown as number
                 }}
                 onFocus={() => setShowBankList(true)}
                 onBlur={() => {
-                  // hide list after a tick to allow click handlers (we use onMouseDown on options)
+                  // hide list after a short delay to allow option activation
                   setTimeout(() => setShowBankList(false), 150)
                 }}
                 onKeyDown={(e) => {
+                  // compute filtered list from current (not-yet-debounced) query
                   const q = bankQuery.trim().toLowerCase()
                   const filtered = q ? banks.filter(b => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q)) : banks
                   if (e.key === 'ArrowDown') {
@@ -338,7 +387,7 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
               />
 
               {showBankList && (
-                <div ref={bankListRef} className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg max-h-56 overflow-auto shadow-sm">
+                <div ref={bankListRef} id="bank-listbox" role="listbox" aria-labelledby={inputId} className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg max-h-56 overflow-auto shadow-sm">
                   {banks.length === 0 ? (
                     <div className="p-3 text-sm text-gray-500">Loading banks...</div>
                   ) : (
@@ -348,11 +397,14 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
                       return filtered.length === 0 ? (
                         <div className="p-3 text-sm text-gray-500">No banks found</div>
                       ) : (
-                        <ul role="list" className="divide-y divide-gray-100">
+                        <div className="divide-y divide-gray-100">
                           {filtered.map((bank, idx) => (
-                            <li key={bank.code}>
-                              <button
-                                type="button"
+                            <div key={bank.code}>
+                              <div
+                                id={activedescId(idx)}
+                                role="option"
+                                aria-selected="false"
+                                tabIndex={-1}
                                 onMouseDown={(e) => {
                                   // prevent input blur so selection proceeds reliably on mobile
                                   e.preventDefault()
@@ -365,20 +417,22 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
                                   setBankQuery(bank.name)
                                   setShowBankList(false)
                                 }}
-                                className={`w-full text-left px-3 py-2 text-sm ${highlightedIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                                className={`w-full text-left px-3 py-2 text-sm ${highlightedIndex === idx ? 'bg-gray-100 ring-2 ring-indigo-300' : 'hover:bg-gray-50'}`}
                               >
                                 <div className="font-medium text-gray-900">{bank.name}</div>
                                 <div className="text-xs text-gray-500">{bank.code}</div>
-                              </button>
-                            </li>
+                              </div>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       )
                     })()
                   )}
                 </div>
               )}
             </div>
+            {/* Live region for screen reader announcements */}
+            <div className="sr-only" aria-live="polite">{announceMessage}</div>
             {/* Hidden select kept for form semantics and required validation */}
             <select
               value={formData.bankCode}
