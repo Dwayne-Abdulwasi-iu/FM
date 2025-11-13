@@ -410,7 +410,7 @@ export async function GET(
               // Buyer email
               const buyerEmail = session.user.email;
               if (buyerEmail) {
-                const buyerEmailContent = renderBuyerEmail(orderCreated as any);
+                const buyerEmailContent = renderBuyerEmail(orderCreated);
                 await sendEmail({
                   to: buyerEmail,
                   subject: buyerEmailContent.subject,

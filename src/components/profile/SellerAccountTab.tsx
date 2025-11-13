@@ -29,6 +29,10 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
     bankCode: '',
     bankName: ''
   })
+  const [bankQuery, setBankQuery] = useState('')
+  const [showBankList, setShowBankList] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+  const bankListRef = React.useRef<HTMLDivElement | null>(null)
   const [pendingBankNameSuggestion, setPendingBankNameSuggestion] = useState<string | null>(null)
   const [showManualVerifyModal, setShowManualVerifyModal] = useState(false)
   const [manualVerifyContext, setManualVerifyContext] = useState<{ message: string } | null>(null)
@@ -292,11 +296,95 @@ export default function SellerAccountTab({ onSuccess = () => {}, onError = () =>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Bank
             </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={bankQuery}
+                onChange={(e) => {
+                  setBankQuery(e.target.value)
+                  setShowBankList(true)
+                  setHighlightedIndex(-1)
+                }}
+                onFocus={() => setShowBankList(true)}
+                onBlur={() => {
+                  // hide list after a tick to allow click handlers (we use onMouseDown on options)
+                  setTimeout(() => setShowBankList(false), 150)
+                }}
+                onKeyDown={(e) => {
+                  const q = bankQuery.trim().toLowerCase()
+                  const filtered = q ? banks.filter(b => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q)) : banks
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    setHighlightedIndex(i => Math.min(i + 1, filtered.length - 1))
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    setHighlightedIndex(i => Math.max(i - 1, 0))
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (highlightedIndex >= 0 && highlightedIndex < filtered.length) {
+                      const bank = filtered[highlightedIndex]
+                      handleBankChange(bank.code)
+                      setBankQuery(bank.name)
+                      setShowBankList(false)
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowBankList(false)
+                  }
+                }}
+                placeholder="Search bank..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white"
+                aria-label="Search bank"
+                autoComplete="off"
+              />
+
+              {showBankList && (
+                <div ref={bankListRef} className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg max-h-56 overflow-auto shadow-sm">
+                  {banks.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-500">Loading banks...</div>
+                  ) : (
+                    (() => {
+                      const q = bankQuery.trim().toLowerCase()
+                      const filtered = q ? banks.filter(b => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q)) : banks
+                      return filtered.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500">No banks found</div>
+                      ) : (
+                        <ul role="list" className="divide-y divide-gray-100">
+                          {filtered.map((bank, idx) => (
+                            <li key={bank.code}>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  // prevent input blur so selection proceeds reliably on mobile
+                                  e.preventDefault()
+                                  handleBankChange(bank.code)
+                                  setBankQuery(bank.name)
+                                  setShowBankList(false)
+                                }}
+                                onClick={() => {
+                                  handleBankChange(bank.code)
+                                  setBankQuery(bank.name)
+                                  setShowBankList(false)
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm ${highlightedIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                              >
+                                <div className="font-medium text-gray-900">{bank.name}</div>
+                                <div className="text-xs text-gray-500">{bank.code}</div>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    })()
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Hidden select kept for form semantics and required validation */}
             <select
               value={formData.bankCode}
               onChange={(e) => handleBankChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white"
-              aria-label="Select Bank"
+              className="hidden"
+              aria-hidden="true"
               required
             >
               <option value="">Select Bank</option>
