@@ -400,7 +400,7 @@ function DesignsPageInner() {
                           Exclusive
                         </div>
                       </div>
-                    ) : design.mediaFiles?.some(file => file.accessType === 'PREMIUM') && (
+                    ) : (design.price > 0 && design.mediaFiles?.some(file => file.accessType === 'PREMIUM')) && (
                       <div className="absolute top-2 left-2">
                         <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-medium rounded-full shadow-sm">
                           <Crown className="h-3 w-3 mr-1" />

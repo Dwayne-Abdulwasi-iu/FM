@@ -303,6 +303,10 @@ export default function DesignPage() {
     if (!design?.mediaFiles || isAdminViewing || hasAccess || design.designer.id === session?.user?.id) {
       return []
     }
+    // Only treat files as "locked/premium" when this design is actually a paid design.
+    // Some media may be marked PREMIUM at upload time, but should not be presented as locked
+    // unless the design itself requires payment (price > 0).
+    if (!design || !(design.price > 0)) return []
     return design.mediaFiles
       .filter(file => file.accessType === 'PREMIUM')
       .sort((a, b) => a.sortOrder - b.sortOrder)

@@ -9,6 +9,7 @@ import OverviewTab from './OverviewTab'
 import DesignsTab from './DesignsTab'
 import EarningsTab from './EarningsTab'
 import OrdersTab from './OrdersTab'
+import ConfirmModal from '@/components/ui/confirm-modal'
 
 const TABS = [
   'Overview',
@@ -38,6 +39,9 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   const [formLocation, setFormLocation] = useState<string>('')
   const [saving, setSaving] = useState<boolean>(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [confirmUsernameOpen, setConfirmUsernameOpen] = useState<boolean>(false)
+  const [confirmingChange, setConfirmingChange] = useState<boolean>(false)
+  const [confirmStep, setConfirmStep] = useState<number>(1)
   const [stats, setStats] = useState<{ totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null>(initialStats ?? null)
   const [statsLoading, setStatsLoading] = useState<boolean>(initialStats ? false : true)
   const [avgOrderValue, setAvgOrderValue] = useState<number | null>(null)
@@ -224,6 +228,32 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
     return () => { mounted = false; ac.abort() }
   }, [initialPayoutSummary])
 
+  // perform the actual save to profile API
+  const performSave = async () => {
+    setSaveError(null)
+    try {
+      setSaving(true)
+      const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formName || null, username: formUsername || null, bio: formBio || null, website: formWebsite || null, location: formLocation || null }) })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        setSaveError(j?.message || 'Failed to save profile')
+        return
+      }
+      const data = await res.json()
+      if (data?.user) {
+        setProfileUser(data.user)
+        setEditing(false)
+      } else {
+        setSaveError('Unexpected response from server')
+      }
+    } catch (err) {
+      console.error('Save profile error', err)
+      setSaveError('Failed to save profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <aside className="col-span-1">
@@ -326,27 +356,16 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                                 return
                               }
                             }
-                            try {
-                              setSaving(true)
-                              const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formName || null, username: formUsername || null, bio: formBio || null, website: formWebsite || null, location: formLocation || null }) })
-                              if (!res.ok) {
-                                const j = await res.json().catch(() => ({}))
-                                setSaveError(j?.message || 'Failed to save profile')
-                                return
-                              }
-                              const data = await res.json()
-                              if (data?.user) {
-                                setProfileUser(data.user)
-                                setEditing(false)
-                              } else {
-                                setSaveError('Unexpected response from server')
-                              }
-                            } catch (err) {
-                              console.error('Save profile error', err)
-                              setSaveError('Failed to save profile')
-                            } finally {
-                              setSaving(false)
+
+                            // If username changed (and profileUser exists), require two-step confirmation
+                            if (profileUser && (formUsername || '') !== (profileUser.username || '')) {
+                              setConfirmStep(1)
+                              setConfirmUsernameOpen(true)
+                              return
                             }
+
+                            // otherwise perform save directly
+                            await performSave()
                           }} className="px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
                           <button disabled={saving} onClick={() => { setEditing(false); setSaveError(null) }} className="px-3 py-1 border rounded">Cancel</button>
                         </div>
@@ -445,7 +464,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               <button
                 key={tab}
                 role="tab"
-                aria-selected={isActive ? true : false}
+                aria-selected={isActive}
                 aria-controls={`panel-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 id={`tab-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => setActive(tab)}
@@ -466,6 +485,51 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
           })}
         </nav>
         </div>
+        {/* Confirm username change modal */}
+        <ConfirmModal
+          open={confirmUsernameOpen}
+          title={confirmStep === 1 ? 'Confirm username change' : 'Confirm again to apply change'}
+          description={
+            <div>
+              {confirmStep === 1 ? (
+                <>
+                  <p className="text-sm">You are about to change your public username.</p>
+                  <p className="text-sm mt-2">This will update how people see you across the site.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm">Please confirm again to apply the new username.</p>
+                  <p className="text-sm mt-2">Current: <strong>@{profileUser?.username || '—'}</strong></p>
+                  <p className="text-sm mt-1">New: <strong>@{formUsername || '—'}</strong></p>
+                </>
+              )}
+            </div>
+          }
+          confirmText={confirmStep === 1 ? 'Continue' : 'Change username'}
+          tone={confirmStep === 1 ? 'default' : 'warning'}
+          confirming={confirmingChange}
+          onCancel={() => {
+            setConfirmUsernameOpen(false)
+            setConfirmStep(1)
+          }}
+          onConfirm={async () => {
+            if (confirmStep === 1) {
+              // advance to second confirmation step
+              setConfirmStep(2)
+              return
+            }
+
+            // final confirmation — perform save
+            setConfirmingChange(true)
+            try {
+              await performSave()
+            } finally {
+              setConfirmingChange(false)
+              setConfirmUsernameOpen(false)
+              setConfirmStep(1)
+            }
+          }}
+        />
 
         <div className="mt-6" ref={panelRef} tabIndex={-1}>
           {active === 'Overview' && <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview"><OverviewTab designsCount={designsCount} ordersCount={ordersCount} loading={countsLoading} balance={stats?.totalEarnings ?? null} balanceLoading={statsLoading} /></div>}
