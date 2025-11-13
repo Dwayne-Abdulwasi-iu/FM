@@ -54,3 +54,38 @@ jobs:
       - name: Post-run note
         run: |
           echo "Upload complete. Please rotate the AWS credentials used by this workflow if they are temporary or shared."
+
+        - name: Send success email
+          if: success()
+          uses: dawidd6/action-send-mail@v3
+          with:
+            server_address: smtp.gmail.com
+            server_port: 465
+            username: ${{ secrets.GMAIL_USERNAME }}
+            password: ${{ secrets.GMAIL_APP_PASSWORD }}
+            subject: "Backup Success: ${{ github.repository }}"
+            to: ${{ secrets.EMAIL_TO }}
+            from: ${{ secrets.GMAIL_USERNAME }}
+            body: |
+              The backup workflow completed successfully for ${{ github.repository }}.
+              Workflow: ${{ github.workflow }}
+              Run: ${{ github.run_id }}
+              Timestamp: ${{ github.run_started_at }}
+
+        - name: Send failure email
+          if: failure()
+          uses: dawidd6/action-send-mail@v3
+          with:
+            server_address: smtp.gmail.com
+            server_port: 465
+            username: ${{ secrets.GMAIL_USERNAME }}
+            password: ${{ secrets.GMAIL_APP_PASSWORD }}
+            subject: "Backup Failed: ${{ github.repository }}"
+            to: ${{ secrets.EMAIL_TO }}
+            from: ${{ secrets.GMAIL_USERNAME }}
+            body: |
+              The backup workflow FAILED for ${{ github.repository }}.
+              Workflow: ${{ github.workflow }}
+              Run: ${{ github.run_id }}
+              Timestamp: ${{ github.run_started_at }}
+              Please check the logs for details.
