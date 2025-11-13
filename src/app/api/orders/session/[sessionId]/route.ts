@@ -115,47 +115,114 @@ export async function GET(
 
         // Validate this session belongs to the current user
         if (userIdMeta && userIdMeta === session.user.id && checkoutSession.payment_status === 'paid' && orderItemsMeta.length > 0) {
-          const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
-          const amountTotalCents = checkoutSession.amount_total ?? 0
-              const currency = (checkoutSession.currency as string | undefined)?.toUpperCase() || 'USD'
-              const orderCreated = await prisma.order.create({
-                      // Send email notifications to buyer and seller
-                      try {
-                        const { sendEmail } = await import('@/lib/sendPurchaseEmail');
-                        const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
+          const orderNumber = `FM-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+          const amountTotalCents = checkoutSession.amount_total ?? 0;
+          const currency = (checkoutSession.currency as string | undefined)?.toUpperCase() || 'USD';
+          const orderCreated = await prisma.order.create({
+            data: {
+              orderNumber: orderNumber,
+              status: 'COMPLETED',
+              totalAmount: amountTotalCents / 100,
+              platformFee: platformFeeCents / 100,
+              customerId: session.user.id,
+              stripePaymentIntentId: paymentIntentId,
+              items: {
+                create: orderItemsMeta.map((item) => ({
+                  designId: item.designId,
+                  quantity: item.quantity,
+                  price: item.price,
+                  purchaseType: item.purchaseType || 'REGULAR'
+                }))
+              }
+            },
+            include: {
+              items: {
+                include: {
+                  design: {
+                    include: {
+                      designer: true
+                    }
+                  }
+                }
+              }
+            }
+          });
 
-                        // Buyer email
-                        const buyerEmail = session.user.email;
-                        if (buyerEmail) {
-                          const buyerEmailContent = renderBuyerEmail(orderCreated);
-                          await sendEmail({
-                            to: buyerEmail,
-                            subject: buyerEmailContent.subject,
-                            text: buyerEmailContent.text,
-                            html: buyerEmailContent.html
-                          });
-                        }
+          // Send email notifications to buyer and seller
+          try {
+            const { sendEmail } = await import('@/lib/sendPurchaseEmail');
+            const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
 
-                        // Seller emails (one per design)
-                        for (const item of orderCreated.items) {
-                          const sellerEmail = item.design?.designer?.email;
-                          if (sellerEmail) {
-                            const sellerEmailContent = renderSellerEmail(
-                              item.design,
-                              item.price,
-                              item.purchaseType === 'OWNERSHIP' ? 'Exclusive' : 'Regular'
-                            );
-                            await sendEmail({
-                              to: sellerEmail,
-                              subject: sellerEmailContent.subject,
-                              text: sellerEmailContent.text,
-                              html: sellerEmailContent.html
-                            });
-                          }
-                        }
-                      } catch (emailErr) {
-                        console.warn('Failed to send purchase emails', emailErr);
-                      }
+            // Buyer email
+            const buyerEmail = session.user.email;
+            if (buyerEmail) {
+              const buyerEmailContent = renderBuyerEmail(orderCreated);
+              await sendEmail({
+                to: buyerEmail,
+                subject: buyerEmailContent.subject,
+                text: buyerEmailContent.text,
+                html: buyerEmailContent.html
+              });
+            }
+
+            // Seller emails (one per design)
+            for (const item of orderCreated.items) {
+              const sellerEmail = item.design?.designer?.email;
+              if (sellerEmail) {
+                const sellerEmailContent = renderSellerEmail(
+                  item.design,
+                  item.price,
+                  item.purchaseType === 'OWNERSHIP' ? 'Exclusive' : 'Regular'
+                );
+                await sendEmail({
+                  to: sellerEmail,
+                  subject: sellerEmailContent.subject,
+                  text: sellerEmailContent.text,
+                  html: sellerEmailContent.html
+                });
+              }
+            }
+          } catch (emailErr) {
+            console.warn('Failed to send purchase emails', emailErr);
+          }
+// ...existing code...
+          // Send email notifications to buyer and seller
+          try {
+            const { sendEmail } = await import('@/lib/sendPurchaseEmail');
+            const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
+
+            // Buyer email
+            const buyerEmail = session.user.email;
+            if (buyerEmail) {
+              const buyerEmailContent = renderBuyerEmail(orderCreated);
+              await sendEmail({
+                to: buyerEmail,
+                subject: buyerEmailContent.subject,
+                text: buyerEmailContent.text,
+                html: buyerEmailContent.html
+              });
+            }
+
+            // Seller emails (one per design)
+            for (const item of orderCreated.items) {
+              const sellerEmail = item.design?.designer?.email;
+              if (sellerEmail) {
+                const sellerEmailContent = renderSellerEmail(
+                  item.design,
+                  item.price,
+                  item.purchaseType === 'OWNERSHIP' ? 'Exclusive' : 'Regular'
+                );
+                await sendEmail({
+                  to: sellerEmail,
+                  subject: sellerEmailContent.subject,
+                  text: sellerEmailContent.text,
+                  html: sellerEmailContent.html
+                });
+              }
+            }
+          } catch (emailErr) {
+            console.warn('Failed to send purchase emails', emailErr);
+          }
             data: {
               orderNumber,
               status: 'COMPLETED',
@@ -254,7 +321,10 @@ export async function GET(
           }
 
           order = orderCreated
-                  // Send email notifications to buyer and seller
+        // ...existing code...
+                }
+                // Send email notifications to buyer and seller after order creation and post-processing
+                if (orderCreated) {
                   try {
                     const { sendEmail } = await import('@/lib/sendPurchaseEmail');
                     const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
@@ -291,6 +361,7 @@ export async function GET(
                   } catch (emailErr) {
                     console.warn('Failed to send purchase emails', emailErr);
                   }
+                }
         }
       } catch (rebuildErr) {
         console.error('Order rebuild from Stripe session failed:', rebuildErr)
