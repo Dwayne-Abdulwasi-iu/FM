@@ -119,6 +119,43 @@ export async function GET(
           const amountTotalCents = checkoutSession.amount_total ?? 0
               const currency = (checkoutSession.currency as string | undefined)?.toUpperCase() || 'USD'
               const orderCreated = await prisma.order.create({
+                      // Send email notifications to buyer and seller
+                      try {
+                        const { sendEmail } = await import('@/lib/sendPurchaseEmail');
+                        const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
+
+                        // Buyer email
+                        const buyerEmail = session.user.email;
+                        if (buyerEmail) {
+                          const buyerEmailContent = renderBuyerEmail(orderCreated);
+                          await sendEmail({
+                            to: buyerEmail,
+                            subject: buyerEmailContent.subject,
+                            text: buyerEmailContent.text,
+                            html: buyerEmailContent.html
+                          });
+                        }
+
+                        // Seller emails (one per design)
+                        for (const item of orderCreated.items) {
+                          const sellerEmail = item.design?.designer?.email;
+                          if (sellerEmail) {
+                            const sellerEmailContent = renderSellerEmail(
+                              item.design,
+                              item.price,
+                              item.purchaseType === 'OWNERSHIP' ? 'Exclusive' : 'Regular'
+                            );
+                            await sendEmail({
+                              to: sellerEmail,
+                              subject: sellerEmailContent.subject,
+                              text: sellerEmailContent.text,
+                              html: sellerEmailContent.html
+                            });
+                          }
+                        }
+                      } catch (emailErr) {
+                        console.warn('Failed to send purchase emails', emailErr);
+                      }
             data: {
               orderNumber,
               status: 'COMPLETED',
@@ -217,6 +254,43 @@ export async function GET(
           }
 
           order = orderCreated
+                  // Send email notifications to buyer and seller
+                  try {
+                    const { sendEmail } = await import('@/lib/sendPurchaseEmail');
+                    const { renderBuyerEmail, renderSellerEmail } = await import('@/lib/purchaseEmailTemplates');
+
+                    // Buyer email
+                    const buyerEmail = session.user.email;
+                    if (buyerEmail) {
+                      const buyerEmailContent = renderBuyerEmail(orderCreated);
+                      await sendEmail({
+                        to: buyerEmail,
+                        subject: buyerEmailContent.subject,
+                        text: buyerEmailContent.text,
+                        html: buyerEmailContent.html
+                      });
+                    }
+
+                    // Seller emails (one per design)
+                    for (const item of orderCreated.items) {
+                      const sellerEmail = item.design?.designer?.email;
+                      if (sellerEmail) {
+                        const sellerEmailContent = renderSellerEmail(
+                          item.design,
+                          item.price,
+                          item.purchaseType === 'OWNERSHIP' ? 'Exclusive' : 'Regular'
+                        );
+                        await sendEmail({
+                          to: sellerEmail,
+                          subject: sellerEmailContent.subject,
+                          text: sellerEmailContent.text,
+                          html: sellerEmailContent.html
+                        });
+                      }
+                    }
+                  } catch (emailErr) {
+                    console.warn('Failed to send purchase emails', emailErr);
+                  }
         }
       } catch (rebuildErr) {
         console.error('Order rebuild from Stripe session failed:', rebuildErr)
