@@ -42,6 +42,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   const [confirmUsernameOpen, setConfirmUsernameOpen] = useState<boolean>(false)
   const [confirmingChange, setConfirmingChange] = useState<boolean>(false)
   const [confirmStep, setConfirmStep] = useState<number>(1)
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
   const [stats, setStats] = useState<{ totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null>(initialStats ?? null)
   const [statsLoading, setStatsLoading] = useState<boolean>(initialStats ? false : true)
   const [avgOrderValue, setAvgOrderValue] = useState<number | null>(null)
@@ -229,11 +230,13 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   }, [initialPayoutSummary])
 
   // perform the actual save to profile API
-  const performSave = async () => {
+  const performSave = async (confirmPasswordParam?: string) => {
     setSaveError(null)
     try {
       setSaving(true)
-      const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formName || null, username: formUsername || null, bio: formBio || null, website: formWebsite || null, location: formLocation || null }) })
+      const body: Record<string, unknown> = { name: formName || null, username: formUsername || null, bio: formBio || null, website: formWebsite || null, location: formLocation || null }
+      if (confirmPasswordParam) body.confirmPassword = confirmPasswordParam
+      const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
         setSaveError(j?.message || 'Failed to save profile')
@@ -464,7 +467,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               <button
                 key={tab}
                 role="tab"
-                aria-selected={isActive}
+                aria-selected={isActive ? 'true' : 'false'}
                 aria-controls={`panel-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 id={`tab-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => setActive(tab)}
@@ -501,16 +504,31 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                   <p className="text-sm">Please confirm again to apply the new username.</p>
                   <p className="text-sm mt-2">Current: <strong>@{profileUser?.username || '—'}</strong></p>
                   <p className="text-sm mt-1">New: <strong>@{formUsername || '—'}</strong></p>
+                  {profileUser && profileUser.hasPassword === false ? (
+                    <div className="mt-3 text-sm text-gray-700">
+                      <p className="mb-2">This account does not have a local password set (you likely signed up with Google or another provider).</p>
+                      <p className="mb-2">To change your username, set a local password first. We can send a password setup/reset link to your registered email.</p>
+                    </div>
+                  ) : (
+                    <div className="mt-3">
+                      <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">Enter your current password to confirm</label>
+                      <input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="current-password" className="mt-1 block w-full border px-3 py-2 rounded" />
+                      {saveError && <div className="text-sm text-red-600 mt-2">{saveError}</div>}
+                    </div>
+                  )}
                 </>
               )}
             </div>
           }
-          confirmText={confirmStep === 1 ? 'Continue' : 'Change username'}
+          confirmText={
+            confirmStep === 1 ? 'Continue' : (profileUser && profileUser.hasPassword === false ? 'Set a password' : 'Change username')
+          }
           tone={confirmStep === 1 ? 'default' : 'warning'}
           confirming={confirmingChange}
           onCancel={() => {
             setConfirmUsernameOpen(false)
             setConfirmStep(1)
+            setConfirmPassword('')
           }}
           onConfirm={async () => {
             if (confirmStep === 1) {
@@ -519,14 +537,25 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               return
             }
 
-            // final confirmation — perform save
+            // If account doesn't have a password, redirect user to forgot-password page to set one
+            if (profileUser && profileUser.hasPassword === false) {
+              // include email in query so the forgot-password page can prefill
+              const email = encodeURIComponent(profileUser.email || '')
+              router.push(`/auth/forgot-password${email ? `?email=${email}` : ''}`)
+              setConfirmUsernameOpen(false)
+              setConfirmStep(1)
+              return
+            }
+
+            // final confirmation — perform save (password-verified)
             setConfirmingChange(true)
             try {
-              await performSave()
+              await performSave(confirmPassword)
             } finally {
               setConfirmingChange(false)
               setConfirmUsernameOpen(false)
               setConfirmStep(1)
+              setConfirmPassword('')
             }
           }}
         />

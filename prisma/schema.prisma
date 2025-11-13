@@ -132,6 +132,8 @@ model DesignMedia {
   id         String   @id @default(cuid()) @map("_id")
   fileName   String // Original filename
   fileUrl    String // Storage URL
+  publicId   String? // Cloudinary public id (if stored)
+  publicVersion Int? // Cloudinary version number
   fileType   String // IMAGE, VIDEO
   mimeType   String // image/jpeg, video/mp4, etc.
   fileSize   Int // File size in bytes

@@ -246,6 +246,8 @@ export async function POST(request: NextRequest) {
           })
 
           fileUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
+          const _pubId = (uploadResult as { public_id?: string } | null)?.public_id
+          const _pubVersion = (uploadResult as { version?: number } | null)?.version
           // If this was a video upload, also attempt to generate a Cloudinary-hosted thumbnail/poster
           try {
             const pubId = (uploadResult as { public_id?: string } | null)?.public_id
@@ -261,7 +263,25 @@ export async function POST(request: NextRequest) {
                 // Use the generated poster as thumbnail if we don't already have one
                 if (!thumbnailUrl) thumbnailUrl = poster
               } catch {
-                // ignore poster generation errors
+                // log poster generation errors for easier debugging in production
+                console.error('Cloudinary poster generation failed for public_id:', pubId)
+            // Persist publicId/version in the mediaFiles object (used later by worker/backfills)
+            // We'll attach these to the mediaFiles array objects below when creating DB records.
+            ;(uploadResult as Record<string, unknown>)['_publicId'] = _pubId
+            ;(uploadResult as Record<string, unknown>)['_publicVersion'] = _pubVersion
+                try {
+                  // attempt a second, more permissive poster generation (different offset)
+                  const poster2 = cloudinary.url(pubId, {
+                    resource_type: 'video',
+                    format: 'jpg',
+                    transformation: [
+                      { width: 1280, height: 720, crop: 'fill', start_offset: '0.5', quality: 'auto' }
+                    ]
+                  })
+                  if (!thumbnailUrl) thumbnailUrl = poster2
+                } catch (e) {
+                  console.error('Cloudinary poster secondary attempt failed for public_id:', pubId, e)
+                }
               }
             }
           } catch {
@@ -294,6 +314,8 @@ export async function POST(request: NextRequest) {
       mediaFiles.push({
         fileName: file.name,
         fileUrl,
+        publicId: (uploadResult as Record<string, unknown>)['_publicId'] as string | undefined,
+        publicVersion: (uploadResult as Record<string, unknown>)['_publicVersion'] as number | undefined,
         fileType,
         mimeType: file.type,
         fileSize: file.size,
