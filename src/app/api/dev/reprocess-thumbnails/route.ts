@@ -31,14 +31,14 @@ export async function POST(request: Request) {
       const { enqueueThumbnailJobsForDesign } = await import('@/lib/thumbnailQueue')
       for (const d of candidates) {
         // Only enqueue if there are video media files
-        if (d.mediaFiles && d.mediaFiles.some((m: any) => m.fileType === 'VIDEO')) {
+        if (d.mediaFiles && d.mediaFiles.some((m: { fileType: string }) => m.fileType === 'VIDEO')) {
           // best-effort
           // don't await the result to keep the endpoint responsive
           enqueueThumbnailJobsForDesign(d).catch(() => {})
           enqueued++
         }
       }
-    } catch (e) {
+    } catch {
       console.warn('Thumbnail queue not available; ensure bullmq and REDIS_URL are configured')
     }
 

@@ -1,6 +1,6 @@
 // Lightweight enqueue helper for thumbnail generation jobs.
 // Uses dynamic import of bullmq so tests/dev runs without the package unless REDIS_URL is configured.
-import prisma from '@/lib/prisma'
+// import prisma from '@/lib/prisma' // Removed unused import
 
 export async function enqueueThumbnailJob(jobData: { mediaId: string; designId: string; fileUrl: string }) {
   const redisUrl = process.env.REDIS_URL
@@ -19,12 +19,23 @@ export async function enqueueThumbnailJob(jobData: { mediaId: string; designId: 
   }
 }
 
-export async function enqueueThumbnailJobsForDesign(design: any) {
-  if (!design?.mediaFiles?.length) return
+export interface DesignMedia {
+  id: string;
+  fileType: string;
+  fileUrl: string;
+}
+
+export interface Design {
+  id: string;
+  mediaFiles: DesignMedia[];
+}
+
+export async function enqueueThumbnailJobsForDesign(design: Design) {
+  if (!design?.mediaFiles?.length) return;
   for (const m of design.mediaFiles) {
     if (m.fileType === 'VIDEO' && typeof m.fileUrl === 'string' && m.fileUrl.startsWith('/uploads/')) {
       // enqueue per-media job
-      await enqueueThumbnailJob({ mediaId: m.id, designId: design.id, fileUrl: m.fileUrl })
+      await enqueueThumbnailJob({ mediaId: m.id, designId: design.id, fileUrl: m.fileUrl });
     }
   }
 }
