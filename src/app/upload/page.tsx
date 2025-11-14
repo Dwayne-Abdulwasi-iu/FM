@@ -68,6 +68,7 @@ export default function EnhancedUploadPage() {
   }
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
   const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
+  const [showUploadBanner, setShowUploadBanner] = useState(true)
   const [isConverting, setIsConverting] = useState(false)
   const [conversionNote, setConversionNote] = useState<string | null>(null)
   const conversionTimerRef = useRef<number | null>(null)
@@ -88,6 +89,14 @@ export default function EnhancedUploadPage() {
       checkBankAccountStatus()
     }
   }, [session])
+
+  // Load banner dismissal state from localStorage (client-only)
+  useEffect(() => {
+    try {
+      const dismissed = typeof window !== 'undefined' && window.localStorage.getItem('uploadBannerDismissed') === '1'
+      if (dismissed) setShowUploadBanner(false)
+    } catch {}
+  }, [])
 
   const checkBankAccountStatus = async () => {
     try {
@@ -556,16 +565,29 @@ export default function EnhancedUploadPage() {
                   </div>
                 </div>
 
-                {/* Informational banner: require first upload to be an image/thumbnail for faster review */}
-                <div className="mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <Eye className="h-4 w-4 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-900">
-                      <p className="font-medium">Note</p>
-                      <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                {/* Informational banner: require first upload to be an image/thumbnail for faster review (dismissible) */}
+                {showUploadBanner && (
+                  <div className="mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Eye className="h-4 w-4 text-blue-600 mt-0.5" />
+                      <div className="text-sm text-blue-900 flex-1">
+                        <p className="font-medium">Note</p>
+                        <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Dismiss banner"
+                        onClick={() => {
+                          try { if (typeof window !== 'undefined') window.localStorage.setItem('uploadBannerDismissed', '1') } catch {}
+                          setShowUploadBanner(false)
+                        }}
+                        className="text-blue-700 hover:text-blue-900 ml-3 p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-4">
                   {mediaFiles.map((media, index) => (
