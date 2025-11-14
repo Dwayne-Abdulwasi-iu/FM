@@ -69,6 +69,7 @@ export default function EnhancedUploadPage() {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(UI_CONFIG.showAdvancedOptionsDefault)
   const [showAdvancedMediaControls, setShowAdvancedMediaControls] = useState(UI_CONFIG.showAdvancedMediaControlsDefault)
   const [showUploadBanner, setShowUploadBanner] = useState(true)
+  const [isDismissing, setIsDismissing] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
   const [conversionNote, setConversionNote] = useState<string | null>(null)
   const conversionTimerRef = useRef<number | null>(null)
@@ -567,25 +568,34 @@ export default function EnhancedUploadPage() {
 
                 {/* Informational banner: require first upload to be an image/thumbnail for faster review (dismissible) */}
                 {showUploadBanner && (
-                  <div className="mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex flex-col sm:flex-row items-start gap-3">
-                        <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-blue-900 flex-1">
-                          <p className="font-medium">Note</p>
-                          <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Dismiss banner"
-                          onClick={() => {
+                  <div
+                    className={`mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg transform transition-all duration-200 ease-out ${isDismissing ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start gap-3">
+                      <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-900 flex-1">
+                        <p className="font-medium">Note</p>
+                        <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Dismiss banner"
+                        onClick={() => {
+                          // animate then hide
+                          setIsDismissing(true)
+                          setTimeout(() => {
                             try { if (typeof window !== 'undefined') window.localStorage.setItem('uploadBannerDismissed', '1') } catch {}
                             setShowUploadBanner(false)
-                          }}
-                          className="text-blue-700 hover:text-blue-900 ml-auto sm:ml-3 mt-2 sm:mt-0 p-1"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+                            setIsDismissing(false)
+                          }, 200)
+                        }}
+                        className="text-blue-700 hover:text-blue-900 ml-auto sm:ml-3 mt-2 sm:mt-0 p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
