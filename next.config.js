@@ -1,13 +1,65 @@
 /** @type {import('next').NextConfig} */
+// Workbox runtime caching rules for critical routes and images
+const runtimeCaching = [
+  {
+    // API routes: prefer network but fallback to cache
+    urlPattern: /\/api\/.*$/,
+    handler: 'NetworkFirst',
+    options: {
+      cacheName: 'api-cache',
+      networkTimeoutSeconds: 10,
+      expiration: {
+        maxEntries: 50,
+        maxAgeSeconds: 60 * 5, // 5 minutes
+      },
+      cacheableResponse: { statuses: [0, 200] },
+    },
+  },
+  {
+    // Cloudinary-hosted images: serve stale while revalidating
+    urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:png|jpg|jpeg|webp|svg)$/,
+    handler: 'StaleWhileRevalidate',
+    options: {
+      cacheName: 'cloudinary-images',
+      expiration: {
+        maxEntries: 200,
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+      },
+      cacheableResponse: { statuses: [0, 200] },
+    },
+  },
+  {
+    // Next.js static assets
+    urlPattern: /\/_next\/_static\/.*$/,
+    handler: 'StaleWhileRevalidate',
+    options: {
+      cacheName: 'static-resources',
+      expiration: {
+        maxEntries: 200,
+        maxAgeSeconds: 60 * 60 * 24 * 30,
+      },
+    },
+  },
+  {
+    // App icons
+    urlPattern: /\/icons\/.*\.(?:png|jpg|jpeg|svg)$/,
+    handler: 'CacheFirst',
+    options: {
+      cacheName: 'app-icons',
+      expiration: {
+        maxEntries: 20,
+        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+      },
+    },
+  },
+]
+
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-})
-
-module.exports = withPWA({
-  reactStrictMode: true,
+  runtimeCaching,
 })
 const path = require('path')
 /** @type {import('next').NextConfig} */
@@ -88,4 +140,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withPWA(nextConfig)
