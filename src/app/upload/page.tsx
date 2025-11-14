@@ -568,24 +568,24 @@ export default function EnhancedUploadPage() {
                 {/* Informational banner: require first upload to be an image/thumbnail for faster review (dismissible) */}
                 {showUploadBanner && (
                   <div className="mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Eye className="h-4 w-4 text-blue-600 mt-0.5" />
-                      <div className="text-sm text-blue-900 flex-1">
-                        <p className="font-medium">Note</p>
-                        <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                      <div className="flex flex-col sm:flex-row items-start gap-3">
+                        <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-900 flex-1">
+                          <p className="font-medium">Note</p>
+                          <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Dismiss banner"
+                          onClick={() => {
+                            try { if (typeof window !== 'undefined') window.localStorage.setItem('uploadBannerDismissed', '1') } catch {}
+                            setShowUploadBanner(false)
+                          }}
+                          className="text-blue-700 hover:text-blue-900 ml-auto sm:ml-3 mt-2 sm:mt-0 p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        aria-label="Dismiss banner"
-                        onClick={() => {
-                          try { if (typeof window !== 'undefined') window.localStorage.setItem('uploadBannerDismissed', '1') } catch {}
-                          setShowUploadBanner(false)
-                        }}
-                        className="text-blue-700 hover:text-blue-900 ml-3 p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
                 )}
 
