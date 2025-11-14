@@ -5,10 +5,10 @@ import DesignsTab from '../../components/profile/DesignsTab'
 beforeEach(() => {
   ;(global as unknown as { fetch?: unknown }).fetch = jest.fn((input: RequestInfo) => {
     const url = String(input)
-    if (url.includes('/api/designs')) {
+    if (url.includes('/api/profile/designs')) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ designs: [
-        { id: 'd1', title: 'Design One', category: 'Pattern', imageUrl: '/img1.png', thumbnailUrl: '/thumb1.png' },
-        { id: 'd2', title: 'Design Two', category: 'Illustration', imageUrl: '/img2.png', thumbnailUrl: '/thumb2.png' }
+        { id: 'd1', title: 'Design One', category: 'Pattern', imageUrl: '/img1.png', thumbnailUrl: '/thumb1.png', salesCount: 0, isOwned: false },
+        { id: 'd2', title: 'Design Two', category: 'Illustration', imageUrl: '/img2.png', thumbnailUrl: '/thumb2.png', salesCount: 2, isOwned: false }
       ] }) })
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
