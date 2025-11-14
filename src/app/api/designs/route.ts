@@ -192,7 +192,16 @@ export async function GET(request: NextRequest) {
       | { createdAt?: 'asc' | 'desc'; price?: 'asc' | 'desc' }
       | Array<{ totalSales?: 'asc' | 'desc'; totalRevenue?: 'asc' | 'desc'; createdAt?: 'asc' | 'desc' }>
     if (featured) {
-      // Featured prioritizes best sellers by default
+      // Featured: include designs explicitly tagged as 'featured' OR those
+      // with sales activity. This lets admins tag specific items while
+      // still surfacing popular designs automatically. No schema change
+      // required.
+      ;(where as Record<string, unknown>).OR = [
+        { tags: { has: 'featured' } },
+        { totalSales: { gt: 0 } }
+      ]
+
+      // Prioritize best sellers and revenue, then newest
       orderBy = [
         { totalSales: "desc" as const },
         { totalRevenue: "desc" as const },

@@ -35,7 +35,7 @@ describe('/api/notifications', () => {
     mockPrisma.notification.count.mockResolvedValue(1)
     getServerSession.mockResolvedValue({ user: { id: 'u1' } })
 
-    const req = { url: 'http://localhost/api/notifications?limit=5' } as unknown as Request
+    const req = { url: 'http://localhost/api/notifications?limit=5', headers: new Headers() } as unknown as Request
     await GET(req as unknown as import('next/server').NextRequest)
 
     expect(mockPrisma.notification.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId: 'u1' }), take: 5 }))

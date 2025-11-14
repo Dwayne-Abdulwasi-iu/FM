@@ -33,8 +33,9 @@ export interface Design {
 export async function enqueueThumbnailJobsForDesign(design: Design) {
   if (!design?.mediaFiles?.length) return;
   for (const m of design.mediaFiles) {
-    if (m.fileType === 'VIDEO' && typeof m.fileUrl === 'string' && m.fileUrl.startsWith('/uploads/')) {
-      // enqueue per-media job
+    if (m.fileType === 'VIDEO' && typeof m.fileUrl === 'string') {
+      // enqueue per-media job for ANY video (local or cloud-hosted). Worker should
+      // decide how to fetch/process the URL (Cloudinary vs local filesystem).
       await enqueueThumbnailJob({ mediaId: m.id, designId: design.id, fileUrl: m.fileUrl });
     }
   }

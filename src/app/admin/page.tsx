@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { notify } from '@/lib/toast'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -20,7 +21,9 @@ import {
   Mail,
   MessageCircle,
   BookOpen,
-  AlertTriangle
+  AlertTriangle,
+  Star,
+  StarOff
 } from 'lucide-react'
 
 interface User {
@@ -87,6 +90,7 @@ interface Design {
     email: string
     username?: string | null
   }
+  tags?: string[]
 }
 
 // Row shape for Exclusive Sales table and CSV export
@@ -102,7 +106,7 @@ interface Design {
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  type AdminTab = 'overview' | 'users' | 'designs' | 'orders' | 'exclusive' | 'resources' | 'contact' | 'requests' | 'chat' | 'earnings'
+  type AdminTab = 'overview' | 'users' | 'designs' | 'featured' | 'orders' | 'exclusive' | 'resources' | 'contact' | 'requests' | 'chat' | 'earnings'
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -180,9 +184,20 @@ export default function AdminDashboard() {
   const [filterHasOrders, setFilterHasOrders] = useState<boolean>(false)
   const [filterOwned, setFilterOwned] = useState<boolean>(false)
   const [filterInactive, setFilterInactive] = useState<boolean>(false)
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'featuredOnly'>('all')
+  const [featuredSort, setFeaturedSort] = useState<boolean>(false)
+  const [actionConfirm, setActionConfirm] = useState<{
+    action: 'delete' | 'deactivate' | 'activate' | 'addFeatured' | 'removeFeatured' | 'bulkRemoveFeatured'
+    designIds: string[]
+    title?: string
+  } | null>(null)
+  const [actionConfirmTitles, setActionConfirmTitles] = useState<string[]>([])
+  const [perItemResult, setPerItemResult] = useState<Record<string, 'success' | 'error'>>({})
+  const [selectedDesignIds, setSelectedDesignIds] = useState<Record<string, boolean>>({})
+  const [selectAllDesigns, setSelectAllDesigns] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
   const [adminConfirm, setAdminConfirm] = useState<{ step: number; userId: string; userEmail: string; action: 'makeAdmin' | 'removeAdmin' } | null>(null)
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  
   const [currency, setCurrency] = useState<SupportedCurrency>('USD')
   const [locale, setLocale] = useState<string>('en-US')
   interface ContactMessage {
@@ -219,8 +234,7 @@ export default function AdminDashboard() {
   // SafeImage centralizes sanitization and onError fallback
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 5000)
+    notify(type, message)
   }
 
   const fetchData = async () => {
@@ -399,6 +413,16 @@ export default function AdminDashboard() {
     fetchAdminData()
   }, [session, status, router, fetchAdminData])
 
+  const { featuredCount, featuredItems } = useMemo(() => {
+    try {
+      const f = ((designs || []) as Design[]).filter(d => Array.isArray(d.tags) && d.tags!.includes('featured'))
+      const items = f.map(d => ({ id: d.id, title: d.title || d.id, imageUrl: d.imageUrl })).slice(0, 5)
+      return { featuredCount: f.length, featuredItems: items }
+    } catch {
+      return { featuredCount: 0, featuredItems: [] }
+    }
+  }, [designs])
+
   // Load admin locale/currency for formatting
   useEffect(() => {
     const loadLocale = async () => {
@@ -439,8 +463,7 @@ export default function AdminDashboard() {
   }
 
   const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 5000) // Auto-hide after 5 seconds
+    notify(type, message)
   }
 
   // Overview quick filters
@@ -674,6 +697,79 @@ export default function AdminDashboard() {
     }
   }
 
+  // Confirmable wrapper: set up an action that requires confirmation
+  // confirmDesignAction was removed — use setActionConfirm(...) directly where needed
+
+  const confirmToggleFeatured = (designId: string, adding: boolean, title?: string) => {
+    setActionConfirm({ action: adding ? 'addFeatured' : 'removeFeatured', designIds: [designId], title: title || '' })
+  }
+
+  const clearSelection = () => {
+    setSelectedDesignIds({})
+    setSelectAllDesigns(false)
+  }
+
+  const performActionConfirm = async () => {
+    if (!actionConfirm) return
+    const { action, designIds } = actionConfirm
+    try {
+      // prepare titles for modal (if not already set)
+      if (actionConfirmTitles.length === 0 && designIds.length > 0) {
+        const titles = ((designs || []) as Design[]).filter(d => designIds.includes(d.id)).map(d => d.title || d.id)
+        setActionConfirmTitles(titles.slice(0, 20))
+      }
+      if (action === 'delete' || action === 'activate' || action === 'deactivate') {
+        // single design actions handled by handleDesignAction
+        const designId = designIds[0]
+        await handleDesignAction(designId, action === 'delete' ? 'delete' : (action === 'activate' ? 'activate' : 'deactivate'))
+      } else if (action === 'addFeatured' || action === 'removeFeatured') {
+        // call toggle for each id
+        for (const id of designIds) {
+          await handleToggleFeatured(id, action === 'removeFeatured')
+        }
+      } else if (action === 'bulkRemoveFeatured') {
+        for (const id of designIds) {
+          await handleToggleFeatured(id, true)
+        }
+        clearSelection()
+      }
+      await fetchAdminData()
+      setActionConfirm(null)
+      setActionConfirmTitles([])
+      // clear per-item feedback after a short delay so users can see results
+      setTimeout(() => setPerItemResult({}), 4000)
+    } catch (e) {
+      console.error('Error performing confirmed action', e)
+      showNotification('error', 'Failed to perform action')
+      setActionConfirm(null)
+    }
+  }
+
+  const handleToggleFeatured = async (designId: string, currentlyFeatured: boolean) => {
+    try {
+      const response = await fetch('/api/admin/designs/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ designId, action: 'toggleFeatured' })
+      })
+
+      if (response.ok) {
+        fetchAdminData()
+        // record per-item success state for UI feedback
+        setPerItemResult(prev => ({ ...prev, [designId]: 'success' }))
+        showNotification('success', currentlyFeatured ? 'Removed design from Featured' : 'Marked design as Featured')
+        try { window.dispatchEvent(new Event('notificationsUpdated')) } catch {}
+      } else {
+        setPerItemResult(prev => ({ ...prev, [designId]: 'error' }))
+        showNotification('error', 'Failed to update featured flag')
+      }
+    } catch (error) {
+      setPerItemResult(prev => ({ ...prev, [designId]: 'error' }))
+      console.error('Error toggling featured flag:', error)
+      showNotification('error', 'Error occurred while updating featured flag')
+    }
+  }
+
   const handleDesignApproval = async (designId: string, action: 'approve' | 'reject') => {
     try {
       const response = await fetch('/api/admin/designs/approve', {
@@ -811,8 +907,20 @@ export default function AdminDashboard() {
     const hasOrdersMatch = filterHasOrders ? design.totalSales > 0 : true
     const ownedMatch = filterOwned ? !!design.isOwned : true
     const inactiveMatch = filterInactive ? !design.isActive : true
-    return statusMatch && deletableMatch && hasOrdersMatch && ownedMatch && inactiveMatch
+    const featuredMatch = featuredFilter === 'all' ? true : (Array.isArray(design.tags) && design.tags.includes('featured'))
+
+    return statusMatch && deletableMatch && hasOrdersMatch && ownedMatch && inactiveMatch && featuredMatch
   })
+
+  // Optionally sort featured designs to the top when requested
+  if (featuredSort) {
+    filteredDesigns.sort((a, b) => {
+      const aFeatured = Array.isArray(a.tags) && a.tags.includes('featured') ? 1 : 0
+      const bFeatured = Array.isArray(b.tags) && b.tags.includes('featured') ? 1 : 0
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }
 
   if (status === 'loading' || loading) {
     return (
@@ -836,9 +944,34 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 overflow-x-hidden">
-  <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 xs:px-2 xs:py-6">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 xs:px-2 xs:py-6">
         <div className="mb-8 xs:mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            {featuredCount > 0 && (
+              <div className="relative group">
+                <span className="inline-flex items-center text-xs font-semibold px-2 py-1 rounded bg-yellow-500 text-white">
+                  {featuredCount} Featured
+                </span>
+                <div className="pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute top-full mt-2 right-0 w-80 bg-white border border-gray-200 rounded shadow-lg p-3 z-50">
+                  <div className="text-xs text-gray-700 font-semibold mb-2">Featured designs</div>
+                  <div className="flex flex-col gap-2 max-h-48 overflow-auto">
+                    {featuredItems.map((it) => (
+                      <a key={it.id} href={`/designs/${it.id}?admin=true`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-1 rounded hover:bg-gray-50">
+                        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          <SafeImage src={it.imageUrl} alt={it.title} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="text-sm text-gray-700 truncate">{it.title}</div>
+                      </a>
+                    ))}
+                  </div>
+                  {featuredCount > featuredItems.length && (
+                    <div className="text-xs text-gray-500 mt-2">+{featuredCount - featuredItems.length} more</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <p className="text-gray-600 mt-2">Manage your fashion marketplace platform</p>
         </div>
 
@@ -899,6 +1032,7 @@ export default function AdminDashboard() {
                 { id: 'overview', label: 'Overview', icon: Eye },
                 { id: 'users', label: 'User Management', icon: Users },
                 { id: 'designs', label: 'Design Management', icon: ShoppingBag },
+                { id: 'featured', label: 'Featured', icon: Star },
                 { id: 'orders', label: 'Order Management', icon: ShoppingBag },
                 { id: 'exclusive', label: 'Exclusive Sales', icon: TrendingUp },
                 { id: 'resources', label: 'Resources', icon: BookOpen },
@@ -922,6 +1056,11 @@ export default function AdminDashboard() {
                     {tab.id === 'chat' && unreadTotal > 0 && (
                       <span className="ml-2 inline-flex items-center justify-center text-[10px] leading-none font-semibold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
                         {unreadTotal > 99 ? '99+' : unreadTotal}
+                      </span>
+                    )}
+                    {tab.id === 'designs' && featuredCount > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center text-[10px] leading-none font-semibold px-1.5 py-0.5 rounded-full bg-yellow-500 text-white" title={`${featuredCount} featured`}>
+                        {featuredCount > 99 ? '99+' : featuredCount}
                       </span>
                     )}
                   </span>
@@ -1154,6 +1293,43 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Design Management</h3>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 xs:flex-col xs:items-start">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        aria-label="Select all designs on page"
+                        type="checkbox"
+                        checked={selectAllDesigns}
+                        onChange={(e) => {
+                          const checked = e.target.checked
+                          setSelectAllDesigns(checked)
+                          if (checked) {
+                            const map: Record<string, boolean> = {}
+                            filteredDesigns.forEach(d => { map[d.id] = true })
+                            setSelectedDesignIds(map)
+                          } else {
+                            setSelectedDesignIds({})
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <span>Select all</span>
+                    </label>
+                    <div className="text-sm text-gray-600">{Object.values(selectedDesignIds).filter(Boolean).length} selected</div>
+                    <button
+                      disabled={Object.values(selectedDesignIds).filter(Boolean).length === 0}
+                      onClick={() => {
+                        const ids = Object.keys(selectedDesignIds).filter(id => selectedDesignIds[id])
+                        // only pass ids that currently have featured tag
+                        const featuredIds = ((filteredDesigns || []) as Design[]).filter(d => ids.includes(d.id) && Array.isArray(d.tags) && d.tags.includes('featured')).map(d => d.id)
+                        if (featuredIds.length === 0) {
+                          showNotification('error', 'No selected designs are featured')
+                          return
+                        }
+                        setActionConfirm({ action: 'bulkRemoveFeatured', designIds: featuredIds, title: `${featuredIds.length} designs` })
+                      }}
+                      className="px-3 py-2 text-sm rounded bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                    >
+                      Remove Featured
+                    </button>
                     <select
                       value={designFilter}
                       onChange={(e) => setDesignFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
@@ -1165,6 +1341,26 @@ export default function AdminDashboard() {
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>
                     </select>
+
+                    <select
+                      value={featuredFilter}
+                      onChange={(e) => setFeaturedFilter(e.target.value as 'all' | 'featuredOnly')}
+                      className="px-3 py-2 border border-gray-300 rounded-md text-sm text-black"
+                      title="Filter by featured status"
+                    >
+                      <option value="all">All</option>
+                      <option value="featuredOnly">Featured only</option>
+                    </select>
+
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Sort so featured designs appear first">
+                      <input
+                        type="checkbox"
+                        checked={featuredSort}
+                        onChange={(e) => setFeaturedSort(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Featured first</span>
+                    </label>
                     <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer" title="Show only designs that are safe to delete (no sales and not owned)">
                       <input
                         type="checkbox"
@@ -1211,35 +1407,48 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {filteredDesigns.map((design) => (
                     <div key={design.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                      <div className="aspect-square relative">
-                        <SafeImage
-                          src={design.imageUrl}
-                          alt={design.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold ${
-                          design.approvalStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          design.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {design.approvalStatus}
+                        <div className="aspect-square relative">
+                          <div className="absolute top-2 left-2 z-10 bg-white bg-opacity-80 rounded">
+                            <label className="inline-flex items-center p-1">
+                              <input aria-label={`Select design ${design.title}`} type="checkbox" checked={!!selectedDesignIds[design.id]} onChange={() => setSelectedDesignIds(prev => ({ ...prev, [design.id]: !prev[design.id] }))} className="h-4 w-4" />
+                            </label>
+                          </div>
+                          <SafeImage
+                            src={design.imageUrl}
+                            alt={design.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Featured badge */}
+                          {design.tags && design.tags.includes('featured') && (
+                            <div className="absolute top-2 right-10 px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                              <Star className="w-3 h-3" />
+                              <span>Featured</span>
+                            </div>
+                          )}
+
+                          <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold ${
+                            design.approvalStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                            design.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {design.approvalStatus}
+                          </div>
+                          {design.totalSales > 0 && (
+                            <div className="absolute top-10 right-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold" title="This design has completed orders">
+                              Has orders
+                            </div>
+                          )}
+                          {!design.isActive && (
+                            <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
+                              <span className="text-white font-semibold">INACTIVE</span>
+                            </div>
+                          )}
+                          {design.isOwned && (
+                            <div className="absolute top-2 left-12 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
+                              OWNED
+                            </div>
+                          )}
                         </div>
-                        {design.totalSales > 0 && (
-                          <div className="absolute top-10 right-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold" title="This design has completed orders">
-                            Has orders
-                          </div>
-                        )}
-                        {!design.isActive && (
-                          <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
-                            <span className="text-white font-semibold">INACTIVE</span>
-                          </div>
-                        )}
-                        {design.isOwned && (
-                          <div className="absolute top-2 left-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
-                            OWNED
-                          </div>
-                        )}
-                      </div>
                       <div className="p-3 md:p-4">
                         <h4 className="font-semibold text-gray-900 truncate">{design.title}</h4>
                         <p className="text-sm text-gray-600 mb-2">by {design.designer.username || design.designer.name || design.designer.email}</p>
@@ -1286,7 +1495,18 @@ export default function AdminDashboard() {
                             View
                           </Link>
                           <button
-                            onClick={() => handleDesignAction(design.id, design.isActive ? 'deactivate' : 'activate')}
+                            onClick={() => {
+                              const isFeatured = Array.isArray(design.tags) && design.tags.includes('featured')
+                              // Ask for confirmation both when adding and removing from featured
+                              confirmToggleFeatured(design.id, !isFeatured, design.title)
+                            }}
+                            className={`px-3 py-1 text-xs rounded ${design.tags && design.tags.includes('featured') ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            title={design.tags && design.tags.includes('featured') ? 'Remove from Featured' : 'Mark as Featured'}
+                          >
+                            {design.tags && design.tags.includes('featured') ? <Star className="w-3 h-3" /> : <StarOff className="w-3 h-3" />}
+                          </button>
+                          <button
+                            onClick={() => setActionConfirm({ action: design.isActive ? 'deactivate' : 'activate', designIds: [design.id], title: design.title })}
                             className={`flex-1 px-3 py-1 text-xs rounded ${
                               design.isActive 
                                 ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' 
@@ -1296,7 +1516,7 @@ export default function AdminDashboard() {
                             {design.isActive ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
-                            onClick={() => handleDesignAction(design.id, 'delete')}
+                            onClick={() => setActionConfirm({ action: 'delete', designIds: [design.id], title: design.title })}
                             className={`px-3 py-1 text-xs rounded ${design.totalSales > 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
                             disabled={design.totalSales > 0}
                             title={design.totalSales > 0 ? 'Cannot delete a design that has orders. Please deactivate instead.' : 'Delete design'}
@@ -1304,11 +1524,77 @@ export default function AdminDashboard() {
                             Delete
                           </button>
                         </div>
+                        {perItemResult[design.id] === 'success' && (
+                          <div className="mt-2 text-sm text-green-700 font-semibold">Updated ✓</div>
+                        )}
+                        {perItemResult[design.id] === 'error' && (
+                          <div className="mt-2 text-sm text-red-700 font-semibold">Failed ✕</div>
+                        )}
                         {design.totalSales > 0 && (
                           <div className="mt-2 text-xs text-gray-600">
                             Has orders; delete disabled. Use <span className="font-medium">Deactivate</span> to remove from marketplace.
                           </div>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* generic action confirmation modal (delete/deactivate/activate/add/remove featured, bulk) */}
+                {actionConfirm && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+                      <h3 className="text-lg font-semibold text-gray-900">Confirm action</h3>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {actionConfirm.action === 'delete' && 'Are you sure you want to permanently delete this design?'}
+                        {actionConfirm.action === 'deactivate' && 'Are you sure you want to deactivate this design?'}
+                        {actionConfirm.action === 'activate' && 'Are you sure you want to activate this design?'}
+                        {actionConfirm.action === 'addFeatured' && 'Add this design to Featured?'}
+                        {actionConfirm.action === 'removeFeatured' && 'Remove this design from Featured?'}
+                        {actionConfirm.action === 'bulkRemoveFeatured' && 'Remove Featured from the selected designs?'}
+                      </p>
+                      {actionConfirm.title && <p className="text-sm text-gray-700 mt-3 font-medium">{actionConfirm.title}</p>}
+                      {actionConfirmTitles && actionConfirmTitles.length > 0 && (
+                        <div className="mt-3 text-sm text-gray-600 max-h-40 overflow-auto">
+                          <div className="text-xs text-gray-500 mb-1">Items to be affected:</div>
+                          <ul className="list-disc list-inside space-y-1">
+                            {actionConfirmTitles.map((t, idx) => (
+                              <li key={idx} className="truncate">{t}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="mt-4 flex justify-end gap-2">
+                        <button onClick={() => setActionConfirm(null)} className="px-3 py-2 bg-gray-100 rounded text-sm">Cancel</button>
+                        <button onClick={performActionConfirm} className="px-3 py-2 bg-red-600 text-white rounded text-sm">Confirm</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'featured' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Featured Designs</h3>
+                <div className="mt-4 mb-4 text-sm text-gray-600">Showing {featuredCount} featured design{featuredCount === 1 ? '' : 's'}</div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {((designs || []) as Design[]).filter(d => Array.isArray(d.tags) && d.tags!.includes('featured')).map((design) => (
+                    <div key={design.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                      <div className="aspect-square relative">
+                        <SafeImage src={design.imageUrl} alt={design.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="p-3 md:p-4">
+                        <h4 className="font-semibold text-gray-900 truncate">{design.title}</h4>
+                        <p className="text-sm text-gray-500 mb-2">by {design.designer.username || design.designer.name || design.designer.email}</p>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-lg font-bold text-indigo-600">{formatPrice(design.price)}</span>
+                          <span className="text-sm text-gray-500">{design.totalSales} sales</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <a href={`/designs/${design.id}?admin=true`} target="_blank" rel="noopener noreferrer" className="px-3 py-1 text-xs bg-indigo-100 text-indigo-800 hover:bg-indigo-200 rounded flex items-center gap-1">View</a>
+                          <button onClick={() => confirmToggleFeatured(design.id, false, design.title)} className="px-3 py-1 text-xs bg-red-100 text-red-800 hover:bg-red-200 rounded">Remove Featured</button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2385,37 +2671,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
-          <div className={`rounded-lg p-4 shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                {notification.type === 'success' ? (
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                )}
-                <span className="font-medium">{notification.message}</span>
-              </div>
-              <button
-                onClick={() => setNotification(null)}
-                className="ml-4 text-white hover:text-gray-200"
-                title="Close notification"
-                aria-label="Close notification"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   )
 }

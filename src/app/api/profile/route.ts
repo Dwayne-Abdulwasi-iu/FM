@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import { MongoClient } from 'mongodb'
 import fs from 'fs'
@@ -31,7 +32,8 @@ export async function GET() {
         role: true,
         isVerified: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        password: true
       }
     })
 
@@ -42,7 +44,16 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ user })
+    // don't expose hashed password; include a safe boolean flag indicating whether the
+    // account has a password set (useful for client-side UX for OAuth-only users)
+    const u = user as unknown as Record<string, unknown>
+    const hasPassword = Boolean(u['password'])
+    const out = { ...u }
+    // remove password from output
+    delete out['password']
+    const responseUser = { ...out, hasPassword }
+
+    return NextResponse.json({ user: responseUser })
 
   } catch (error) {
     console.error('Profile fetch error:', error)
@@ -66,7 +77,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const { name, username, bio, website, location } = await request.json()
+    const { name, username, bio, website, location, confirmPassword } = await request.json()
 
     // validate username if provided
     if (username != null && username !== '') {
@@ -108,6 +119,18 @@ export async function PUT(request: NextRequest) {
         }
       } finally {
         await client.close()
+      }
+    }
+
+    // If a confirmPassword was provided, verify it matches the current user's password
+    if (confirmPassword != null) {
+      const existing = await prisma.user.findUnique({ where: { id: session.user.id }, select: { password: true } })
+      if (!existing || !existing.password) {
+        return NextResponse.json({ message: 'Unable to verify password for this account' }, { status: 400 })
+      }
+      const ok = await bcrypt.compare(confirmPassword, existing.password || '')
+      if (!ok) {
+        return NextResponse.json({ message: 'Incorrect password' }, { status: 401 })
       }
     }
 

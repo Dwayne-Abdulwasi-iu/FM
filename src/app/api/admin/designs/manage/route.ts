@@ -58,6 +58,30 @@ export async function POST(request: NextRequest) {
         }
         break
 
+        case 'toggleFeatured':
+          // Toggle the presence of the 'featured' tag on the design
+          {
+            const existing = await prisma.design.findUnique({ where: { id: designId } })
+            if (!existing) {
+              return NextResponse.json({ error: 'Design not found' }, { status: 404 })
+            }
+
+            const currentTags: string[] = Array.isArray(existing.tags) ? existing.tags : []
+            const hasFeatured = currentTags.includes('featured')
+            const newTags = hasFeatured ? currentTags.filter(t => t !== 'featured') : Array.from(new Set([...currentTags, 'featured']))
+
+            result = await prisma.design.update({
+              where: { id: designId },
+              data: { tags: newTags },
+              include: { designer: { select: { id: true, name: true, email: true } } }
+            })
+
+            // Revalidate public listings so changes reflect immediately
+            revalidatePath('/')
+            revalidatePath('/designs')
+          }
+          break
+
       case 'deactivate':
         result = await prisma.design.update({
           where: { id: designId },
