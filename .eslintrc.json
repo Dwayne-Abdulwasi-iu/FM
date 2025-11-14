@@ -3,4 +3,13 @@
     "next/core-web-vitals",
     "next/typescript"
   ]
+  ,
+  "overrides": [
+    {
+      "files": ["**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

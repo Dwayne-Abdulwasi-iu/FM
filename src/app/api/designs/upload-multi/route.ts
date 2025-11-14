@@ -222,6 +222,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Upload to Cloudinary
+      let _publicId: string | undefined = undefined
+      let _publicVersion: number | undefined = undefined
       if (process.env.CLOUDINARY_CLOUD_NAME) {
         try {
           const uploadResult = await new Promise<unknown>((resolve, reject) => {
@@ -248,6 +250,8 @@ export async function POST(request: NextRequest) {
           fileUrl = (uploadResult as { secure_url?: string } | null)?.secure_url || ''
           const _pubId = (uploadResult as { public_id?: string } | null)?.public_id
           const _pubVersion = (uploadResult as { version?: number } | null)?.version
+          _publicId = _pubId
+          _publicVersion = _pubVersion
           // If this was a video upload, also attempt to generate a Cloudinary-hosted thumbnail/poster
           try {
             const pubId = (uploadResult as { public_id?: string } | null)?.public_id
@@ -311,18 +315,19 @@ export async function POST(request: NextRequest) {
       // Get video duration if it's a video
       const duration = fileType === 'VIDEO' ? await getVideoDuration(buffer, file.type) : null
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mediaFiles.push({
         fileName: file.name,
         fileUrl,
-        publicId: (uploadResult as Record<string, unknown>)['_publicId'] as string | undefined,
-        publicVersion: (uploadResult as Record<string, unknown>)['_publicVersion'] as number | undefined,
+        publicId: _publicId,
+        publicVersion: _publicVersion,
         fileType,
         mimeType: file.type,
         fileSize: file.size,
         duration,
         accessType: metadata.accessType,
         sortOrder: metadata.sortOrder
-      })
+      } as unknown as MediaFileInput)
     }
 
     // If no image was uploaded, use a placeholder for the primary image.

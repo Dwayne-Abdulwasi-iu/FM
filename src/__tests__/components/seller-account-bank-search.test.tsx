@@ -20,7 +20,8 @@ afterAll(() => {
   ;(Element.prototype as any).scrollIntoView = undefined
 })
 beforeEach(() => {
-  jest.spyOn(global, 'fetch').mockImplementation((url: RequestInfo) => {
+  jest.spyOn(global, 'fetch').mockImplementation((...args: unknown[]) => {
+    const url = args[0] as unknown
     if (typeof url === 'string' && url.includes('/api/seller/banks')) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ banks: mockBanks }) } as unknown as Response)
     }

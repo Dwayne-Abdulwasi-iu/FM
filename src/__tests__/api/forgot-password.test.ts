@@ -16,6 +16,11 @@ jest.mock('nodemailer', () => ({
   createTransport: () => ({ sendMail: jest.fn() })
 }))
 
+// Ensure internal mail wrapper is mocked so tests don't perform network fetches
+jest.mock('@/lib/mail', () => ({
+  sendMail: jest.fn().mockResolvedValue({ ok: true })
+}))
+
 const mockPrisma = jest.requireMock('@/lib/prisma').default as any
 
 describe('/api/auth/forgot-password', () => {

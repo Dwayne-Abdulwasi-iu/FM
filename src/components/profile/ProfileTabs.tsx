@@ -504,7 +504,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
                   <p className="text-sm">Please confirm again to apply the new username.</p>
                   <p className="text-sm mt-2">Current: <strong>@{profileUser?.username || '—'}</strong></p>
                   <p className="text-sm mt-1">New: <strong>@{formUsername || '—'}</strong></p>
-                  {profileUser && profileUser.hasPassword === false ? (
+                  {profileUser && (profileUser as unknown as { hasPassword?: boolean }).hasPassword === false ? (
                     <div className="mt-3 text-sm text-gray-700">
                       <p className="mb-2">This account does not have a local password set (you likely signed up with Google or another provider).</p>
                       <p className="mb-2">To change your username, set a local password first. We can send a password setup/reset link to your registered email.</p>
@@ -521,7 +521,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
             </div>
           }
           confirmText={
-            confirmStep === 1 ? 'Continue' : (profileUser && profileUser.hasPassword === false ? 'Set a password' : 'Change username')
+            confirmStep === 1 ? 'Continue' : (profileUser && (profileUser as unknown as { hasPassword?: boolean }).hasPassword === false ? 'Set a password' : 'Change username')
           }
           tone={confirmStep === 1 ? 'default' : 'warning'}
           confirming={confirmingChange}
@@ -538,7 +538,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
             }
 
             // If account doesn't have a password, redirect user to forgot-password page to set one
-            if (profileUser && profileUser.hasPassword === false) {
+            if (profileUser && (profileUser as unknown as { hasPassword?: boolean }).hasPassword === false) {
               // include email in query so the forgot-password page can prefill
               const email = encodeURIComponent(profileUser.email || '')
               router.push(`/auth/forgot-password${email ? `?email=${email}` : ''}`)
