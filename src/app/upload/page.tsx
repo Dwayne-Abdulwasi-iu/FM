@@ -556,6 +556,17 @@ export default function EnhancedUploadPage() {
                   </div>
                 </div>
 
+                {/* Informational banner: require first upload to be an image/thumbnail for faster review */}
+                <div className="mx-0 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Eye className="h-4 w-4 text-blue-600 mt-0.5" />
+                    <div className="text-sm text-blue-900">
+                      <p className="font-medium">Note</p>
+                      <p className="mt-1">Upload an image or thumbnail first — required for faster review; designs without one may be rejected.</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   {mediaFiles.map((media, index) => (
                     <div
