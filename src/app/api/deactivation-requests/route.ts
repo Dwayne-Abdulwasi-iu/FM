@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
+import { sendMail } from '@/lib/mail'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,6 +50,15 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
       },
     })
+    // Try to notify admins by email (best-effort)
+    try {
+      const adminEmail = process.env.APP_SUPPORT_EMAIL || process.env.EMAIL_FROM
+      if (adminEmail) {
+        sendMail({ to: adminEmail, subject, text: messageLines.join('\n') }).catch((err) => console.error('Failed sending deactivation email', err))
+      }
+    } catch (err) {
+      console.error('Deactivation notification failed', err)
+    }
 
     return NextResponse.json({ id: contactMessage.id, message: 'Request submitted' }, { status: 201 })
   } catch (error: unknown) {

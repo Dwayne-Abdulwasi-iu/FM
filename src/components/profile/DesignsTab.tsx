@@ -62,24 +62,32 @@ export default function DesignsTab() {
     }
   }
 
-  const requestDeactivation = async (d: Design) => {
+  const [requestModalOpen, setRequestModalOpen] = useState(false)
+
+  const openRequestModal = (d: Design) => {
     setTargetDesign(d)
-    const reason = prompt('Enter a short reason to request admin deactivation (optional)') || ''
+    setRequestReason('')
+    setRequestModalOpen(true)
+  }
+
+  const submitDeactivationRequest = async () => {
+    if (!targetDesign) return
     try {
       setRequesting(true)
-      const res = await fetch('/api/deactivation-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: d.id, reason }) })
+      const res = await fetch('/api/deactivation-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ designId: targetDesign.id, reason: requestReason }) })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) {
         toastApi.showError(j?.message || 'Failed to submit request')
         return
       }
       toastApi.showSuccess('Deactivation request submitted')
+      setRequestModalOpen(false)
+      setTargetDesign(null)
     } catch (err) {
       console.error('Request error', err)
       toastApi.showError('Failed to submit request')
     } finally {
       setRequesting(false)
-      setTargetDesign(null)
     }
   }
 
@@ -99,12 +107,16 @@ export default function DesignsTab() {
               const canDelete = (d.salesCount || 0) === 0 && !d.isOwned
               return (
                 <div key={d.id} className="flex items-center gap-3 bg-white border rounded p-3">
-                  <Link href={`/designs/${d.id}`} className="flex items-center gap-3 flex-1">
+                    <Link href={`/designs/${d.id}`} className="flex items-center gap-3 flex-1">
                     <div className="w-16 h-16 rounded overflow-hidden bg-gray-100 border border-gray-200">
                       <SafeImage src={d.thumbnailUrl || d.imageUrl} alt={d.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">{d.title}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium text-gray-900 truncate">{d.title}</div>
+                        <div className="text-xs text-gray-500">•</div>
+                        <div className="text-xs text-gray-500">Sales: <span className="font-medium text-gray-900">{d.salesCount ?? 0}</span></div>
+                      </div>
                       <div className="text-xs text-gray-500">{d.category}</div>
                     </div>
                   </Link>
@@ -117,7 +129,7 @@ export default function DesignsTab() {
                     )}
 
                     {!canDelete && (
-                      <button onClick={() => requestDeactivation(d)} disabled={requesting} className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Request deactivation</button>
+                      <button onClick={() => openRequestModal(d)} disabled={requesting} className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Request deactivation</button>
                     )}
                   </div>
                 </div>
@@ -126,6 +138,21 @@ export default function DesignsTab() {
           </div>
         )}
       </div>
+      
+      <ConfirmModal
+        open={requestModalOpen}
+        title="Request deactivation"
+        description={<div>
+          <p className="text-sm mb-2">You are requesting the admin to deactivate <strong>{targetDesign?.title}</strong>. Prior purchasers will retain access.</p>
+          <label htmlFor="deactivation-reason" className="block text-sm font-medium text-gray-700">Reason (optional)</label>
+          <textarea id="deactivation-reason" value={requestReason} onChange={(e) => setRequestReason(e.target.value)} aria-label="Deactivation reason" className="mt-1 block w-full border px-3 py-2 rounded" rows={4} />
+        </div>}
+        confirmText="Send request"
+        tone="default"
+        confirming={requesting}
+        onCancel={() => { setRequestModalOpen(false); setTargetDesign(null); setRequestReason('') }}
+        onConfirm={submitDeactivationRequest}
+      />
 
       <ConfirmModal
         open={confirmOpen}
