@@ -20,18 +20,17 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState<'collect' | 'otp' | 'password'>('collect')
+  const [otpResending, setOtpResending] = useState(false)
   // Removed unused otpSent
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    // Flow control: if we're in collect step, send OTP
     try {
       if (step === 'collect') {
         const res = await fetch('/api/auth/send-signup-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formData.name, email: formData.email }) })
         if (res.ok) {
-          setOtpSent(true)
           setStep('otp')
         } else {
           const d = await res.json().catch(() => ({}))
@@ -75,11 +74,28 @@ export default function SignUpPage() {
         const d = await res.json().catch(() => ({}))
         setError(d.message || 'Failed to create account')
       }
-    } catch (e) {
-      console.error('signup error', e)
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setOtpResending(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/send-signup-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: formData.name, email: formData.email }) })
+      if (res.ok) {
+        setError('Verification code resent')
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setError(d.message || 'Failed to resend verification code')
+      }
+    } catch {
+      setError('Error resending code')
+    } finally {
+      setOtpResending(false)
     }
   }
 
@@ -163,7 +179,7 @@ export default function SignUpPage() {
                 <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
                   Verification Code
                 </label>
-                <div className="mt-1 relative">
+                <div className="mt-1 relative flex gap-2">
                   <input
                     id="otp"
                     name="otp"
@@ -176,6 +192,16 @@ export default function SignUpPage() {
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     aria-label="Verification code"
                   />
+                  {step === 'otp' && (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={otpResending}
+                      className="px-3 py-2 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 text-sm font-medium disabled:opacity-50"
+                    >
+                      {otpResending ? 'Resending...' : 'Resend Code'}
+                    </button>
+                  )}
                 </div>
                 <div className="mt-2 text-sm text-gray-600">
                   {step === 'collect' ? (

@@ -383,99 +383,122 @@ function DesignsPageInner() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 lg:gap-5 xl:gap-6">
-            {designs.map((design) => (
-              <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group transition-transform duration-200 ease-out hover:-translate-y-0.5">
-                <Link href={`/designs/${design.id}`}>
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <SafeImage
-                      src={design.thumbnailUrl || design.imageUrl}
-                      alt={design.title}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Locked / Exclusive Badge */}
-                    {(design.buyingTypes === 'OWNERSHIP' || design.buyingTypes === 'BOTH') && design.ownershipPrice ? (
-                      <div className="absolute top-2 left-2">
-                        <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-xs font-medium rounded-full shadow-sm">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Exclusive
-                        </div>
-                      </div>
-                    ) : (design.price > 0 && design.mediaFiles?.some(file => file.accessType === 'PREMIUM')) && (
-                      <div className="absolute top-2 left-2">
-                        <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-medium rounded-full shadow-sm">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Locked
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => toggleFavorite(e, design)}
-                        className={`p-2 rounded-full shadow-sm ${favoriteIds.has(design.id) ? 'bg-red-50' : 'bg-white'} hover:bg-gray-50`}
-                        aria-label={favoriteIds.has(design.id) ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <Heart className={`h-4 w-4 ${favoriteIds.has(design.id) ? 'text-red-500' : 'text-gray-600'}`} />
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-                
-                <div className="p-3 sm:p-4">
+            {designs.map((design) => {
+              const isOwner = session?.user?.id === design.designer.id;
+              // Only show delete if owner and design is not purchased
+              const canDelete = isOwner && design.totalSales === 0;
+              return (
+                <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group transition-transform duration-200 ease-out hover:-translate-y-0.5">
                   <Link href={`/designs/${design.id}`}>
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-indigo-700">
-                      {design.title}
-                    </h3>
-                  </Link>
-                  
-                  <p className="text-sm text-gray-600 mb-2">
-                    by {design.designer.username || design.designer.name || 'Anonymous'}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-bold text-lg text-gray-900">
-                      {formatPrice(design.price)}
-                    </span>
-                    
-                    <div className="flex items-center space-x-2">
-                      {design._count?.reviews ? (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                          {design._count.reviews}
+                    <div className="aspect-square relative overflow-hidden rounded-t-lg">
+                      <SafeImage
+                        src={design.thumbnailUrl || design.imageUrl}
+                        alt={design.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Locked / Exclusive Badge */}
+                      {(design.buyingTypes === 'OWNERSHIP' || design.buyingTypes === 'BOTH') && design.ownershipPrice ? (
+                        <div className="absolute top-2 left-2">
+                          <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-xs font-medium rounded-full shadow-sm">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Exclusive
+                          </div>
                         </div>
-                      ) : null}
-                      
-                      <button 
-                        onClick={() => handleAddToCart(design.id, design.title)}
-                        disabled={addingToCart === design.id}
-                        className="p-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                        aria-label="Add to cart"
-                      >
-                        {addingToCart === design.id ? (
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                        ) : (
-                          <ShoppingCart className="h-4 w-4" />
+                      ) : (design.price > 0 && design.mediaFiles?.some(file => file.accessType === 'PREMIUM')) && (
+                        <div className="absolute top-2 left-2">
+                          <div className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs font-medium rounded-full shadow-sm">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Locked
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <button
+                          onClick={(e) => toggleFavorite(e, design)}
+                          className={`p-2 rounded-full shadow-sm ${favoriteIds.has(design.id) ? 'bg-red-50' : 'bg-white'} hover:bg-gray-50`}
+                          aria-label={favoriteIds.has(design.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          <Heart className={`h-4 w-4 ${favoriteIds.has(design.id) ? 'text-red-500' : 'text-gray-600'}`} />
+                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (window.confirm('Are you sure you want to delete this design? This cannot be undone.')) {
+                                try {
+                                  const res = await fetch(`/api/designs/${design.id}`, { method: 'DELETE' });
+                                  if (res.ok) {
+                                    setDesigns((prev) => prev.filter((d) => d.id !== design.id));
+                                    toast.success('Design deleted');
+                                  } else {
+                                    toast.error('Failed to delete design');
+                                  }
+                                } catch {
+                                  toast.error('Error deleting design');
+                                }
+                              }
+                            }}
+                            className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 shadow-sm"
+                            aria-label="Delete design"
+                          >
+                            Delete
+                          </button>
                         )}
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* View Details Button */}
-                  <Link
-                    href={`/designs/${design.id}`}
-                    className="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors font-medium mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
                   </Link>
-                  
-                  <div className="mt-2">
-                    <span className="inline-block px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded font-medium">
-                      {design.category}
-                    </span>
+                  <div className="p-3 sm:p-4">
+                    <Link href={`/designs/${design.id}`}>
+                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-indigo-700">
+                        {design.title}
+                      </h3>
+                    </Link>
+                    <p className="text-sm text-gray-600 mb-2">
+                      by {design.designer.username || design.designer.name || 'Anonymous'}
+                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-bold text-lg text-gray-900">
+                        {formatPrice(design.price)}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        {design._count?.reviews ? (
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                            {design._count.reviews}
+                          </div>
+                        ) : null}
+                        <button 
+                          onClick={() => handleAddToCart(design.id, design.title)}
+                          disabled={addingToCart === design.id}
+                          className="p-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                          aria-label="Add to cart"
+                        >
+                          {addingToCart === design.id ? (
+                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                          ) : (
+                            <ShoppingCart className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    {/* View Details Button */}
+                    <Link
+                      href={`/designs/${design.id}`}
+                      className="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs xs:text-sm md:px-4 md:py-2 md:text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors font-medium mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </Link>
+                    <div className="mt-2">
+                      <span className="inline-block px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded font-medium">
+                        {design.category}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
