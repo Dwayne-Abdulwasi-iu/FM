@@ -34,7 +34,7 @@ beforeEach(() => {
 
         // success case: return updated user
         return Promise.resolve({ ok: true, json: () => Promise.resolve({ user: { id: 'u1', name: 'Client User', email: 'client@example.com', role: 'USER', isVerified: true, bio: 'Client', location: 'Earth', username: body.username || 'olduser', createdAt: '2025-01-01T00:00:00Z' } }) })
-      } catch (e) {
+      } catch {
         return Promise.resolve({ ok: false, json: () => Promise.resolve({ message: 'Bad request' }) })
       }
     }
