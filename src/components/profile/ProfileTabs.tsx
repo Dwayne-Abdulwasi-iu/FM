@@ -19,10 +19,22 @@ const TABS = [
   'Bank Account',
 ]
 
+// Helpers to keep URL friendly (use slug in query) while keeping friendly labels in UI
+export const slug = (s: string) => s.toLowerCase().replace(/\s+/g, '-')
+export const labelFromParam = (param?: string | null) => {
+  if (!param) return null
+  const p = param.toLowerCase()
+  // match either the slug form or the label form (case-insensitive)
+  return TABS.find(t => t.toLowerCase() === p || slug(t) === p) || null
+}
+
 export default function ProfileTabs({ initialProfile, initialStats, initialPayoutSummary }: { initialProfile?: { id: string; name?: string | null; username?: string | null; email?: string | null; role?: string | null; isVerified?: boolean | null; bio?: string | null; location?: string | null; website?: string | null; createdAt?: string | Date | null } | null; initialStats?: { totalEarnings?: number; totalRevenue?: number; platformCommission?: number; totalSales?: number; totalDesigns?: number; monthlyEarnings?: { month: string; earnings: number }[] } | null; initialPayoutSummary?: { lastPayoutStatus?: string | null; lastPayoutDate?: string | null } | null }) {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [active, setActive] = useState<string>(() => (searchParams?.get('tab') as string) || 'Overview')
+  const [active, setActive] = useState<string>(() => {
+    const p = searchParams?.get('tab')
+    return labelFromParam(p) || 'Overview'
+  })
   const [designsCount, setDesignsCount] = useState<number | null>(initialStats?.totalDesigns ?? null)
   const [ordersCount, setOrdersCount] = useState<number | null>(initialStats?.totalSales ?? null)
   const [countsLoading, setCountsLoading] = useState<boolean>(initialStats ? false : true)
@@ -51,9 +63,10 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   const panelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    // Sync tab from URL when search params change
+    // Sync tab from URL when search params change (accept slug or label)
     const t = searchParams?.get('tab')
-    if (t && TABS.includes(t)) setActive(t)
+    const lbl = labelFromParam(t)
+    if (lbl) setActive(lbl)
   }, [searchParams])
 
   useEffect(() => {
@@ -71,7 +84,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
   useEffect(() => {
     // update URL when active tab changes
     const params = new URLSearchParams(Array.from(searchParams?.entries() || []))
-    if (active) params.set('tab', active)
+    if (active) params.set('tab', slug(active))
     router.replace(`/profile?${params.toString()}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active])
@@ -467,7 +480,7 @@ export default function ProfileTabs({ initialProfile, initialStats, initialPayou
               <button
                 key={tab}
                 role="tab"
-                aria-selected={isActive ? 'true' : 'false'}
+                aria-selected={isActive}
                 aria-controls={`panel-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 id={`tab-${tab.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => setActive(tab)}
