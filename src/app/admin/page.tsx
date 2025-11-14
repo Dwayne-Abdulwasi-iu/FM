@@ -413,6 +413,33 @@ export default function AdminDashboard() {
     fetchAdminData()
   }, [session, status, router, fetchAdminData])
 
+  // Real-time updates: listen to server-sent events for notifications and refresh admin inbox/resources
+  useEffect(() => {
+    if (!session || session.user?.role !== 'ADMIN') return
+    if (typeof window === 'undefined' || !('EventSource' in window)) return
+    let es: EventSource | null = null
+    try {
+      es = new EventSource('/api/notifications/stream')
+      es.onmessage = (e) => {
+        try {
+          JSON.parse(e.data)
+          // on any incoming notification, refresh contact messages and counts
+          fetchAdminData()
+        } catch {
+          // ignore non-json keepalive messages
+        }
+      }
+      es.onerror = () => {
+        try { es?.close() } catch {}
+        es = null
+      }
+    } catch {
+      // ignore SSE setup failures
+    }
+    return () => { if (es) try { es.close() } catch {} }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, status])
+
   const { featuredCount, featuredItems } = useMemo(() => {
     try {
       const f = ((designs || []) as Design[]).filter(d => Array.isArray(d.tags) && d.tags!.includes('featured'))

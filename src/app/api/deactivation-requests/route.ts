@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import { sendMail } from '@/lib/mail'
+import { publish } from '@/lib/notificationsPubSub'
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,6 +51,28 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
       },
     })
+    // Create admin notifications and publish in real-time
+    try {
+      const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true, email: true } })
+      const notifPromises: Promise<unknown>[] = []
+      for (const a of admins) {
+        const title = `Deactivation request: ${design.title}`
+        const message = `${design.title} (ID: ${design.id}) — requested by ${session.user.email}`
+        notifPromises.push(prisma.notification.create({ data: { userId: a.id, title, message, url: `/admin?tab=contact`, isRead: false } }))
+      }
+      await Promise.all(notifPromises)
+
+      // publish a small payload via pubsub so admin clients refresh
+      for (const a of admins) {
+        try {
+          publish(a.id, { type: 'deactivation_request', id: contactMessage.id, designId: design.id, title: design.title })
+        } catch (e) {
+          // ignore
+        }
+      }
+    } catch (e) {
+      console.error('Failed creating admin notifications', e)
+    }
     // Try to notify admins by email (best-effort)
     try {
       const adminEmail = process.env.APP_SUPPORT_EMAIL || process.env.EMAIL_FROM
