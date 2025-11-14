@@ -1,0 +1,16 @@
+{
+  "name": "Fashion Market",
+  "short_name": "Fashion",
+  "description": "Fashion Market — sell and buy fashion designs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
