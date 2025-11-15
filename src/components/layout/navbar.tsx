@@ -652,13 +652,13 @@ export function Navbar() {
                 </span>
               )}
             </button>
-            <button 
-              className="p-2 rounded hover:bg-gray-100"
+            <button
+              className={`p-2 rounded ${mobileOpen ? 'bg-gray-900' : 'bg-black'} hover:bg-gray-900`}
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-controls="mobile-menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-6 h-6 text-white" />
             </button>
           </div>
         </div>

@@ -4,9 +4,11 @@
   font-size: 1.5rem; /* base mobile, override with media queries */
   font-weight: 700;
   margin-bottom: 0.5rem;
+  display: block;
+  max-width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
-  white-space: pre-line;
+  white-space: normal;
 }
 
 @media (min-width: 640px) {
