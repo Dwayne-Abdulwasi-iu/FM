@@ -107,7 +107,7 @@ export default function DesignsTab() {
               const canDelete = (d.salesCount || 0) === 0 && !d.isOwned
               return (
                 <div key={d.id} className="flex items-center gap-3 bg-white border rounded p-3">
-                    <Link href={`/designs/${d.id}`} className="flex items-center gap-3 flex-1">
+                  <Link href={`/designs/${d.id}`} className="flex items-center gap-3 flex-1">
                     <div className="w-16 h-16 rounded overflow-hidden bg-gray-100 border border-gray-200">
                       <SafeImage src={d.thumbnailUrl || d.imageUrl} alt={d.title} className="w-full h-full object-cover" />
                     </div>
@@ -118,16 +118,19 @@ export default function DesignsTab() {
                         <div className="text-xs text-gray-500">Sales: <span className="font-medium text-gray-900">{d.salesCount ?? 0}</span></div>
                       </div>
                       <div className="text-xs text-gray-500">{d.category}</div>
+                      {/* Debug info for delete eligibility */}
+                      <div className="mt-1 text-xs text-gray-400">
+                        <span>isOwned: {String(d.isOwned)} | salesCount: {d.salesCount ?? 0}</span>
+                        {/* If you want to show ownership purchase status, add it to the API and display here */}
+                      </div>
                     </div>
                   </Link>
-
                   <div className="flex items-center gap-2">
                     {canDelete ? (
                       <button onClick={() => openDeleteConfirm(d)} className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
                     ) : (
                       <button disabled className="px-3 py-1 text-sm bg-gray-100 text-gray-500 rounded border">Delete</button>
                     )}
-
                     {!canDelete && (
                       <button onClick={() => openRequestModal(d)} disabled={requesting} className="px-3 py-1 text-sm border rounded hover:bg-gray-50">Request deactivation</button>
                     )}

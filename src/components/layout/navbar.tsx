@@ -675,7 +675,7 @@ export function Navbar() {
           <div
             id="mobile-menu"
             // Make the mobile panel fixed so it doesn't push page content and cause layout shift
-            className="md:hidden z-50 fixed inset-x-0 top-16 bg-white border-t border-gray-200 shadow-sm"
+            className="md:hidden z-50 fixed inset-x-0 top-16 bg-black border-t border-gray-900 shadow-lg"
           >
             <div className="px-4 py-4 space-y-4">
               {/* Search (mobile) */}
@@ -692,18 +692,18 @@ export function Navbar() {
               </form>
 
               <div className="grid grid-cols-1 gap-2">
-                <Link href="/designs" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                <Link href="/designs" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium">
                   Browse
                 </Link>
-                <Link href="/contact" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                <Link href="/contact" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium">
                   Contact
                 </Link>
                 {session && (
-                  <Link href="/upload" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2">
+                  <Link href="/upload" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium inline-flex items-center gap-2">
                     <Upload className="w-4 h-4" /> Upload
                   </Link>
                 )}
-                <Link href="/cart" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2 relative">
+                <Link href="/cart" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium inline-flex items-center gap-2 relative">
                   <ShoppingBag className="w-4 h-4" />
                   Cart
                   {cartCount > 0 && (
@@ -716,11 +716,11 @@ export function Navbar() {
                 {session ? (
                   <>
                     {session.user?.role === 'ADMIN' && (
-                      <Link href="/admin" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium inline-flex items-center gap-2">
+                      <Link href="/admin" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium inline-flex items-center gap-2">
                         <Shield className="w-4 h-4" /> Admin
                       </Link>
                     )}
-                    <Link href="/profile" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-50 text-gray-800 font-medium">
+                    <Link href="/profile" onClick={() => setMobileOpen(false)} className="w-full text-left px-4 py-2 rounded-lg border hover:bg-gray-800 text-white font-medium">
                       Profile
                     </Link>
                     <button

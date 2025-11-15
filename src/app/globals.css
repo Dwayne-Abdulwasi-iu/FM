@@ -1,3 +1,19 @@
+/* Price styling for design details (mobile/iOS compatibility) */
+.design-price {
+  color: #4f46e5; /* indigo-600 */
+  font-size: 1.5rem; /* base mobile, override with media queries */
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-line;
+}
+
+@media (min-width: 640px) {
+  .design-price {
+    font-size: 2rem;
+  }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -53,7 +69,7 @@ video {
 
 @layer utilities {
   .text-balance {
-    text-wrap: balance;
+    /* Removed unsupported text-wrap for iOS compatibility */
   }
 }
 

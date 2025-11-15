@@ -585,8 +585,8 @@ export default function DesignPage() {
           {/* Details */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{design.title}</h1>
-              <p className="text-2xl font-bold text-indigo-600">{formatPrice(design.price)}</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 break-words">{design.title}</h1>
+              <p className="design-price">{formatPrice(design.price)}</p>
               {design.submittedPrice && design.submittedCurrency && design.submittedCurrency !== 'USD' && (
                 <p className="text-sm text-gray-500 mt-1">Seller entered: {formatSellerEntered(design.submittedPrice, design.submittedCurrency)}</p>
               )}
