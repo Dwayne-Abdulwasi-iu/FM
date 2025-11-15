@@ -1,3 +1,44 @@
+/* Regular License price styling for mobile compatibility */
+.license-price {
+  color: #4f46e5;
+  font-size: 1.125rem;
+  font-weight: 700;
+  display: block;
+  max-width: 50vw;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .license-price {
+    font-size: 1.25rem;
+    max-width: 20vw;
+  }
+}
+
+/* Exclusive Ownership price styling for mobile compatibility */
+.exclusive-price {
+  color: #7c3aed;
+  font-size: 1.125rem;
+  font-weight: 700;
+  display: block;
+  max-width: 50vw;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .exclusive-price {
+    font-size: 1.25rem;
+    max-width: 20vw;
+  }
+}
 /* Exclusive Ownership price styling for mobile compatibility */
 .exclusive-price {
   color: #9333ea;
