@@ -763,12 +763,10 @@ export default function DesignPage() {
                 <div className="grid gap-4">
                   {(design.buyingTypes === 'REGULAR' || design.buyingTypes === 'BOTH') && (
                     <div className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-900">Regular License</h4>
-                          <p className="text-sm text-gray-600">Standard commercial use, multiple buyers allowed</p>
-                        </div>
-                        <span className="text-lg font-bold text-indigo-600">
+                      <div className="mb-2">
+                        <h4 className="font-semibold text-gray-900">Regular License</h4>
+                        <p className="text-sm text-gray-600 mb-1">Standard commercial use, multiple buyers allowed</p>
+                        <span className="license-price">
                           {formatPrice(design.price)}
                         </span>
                       </div>
@@ -783,12 +781,10 @@ export default function DesignPage() {
 
                   {(design.buyingTypes === 'OWNERSHIP' || design.buyingTypes === 'BOTH') && !design.isOwned && !!design.ownershipPrice && (
                     <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
-                      <div className="flex justify-between items-center mb-2">
-                        <div>
-                          <h4 className="font-semibold text-purple-900">Exclusive Ownership</h4>
-                          <p className="text-sm text-purple-700">Exclusive rights, branding allowed; design becomes unavailable</p>
-                        </div>
-                        <span className="text-lg font-bold text-purple-600">
+                      <div className="mb-2">
+                        <h4 className="font-semibold text-purple-900">Exclusive Ownership</h4>
+                        <p className="text-sm text-purple-700 mb-1">Exclusive rights, branding allowed; design becomes unavailable</p>
+                        <span className="exclusive-price">
                           {formatPrice(design.ownershipPrice)}
                         </span>
                       </div>
