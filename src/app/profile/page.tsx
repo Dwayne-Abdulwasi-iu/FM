@@ -3,7 +3,7 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -38,7 +38,37 @@ interface Design {
   createdAt: string
 }
 
-type TabId = 'overview' | 'designs' | 'earnings' | 'account'
+interface PurchasedDesign {
+  id: string
+  purchaseId: string
+  purchaseDate: string
+  purchaseType: string
+  purchasePrice: number
+  design: {
+    id: string
+    title: string
+    category: string
+    imageUrl: string
+    price: number
+    ownershipPrice: number | null
+    description: string | null
+    mediaFiles: Array<{
+      id: string
+      fileUrl: string
+      fileName: string
+      fileType: string
+      createdAt: string
+    }>
+    tags: string | null
+    designer: {
+      id: string
+      name: string | null
+      email: string
+    }
+  }
+}
+
+type TabId = 'overview' | 'designs' | 'earnings' | 'account' | 'purchases'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -46,6 +76,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [designs, setDesigns] = useState<Design[]>([])
+  const [purchasedDesigns, setPurchasedDesigns] = useState<PurchasedDesign[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
@@ -64,10 +95,11 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const [profileRes, statsRes, designsRes] = await Promise.all([
+      const [profileRes, statsRes, designsRes, purchasesRes] = await Promise.all([
         fetch('/api/profile'),
         fetch('/api/profile/stats'),
-        fetch('/api/profile/designs')
+        fetch('/api/profile/designs'),
+        fetch('/api/profile/purchases')
       ])
 
       if (profileRes.ok) {
@@ -84,8 +116,16 @@ export default function ProfilePage() {
         const designsData = await designsRes.json()
         setDesigns(designsData.designs)
       }
-  } catch {
-    console.error('Failed to fetch profile data') // Keeping this line for error logging
+
+      if (purchasesRes.ok) {
+        const purchasesData = await purchasesRes.json()
+        setPurchasedDesigns(purchasesData.purchases || [])
+      } else {
+        console.warn('Failed to fetch purchases:', purchasesRes.status)
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile data:', error)
+      setErrorMessage('Failed to load profile')
     } finally {
       setLoading(false)
     }
@@ -114,6 +154,71 @@ export default function ProfilePage() {
 
   const handleDeleteDesign = (designId: string, title: string) => {
     setDeleteConfirm({ designId, title })
+  }
+
+  const handleDownloadPurchasedDesign = async (purchaseId: string, designId: string, designTitle: string) => {
+    try {
+      if (!designId) {
+        console.error('Design ID is missing')
+        setErrorMessage('Design ID not found')
+        return
+      }
+
+      const response = await fetch(`/api/designs/${designId}/download?purchaseId=${purchaseId}`)
+      
+      if (response.ok) {
+        const contentType = response.headers.get('content-type')
+        
+        if (contentType?.includes('application/json')) {
+          // Multiple files manifest
+          const data = await response.json()
+          if (data.files && Array.isArray(data.files)) {
+            // Download each file sequentially
+            for (const file of data.files) {
+              const fileUrl = file.downloadUrl || file.url
+              if (!fileUrl) {
+                console.warn('No download URL for file:', file)
+                continue
+              }
+              const fileResponse = await fetch(fileUrl)
+              if (fileResponse.ok) {
+                const blob = await fileResponse.blob()
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = file.name || `${designTitle}-file`
+                document.body.appendChild(a)
+                a.click()
+                window.URL.revokeObjectURL(url)
+                document.body.removeChild(a)
+                // Small delay between downloads
+                await new Promise(resolve => setTimeout(resolve, 500))
+              }
+            }
+          }
+        } else {
+          // Single file download
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || designTitle
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+        }
+        setSuccessMessage('Design downloaded successfully')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        setErrorMessage('Failed to download design')
+        setTimeout(() => setErrorMessage(null), 3000)
+      }
+    } catch (error) {
+      console.error('Download error:', error)
+      setErrorMessage('An error occurred while downloading the design')
+      setTimeout(() => setErrorMessage(null), 3000)
+    }
   }
 
   const confirmDelete = async () => {
@@ -210,34 +315,31 @@ export default function ProfilePage() {
           </div>
         )}
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-white" />
+        <div className="bg-white rounded-lg shadow-sm p-3 mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{profile.name || 'Anonymous User'}</h1>
-                <div className="flex items-center text-gray-600 mt-1">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {profile.email}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{profile.name || 'Anonymous User'}</h1>
+                <div className="flex items-center text-gray-600 text-[11px] sm:text-xs mt-0.5">
+                  <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">{profile.email}</span>
                 </div>
-                <div className="flex items-center text-gray-600 mt-1">
-                  <Calendar className="w-4 h-4 mr-2" />
+                <div className="flex items-center text-gray-600 text-[11px] sm:text-xs mt-0.5">
+                  <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" />
                   Member since {formatDate(profile.createdAt)}
                 </div>
-                {profile.bio && (
-                  <p className="text-gray-700 mt-2 max-w-md">{profile.bio}</p>
-                )}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 mt-1 sm:mt-0">
               {profile.isVerified && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
                   Verified
                 </span>
               )}
-              <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
+              <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium capitalize">
                 {profile.role.toLowerCase()}
               </span>
             </div>
@@ -246,83 +348,76 @@ export default function ProfilePage() {
 
         {/* Stats Cards */}
         {stats && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Designs</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalDesigns}</p>
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-3">
+            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+              <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Designs</p>
+                  <p className="text-base sm:text-xl font-bold text-gray-900">{stats.totalDesigns}</p>
                 </div>
-                <Upload className="w-8 h-8 text-indigo-600" />
+                <Upload className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600 mt-1 sm:mt-0" />
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats?.totalSales ?? 0}</p>
+            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+              <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Sales</p>
+                  <p className="text-base sm:text-xl font-bold text-gray-900">{stats?.totalSales ?? 0}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-green-600" />
+                <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 mt-1 sm:mt-0" />
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-            setErrorMessage('Failed to load profile') // Keeping this line for error message
-            setLoading(false) // Keeping this line for loading state
+            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+              <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Earnings</p>
+                  <p className="text-base sm:text-xl font-bold text-gray-900">{formatPrice(stats?.totalEarnings ?? 0)}</p>
+                  <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5">After 10% fee</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-blue-600" />
+                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 mt-1 sm:mt-0 hidden sm:block" />
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Your Earnings</p>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
-                  <p className="text-xs text-gray-500">After 5% platform fee</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex overflow-x-auto scrollbar-hide px-1.5 sm:px-4 -mb-px">
               {(
                 [
-                  { id: 'overview' as TabId, label: 'Overview', icon: Eye },
-                  { id: 'designs' as TabId, label: 'My Designs', icon: Upload },
-                  { id: 'earnings' as TabId, label: 'Earnings', icon: DollarSign },
-                  { id: 'account' as TabId, label: 'Bank Account', icon: CreditCard }
-                ] as { id: TabId; label: string; icon: ElementType }[]
+                  { id: 'overview' as TabId, label: 'Overview', shortLabel: 'Overview', icon: Eye },
+                  { id: 'designs' as TabId, label: 'My Designs', shortLabel: 'Designs', icon: Upload },
+                  { id: 'purchases' as TabId, label: 'Purchases', shortLabel: 'Purchases', icon: Download },
+                  { id: 'earnings' as TabId, label: 'Earnings', shortLabel: 'Earnings', icon: DollarSign },
+                  { id: 'account' as TabId, label: 'Bank Account', shortLabel: 'Bank', icon: CreditCard }
+                ] as { id: TabId; label: string; shortLabel: string; icon: ElementType }[]
               ).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                  className={`flex items-center py-2 sm:py-3 px-1.5 sm:px-2.5 border-b-2 font-medium text-[10px] sm:text-xs whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <tab.icon className="w-4 h-4 mr-2" />
-                  {tab.label}
+                  <tab.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1.5" />
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-2.5 sm:p-4">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2">Account Overview</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Profile Information</h4>
-                    <div className="space-y-2 text-sm text-gray-900">
+                    <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Profile Information</h4>
+                    <div className="space-y-1 text-[11px] sm:text-xs text-gray-900">
                       <p><span className="font-medium">Email:</span> {profile.email}</p>
                       <p><span className="font-medium">Role:</span> {profile.role}</p>
                       <p><span className="font-medium">Verified:</span> {profile.isVerified ? 'Yes' : 'No'}</p>
@@ -331,19 +426,19 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Quick Actions</h4>
-                    <div className="space-y-2">
+                    <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Quick Actions</h4>
+                    <div className="flex gap-1.5 sm:flex-col sm:space-y-1.5">
                       <Link
                         href="/upload"
-                        className="block w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-center"
+                        className="flex-1 bg-indigo-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-center text-[10px] sm:text-xs"
                       >
-                        Upload New Design
+                        Upload
                       </Link>
                       <Link
                         href="/designs"
-                        className="block w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-center"
+                        className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs"
                       >
-                        Browse Designs
+                        Browse
                       </Link>
                     </div>
                   </div>
@@ -353,30 +448,30 @@ export default function ProfilePage() {
 
             {activeTab === 'designs' && (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">My Designs</h3>
+                <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900">My Designs</h3>
                   <Link
                     href="/upload"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
+                    className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-indigo-700 text-[10px] sm:text-xs whitespace-nowrap"
                   >
                     Upload New Design
                   </Link>
                 </div>
                 
                 {designs.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">No designs yet</h4>
-                    <p className="text-gray-600 mb-4">Start by uploading your first design to the marketplace</p>
+                  <div className="text-center py-6 sm:py-8">
+                    <Upload className="w-8 sm:w-10 text-gray-400 mx-auto mb-2" />
+                    <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-1">No designs yet</h4>
+                    <p className="text-[10px] sm:text-xs text-gray-600 mb-2 sm:mb-3">Start by uploading your first design to the marketplace</p>
                     <Link
                       href="/upload"
-                      className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+                      className="inline-block bg-indigo-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-xs sm:text-sm"
                     >
                       Upload First Design
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                     {designs.map((design) => (
                         <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                           <div className="aspect-square bg-gray-100">
@@ -388,32 +483,32 @@ export default function ProfilePage() {
                               className="w-full h-full object-cover"
                             />
                           </div>
-                        <div className="p-4">
-                          <h4 className="font-medium text-gray-900 mb-1">{design.title}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{design.category}</p>
-                          <div className="flex items-center justify-between">
+                        <div className="p-3 sm:p-4">
+                          <h4 className="font-medium text-gray-900 mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{design.title}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">{design.category}</p>
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span className="font-bold text-indigo-600">{formatPrice(design.price)}</span>
-                            <span className="text-sm text-gray-500">{design.totalSales} sales</span>
+                            <span className="text-gray-500">{design.totalSales} sales</span>
                           </div>
-                          <div className="mt-2 text-sm text-gray-600">
+                          <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600">
                             Revenue: {formatPrice(design.totalRevenue || 0)}
                           </div>
-                          <div className="mt-2 flex space-x-2">
+                          <div className="mt-2 flex gap-1 sm:gap-2">
                             <Link
                               href={`/designs/${design.id}`}
-                              className="flex-1 bg-gray-100 text-gray-700 px-3 py-1 rounded text-center text-sm hover:bg-gray-200"
+                              className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-gray-200"
                             >
-                              View Details
+                              View
                             </Link>
                             <button
                               onClick={() => handleEditDesign(design.id)}
-                              className="flex-1 bg-indigo-100 text-indigo-700 px-3 py-1 rounded text-center text-sm hover:bg-indigo-200"
+                              className="flex-1 bg-indigo-100 text-indigo-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-indigo-200"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleDeleteDesign(design.id, design.title)}
-                              className="flex-1 bg-red-100 text-red-700 px-3 py-1 rounded text-center text-sm hover:bg-red-200"
+                              className="flex-1 bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-red-200"
                             >
                               Delete
                             </button>
@@ -428,31 +523,111 @@ export default function ProfilePage() {
 
             {activeTab === 'earnings' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Overview</h3>
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Earnings Overview</h3>
                 {stats && (
-                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-2.5 sm:p-4 mb-2.5 sm:mb-3">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Total Revenue Generated</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatPrice(stats?.totalRevenue ?? 0)}</p>
+                        <p className="text-[9px] sm:text-xs text-gray-600">Revenue</p>
+                        <p className="text-sm sm:text-lg font-bold text-gray-900">{formatPrice(stats?.totalRevenue ?? 0)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Platform Commission (5%)</p>
-                        <p className="text-2xl font-bold text-red-600">-{formatPrice(stats.platformCommission)}</p>
+                        <p className="text-[9px] sm:text-xs text-gray-600">Commission</p>
+                        <p className="text-sm sm:text-lg font-bold text-red-600">-{formatPrice(stats.platformCommission)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Your Earnings (95%)</p>
-                        <p className="text-2xl font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
+                        <p className="text-[9px] sm:text-xs text-gray-600">Earnings</p>
+                        <p className="text-sm sm:text-lg font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
                       </div>
                     </div>
                   </div>
                 )}
                 
-                <div className="text-center py-8 text-gray-500">
-                  <DollarSign className="w-12 h-12 mx-auto mb-4" />
-                  <p>Detailed earnings breakdown coming soon</p>
-                  <p className="text-sm">Track individual sales and commission details</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 mb-2 sm:mb-2.5">
+                  <h4 className="font-semibold text-blue-900 mb-1 text-xs sm:text-sm">View Payment Transfers</h4>
+                  <p className="text-[10px] sm:text-xs text-blue-800 mb-2">Check the status of all your seller payments, including successful transfers, pending payments, and retry history.</p>
+                  <Link 
+                    href="/seller/transfers"
+                    className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs sm:text-sm"
+                  >
+                    <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    View My Transfers & Payments
+                  </Link>
                 </div>
+                
+                <div className="text-center py-2 sm:py-3 text-gray-500">
+                  <p className="text-[9px] sm:text-xs">More detailed earnings breakdown available in transfer dashboard</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'purchases' && (
+              <div>
+                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Purchased Designs</h2>
+                
+                {purchasedDesigns.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8">
+                    <Download className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2 sm:mb-3" />
+                    <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No purchases yet</p>
+                    <Link 
+                      href="/designs"
+                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs"
+                    >
+                      Browse Designs
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                    {purchasedDesigns.map((purchase) => (
+                      <div key={purchase.purchaseId} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        {/* Design Image */}
+                        <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
+                          <Image
+                            src={purchase.design.imageUrl}
+                            alt={purchase.design.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-cover"
+                          />
+                          <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
+                            {purchase.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
+                          </div>
+                        </div>
+
+                        {/* Design Info */}
+                        <div className="p-2 sm:p-3">
+                          <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{purchase.design.title}</h3>
+                          <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{purchase.design.category}</p>
+                          
+                          {/* Designer Info */}
+                          <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
+                            <p>By <span className="font-medium truncate">{purchase.design.designer.name || 'Unknown'}</span></p>
+                          </div>
+
+                          {/* Purchase Details */}
+                          <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
+                            <p className="text-gray-600">
+                              <span className="font-medium">{formatDate(purchase.purchaseDate)}</span>
+                            </p>
+                            <p className="text-gray-600 mt-0.5">
+                              <span className="font-medium text-indigo-600">{formatPrice(purchase.purchasePrice)}</span>
+                            </p>
+                          </div>
+
+                          {/* Download Button */}
+                          <button
+                            onClick={() => handleDownloadPurchasedDesign(purchase.purchaseId, purchase.design.id, purchase.design.title)}
+                            className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
+                            disabled={!purchase?.design?.id}
+                          >
+                            <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -671,60 +846,60 @@ function SellerAccountTab() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Bank Account for Earnings</h3>
+    <div className="p-2.5 sm:p-4">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h3 className="text-xs sm:text-sm font-semibold text-gray-900\">Bank Account for Earnings</h3>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-indigo-700 text-xs sm:text-sm whitespace-nowrap"
           >
-            {sellerAccount ? 'Update Account' : 'Add Account'}
+            {sellerAccount ? 'Update' : 'Add Account'}
           </button>
         )}
       </div>
 
       {sellerAccount && !showForm ? (
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium text-gray-900">Current Account</h4>
-            <span className={`px-2 py-1 rounded-full text-xs ${
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-gray-900 text-xs sm:text-sm">Current Account</h4>
+            <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-xs ${
               sellerAccount.isVerified 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-yellow-100 text-yellow-800'
             }`}>
-              {sellerAccount.isVerified ? 'Verified' : 'Pending Verification'}
+              {sellerAccount.isVerified ? 'Verified' : 'Pending'}
             </span>
           </div>
-          <div className="space-y-2 text-sm">
-            <p><span className="font-medium">Account Name:</span> {sellerAccount.accountName}</p>
-            <p><span className="font-medium">Account Number:</span> {sellerAccount.accountNumber}</p>
-            <p><span className="font-medium">Bank:</span> {sellerAccount.bankName}</p>
-            <p><span className="font-medium">Status:</span> {sellerAccount.isActive ? 'Active' : 'Inactive'}</p>
+          <div className="space-y-1 text-[10px] sm:text-xs">
+            <p><span className="font-medium\">Account Name:</span> <span className="truncate inline-block max-w-xs">{sellerAccount.accountName}</span></p>
+            <p><span className="font-medium\">Account Number:</span> {sellerAccount.accountNumber}</p>
+            <p><span className="font-medium\">Bank:</span> <span className="truncate inline-block max-w-xs\">{sellerAccount.bankName}</span></p>
+            <p><span className="font-medium\">Status:</span> {sellerAccount.isActive ? 'Active' : 'Inactive'}</p>
           </div>
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>How it works:</strong> When customers make purchases, 95% of the sale amount will be automatically transferred to this account. The platform retains 5% as commission.
+          <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-blue-50 rounded-lg\">
+            <p className="text-[9px] sm:text-xs text-blue-800 leading-tight">
+              <strong>How it works:</strong> When customers make purchases, 90% of the sale amount will be automatically transferred to this account. The platform retains 10% as commission.
             </p>
           </div>
           
           {!sellerAccount.isVerified && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center justify-between">
+            <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg\">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
                 <div>
-                  <p className="text-sm text-yellow-800 font-medium">Account Not Verified</p>
-                  <p className="text-xs text-yellow-700 mt-1">
+                  <p className="text-[10px] sm:text-xs text-yellow-800 font-medium\">Account Not Verified</p>
+                  <p className="text-[9px] sm:text-xs text-yellow-700 mt-0.5\">
                     Your account needs to be verified to receive payments automatically.
                   </p>
                 </div>
                 <button
                   onClick={handleVerifyAccount}
                   disabled={verifying}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="bg-yellow-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs whitespace-nowrap\"
                 >
                   {verifying ? (
                     <>
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block mr-2" />
+                      <div className="animate-spin h-3 w-3 border-1.5 border-white border-t-transparent rounded-full inline-block mr-1\" />
                       Verifying...
                     </>
                   ) : (

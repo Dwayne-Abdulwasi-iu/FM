@@ -5,6 +5,7 @@ import Image from 'next/image'
 // import { useRouter } from 'next/navigation'
 import { CheckCircle, Download, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 interface OrderDetails {
   id: string
@@ -29,6 +30,7 @@ interface OrderDetails {
 
 export default function CheckoutSuccessPage() {
   // const router = useRouter()
+  const { data: session } = useSession()
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -42,10 +44,33 @@ export default function CheckoutSuccessPage() {
   useEffect(() => {
     if (sessionId) {
       fetchOrderDetails(sessionId)
+      // Clear cart after successful payment
+      if (session?.user?.id) {
+        clearCart()
+      }
     } else {
       setLoading(false)
     }
-  }, [sessionId])
+  }, [sessionId, session])
+
+  const clearCart = async () => {
+    try {
+      // Delete all items from user's cart
+      const response = await fetch('/api/cart', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        console.log('Cart cleared successfully after payment')
+      }
+    } catch (error) {
+      console.error('Failed to clear cart:', error)
+      // Don't fail the success page if cart clearing fails
+    }
+  }
 
   const fetchOrderDetails = async (sessionId: string) => {
     try {

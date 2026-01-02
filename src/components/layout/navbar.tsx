@@ -12,6 +12,7 @@ export function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -164,10 +165,99 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu */}
-          <button className="md:hidden" aria-label="Open menu">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100" 
+            aria-label="Open menu"
+          >
             <Menu className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Mobile Menu Content */}
+        {mobileMenuOpen && (
+          <div className="md:hidden pb-2 border-t border-gray-200">
+            <div className="space-y-1 py-2">
+              <Link 
+                href="/designs" 
+                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Browse
+              </Link>
+              <Link 
+                href="/contact" 
+                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              {session && (
+                <Link 
+                  href="/upload" 
+                  className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Upload className="w-3 h-3" />
+                  Upload
+                </Link>
+              )}
+              <Link 
+                href="/cart" 
+                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center justify-between"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Cart</span>
+                {cartCount > 0 && (
+                  <span className="bg-indigo-700 text-white text-[10px] rounded-full px-1.5 py-0.5">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              {session ? (
+                <>
+                  {session.user?.role === 'ADMIN' && (
+                    <Link 
+                      href="/admin" 
+                      className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Shield className="w-3 h-3" />
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <Link 
+                    href="/profile" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <User className="w-3 h-3" />
+                    Profile
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => {
+                    signIn();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-11/12 mx-auto block bg-indigo-700 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-800 font-medium text-xs text-center"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

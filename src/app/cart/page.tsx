@@ -120,7 +120,17 @@ export default function CartPage() {
         window.location.href = url
       } else {
         const error = await response.json()
-        setErrorMessage(`Checkout failed: ${error.message}`)
+        // If Stripe is not activated, automatically try Paystack
+        if (paymentMethod === 'stripe' && error.message?.includes('Stripe not activated')) {
+          setErrorMessage('Stripe not activated. Switching to Paystack...')
+          setPaymentMethod('paystack')
+          // Retry with Paystack after a brief delay
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 2000)
+          return
+        }
+        setErrorMessage(error.message || 'Checkout failed. Please try again.')
       }
     } catch (error) {
       console.error('Checkout error:', error)
@@ -303,8 +313,8 @@ export default function CartPage() {
                       </div>
                       <div className="text-xs text-gray-500 mt-1 space-y-1">
                         <p>• No additional fees charged to you</p>
-                        <p>• Platform takes 5% commission from sellers</p>
-                        <p>• Sellers receive 95% of the sale price</p>
+                        <p>• Platform takes 10% commission from sellers</p>
+                        <p>• Sellers receive 90% of the sale price</p>
                       </div>
                     </div>
                   </div>

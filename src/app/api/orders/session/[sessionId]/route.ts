@@ -15,11 +15,49 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
       )
     }
 
-  // Resolve params (supports Promise or object) and retrieve the checkout session from Stripe
-  const paramsObj = await Promise.resolve(context.params)
-  // Initialize Stripe lazily and retrieve the checkout session
-  const stripe = getStripe()
-  const checkoutSession = await stripe.checkout.sessions.retrieve(paramsObj.sessionId)
+    // Resolve params (supports Promise or object)
+    const paramsObj = await Promise.resolve(context.params)
+    const sessionId = paramsObj.sessionId
+
+    // Check if this is a Paystack reference (starts with 'fashion_')
+    if (sessionId.startsWith('fashion_')) {
+      // Find Paystack order by orderNumber
+      const order = await prisma.order.findFirst({
+        where: {
+          orderNumber: sessionId,
+          customerId: session.user.id
+        },
+        include: {
+          items: {
+            include: {
+              design: {
+                include: {
+                  designer: {
+                    select: {
+                      id: true,
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
+
+      if (!order) {
+        return NextResponse.json(
+          { message: 'Order not found' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json({ order })
+    }
+
+    // Otherwise, try Stripe
+    const stripe = getStripe()
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId)
     
     if (!checkoutSession.payment_intent) {
       return NextResponse.json(

@@ -81,6 +81,8 @@ export async function POST() {
         }
 
         // Create Paystack subaccount for split payments
+        // percentage_charge is what the MAIN ACCOUNT (platform) keeps
+        // Setting to 10 means platform keeps 10%, seller gets 90%
         let subaccountCode = sellerAccount.subaccountCode
         if (!subaccountCode) {
           try {
@@ -89,7 +91,7 @@ export async function POST() {
               business_name: `${verifiedAccountName} - Fashion Designer`,
               settlement_bank: sellerAccount.bankCode,
               account_number: sellerAccount.accountNumber,
-              percentage_charge: 95, // Seller gets 95%, platform keeps 5%
+              percentage_charge: 10, // Platform keeps 10%, seller gets 90%
               description: `Subaccount for fashion designer: ${verifiedAccountName}`
             })
 
@@ -121,7 +123,7 @@ export async function POST() {
 
         return NextResponse.json({
           success: true,
-          message: 'Bank account verified successfully! Split payments are now enabled - you\'ll receive 95% of each sale instantly.',
+          message: 'Bank account verified successfully! Split payments are now enabled - you\'ll receive 90% of each sale instantly.',
           sellerAccount: updatedAccount,
           verifiedName: verifiedAccountName,
           recipientCode,

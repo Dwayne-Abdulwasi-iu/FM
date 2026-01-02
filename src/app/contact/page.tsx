@@ -55,107 +55,107 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Have questions or need help? We're here to assist you. Send us a message or start a live chat with our support team.
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">Contact Us</h1>
+          <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto">
+            Have questions? Send us a message or chat with our support team.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Contact Information */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
+            <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-3 sm:mb-4">
+              <h2 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Get in Touch</h2>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-indigo-600 mr-3" />
+                  <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 mr-2 sm:mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Email</p>
-                    <p className="text-gray-600">support@fashionmarketplace.com</p>
+                    <p className="font-medium text-gray-900 text-xs sm:text-sm">Email</p>
+                    <p className="text-gray-600 text-[10px] sm:text-xs">support@fashionmarketplace.com</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center">
-                  <Phone className="h-5 w-5 text-indigo-600 mr-3" />
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 mr-2 sm:mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Phone</p>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
+                    <p className="font-medium text-gray-900 text-xs sm:text-sm">Phone</p>
+                    <p className="text-gray-600 text-[10px] sm:text-xs">+1 (555) 123-4567</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center">
-                  <MapPin className="h-5 w-5 text-indigo-600 mr-3" />
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 mr-2 sm:mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Office</p>
-                    <p className="text-gray-600">123 Fashion Ave, Style City, SC 12345</p>
+                    <p className="font-medium text-gray-900 text-xs sm:text-sm">Office</p>
+                    <p className="text-gray-600 text-[10px] sm:text-xs">123 Fashion Ave, Style City, SC</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Customer Care Chat */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Immediate Help?</h3>
-              <p className="text-gray-600 mb-4">
-                Start a live chat with our customer care team for instant support.
+            <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3">Need Help?</h3>
+              <p className="text-[10px] sm:text-xs text-gray-600 mb-3">
+                Chat with our support team.
               </p>
               <button
                 onClick={() => router.push('/customer-care')}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-indigo-600 text-white py-2 sm:py-3 px-3 sm:px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
-                <MessageCircle className="h-4 w-4" />
-                Start Live Chat
+                <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                Live Chat
               </button>
             </div>
           </div>
 
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
+            <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+              <h2 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Send us a Message</h2>
               
               {success && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                    <span className="text-green-800 font-medium">Message sent successfully! We'll get back to you soon.</span>
+                <div className="mb-4 p-2.5 sm:p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-green-800 font-medium text-xs sm:text-sm">Message sent! We'll reply soon.</span>
                   </div>
                   <button
                     onClick={() => setSuccess(false)}
                     className="text-green-600 hover:text-green-800"
-                    title="Close success message"
-                    aria-label="Close success message"
+                    title="Close"
+                    aria-label="Close"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   </button>
                 </div>
               )}
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <X className="h-5 w-5 text-red-600 mr-3" />
-                    <span className="text-red-800 font-medium">{error}</span>
+                <div className="mb-4 p-2.5 sm:p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
+                    <span className="text-red-800 font-medium text-xs sm:text-sm">{error}</span>
                   </div>
                   <button
                     onClick={() => setError(null)}
                     className="text-red-600 hover:text-red-800"
-                    title="Close error message"
-                    aria-label="Close error message"
+                    title="Close"
+                    aria-label="Close"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   </button>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Name *
                     </label>
                     <input
@@ -165,13 +165,13 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
-                      placeholder="Your full name"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
+                      placeholder="Your name"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Email *
                     </label>
                     <input
@@ -181,15 +181,15 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
-                      placeholder="your.email@example.com"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
+                      placeholder="your@email.com"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="subject" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Subject *
                     </label>
                     <input
@@ -199,13 +199,13 @@ export default function ContactPage() {
                       value={formData.subject}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
-                      placeholder="Brief description of your inquiry"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
+                      placeholder="Your inquiry"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="priority" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Priority
                     </label>
                     <select
@@ -213,7 +213,7 @@ export default function ContactPage() {
                       name="priority"
                       value={formData.priority}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white text-xs sm:text-sm"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -224,7 +224,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="message" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Message *
                   </label>
                   <textarea
@@ -233,21 +233,21 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleInputChange}
                     required
-                    rows={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
-                    placeholder="Please describe your inquiry in detail..."
+                    rows={4}
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
+                    placeholder="Describe your inquiry..."
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-indigo-600 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 transition-colors text-xs sm:text-sm"
                 >
                   {loading ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent rounded-full" />
                   ) : (
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
                   {loading ? 'Sending...' : 'Send Message'}
                 </button>

@@ -129,27 +129,27 @@ export default function DesignsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Fashion Designs</h1>
-          <p className="text-gray-700">Discover unique fashion illustrations and designs from talented creators</p>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Fashion Designs</h1>
+          <p className="text-xs sm:text-sm text-gray-700">Discover unique fashion illustrations and designs from talented creators</p>
         </div>
 
         {/* Category Filter */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-2.5 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                   selectedCategory === category
                     ? 'bg-indigo-700 text-white shadow-md'
                     : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-300 hover:border-indigo-300'
                 }`}
               >
-                {category === 'all' ? 'All Categories' : category}
+                {category === 'all' ? 'All' : category}
               </button>
             ))}
           </div>
@@ -157,30 +157,30 @@ export default function DesignsPage() {
 
         {/* Designs Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                 <div className="aspect-square bg-gray-300 rounded-t-lg" />
-                <div className="p-4 space-y-2">
-                  <div className="h-4 bg-gray-300 rounded" />
-                  <div className="h-3 bg-gray-300 rounded w-2/3" />
-                  <div className="h-4 bg-gray-300 rounded w-1/3" />
+                <div className="p-2 sm:p-3 space-y-1">
+                  <div className="h-3 bg-gray-300 rounded" />
+                  <div className="h-2 bg-gray-300 rounded w-2/3" />
+                  <div className="h-3 bg-gray-300 rounded w-1/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : designs.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No designs found in this category.</p>
+          <div className="text-center py-6 sm:py-8">
+            <p className="text-gray-500 text-xs sm:text-sm">No designs found in this category.</p>
             <Link 
               href="/upload" 
-              className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 font-medium"
+              className="mt-2 sm:mt-3 inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 font-medium text-xs sm:text-sm"
             >
               Upload Your First Design
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {designs.map((design) => (
               <div key={design.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group">
                 <Link href={`/designs/${design.id}`}>
@@ -213,26 +213,26 @@ export default function DesignsPage() {
                   </div>
                 </Link>
                 
-                <div className="p-4">
+                <div className="p-2 sm:p-3">
                   <Link href={`/designs/${design.id}`}>
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-indigo-700">
+                    <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-0.5 line-clamp-2 hover:text-indigo-700">
                       {design.title}
                     </h3>
                   </Link>
                   
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5">
                     by {design.designer.name || 'Anonymous'}
                   </p>
                   
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-bold text-lg text-gray-900">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-xs sm:text-sm text-gray-900">
                       {formatPrice(design.price)}
                     </span>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-1">
                       {design._count?.reviews ? (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                        <div className="flex items-center text-[9px] sm:text-xs text-gray-500">
+                          <Star className="h-3 w-3 text-yellow-400 mr-0.5" />
                           {design._count.reviews}
                         </div>
                       ) : null}
@@ -240,13 +240,13 @@ export default function DesignsPage() {
                       <button 
                         onClick={() => handleAddToCart(design.id, design.title)}
                         disabled={addingToCart === design.id}
-                        className="p-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="p-1.5 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
                         aria-label="Add to cart"
                       >
                         {addingToCart === design.id ? (
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                          <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
                         ) : (
-                          <ShoppingCart className="h-4 w-4" />
+                          <ShoppingCart className="h-3 w-3" />
                         )}
                       </button>
                     </div>
@@ -255,14 +255,14 @@ export default function DesignsPage() {
                   {/* View Details Button */}
                   <Link 
                     href={`/designs/${design.id}`}
-                    className="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium mb-2"
+                    className="w-full inline-flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-[10px] sm:text-xs font-medium mb-1.5"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
+                    <Eye className="h-3 w-3 mr-1" />
+                    View
                   </Link>
                   
-                  <div className="mt-2">
-                    <span className="inline-block px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded font-medium">
+                  <div className="mt-1">
+                    <span className="inline-block px-1.5 py-0.5 text-[8px] sm:text-[10px] bg-indigo-100 text-indigo-800 rounded font-medium">
                       {design.category}
                     </span>
                   </div>

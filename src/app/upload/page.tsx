@@ -201,66 +201,66 @@ export default function EnhancedUploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Upload className="h-6 w-6" />
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-1.5">
+              <Upload className="h-4 sm:h-5 w-4 sm:w-5" />
               Upload New Design
             </h1>
-            <p className="text-gray-600 mt-1">Share your fashion designs with multiple media files</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Share your fashion designs with multiple media files</p>
           </div>
 
           {/* Success Message */}
           {successMessage && (
-            <div className="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+            <div className="mx-3 sm:mx-6 mt-3 sm:mt-6 p-2.5 sm:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                <span className="text-green-800 font-medium">{successMessage}</span>
+                <CheckCircle className="h-4 sm:h-5 w-4 sm:w-5 text-green-600 mr-2 sm:mr-3 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-green-800 font-medium">{successMessage}</span>
               </div>
               <button
                 onClick={() => setSuccessMessage(null)}
-                className="text-green-600 hover:text-green-800"
+                className="text-green-600 hover:text-green-800 ml-2 flex-shrink-0"
                 aria-label="Close success message"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 sm:h-4 w-3 sm:w-4" />
               </button>
             </div>
           )}
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+            <div className="mx-3 sm:mx-6 mt-3 sm:mt-6 p-2.5 sm:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
               <div className="flex items-center">
-                <X className="h-5 w-5 text-red-600 mr-3" />
-                <span className="text-red-800 font-medium">{errorMessage}</span>
+                <X className="h-4 sm:h-5 w-4 sm:w-5 text-red-600 mr-2 sm:mr-3 flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-red-800 font-medium">{errorMessage}</span>
               </div>
               <button
                 onClick={() => setErrorMessage(null)}
-                className="text-red-600 hover:text-red-800"
+                className="text-red-600 hover:text-red-800 ml-2 flex-shrink-0"
                 aria-label="Close error message"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 sm:h-4 w-3 sm:w-4" />
               </button>
             </div>
           )}
 
           {/* Bank Account Required Message */}
           {bankAccountRequired && (
-            <div className="mx-6 mt-6 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-start">
-                <DollarSign className="h-6 w-6 text-yellow-600 mr-3 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="text-yellow-800 font-semibold text-lg mb-2">Bank Account Required</h3>
-                  <p className="text-yellow-700 mb-4">
+            <div className="mx-3 sm:mx-6 mt-3 sm:mt-6 p-3 sm:p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <DollarSign className="h-4 sm:h-6 w-4 sm:w-6 text-yellow-600 mt-0.5 sm:mt-1 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm sm:text-base text-yellow-800 font-semibold mb-1.5 sm:mb-2">Bank Account Required</h3>
+                  <p className="text-xs sm:text-sm text-yellow-700 mb-2.5 sm:mb-4 leading-tight">
                     To upload designs and receive payments, you need to add your bank account details first. 
                     This ensures you can receive your earnings when customers purchase your designs.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 sm:gap-3">
                     <button
                       onClick={() => router.push('/profile#bank-account')}
-                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 font-medium transition-colors"
+                      className="bg-yellow-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-yellow-700 font-medium transition-colors text-xs sm:text-sm"
                     >
                       Add Bank Account
                     </button>
@@ -272,19 +272,19 @@ export default function EnhancedUploadPage() {
 
           {/* Bank Account Verification Required Message */}
           {bankAccountNeedsVerification && (
-            <div className="mx-6 mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start">
-                <CheckCircle className="h-6 w-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="text-blue-800 font-semibold text-lg mb-2">Bank Account Verification Required</h3>
-                  <p className="text-blue-700 mb-4">
+            <div className="mx-3 sm:mx-6 mt-3 sm:mt-6 p-3 sm:p-6 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <CheckCircle className="h-4 sm:h-6 w-4 sm:w-6 text-blue-600 mt-0.5 sm:mt-1 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm sm:text-base text-blue-800 font-semibold mb-1.5 sm:mb-2">Bank Account Verification Required</h3>
+                  <p className="text-xs sm:text-sm text-blue-700 mb-2.5 sm:mb-4 leading-tight">
                     Your bank account has been added but needs to be verified before you can upload designs. 
                     Verification enables automatic payments with our split payment system.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 sm:gap-3">
                     <button
                       onClick={() => router.push('/profile#bank-verification')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                      className="bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-xs sm:text-sm"
                     >
                       Verify Account
                     </button>
@@ -295,46 +295,46 @@ export default function EnhancedUploadPage() {
           )}
 
           <div className="relative">
-            <form onSubmit={handleSubmit} className={`p-6 ${(bankAccountRequired || bankAccountNeedsVerification) ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <form onSubmit={handleSubmit} className={`p-3 sm:p-6 ${(bankAccountRequired || bankAccountNeedsVerification) ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
               {/* Media Files Upload */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    <ImageIcon className="inline h-4 w-4 mr-1" />
+                <div className="flex items-center justify-between mb-2.5 sm:mb-4 gap-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 min-w-0">
+                    <ImageIcon className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                     Media Files (Images & Videos)
                   </label>
                   <button
                     type="button"
                     onClick={addMediaSection}
-                    className="inline-flex items-center px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
+                    className="inline-flex items-center px-2 sm:px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 flex-shrink-0"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
+                    <Plus className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
                     Add File
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {mediaFiles.map((media, index) => (
-                    <div key={media.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-gray-700">
+                    <div key={media.id} className="border border-gray-200 rounded-lg p-2.5 sm:p-4">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">
                           File {index + 1}
                         </span>
                         {mediaFiles.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeMediaSection(media.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
+                            className="text-red-600 hover:text-red-800 p-0.5"
                             aria-label="Remove file section"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 sm:h-4 w-3 sm:w-4" />
                           </button>
                         )}
                       </div>
 
                       {/* File Upload */}
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-500 transition-colors relative mb-3">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-2.5 sm:p-4 text-center hover:border-indigo-500 transition-colors relative mb-2 sm:mb-3">
                         {media.preview ? (
                           <div className="space-y-2">
                             {media.fileType === 'VIDEO' ? (
@@ -361,18 +361,18 @@ export default function EnhancedUploadPage() {
                                     : m
                                 ))
                               }}
-                              className="text-sm text-indigo-700 hover:text-indigo-900 font-medium"
+                              className="text-xs sm:text-sm text-indigo-700 hover:text-indigo-900 font-medium"
                             >
                               Change file
                             </button>
                           </div>
                         ) : (
                           <div>
-                            <div className="flex justify-center mb-2">
-                              <Upload className="h-8 w-8 text-gray-400" />
+                            <div className="flex justify-center mb-1.5 sm:mb-2">
+                              <Upload className="h-5 sm:h-8 w-5 sm:w-8 text-gray-400" />
                             </div>
-                            <p className="text-gray-600 text-sm mb-1">Click to upload or drag and drop</p>
-                            <p className="text-xs text-gray-500">Images: PNG, JPG, GIF | Videos: MP4, MOV, AVI</p>
+                            <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Click to upload or drag and drop</p>
+                            <p className="text-[10px] sm:text-xs text-gray-500">Images: PNG, JPG, GIF | Videos: MP4, MOV, AVI</p>
                           </div>
                         )}
                         <input
@@ -388,31 +388,31 @@ export default function EnhancedUploadPage() {
                       </div>
 
                       {/* Access Type Selection */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Access Type:</span>
-                        <div className="flex space-x-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs sm:text-sm text-gray-600">Access Type:</span>
+                        <div className="flex space-x-1.5 sm:space-x-2">
                           <button
                             type="button"
                             onClick={() => updateMediaAccessType(media.id, 'FREE')}
-                            className={`inline-flex items-center px-3 py-1 text-xs rounded ${
+                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded ${
                               media.accessType === 'FREE'
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-gray-100 text-gray-600 hover:bg-green-50'
                             }`}
                           >
-                            <Eye className="h-3 w-3 mr-1" />
+                            <Eye className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
                             Free View
                           </button>
                           <button
                             type="button"
                             onClick={() => updateMediaAccessType(media.id, 'PREMIUM')}
-                            className={`inline-flex items-center px-3 py-1 text-xs rounded ${
+                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded ${
                               media.accessType === 'PREMIUM'
                                 ? 'bg-purple-100 text-purple-800'
                                 : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
                             }`}
                           >
-                            <Lock className="h-3 w-3 mr-1" />
+                            <Lock className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
                             Premium
                           </button>
                         </div>
@@ -423,39 +423,39 @@ export default function EnhancedUploadPage() {
               </div>
 
               {/* Form Fields */}
-              <div className="space-y-6">
+              <div className="space-y-3.5 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Type className="inline h-4 w-4 mr-1" />
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <Type className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                     Title
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     placeholder="Enter design title"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FileText className="inline h-4 w-4 mr-1" />
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <FileText className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     placeholder="Describe your design..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <DollarSign className="inline h-4 w-4 mr-1" />
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <DollarSign className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                     Regular Price (USD)
                   </label>
                   <input
@@ -464,20 +464,20 @@ export default function EnhancedUploadPage() {
                     min="0"
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     placeholder="0.00"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Buying Options
                   </label>
                   <select
                     value={formData.buyingTypes}
                     onChange={(e) => setFormData({...formData, buyingTypes: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     title="Select buying options"
                   >
                     <option value="REGULAR">Regular Only (Multiple buyers allowed)</option>
@@ -488,8 +488,8 @@ export default function EnhancedUploadPage() {
 
                 {(formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <DollarSign className="inline h-4 w-4 mr-1" />
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      <DollarSign className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                       Ownership Price (USD)
                     </label>
                     <input
@@ -498,24 +498,24 @@ export default function EnhancedUploadPage() {
                       min="0"
                       value={formData.ownershipPrice}
                       onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                      className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                       placeholder="0.00"
                       required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                       Higher price for exclusive ownership and branding rights
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Category
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     title="Select design category"
                   >
                     {categories.map(category => (
@@ -525,42 +525,42 @@ export default function EnhancedUploadPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Tag className="inline h-4 w-4 mr-1" />
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    <Tag className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                     Tags
                   </label>
                   <input
                     type="text"
                     value={formData.tags}
                     onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
                     placeholder="e.g. summer,dress,elegant (comma-separated)"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end space-x-4">
+            <div className="mt-4 sm:mt-8 flex justify-end gap-2.5 sm:gap-4">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="px-4 sm:px-6 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isUploading}
-                className="px-6 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+                className="px-4 sm:px-6 py-1.5 sm:py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm"
               >
                 {isUploading ? (
                   <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="animate-spin h-3 sm:h-4 w-3 sm:w-4 border-2 border-white border-t-transparent rounded-full" />
                     Uploading...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4" />
+                    <Upload className="h-3 sm:h-4 w-3 sm:w-4" />
                     Upload Design
                   </>
                 )}

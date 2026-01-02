@@ -129,8 +129,8 @@ async function handleCheckoutCompleted(session: unknown) {
     // Update design sales statistics, create seller earnings, and handle purchases
     for (const item of orderItems) {
       const saleAmount = item.price * item.quantity
-      const platformCommission = saleAmount * 0.05 // 5% commission
-      const sellerEarning = saleAmount - platformCommission // 95% to seller
+      const platformCommission = saleAmount * 0.10 // 10% commission
+      const sellerEarning = saleAmount - platformCommission // 90% to seller
 
       // Build update payload inline (avoid a loosely-typed intermediate variable)
       const designUpdateData = {

@@ -35,6 +35,8 @@ model User {
   contactMessages ContactMessage[]
   chatSessions ChatSession[]
   resources Resource[]
+  paystackTransfers PaystackTransfer[]
+  transferNotifications TransferNotification[]
 
   accounts Account[]
   sessions Session[]
@@ -327,4 +329,58 @@ model Resource {
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   @@map("resources")
+}
+
+model PaystackTransfer {
+  id              String   @id @default(cuid()) @map("_id")
+  orderId         String   // Order that triggered the transfer
+  designId        String   // Design being paid for
+  sellerId        String   // Seller receiving payment
+  seller          User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  amountUSD       Float    // Amount in USD (seller's 90%)
+  amountNGN       Float    // Amount in NGN (converted)
+  exchangeRate    Float    // Exchange rate used
+  
+  paystackReference String? // Paystack transfer reference
+  paystackStatus  String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  
+  retryCount      Int      @default(0)
+  maxRetries      Int      @default(3)
+  lastRetryAt     DateTime?
+  
+  errorMessage    String?
+  failureReason   String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  succeededAt     DateTime?
+  
+  @@map("paystack_transfers")
+}
+
+model TransferNotification {
+  id              String   @id @default(cuid()) @map("_id")
+  transferId      String
+  sellerId        String
+  seller          User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  type            String   // SUCCESS, FAILED, PENDING, RETRY
+  message         String
+  isRead          Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  readAt          DateTime?
+  
+  @@map("transfer_notifications")
+}
+
+model Settings {
+  id        String   @id @default(cuid()) @map("_id")
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }

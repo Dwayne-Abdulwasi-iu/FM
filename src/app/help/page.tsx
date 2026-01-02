@@ -229,93 +229,82 @@ export default function HelpPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6">
           <Link 
             href="/" 
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4"
+            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-2 sm:mb-3 text-xs sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Back to Home
           </Link>
           
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <HelpCircle className="h-12 w-12 text-indigo-600 mr-3" />
-              <h1 className="text-4xl font-bold text-gray-900">Help Center</h1>
+          <div className="text-center mb-4 sm:mb-6">
+            <div className="flex items-center justify-center mb-2 sm:mb-3">
+              <HelpCircle className="h-8 w-8 sm:h-12 sm:w-12 text-indigo-600 mr-2 sm:mr-3" />
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Help Center</h1>
             </div>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Find answers to common questions and learn how to make the most of Fashion Marketplace
+            <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto">
+              Find answers to common questions
             </p>
           </div>
 
           {/* Search */}
-          <div className="max-w-2xl mx-auto mb-8">
+          <div className="max-w-2xl mx-auto mb-4 sm:mb-6">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="text"
-                placeholder="Search for help topics..."
+                placeholder="Search help..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
+                className="w-full pl-7 sm:pl-12 pr-3 sm:pr-4 py-1.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs sm:text-base"
               />
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
           <Link 
             href="/contact"
-            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+            className="bg-white p-2 sm:p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
           >
-            <Mail className="h-8 w-8 text-indigo-600 mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Contact Support</h3>
-            <p className="text-gray-600 text-sm">Get personalized help from our support team</p>
-            <div className="flex items-center text-indigo-600 text-sm font-medium mt-3">
-              Send Message
-              <ArrowLeft className="h-4 w-4 ml-1 rotate-180 group-hover:translate-x-1 transition-transform" />
-            </div>
+            <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mb-1 sm:mb-2" />
+            <h3 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">Support</h3>
+            <p className="text-gray-600 text-[10px] sm:text-xs">Get help</p>
           </Link>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <Video className="h-8 w-8 text-green-600 mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Video Tutorials</h3>
-            <p className="text-gray-600 text-sm">Watch step-by-step guides</p>
-            <div className="flex items-center text-green-600 text-sm font-medium mt-3">
-              Coming Soon
-            </div>
+          <div className="bg-white p-2 sm:p-3 rounded-lg shadow-sm">
+            <Video className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mb-1 sm:mb-2" />
+            <h3 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">Videos</h3>
+            <p className="text-gray-600 text-[10px] sm:text-xs">Coming Soon</p>
           </div>
 
           <Link 
             href="/terms"
-            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+            className="bg-white p-2 sm:p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
           >
-            <FileText className="h-8 w-8 text-purple-600 mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Terms & Policies</h3>
-            <p className="text-gray-600 text-sm">Read our terms of service and privacy policy</p>
-            <div className="flex items-center text-purple-600 text-sm font-medium mt-3">
-              View Documents
-              <ArrowLeft className="h-4 w-4 ml-1 rotate-180 group-hover:translate-x-1 transition-transform" />
-            </div>
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mb-1 sm:mb-2" />
+            <h3 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">Terms</h3>
+            <p className="text-gray-600 text-[10px] sm:text-xs">Policies</p>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Categories Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-              <h3 className="font-semibold text-gray-900 mb-4">Help Categories</h3>
-              <div className="space-y-2">
+            <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-8">
+              <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Categories</h3>
+              <div className="space-y-1">
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                  className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
                     selectedCategory === 'all' 
                       ? 'bg-indigo-100 text-indigo-700' 
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  All Categories
+                  All
                 </button>
                 {helpCategories.map((category) => {
                   const IconComponent = category.icon
@@ -323,14 +312,15 @@ export default function HelpPage() {
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center ${
+                      className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center text-xs sm:text-sm ${
                         selectedCategory === category.id 
                           ? 'bg-indigo-100 text-indigo-700' 
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      <IconComponent className="h-4 w-4 mr-2" />
-                      {category.title}
+                      <IconComponent className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                      <span className="hidden sm:inline">{category.title}</span>
+                      <span className="sm:hidden">{category.title.split(' ')[0]}</span>
                     </button>
                   )
                 })}
@@ -343,22 +333,22 @@ export default function HelpPage() {
             {selectedCategory === 'all' && !searchQuery ? (
               <>
                 {/* Category Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                   {helpCategories.map((category) => {
                     const IconComponent = category.icon
                     return (
                       <button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
-                        className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left group"
+                        className="bg-white p-2 sm:p-3 md:p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left group"
                       >
-                        <div className={`w-12 h-12 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center mb-4`}>
-                          <IconComponent className="h-6 w-6 text-white" />
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center mb-1.5 sm:mb-2`}>
+                          <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors">
+                        <h3 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm group-hover:text-indigo-700 transition-colors">
                           {category.title}
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-[10px] sm:text-xs">
                           {category.description}
                         </p>
                       </button>
@@ -370,35 +360,35 @@ export default function HelpPage() {
               <>
                 {/* FAQ List */}
                 <div className="bg-white rounded-lg shadow-sm">
-                  <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      {selectedCategory === 'all' ? 'All Questions' : 
+                  <div className="p-3 sm:p-4 border-b border-gray-200">
+                    <h2 className="text-sm sm:text-lg font-semibold text-gray-900">
+                      {selectedCategory === 'all' ? 'All' : 
                        helpCategories.find(cat => cat.id === selectedCategory)?.title || 'Questions'}
                     </h2>
-                    <p className="text-gray-600 mt-1">
-                      {filteredFAQs.length} {filteredFAQs.length === 1 ? 'question' : 'questions'} found
+                    <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">
+                      {filteredFAQs.length} found
                     </p>
                   </div>
 
                   <div className="divide-y divide-gray-200">
                     {filteredFAQs.map((faq) => (
-                      <div key={faq.id} className="p-6">
+                      <div key={faq.id} className="p-2.5 sm:p-4">
                         <button
                           onClick={() => toggleFAQ(faq.id)}
                           className="w-full flex items-center justify-between text-left"
                         >
-                          <h3 className="font-medium text-gray-900 pr-4">
+                          <h3 className="font-medium text-gray-900 text-xs sm:text-sm pr-2">
                             {faq.question}
                           </h3>
                           {expandedFAQ === faq.id ? (
-                            <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                           ) : (
-                            <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                           )}
                         </button>
                         
                         {expandedFAQ === faq.id && (
-                          <div className="mt-4 text-gray-600 leading-relaxed">
+                          <div className="mt-2 sm:mt-3 text-gray-600 text-xs sm:text-sm leading-relaxed">
                             {faq.answer}
                           </div>
                         )}
@@ -408,20 +398,20 @@ export default function HelpPage() {
                 </div>
 
                 {filteredFAQs.length === 0 && (
-                  <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                    <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
-                    <p className="text-gray-600 mb-6">
-                      Try adjusting your search or browse different categories
+                  <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8 text-center">
+                    <Search className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-2 sm:mb-4" />
+                    <h3 className="text-sm sm:text-lg font-medium text-gray-900 mb-1">No results</h3>
+                    <p className="text-[10px] sm:text-sm text-gray-600 mb-3 sm:mb-4">
+                      Try adjusting your search
                     </p>
                     <button
                       onClick={() => {
                         setSearchQuery('')
                         setSelectedCategory('all')
                       }}
-                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                      className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors text-xs sm:text-sm"
                     >
-                      Clear Search
+                      Clear
                     </button>
                   </div>
                 )}
@@ -431,24 +421,25 @@ export default function HelpPage() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-16 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-8">
+        <div className="mt-8 sm:mt-12 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 sm:p-6">
           <div className="text-center">
-            <MessageCircle className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Still need help?</h2>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Can't find what you're looking for? Our support team is here to help you with any questions or issues.
+            <MessageCircle className="h-8 w-8 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-2 sm:mb-4" />
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">Need help?</h2>
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 max-w-2xl mx-auto">
+              Our support team is here to help.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
               <Link 
                 href="/contact"
-                className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                className="inline-flex items-center px-3 sm:px-6 py-1.5 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors text-xs sm:text-sm"
               >
-                <Mail className="h-5 w-5 mr-2" />
-                Contact Support
+                <Mail className="h-3 w-3 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                Contact
               </Link>
-              <div className="inline-flex items-center px-6 py-3 bg-white text-gray-800 border border-gray-300 rounded-lg font-medium">
-                <Phone className="h-5 w-5 mr-2" />
-                +1 (555) 123-4567
+              <div className="inline-flex items-center px-3 sm:px-6 py-1.5 sm:py-3 bg-white text-gray-800 border border-gray-300 rounded-lg font-medium text-xs sm:text-sm">
+                <Phone className="h-3 w-3 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">+1 (555) 123-4567</span>
+                <span className="sm:hidden">Call Us</span>
               </div>
             </div>
           </div>

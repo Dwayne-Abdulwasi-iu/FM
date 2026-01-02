@@ -7,7 +7,12 @@ import Stripe from 'stripe'
 let _stripe: Stripe | null = null
 
 export function isStripeConfigured(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) return false
+  return (
+    key.startsWith('sk_live_') || 
+    (key.startsWith('sk_test_') && !key.includes('REDACTED') && !key.includes('here'))
+  )
 }
 
 export function getStripe(): Stripe {
@@ -20,7 +25,7 @@ export function getStripe(): Stripe {
   return _stripe
 }
 
-export const PLATFORM_FEE_PERCENTAGE = 0.05 // 5%
+export const PLATFORM_FEE_PERCENTAGE = 0.10 // 10%
 
 export function calculatePlatformFee(amount: number): number {
   return Math.round(amount * PLATFORM_FEE_PERCENTAGE * 100) // Convert to cents

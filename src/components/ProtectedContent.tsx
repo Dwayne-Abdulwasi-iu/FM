@@ -58,18 +58,65 @@ export default function ProtectedContent({ designId, children, previewContent }:
     
     try {
       const response = await fetch(`/api/designs/${designId}/download`)
-      if (response.ok) {
+      
+      if (!response.ok) {
+        alert('Download failed. Please try again.')
+        return
+      }
+      
+      const contentType = response.headers.get('content-type') || ''
+      
+      // If it's a direct file download (single file)
+      if (!contentType.includes('application/json') || contentType.includes('attachment')) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${accessCheck.design.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_files.zip`
+        
+        // Try to get filename from Content-Disposition header
+        const disposition = response.headers.get('content-disposition')
+        let filename = `${accessCheck.design.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_download`
+        if (disposition) {
+          const match = disposition.match(/filename="(.+)"/)
+          if (match) filename = match[1]
+        }
+        
+        a.download = filename
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
+        return
+      }
+      
+      // Multiple files - get manifest and download each
+      const manifest = await response.json()
+      
+      if (manifest.files && manifest.files.length > 0) {
+        // Download files sequentially
+        for (const file of manifest.files) {
+          try {
+            const fileResponse = await fetch(file.downloadUrl)
+            if (fileResponse.ok) {
+              const blob = await fileResponse.blob()
+              const url = window.URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = file.name
+              document.body.appendChild(a)
+              a.click()
+              window.URL.revokeObjectURL(url)
+              document.body.removeChild(a)
+              
+              // Small delay between downloads
+              await new Promise(resolve => setTimeout(resolve, 500))
+            }
+          } catch (fileError) {
+            console.error(`Failed to download ${file.name}:`, fileError)
+          }
+        }
       } else {
-        alert('Download failed. Please try again.')
+        alert('No files available for download.')
       }
     } catch (error) {
       console.error('Download error:', error)
@@ -98,7 +145,7 @@ export default function ProtectedContent({ designId, children, previewContent }:
       try {
         await navigator.clipboard.writeText(window.location.href)
         alert('Link copied to clipboard!')
-      } catch (clipboardError) {
+      } catch {
         alert('Sharing failed. Please copy the URL manually.')
       }
     }

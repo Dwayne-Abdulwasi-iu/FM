@@ -246,13 +246,20 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const itemId = searchParams.get('itemId')
 
+    // If no itemId provided, clear entire cart
     if (!itemId) {
-      return NextResponse.json(
-        { message: 'Item ID is required' },
-        { status: 400 }
-      )
+      await prisma.cartItem.deleteMany({
+        where: {
+          userId: session.user.id
+        }
+      })
+      
+      return NextResponse.json({
+        message: 'Cart cleared successfully'
+      })
     }
 
+    // Otherwise, delete specific item
     const cartItem = await prisma.cartItem.findFirst({
       where: {
         id: itemId,

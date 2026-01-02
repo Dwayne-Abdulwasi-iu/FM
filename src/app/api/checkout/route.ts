@@ -5,6 +5,13 @@ import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
 
+export async function GET() {
+  return NextResponse.json(
+    { message: 'Use POST to initiate checkout' },
+    { status: 405 }
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +23,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { cartItems, paymentMethod = 'stripe' } = await request.json()
+    let cartItems, paymentMethod
+    try {
+      const body = await request.json()
+      cartItems = body.cartItems
+      paymentMethod = body.paymentMethod || 'stripe'
+    } catch (parseError) {
+      console.error('Failed to parse checkout request body:', parseError)
+      return NextResponse.json(
+        { message: 'Invalid request body' },
+        { status: 400 }
+      )
+    }
 
     // Check if at least one payment system is configured
   const stripeConfigured = isStripeConfigured() && process.env.STRIPE_SECRET_KEY !== 'sk_test_REDACTED'
@@ -32,14 +50,14 @@ export async function POST(request: NextRequest) {
     // Check if requested payment method is available
     if (paymentMethod === 'stripe' && !stripeConfigured) {
       return NextResponse.json(
-        { message: 'Stripe payment not available. Try Paystack.' },
+        { message: 'Stripe not activated. Use Paystack instead.' },
         { status: 503 }
       )
     }
 
     if (paymentMethod === 'paystack' && !paystackConfigured) {
       return NextResponse.json(
-        { message: 'Paystack payment not available. Try Stripe.' },
+        { message: 'Paystack not activated. Use Stripe instead.' },
         { status: 503 }
       )
     }
@@ -122,8 +140,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Platform takes 5% from sellers, not buyers
-    const platformFeeTotal = Math.round(totalAmount * 0.05 * 100) // 5% in cents
+    // Platform takes 10% from sellers, not buyers
+    const platformFeeTotal = Math.round(totalAmount * 0.10 * 100) // 10% in cents
 
     if (paymentMethod === 'stripe') {
       // Create Stripe checkout session (initialize Stripe lazily)
@@ -158,12 +176,12 @@ export async function POST(request: NextRequest) {
       })
     } else if (paymentMethod === 'paystack') {
       // Convert USD to NGN for Paystack
-      const amountInNGN = convertUSDToNGN(totalAmount)
+      const amountInNGN = await convertUSDToNGN(totalAmount)
       
       // Get unique designers from order items and check their subaccounts
       const designerIds = [...new Set(orderItems.map(item => item.designerId))]
-  type Subaccount = { subaccount: string; share: number }
-  const subaccounts: Subaccount[] = []
+      type Subaccount = { subaccount: string; share: number }
+      const subaccounts: Subaccount[] = []
       
       for (const designerId of designerIds) {
         const sellerAccount = await prisma.sellerAccount.findUnique({
@@ -174,11 +192,13 @@ export async function POST(request: NextRequest) {
           // Calculate designer's total amount from this order
           const designerItems = orderItems.filter(item => item.designerId === designerId)
           const designerTotal = designerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-          const designerAmountNGN = convertUSDToNGN(designerTotal)
+          const designerAmountNGN = await convertUSDToNGN(designerTotal)
           
+          // For flat split: share is the amount in kobo to go to the subaccount
+          // Seller gets 90% of their items total
           subaccounts.push({
             subaccount: sellerAccount.subaccountCode,
-            share: Math.round(designerAmountNGN * 0.95 * 100), // 95% to designer in kobo
+            share: Math.round(designerAmountNGN * 0.90 * 100), // 90% to designer in kobo
           })
         }
       }
@@ -192,20 +212,39 @@ export async function POST(request: NextRequest) {
         callback_url: `${process.env.NEXTAUTH_URL}/checkout/success`,
         metadata: {
           userId: session.user.id,
-          platformFee: Math.round(amountInNGN * 0.05).toString(),
+          platformFee: Math.round(amountInNGN * 0.10).toString(),
           orderItems: JSON.stringify(orderItems),
           originalAmountUSD: totalAmount.toString(),
           splitPaymentEnabled: subaccounts.length > 0
         }
       }
       
-      // Add split configuration if we have subaccounts
-      if (subaccounts.length > 0) {
+      // For single seller orders, use direct subaccount attachment
+      // This automatically splits based on the subaccount's percentage_charge
+      // For multi-seller orders, use split with flat amounts
+      if (subaccounts.length === 1) {
+        // Single seller - use subaccount directly (cleaner, auto-splits)
+        transactionData.subaccount = subaccounts[0].subaccount
+        // Note: bearer is not needed here - Paystack uses the subaccount's percentage_charge
+        console.log('Single seller - using direct subaccount:', subaccounts[0].subaccount)
+      } else if (subaccounts.length > 1) {
+        // Multiple sellers - use split payments
         transactionData.split = {
-          type: "flat",
-          subaccounts: subaccounts
+          type: "flat", // flat means each subaccount gets a fixed amount
+          bearer_type: "account", // Main account (platform) pays transaction fees
+          subaccounts: subaccounts.map(s => ({
+            subaccount: s.subaccount,
+            share: s.share, // Amount in kobo to credit to this subaccount
+          }))
         }
-        console.log('Split payment configuration:', JSON.stringify(transactionData.split, null, 2))
+        console.log('Multi-seller split payment configuration:', JSON.stringify(transactionData.split, null, 2))
+      } else {
+        // No sellers with subaccounts - this shouldn't happen if payment method is 'paystack'
+        console.warn('No sellers with Paystack subaccounts found')
+        return NextResponse.json(
+          { message: 'Unable to process payment. Sellers are not set up for Paystack payments.' },
+          { status: 503 }
+        )
       }
       
       const transaction = await paystack.transaction.initialize(transactionData)
@@ -224,10 +263,41 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    void error
     console.error('Checkout error:', error)
+    
+    // Handle Stripe authentication errors
+    if (error instanceof Error && error.message?.includes('Invalid API Key')) {
+      return NextResponse.json(
+        { message: 'Stripe not properly configured. Use Paystack instead.' },
+        { status: 503 }
+      )
+    }
+    
+    // Handle other Stripe errors
+    if (error instanceof Error && (error.message?.includes('StripeAuthenticationError') || error.name?.includes('Stripe'))) {
+      return NextResponse.json(
+        { message: 'Stripe authentication failed. Use Paystack instead.' },
+        { status: 503 }
+      )
+    }
+    
+    // Handle Paystack API errors
+    if (error instanceof Error && error.message?.includes('Request failed with status code 400')) {
+      return NextResponse.json(
+        { message: 'Paystack configuration error. Please verify your seller account is properly set up.' },
+        { status: 503 }
+      )
+    }
+    
+    if (error instanceof Error && error.message?.includes('Request failed')) {
+      return NextResponse.json(
+        { message: 'Payment gateway error. Please try again or contact support.' },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Checkout failed. Please try another payment method.' },
       { status: 500 }
     )
   }

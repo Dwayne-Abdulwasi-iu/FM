@@ -232,20 +232,20 @@ export default function DesignPage() {
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-3 sm:mb-4 text-xs sm:text-sm"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Back
         </button>
 
         {/* Admin Viewing Banner */}
         {isAdminViewing && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center">
-              <Shield className="h-5 w-5 text-red-600 mr-3" />
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
-                <span className="text-red-800 font-medium">Admin Moderation Mode</span>
-                <p className="text-red-600 text-sm mt-1">
+                <span className="text-red-800 font-medium text-xs sm:text-sm">Admin Moderation Mode</span>
+                <p className="text-red-600 text-[10px] sm:text-xs mt-0.5">
                   You are viewing this design with full admin privileges. All premium content is accessible for moderation purposes.
                 </p>
               </div>
@@ -255,41 +255,41 @@ export default function DesignPage() {
 
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-              <span className="text-green-800 font-medium">{successMessage}</span>
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <span className="text-green-800 font-medium text-xs sm:text-sm">{successMessage}</span>
             </div>
             <button
               onClick={() => setSuccessMessage(null)}
-              className="text-green-600 hover:text-green-800"
+              className="text-green-600 hover:text-green-800 ml-2"
               aria-label="Close success message"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
             </button>
           </div>
         )}
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <X className="h-5 w-5 text-red-600 mr-3" />
-              <span className="text-red-800 font-medium">{errorMessage}</span>
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
+              <span className="text-red-800 font-medium text-xs sm:text-sm">{errorMessage}</span>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-red-600 hover:text-red-800"
+              className="text-red-600 hover:text-red-800 ml-2"
               aria-label="Close error message"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Media Gallery */}
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-3">
             {/* Main Media Display */}
             <div className="aspect-square bg-white rounded-lg shadow-sm overflow-hidden">
               {(() => {
@@ -471,48 +471,48 @@ export default function DesignPage() {
           </div>
 
           {/* Details */}
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{design.title}</h1>
-              <p className="text-2xl font-bold text-indigo-600">{formatPrice(design.price)}</p>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{design.title}</h1>
+              <p className="text-lg sm:text-xl font-bold text-indigo-600">{formatPrice(design.price)}</p>
             </div>
 
             {/* Designer Info */}
-            <div className="flex items-center space-x-3 p-4 bg-white rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                 {design.designer.image ? (
-                  <Image src={design.designer.image} alt={design.designer.name || ''} width={48} height={48} className="w-12 h-12 rounded-full" />
+                  <Image src={design.designer.image} alt={design.designer.name || ''} width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
                 ) : (
-                  <span className="text-gray-500 font-semibold">
+                  <span className="text-gray-500 font-semibold text-xs sm:text-sm">
                     {(design.designer.name || 'A')[0].toUpperCase()}
                   </span>
                 )}
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">{design.designer.name || 'Anonymous'}</h3>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{design.designer.name || 'Anonymous'}</h3>
                 {design.designer.bio && (
-                  <p className="text-sm text-gray-600">{design.designer.bio}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-600 truncate">{design.designer.bio}</p>
                 )}
               </div>
             </div>
 
             {/* Description */}
             {design.description && (
-              <div className="p-4 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{design.description}</p>
+              <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1">Description</h3>
+                <p className="text-gray-700 text-xs sm:text-sm whitespace-pre-wrap">{design.description}</p>
               </div>
             )}
 
             {/* Tags */}
             {design.tags && (
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
+                <h3 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1">Tags</h3>
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {getTags(design.tags).map((tag, index) => (
                     <span 
                       key={index}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] sm:text-sm"
                     >
                       {tag}
                     </span>
@@ -522,14 +522,14 @@ export default function DesignPage() {
             )}
 
             {/* Category and Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-1">Category</h3>
-                <p className="text-gray-700">{design.category}</p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-xs mb-0.5">Category</h3>
+                <p className="text-gray-700 text-xs sm:text-sm">{design.category}</p>
               </div>
-              <div className="p-4 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-1">Sales</h3>
-                <p className="text-gray-700">{design.totalSales} sold</p>
+              <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-xs mb-0.5">Sales</h3>
+                <p className="text-gray-700 text-xs sm:text-sm">{design.totalSales}</p>
               </div>
             </div>
 

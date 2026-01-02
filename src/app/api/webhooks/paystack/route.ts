@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { paystack } from '@/lib/paystack'
+import { paystack, getUSDToNGNRate } from '@/lib/paystack'
+import { initiateSellerTransfer, createTransferNotification } from '@/lib/transfer-service'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       // Create seller earnings, purchase records, and handle ownership for each item
       for (const item of order.items) {
         const saleAmount = item.price * item.quantity
-        const commission = saleAmount * 0.05 // 5% commission
+        const commission = saleAmount * 0.10 // 10% commission
         const sellerAmount = saleAmount - commission
 
         await prisma.sellerEarning.create({
@@ -135,87 +136,51 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        // Auto-transfer earnings to seller account
+        // Auto-transfer earnings to seller account using transfer service
         try {
-          const sellerAccount = await prisma.sellerAccount.findUnique({
-            where: { userId: item.design?.designerId ?? '' }
+          const sellerResult = await initiateSellerTransfer({
+            orderId: order.id,
+            designId: item.designId,
+            sellerId: item.design?.designerId ?? '',
+            sellerAmount,
+            designTitle: item.design?.title ?? 'Design',
+            orderNumber: order.orderNumber
           })
 
-          if (sellerAccount && sellerAccount.isVerified) {
-            let recipientCode = sellerAccount.recipientCode
-
-            // If no recipient code exists (manual verification), create one now
-            if (!recipientCode) {
-              try {
-                console.log('Creating recipient code for seller:', item.design?.designerId)
-                const recipient = await paystack.transfer_recipient.create({
-                  type: 'nuban',
-                  name: sellerAccount.accountName,
-                  account_number: sellerAccount.accountNumber,
-                  bank_code: sellerAccount.bankCode,
-                  currency: 'NGN'
-                })
-
-                if (recipient.status) {
-                  recipientCode = recipient.data.recipient_code
-
-                  // Update the seller account with the recipient code
-                  await prisma.sellerAccount.update({
-                    where: { userId: item.design?.designerId ?? '' },
-                    data: { recipientCode }
-                  })
-
-                  console.log('Recipient code created and saved:', recipientCode)
-                }
-              } catch (recipientError) {
-                console.error('Error creating recipient during transfer:', recipientError)
-              }
-            }
-
-            // Proceed with transfer if we have a recipient code
-            if (recipientCode) {
-              // Convert USD to NGN for transfer
-              const transferAmountNGN = Math.round(sellerAmount * 800) // Using 800 exchange rate
-
-              const transfer = await paystack.transfer.initiate({
-                source: 'balance',
-                amount: transferAmountNGN * 100, // Convert to kobo
-                recipient: recipientCode,
-                reason: `Earnings from sale of "${item.design?.title ?? ''}" - Order #${order.orderNumber}`
-              })
-
-              if (transfer.status) {
-                console.log(`Transfer initiated for seller ${item.design?.designerId}: ₦${transferAmountNGN}`)
-              } else {
-                console.error('Transfer failed:', transfer.message)
-              }
-            } else {
-              console.error('Unable to create recipient code for seller:', item.design?.designerId)
-            }
-          } else {
-            console.log('Seller account not verified or not found for user:', item.design?.designerId)
+          if (!sellerResult.success) {
+            console.warn(`Transfer initiation returned error for seller ${item.design?.designerId}:`, sellerResult.error)
           }
         } catch (transferError) {
-          console.error('Auto-transfer error:', transferError)
-          // Continue processing even if transfer fails
+          console.error('Transfer service error:', transferError)
+          // Create failed notification
+          try {
+            await createTransferNotification({
+              sellerId: item.design?.designerId ?? '',
+              type: 'FAILED',
+              message: `Payment processing encountered an error. We'll retry automatically.`
+            })
+          } catch (notificationError) {
+            console.error('Failed to create failure notification:', notificationError)
+          }
         }
       }
 
-      // Transfer platform commission (5%) to platform account
+      // Transfer platform commission (10%) to platform account
       try {
         const platformRecipientCode = process.env.PAYSTACK_PLATFORM_RECIPIENT
         if (platformRecipientCode) {
           const totalCommission = order.items.reduce((sum: number, it: { price: number; quantity: number }) => {
-            return sum + (it.price * it.quantity * 0.05)
+            return sum + (it.price * it.quantity * 0.10)
           }, 0)
 
-          const commissionNGN = Math.round(totalCommission * 800) // Convert to NGN
+          const exchangeRate = await getUSDToNGNRate()
+          const commissionNGN = Math.round(totalCommission * exchangeRate)
 
           const platformTransfer = await paystack.transfer.initiate({
             source: 'balance',
             amount: commissionNGN * 100, // Convert to kobo
             recipient: platformRecipientCode,
-            reason: `Platform commission (5%) from order #${order.orderNumber}`
+            reason: `Platform commission (10%) from order #${order.orderNumber}`
           })
 
           if (platformTransfer.status) {
