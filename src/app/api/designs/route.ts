@@ -125,7 +125,11 @@ export async function GET(request: NextRequest) {
       where.designerId = userId;
     }
 
-    // For featured designs, order by totalSales and totalRevenue
+    // For featured designs, filter by featured=true and order by totalSales and totalRevenue
+    if (featured) {
+      where.featured = true;
+    }
+
     const orderBy = featured 
       ? [
           { totalSales: "desc" as const },

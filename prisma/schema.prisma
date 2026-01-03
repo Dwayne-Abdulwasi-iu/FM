@@ -90,6 +90,7 @@ model Design {
   buyingTypes  String   @default("REGULAR") // REGULAR, OWNERSHIP, BOTH
   isOwned      Boolean  @default(false)
   ownedBy      String?  // User ID who owns the design (for ownership purchases)
+  featured     Boolean  @default(false) // Admin-selected featured designs
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
