@@ -21,7 +21,12 @@ export async function POST(request: NextRequest) {
     const description = formData.get("description") as string;
     const price = parseFloat(formData.get("price") as string);
     const category = formData.get("category") as string;
-    const tags = formData.get("tags") as string;
+    const tagsString = formData.get("tags") as string;
+    
+    // Parse tags from comma-separated string to array
+    const tags = tagsString 
+      ? tagsString.split(",").map(t => t.trim()).filter(t => t.length > 0)
+      : [];
 
     if (!file || !title || !price || !category) {
       return NextResponse.json(
@@ -69,7 +74,7 @@ export async function POST(request: NextRequest) {
         imageUrl: uploadResult.secure_url,
         thumbnailUrl,
         category,
-        tags: tags || null,
+        tags,
         designerId: session.user.id,
       },
     });

@@ -123,7 +123,11 @@ export async function POST(request: NextRequest) {
     const price = parseFloat(formData.get('price') as string)
     const ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
     const category = formData.get('category') as string
-    const tags = formData.get('tags') as string
+    const tagsString = formData.get('tags') as string
+    // Parse tags from comma-separated string to array
+    const tags = tagsString 
+      ? tagsString.split(',').map(t => t.trim()).filter(t => t.length > 0)
+      : []
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'
 
     // Get all files and metadata
@@ -254,7 +258,7 @@ export async function POST(request: NextRequest) {
         imageUrl: primaryImageUrl,
         thumbnailUrl,
         category,
-        tags: tags || null,
+        tags,
         buyingTypes,
         designerId: session.user.id,
         approvalStatus: 'PENDING', // All uploads require approval

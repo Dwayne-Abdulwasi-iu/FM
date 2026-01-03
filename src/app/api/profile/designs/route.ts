@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       price: number
       imageUrl: string
       category: string
-      tags?: string | null
+      tags: string[]
       isActive: boolean
       createdAt: Date
       updatedAt: Date
