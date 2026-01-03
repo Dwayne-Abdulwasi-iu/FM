@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fashion-marketplace
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node node_modules/.bin/next start -p 10000 -H 0.0.0.0
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health
+    healthCheckInterval: 60
+    healthCheckTimeout: 30

@@ -11,6 +11,12 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*'],
+    },
+  },
+  poweredByHeader: false,
 }
 
 module.exports = nextConfig
