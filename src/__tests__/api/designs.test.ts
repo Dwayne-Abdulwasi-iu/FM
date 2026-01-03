@@ -53,10 +53,13 @@ describe('/api/designs', () => {
 
   await GET(req)
 
-    // The route uses a default limit of 12 and currently returns all designs
-    // (no isActive filter). Assert against the actual call shape.
+    // The route uses a default limit of 12 and filters for approved, active designs
+    // Assert against the actual call shape.
     expect(mockPrisma.design.findMany).toHaveBeenCalledWith({
-      where: {},
+      where: {
+        approvalStatus: "APPROVED",
+        isActive: true,
+      },
       include: {
         designer: {
           select: {
@@ -95,6 +98,8 @@ describe('/api/designs', () => {
     expect(mockPrisma.design.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
+          approvalStatus: "APPROVED",
+          isActive: true,
           category: 'Fashion Illustrations',
         },
       })
