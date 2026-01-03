@@ -98,8 +98,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      // For testing, show all designs regardless of approval status
-      // isActive: true,
+      // Only show approved designs
+      approvalStatus: "APPROVED",
+      isActive: true,
     };
 
     // Only show designs by regular users (not admins)

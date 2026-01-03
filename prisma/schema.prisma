@@ -82,7 +82,7 @@ model Design {
   ownershipPrice Float?  // Higher price for ownership option
   imageUrl     String   // Primary/thumbnail image for listings
   thumbnailUrl String?
-  tags         String?
+  tags         String[]
   category     String
   isActive     Boolean  @default(true)
   approvalStatus String @default("PENDING") // PENDING, APPROVED, REJECTED
