@@ -159,7 +159,7 @@ function HelpPageContent() {
     {
       id: 'what-are-digital-designs',
       question: 'What are digital designs?',
-      answer: 'Digital designs are downloadable fashion assets including illustrations, patterns, sketches, technical drawings, embroidery files, and print-ready artwork. Once purchased, you receive instant access to high-resolution files you can use for your fashion projects.',
+      answer: 'Digital designs are downloadable fashion assets including illustrations, patterns, sketches, technical drawings, embroidery files, and print-ready artwork. Once purchased, you receive instant access to high-resolution files. Digital Designs is also the only category that supports Print-on-Demand (POD), allowing buyers to purchase your design printed on physical products like t-shirts, mugs, and posters.',
       category: 'digital-designs'
     },
     {
@@ -253,13 +253,13 @@ function HelpPageContent() {
     {
       id: 'what-is-pod',
       question: 'What is Print-on-Demand (POD)?',
-      answer: 'Print-on-Demand lets you sell physical products (t-shirts, hoodies, bags, phone cases, etc.) featuring your designs without holding inventory. When a customer orders, the product is printed and shipped directly to them. You earn profit on each sale!',
+      answer: 'Print-on-Demand lets you sell physical products (t-shirts, hoodies, bags, phone cases, etc.) featuring your designs without holding inventory. When a customer orders, the product is printed and shipped directly to them. POD is exclusively available for designs in the "Digital Designs" category - this helps distinguish between downloadable fashion assets and designs meant for physical products.',
       category: 'pod'
     },
     {
       id: 'pod-how-it-works',
       question: 'How does POD work on Fashion Marketplace?',
-      answer: 'Step 1: Upload your design. Step 2: Enable POD and select products (t-shirts, mugs, etc.). Step 3: Set your markup/profit margin. Step 4: Customers browse and order. Step 5: Our partners (Printful/Printify) print and ship. Step 6: You receive your profit minus production costs.',
+      answer: 'Step 1: Upload your design in the "Digital Designs" category. Step 2: Enable POD in seller settings and select products (t-shirts, mugs, etc.). Step 3: Set your markup/profit margin. Step 4: Customers browse and order. Step 5: Our partners (Printful/Printify) print and ship. Step 6: You earn your markup minus platform commission.',
       category: 'pod'
     },
     {
@@ -269,9 +269,15 @@ function HelpPageContent() {
       category: 'pod'
     },
     {
+      id: 'pod-which-designs',
+      question: 'Which designs can use POD?',
+      answer: 'POD is exclusively available for designs in the "Digital Designs" category. This category is specifically for artwork that can be printed on physical products (t-shirts, mugs, posters, etc.). Other categories like Fashion Illustrations, Pattern Designs, Sketches, and Technical Drawings are for downloadable fashion assets only and do not support POD.',
+      category: 'pod'
+    },
+    {
       id: 'pod-pricing',
       question: 'How is POD pricing calculated?',
-      answer: 'Final price = Base cost + Your markup. For example: A t-shirt costs $12 to produce. You set a $8 markup. Customer pays $20. You earn $8 profit. We recommend 20-40% markup for competitive pricing while maintaining good profit margins.',
+      answer: 'Final price = Base cost + Your markup. For example: A t-shirt costs $12 to produce. You set a $8 markup. Customer pays $20. Platform commission only applies to your markup/profit, not the base cost. We recommend 20-40% markup for competitive pricing while maintaining good profit margins.',
       category: 'pod'
     },
     {

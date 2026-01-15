@@ -47,6 +47,16 @@ export async function GET(
       }, { status: 404 });
     }
 
+    // POD is only available for Digital Designs category
+    if (design.category !== 'Digital Designs') {
+      return NextResponse.json({
+        success: true,
+        hasPOD: false,
+        products: [],
+        message: 'POD is only available for Digital Designs category'
+      });
+    }
+
     // Check if seller has POD enabled
     if (!design.designer.acceptsPOD) {
       return NextResponse.json({

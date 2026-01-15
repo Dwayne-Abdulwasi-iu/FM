@@ -215,8 +215,10 @@ export default function DesignPage() {
         const data = await response.json()
         setDesign(data.design)
         
-        // Fetch POD products for this design
-        fetchPODProducts(id)
+        // Only fetch POD products for Digital Designs category
+        if (data.design?.category === 'Digital Designs') {
+          fetchPODProducts(id)
+        }
       } else {
         console.error('Design not found')
       }
@@ -1008,8 +1010,8 @@ export default function DesignPage() {
                 </div>
               )}
 
-              {/* POD Products Section - Only show if seller has configured POD */}
-              {hasPOD && podProducts.length > 0 && (
+              {/* POD Products Section - Only show for Digital Designs category with POD configured */}
+              {design.category === 'Digital Designs' && hasPOD && podProducts.length > 0 && (
                 <div className="mt-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border border-cyan-200">
                   <button
                     onClick={() => setShowPODSection(!showPODSection)}
