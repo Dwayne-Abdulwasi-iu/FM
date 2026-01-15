@@ -20,14 +20,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Only sellers can view their transfers
-    if (user.role !== 'SELLER' && user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Not a seller' }, { status: 403 })
-    }
-
     const sellerId = user.id
 
-    // Get all transfers for this seller
+    // Get all transfers for this user (anyone with sales can view their transfers)
     const transfers = await (prisma as any).paystackTransfer.findMany({
       where: { sellerId },
       include: {

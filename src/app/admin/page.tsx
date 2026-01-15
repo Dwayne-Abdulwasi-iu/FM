@@ -591,6 +591,82 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                    <Link
+                      href="/admin/commission-requests"
+                      className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
+                          <Mail className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Commission Requests</p>
+                          <p className="text-xs text-gray-500">Review &amp; forward to designers</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/deliveries"
+                      className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Physical Deliveries</p>
+                          <p className="text-xs text-gray-500">Manage item collection &amp; shipping</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/resources"
+                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Resources</p>
+                          <p className="text-xs text-gray-500">Manage learning resources</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/pod"
+                      className="p-4 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-cyan-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🖨️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Print-on-Demand</p>
+                          <p className="text-xs text-gray-500">Monitor POD orders &amp; providers</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/pod-webhooks"
+                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🔧</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
+                          <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Recent Activity</h3>
                   <div className="space-y-2 sm:space-y-3">
                   {orders.slice(0, 5).map((order) => (

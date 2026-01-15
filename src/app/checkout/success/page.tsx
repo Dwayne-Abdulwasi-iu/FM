@@ -181,7 +181,7 @@ export default function CheckoutSuccessPage() {
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Platform Fee (5%)</span>
+                  <span className="text-gray-600">Platform Fee</span>
                   <span className="font-medium">{formatPrice(order.platformFee)}</span>
                 </div>
                 

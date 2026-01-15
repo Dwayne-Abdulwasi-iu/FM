@@ -305,7 +305,7 @@ export default function SellerTransfersPage() {
           <ul className="text-[10px] sm:text-xs text-blue-800 space-y-0.5">
             <li className="flex items-start gap-2">
               <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>You receive 90% of each sale, we keep 10% as platform commission</span>
+              <span>Commission rates are tiered (7-10%) based on your total sales - first $100 is free!</span>
             </li>
             <li className="flex items-start gap-2">
               <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />

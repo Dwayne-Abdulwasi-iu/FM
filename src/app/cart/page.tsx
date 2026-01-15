@@ -3,13 +3,19 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle, Package, Download, Truck } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
 interface CartItem {
   id: string
   quantity: number
+  purchaseType: 'REGULAR' | 'OWNERSHIP' | 'POD'
+  // POD-specific fields
+  podProductId?: string
+  podProductName?: string
+  podProvider?: string
+  podPrice?: number
   design: {
     id: string
     title: string
@@ -23,6 +29,17 @@ interface CartItem {
   }
 }
 
+interface ShippingAddress {
+  fullName: string
+  addressLine1: string
+  addressLine2?: string
+  city: string
+  state: string
+  postalCode: string
+  country: string
+  phone: string
+}
+
 export default function CartPage() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -31,7 +48,19 @@ export default function CartPage() {
   const [updating, setUpdating] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paystack'>('stripe')
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paystack' | 'flutterwave'>('paystack')
+  const [countryCode, setCountryCode] = useState('NG')
+  const [showShippingForm, setShowShippingForm] = useState(false)
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
+    fullName: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'NG',
+    phone: ''
+  })
 
   useEffect(() => {
     if (session) {
@@ -97,6 +126,24 @@ export default function CartPage() {
   }
 
   const handleCheckout = async () => {
+    // Check if POD items exist and shipping form is needed
+    const hasPOD = cartItems.some(item => item.purchaseType === 'POD')
+    
+    if (hasPOD && !showShippingForm) {
+      setShowShippingForm(true)
+      return
+    }
+    
+    // Validate shipping address if POD items exist
+    if (hasPOD) {
+      const required = ['fullName', 'addressLine1', 'city', 'state', 'postalCode', 'country', 'phone'] as const
+      const missing = required.filter(field => !shippingAddress[field])
+      if (missing.length > 0) {
+        setErrorMessage(`Please fill in: ${missing.join(', ')}`)
+        return
+      }
+    }
+    
     try {
       setCheckingOut(true)
       setErrorMessage(null)
@@ -109,15 +156,29 @@ export default function CartPage() {
         body: JSON.stringify({
           cartItems: cartItems.map(item => ({
             designId: item.design.id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            purchaseType: item.purchaseType,
+            // Include POD-specific fields
+            ...(item.purchaseType === 'POD' ? {
+              podProductId: item.podProductId,
+              podProductName: item.podProductName,
+              podProvider: item.podProvider,
+              podPrice: item.podPrice
+            } : {})
           })),
-          paymentMethod
+          paymentMethod,
+          countryCode,
+          // Include shipping address for POD orders
+          ...(hasPOD ? { shippingAddress } : {})
         })
       })
 
       if (response.ok) {
-        const { url } = await response.json()
-        window.location.href = url
+        const data = await response.json()
+        
+        if (data.url) {
+          window.location.href = data.url
+        }
       } else {
         const error = await response.json()
         // If Stripe is not activated, automatically try Paystack
@@ -148,7 +209,47 @@ export default function CartPage() {
   }
 
   const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.design.price * item.quantity), 0)
+    return cartItems.reduce((sum, item) => {
+      // For POD items, use podPrice; for digital, use design.price
+      const itemPrice = item.purchaseType === 'POD' && item.podPrice 
+        ? item.podPrice 
+        : item.design.price
+      return sum + (itemPrice * item.quantity)
+    }, 0)
+  }
+  
+  // Check if cart has any POD items (requires shipping)
+  const hasPODItems = cartItems.some(item => item.purchaseType === 'POD')
+  const hasDigitalItems = cartItems.some(item => item.purchaseType !== 'POD')
+  
+  // Helper to get item price
+  const getItemPrice = (item: CartItem) => {
+    return item.purchaseType === 'POD' && item.podPrice ? item.podPrice : item.design.price
+  }
+  
+  // Helper to get item type badge
+  const getItemTypeBadge = (item: CartItem) => {
+    if (item.purchaseType === 'POD') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+          <Package className="h-3 w-3" />
+          Physical Product
+        </span>
+      )
+    }
+    if (item.purchaseType === 'OWNERSHIP') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+          Ownership Rights
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <Download className="h-3 w-3" />
+        Digital Download
+      </span>
+    )
   }
 
   // const calculatePlatformFee = (total: number) => {
@@ -228,9 +329,29 @@ export default function CartPage() {
           ) : (
             <div className="p-6">
               <div className="space-y-4 mb-8">
+                {/* POD Items Notice */}
+                {hasPODItems && (
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
+                    <Truck className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-orange-800">Physical Products Require Shipping</p>
+                      <p className="text-sm text-orange-700 mt-1">
+                        You have print-on-demand items in your cart. You&apos;ll need to provide a shipping address during checkout.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="w-20 h-20 flex-shrink-0">
+                  <div 
+                    key={item.id} 
+                    className={`flex items-center space-x-4 p-4 border rounded-lg ${
+                      item.purchaseType === 'POD' 
+                        ? 'border-orange-200 bg-orange-50/30' 
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="w-20 h-20 flex-shrink-0 relative">
                       <Image
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
@@ -238,6 +359,11 @@ export default function CartPage() {
                         height={80}
                         className="w-full h-full object-cover rounded-lg"
                       />
+                      {item.purchaseType === 'POD' && (
+                        <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-1">
+                          <Package className="h-3 w-3" />
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -246,39 +372,59 @@ export default function CartPage() {
                           {item.design.title}
                         </h3>
                       </Link>
+                      {item.purchaseType === 'POD' && item.podProductName && (
+                        <p className="text-sm text-orange-700 font-medium">
+                          {item.podProductName}
+                          {item.podProvider && (
+                            <span className="text-orange-500 ml-1">
+                              via {item.podProvider}
+                            </span>
+                          )}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-600">
                         by {item.design.designer.name || 'Anonymous'}
                       </p>
-                      <p className="font-semibold text-gray-900">
-                        {formatPrice(item.design.price)}
+                      <div className="flex items-center gap-2 mt-1">
+                        {getItemTypeBadge(item)}
+                      </div>
+                      <p className="font-semibold text-gray-900 mt-1">
+                        {formatPrice(getItemPrice(item))}
                       </p>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={updating === item.id}
-                        className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={updating === item.id}
-                        className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
+                      {item.purchaseType !== 'OWNERSHIP' && (
+                        <>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={updating === item.id}
+                            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            disabled={updating === item.id}
+                            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                      {item.purchaseType === 'OWNERSHIP' && (
+                        <span className="text-sm text-gray-500">Qty: 1</span>
+                      )}
                     </div>
                     
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">
-                        {formatPrice(item.design.price * item.quantity)}
+                        {formatPrice(getItemPrice(item) * item.quantity)}
                       </p>
                       <button
                         onClick={() => removeFromCart(item.id)}
@@ -299,6 +445,49 @@ export default function CartPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
                   
                   <div className="space-y-2">
+                    {/* Show breakdown by type */}
+                    {hasDigitalItems && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 flex items-center gap-1">
+                          <Download className="h-4 w-4" />
+                          Digital Items
+                        </span>
+                        <span className="font-medium">
+                          {formatPrice(
+                            cartItems
+                              .filter(item => item.purchaseType !== 'POD')
+                              .reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0)
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {hasPODItems && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 flex items-center gap-1">
+                          <Package className="h-4 w-4" />
+                          Physical Products
+                        </span>
+                        <span className="font-medium">
+                          {formatPrice(
+                            cartItems
+                              .filter(item => item.purchaseType === 'POD')
+                              .reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0)
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {hasPODItems && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 flex items-center gap-1">
+                          <Truck className="h-4 w-4" />
+                          Shipping
+                        </span>
+                        <span className="text-gray-500 italic">Calculated at checkout</span>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between">
                       <span className="text-gray-600">Items Total</span>
                       <span className="font-medium">{formatPrice(total)}</span>
@@ -309,12 +498,16 @@ export default function CartPage() {
                         <span className="text-lg font-semibold text-gray-900">You Pay</span>
                         <span className="text-lg font-semibold text-gray-900">
                           {formatPrice(total)}
+                          {hasPODItems && <span className="text-sm font-normal text-gray-500"> + shipping</span>}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 mt-1 space-y-1">
                         <p>• No additional fees charged to you</p>
-                        <p>• Platform takes 10% commission from sellers</p>
-                        <p>• Sellers receive 90% of the sale price</p>
+                        <p>• Platform takes 7-10% commission from sellers (first $100 free!)</p>
+                        <p>• Higher volume sellers pay lower rates</p>
+                        {hasPODItems && (
+                          <p className="text-orange-600">• Physical products will be printed and shipped to your address</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -323,36 +516,174 @@ export default function CartPage() {
                   <div className="mt-6 border-t border-gray-200 pt-4">
                     <h3 className="text-sm font-medium text-gray-900 mb-3">Payment Method</h3>
                     <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="stripe"
-                          checked={paymentMethod === 'stripe'}
-                          onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'paystack')}
-                          className="mr-3 text-indigo-600"
-                        />
-                        <div className="flex items-center">
-                          <span className="text-sm text-gray-700">Stripe</span>
-                          <span className="ml-2 text-xs text-gray-500">(Credit/Debit Cards)</span>
-                        </div>
-                      </label>
-                      <label className="flex items-center">
+                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="paystack"
                           checked={paymentMethod === 'paystack'}
-                          onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'paystack')}
+                          onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
                           className="mr-3 text-indigo-600"
                         />
-                        <div className="flex items-center">
-                          <span className="text-sm text-gray-700">Paystack</span>
-                          <span className="ml-2 text-xs text-gray-500">(Cards, Bank Transfer, USSD)</span>
+                        <div className="flex items-center flex-1">
+                          <span className="text-2xl mr-2">🏦</span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Paystack</span>
+                            <p className="text-xs text-gray-500">Cards, Bank Transfer, USSD (Nigeria, Ghana, SA)</p>
+                          </div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="flutterwave"
+                          checked={paymentMethod === 'flutterwave'}
+                          onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
+                          className="mr-3 text-indigo-600"
+                        />
+                        <div className="flex items-center flex-1">
+                          <span className="text-2xl mr-2">🌍</span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Flutterwave</span>
+                            <p className="text-xs text-gray-500">Cards, Mobile Money (11 African countries)</p>
+                          </div>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="stripe"
+                          checked={paymentMethod === 'stripe'}
+                          onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
+                          className="mr-3 text-indigo-600"
+                        />
+                        <div className="flex items-center flex-1">
+                          <span className="text-2xl mr-2">💳</span>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Stripe</span>
+                            <p className="text-xs text-gray-500">International Cards (Visa, Mastercard)</p>
+                          </div>
                         </div>
                       </label>
                     </div>
+                    
+                    {/* Flutterwave Country Selection */}
+                    {paymentMethod === 'flutterwave' && (
+                      <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Select Your Country
+                        </label>
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        >
+                          <option value="NG">🇳🇬 Nigeria (NGN)</option>
+                          <option value="GH">🇬🇭 Ghana (GHS)</option>
+                          <option value="KE">🇰🇪 Kenya (KES)</option>
+                          <option value="ZA">🇿🇦 South Africa (ZAR)</option>
+                          <option value="TZ">🇹🇿 Tanzania (TZS)</option>
+                          <option value="UG">🇺🇬 Uganda (UGX)</option>
+                          <option value="RW">🇷🇼 Rwanda (RWF)</option>
+                          <option value="CM">🇨🇲 Cameroon (XAF)</option>
+                          <option value="CI">🇨🇮 Ivory Coast (XOF)</option>
+                          <option value="SN">🇸🇳 Senegal (XOF)</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Shipping Address Form (for POD orders) */}
+                  {showShippingForm && hasPODItems && (
+                    <div className="mt-6 border-t border-gray-200 pt-4">
+                      <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <Truck className="h-4 w-4" />
+                        Shipping Address
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-4">
+                        Required for physical products. Your items will be printed and shipped to this address.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            placeholder="Full Name *"
+                            value={shippingAddress.fullName}
+                            onChange={(e) => setShippingAddress({...shippingAddress, fullName: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            placeholder="Address Line 1 *"
+                            value={shippingAddress.addressLine1}
+                            onChange={(e) => setShippingAddress({...shippingAddress, addressLine1: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            placeholder="Address Line 2 (Optional)"
+                            value={shippingAddress.addressLine2}
+                            onChange={(e) => setShippingAddress({...shippingAddress, addressLine2: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="City *"
+                          value={shippingAddress.city}
+                          onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        />
+                        <input
+                          type="text"
+                          placeholder="State/Province *"
+                          value={shippingAddress.state}
+                          onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Postal Code *"
+                          value={shippingAddress.postalCode}
+                          onChange={(e) => setShippingAddress({...shippingAddress, postalCode: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        />
+                        <select
+                          value={shippingAddress.country}
+                          onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        >
+                          <option value="NG">🇳🇬 Nigeria</option>
+                          <option value="GH">🇬🇭 Ghana</option>
+                          <option value="KE">🇰🇪 Kenya</option>
+                          <option value="ZA">🇿🇦 South Africa</option>
+                          <option value="US">🇺🇸 United States</option>
+                          <option value="GB">🇬🇧 United Kingdom</option>
+                          <option value="CA">🇨🇦 Canada</option>
+                          <option value="AU">🇦🇺 Australia</option>
+                          <option value="DE">🇩🇪 Germany</option>
+                          <option value="FR">🇫🇷 France</option>
+                        </select>
+                        <div className="md:col-span-2">
+                          <input
+                            type="tel"
+                            placeholder="Phone Number *"
+                            value={shippingAddress.phone}
+                            onChange={(e) => setShippingAddress({...shippingAddress, phone: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   <button
                     onClick={handleCheckout}
@@ -363,6 +694,11 @@ export default function CartPage() {
                       <>
                         <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                         Processing...
+                      </>
+                    ) : hasPODItems && !showShippingForm ? (
+                      <>
+                        Enter Shipping Address
+                        <Truck className="h-4 w-4" />
                       </>
                     ) : (
                       <>

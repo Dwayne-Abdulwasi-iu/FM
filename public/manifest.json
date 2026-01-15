@@ -1,0 +1,98 @@
+{
+  "name": "Fashion Marketplace",
+  "short_name": "FashionMkt",
+  "description": "Discover and sell unique fashion designs, illustrations, and sketches from talented designers worldwide.",
+  "start_url": "/?source=pwa",
+  "id": "fashion-marketplace-pwa",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Explore trending fashion designs"
+    },
+    {
+      "src": "/screenshots/home-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Fashion Marketplace on mobile"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "design"],
+  "shortcuts": [
+    {
+      "name": "Browse Designs",
+      "short_name": "Browse",
+      "description": "Explore fashion designs",
+      "url": "/designs",
+      "icons": [{ "src": "/icons/browse-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Upload Design",
+      "short_name": "Upload",
+      "description": "Upload your design",
+      "url": "/upload",
+      "icons": [{ "src": "/icons/upload-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Cart",
+      "short_name": "Cart",
+      "description": "View your cart",
+      "url": "/cart",
+      "icons": [{ "src": "/icons/cart-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "Track your orders",
+      "url": "/orders",
+      "icons": [{ "src": "/icons/orders-icon.svg", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/upload",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "design",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "related_applications": [],
+  "prefer_related_applications": false
+}

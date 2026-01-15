@@ -68,6 +68,7 @@ describe('/api/designs', () => {
             email: true,
             image: true,
             role: true,
+            designerTier: true,
           },
         },
         mediaFiles: {

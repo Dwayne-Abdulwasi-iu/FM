@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
 import prisma from '@/lib/prisma'
+import { getCommissionRate } from '@/lib/commission-tiers'
 
 export async function POST() {
   try {
@@ -82,16 +83,27 @@ export async function POST() {
 
         // Create Paystack subaccount for split payments
         // percentage_charge is what the MAIN ACCOUNT (platform) keeps
-        // Setting to 10 means platform keeps 10%, seller gets 90%
+        // Use tiered commission rate based on seller's total earnings
         let subaccountCode = sellerAccount.subaccountCode
         if (!subaccountCode) {
           try {
-            console.log('Creating Paystack subaccount for split payments...')
+            // Get seller's tier info for commission rate
+            const seller = await prisma.user.findUnique({
+              where: { id: session.user.id },
+              select: { totalEarnings: true, designerTier: true }
+            })
+            const totalEarnings = seller?.totalEarnings ?? 0
+            const isProSubscriber = seller?.designerTier === 'VIP_DESIGNER' || seller?.designerTier === 'VVIP_DESIGNER'
+            const commissionRate = getCommissionRate(totalEarnings, isProSubscriber)
+            // Convert rate to Paystack percentage (e.g., 0.10 -> 10, 0.001 -> 0.1)
+            const paystackPercentage = Math.round(commissionRate * 100 * 10) / 10
+            
+            console.log(`Creating Paystack subaccount with ${paystackPercentage}% platform fee (${totalEarnings < 100 ? 'STARTER' : 'tiered'} rate)`)
             const subaccount = await paystack.subaccount.create({
               business_name: `${verifiedAccountName} - Fashion Designer`,
               settlement_bank: sellerAccount.bankCode,
               account_number: sellerAccount.accountNumber,
-              percentage_charge: 10, // Platform keeps 10%, seller gets 90%
+              percentage_charge: paystackPercentage, // Tiered: 0.1% for new sellers, up to 10%
               description: `Subaccount for fashion designer: ${verifiedAccountName}`
             })
 
@@ -123,7 +135,7 @@ export async function POST() {
 
         return NextResponse.json({
           success: true,
-          message: 'Bank account verified successfully! Split payments are now enabled - you\'ll receive 90% of each sale instantly.',
+          message: 'Bank account verified successfully! Split payments are now enabled - earnings are transferred instantly based on your tier.',
           sellerAccount: updatedAccount,
           verifiedName: verifiedAccountName,
           recipientCode,

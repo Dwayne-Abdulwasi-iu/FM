@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock } from 'lucide-react'
+import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock, Package, Palette, ExternalLink, Info } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface MediaFile {
   id: string
@@ -12,6 +13,11 @@ interface MediaFile {
   preview: string | null
   accessType: 'FREE' | 'PREMIUM'
   fileType: 'IMAGE' | 'VIDEO'
+}
+
+interface FeatureStatus {
+  acceptsCommissions: boolean
+  acceptsPOD: boolean
 }
 
 export default function EnhancedUploadPage() {
@@ -22,6 +28,7 @@ export default function EnhancedUploadPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [bankAccountRequired, setBankAccountRequired] = useState(false)
   const [bankAccountNeedsVerification, setBankAccountNeedsVerification] = useState(false)
+  const [featureStatus, setFeatureStatus] = useState<FeatureStatus>({ acceptsCommissions: false, acceptsPOD: false })
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([
     { id: '1', file: null, preview: null, accessType: 'PREMIUM', fileType: 'IMAGE' }
   ])
@@ -48,6 +55,7 @@ export default function EnhancedUploadPage() {
   useEffect(() => {
     if (session?.user?.id) {
       checkBankAccountStatus()
+      fetchFeatureStatus()
     }
   }, [session])
 
@@ -66,6 +74,35 @@ export default function EnhancedUploadPage() {
       }
     } catch (error) {
       console.error('Error checking bank account status:', error)
+    }
+  }
+
+  const fetchFeatureStatus = async () => {
+    try {
+      // Fetch commission settings
+      const commissionRes = await fetch('/api/seller/commission-settings')
+      // Fetch POD settings
+      const podRes = await fetch('/api/seller/pod-settings')
+      
+      let commissionStatus = false
+      let podStatus = false
+      
+      if (commissionRes.ok) {
+        const data = await commissionRes.json()
+        commissionStatus = data.acceptsCommissions ?? false
+      }
+      
+      if (podRes.ok) {
+        const data = await podRes.json()
+        podStatus = data.acceptsPOD ?? false
+      }
+      
+      setFeatureStatus({
+        acceptsCommissions: commissionStatus,
+        acceptsPOD: podStatus
+      })
+    } catch (error) {
+      console.error('Error fetching feature status:', error)
     }
   }
 
@@ -293,6 +330,83 @@ export default function EnhancedUploadPage() {
               </div>
             </div>
           )}
+
+          {/* Feature Availability Notifications */}
+          <div className="mx-3 sm:mx-6 mt-3 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Commission Availability */}
+            <div className={`p-3 rounded-lg border ${
+              featureStatus.acceptsCommissions 
+                ? 'bg-purple-50 border-purple-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-2">
+                <Palette className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                  featureStatus.acceptsCommissions ? 'text-purple-600' : 'text-gray-400'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-gray-900">Commissions</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      featureStatus.acceptsCommissions 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {featureStatus.acceptsCommissions ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-gray-600 mb-2">
+                    {featureStatus.acceptsCommissions 
+                      ? 'Buyers can request custom work based on your designs.' 
+                      : 'Enable to receive custom design requests from buyers.'}
+                  </p>
+                  <Link
+                    href="/seller/commission-settings"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-purple-600 hover:text-purple-800 font-medium"
+                  >
+                    {featureStatus.acceptsCommissions ? 'Manage' : 'Enable'} Commissions
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* POD Availability */}
+            <div className={`p-3 rounded-lg border ${
+              featureStatus.acceptsPOD 
+                ? 'bg-orange-50 border-orange-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start gap-2">
+                <Package className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                  featureStatus.acceptsPOD ? 'text-orange-600' : 'text-gray-400'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-gray-900">Print-on-Demand</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      featureStatus.acceptsPOD 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {featureStatus.acceptsPOD ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-gray-600 mb-2">
+                    {featureStatus.acceptsPOD 
+                      ? 'Buyers can purchase your designs on physical products.' 
+                      : 'Enable to sell your designs on t-shirts, mugs & more.'}
+                  </p>
+                  <Link
+                    href="/seller/pod-settings"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-orange-600 hover:text-orange-800 font-medium"
+                  >
+                    {featureStatus.acceptsPOD ? 'Manage' : 'Enable'} POD
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="relative">
             <form onSubmit={handleSubmit} className={`p-3 sm:p-6 ${(bankAccountRequired || bankAccountNeedsVerification) ? 'opacity-50 pointer-events-none' : ''}`}>

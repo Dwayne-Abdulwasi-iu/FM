@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
 import Image from 'next/image'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
+import { DesignerBadgeCompact } from '@/components/DesignerBadge'
 
 interface Design {
   id: string
@@ -21,6 +22,7 @@ interface Design {
   designer: {
     id: string
     name: string | null
+    designerTier?: string | null
   }
   totalSales: number
   _count?: {
@@ -220,8 +222,9 @@ export default function DesignsPage() {
                     </h3>
                   </Link>
                   
-                  <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5">
+                  <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 flex items-center gap-1">
                     by {design.designer.name || 'Anonymous'}
+                    <DesignerBadgeCompact tier={design.designer.designerTier} />
                   </p>
                   
                   <div className="flex items-center justify-between mb-2">

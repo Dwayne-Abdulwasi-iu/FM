@@ -4,10 +4,11 @@
 jest.mock('@/lib/prisma', () => ({
   order: { create: jest.fn() },
   sellerEarning: { create: jest.fn() },
-  design: { update: jest.fn() },
+  design: { update: jest.fn(), updateMany: jest.fn() },
   purchase: { create: jest.fn() },
   sellerAccount: { findUnique: jest.fn(), update: jest.fn() },
-  cartItem: { deleteMany: jest.fn() }
+  cartItem: { deleteMany: jest.fn() },
+  processedWebhookEvent: { findUnique: jest.fn(() => null), create: jest.fn() }
 }))
 
 // Mock NextResponse

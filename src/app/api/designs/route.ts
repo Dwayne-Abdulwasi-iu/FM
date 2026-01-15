@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
       ? tagsString.split(",").map(t => t.trim()).filter(t => t.length > 0)
       : [];
 
-    if (!file || !title || !price || !category) {
+    if (!file || !title || isNaN(price) || price <= 0 || !category) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields or invalid price" },
         { status: 400 }
       );
     }
@@ -89,11 +89,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Maximum limit to prevent memory exhaustion
+const MAX_LIMIT = 50;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get("limit") || "12", 10)), MAX_LIMIT);
     const category = searchParams.get("category");
     const search = searchParams.get("search");
     const userId = searchParams.get("userId");
@@ -158,6 +161,7 @@ export async function GET(request: NextRequest) {
               email: true,
               image: true,
               role: true,
+              designerTier: true,
             },
           },
           mediaFiles: {

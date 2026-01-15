@@ -113,6 +113,13 @@ export async function POST(request: NextRequest) {
       ? tagsString.split(',').map(t => t.trim()).filter(t => t.length > 0)
       : []
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'
+    
+    // Draft and inventory fields
+    const isDraft = formData.get('isDraft') === 'true'
+    const stockType = formData.get('stockType') as string || 'UNLIMITED'
+    const stockQuantity = formData.get('stockQuantity') 
+      ? parseInt(formData.get('stockQuantity') as string) 
+      : null
 
     if (!file) {
       return NextResponse.json(
@@ -121,7 +128,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!title || !price || price <= 0) {
+    // Check file size (25MB max for design images)
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { message: 'File too large. Maximum size is 25MB' },
+        { status: 400 }
+      )
+    }
+
+    if (!title || isNaN(price) || price <= 0) {
       return NextResponse.json(
         { message: 'Title and valid price are required' },
         { status: 400 }
@@ -202,8 +218,14 @@ export async function POST(request: NextRequest) {
         tags,
         buyingTypes,
         designerId: session.user.id,
-        approvalStatus: 'PENDING', // All uploads require approval
-        isActive: false, // Inactive until approved
+        // Draft workflow - drafts skip approval, published designs need approval
+        isDraft,
+        approvalStatus: isDraft ? 'PENDING' : 'PENDING', // All non-drafts require approval
+        isActive: false, // Inactive until approved (or if draft)
+        publishedAt: isDraft ? null : new Date(),
+        // Inventory management
+        stockType: ['UNLIMITED', 'LIMITED', 'SOLD_OUT'].includes(stockType) ? stockType : 'UNLIMITED',
+        stockQuantity: stockType === 'LIMITED' ? (stockQuantity || 0) : null,
       },
       include: {
         designer: {
@@ -216,9 +238,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    const responseMessage = isDraft 
+      ? 'Design saved as draft. You can edit and publish it later.'
+      : 'Design uploaded successfully. It will be visible once approved by our team.'
+
     return NextResponse.json({
       id: design.id,
-      message: 'Design uploaded successfully. It will be visible once approved by our team.',
+      message: responseMessage,
       design
     })
 

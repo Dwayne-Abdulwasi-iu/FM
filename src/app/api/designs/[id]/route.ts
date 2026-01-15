@@ -18,7 +18,16 @@ export async function GET(
             name: true,
             bio: true,
             image: true,
-            isVerified: true
+            isVerified: true,
+            designerTier: true,
+            role: true,
+            // Commission settings
+            acceptsCommissions: true,
+            commissionStatus: true,
+            commissionMinBudget: true,
+            commissionMaxBudget: true,
+            commissionTurnaround: true,
+            commissionTypes: true,
           }
         },
         mediaFiles: {

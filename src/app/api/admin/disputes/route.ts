@@ -1,0 +1,96 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+
+// GET - List all disputed commissions for admin
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    // Check if user is admin
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    });
+    
+    if (user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status"); // all, active, resolved
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100); // Cap at 100
+    const skip = (page - 1) * limit;
+    
+    // Build where clause
+    const where: Record<string, unknown> = {
+      isDisputed: true
+    };
+    
+    if (status === "active") {
+      where.disputeResolvedAt = null;
+    } else if (status === "resolved") {
+      where.disputeResolvedAt = { not: null };
+    }
+    
+    const [disputes, total] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).commissionRequest.findMany({
+        where,
+        include: {
+          requester: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true
+            }
+          },
+          designer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              sellerAccount: {
+                select: {
+                  businessName: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: [
+          { disputeResolvedAt: "asc" }, // Unresolved first (null first)
+          { disputedAt: "desc" }
+        ],
+        skip,
+        take: limit
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).commissionRequest.count({ where })
+    ]);
+    
+    return NextResponse.json({
+      disputes,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching disputes:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch disputes" },
+      { status: 500 }
+    );
+  }
+}

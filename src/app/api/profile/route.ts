@@ -20,11 +20,21 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
+        image: true,
+        displayName: true,
         bio: true,
         website: true,
         location: true,
         role: true,
         isVerified: true,
+        designerTier: true,
+        specialties: true,
+        acceptsCommissions: true,
+        commissionStatus: true,
+        commissionMinBudget: true,
+        commissionMaxBudget: true,
+        commissionTurnaround: true,
+        commissionTypes: true,
         createdAt: true,
         updatedAt: true
       }
@@ -60,25 +70,31 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const { name, bio, website, location } = await request.json()
+    const { name, displayName, bio, website, location, image, specialties } = await request.json()
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         name: name || null,
+        displayName: displayName || null,
         bio: bio || null,
         website: website || null,
         location: location || null,
+        ...(image !== undefined && { image }),
+        ...(specialties !== undefined && { specialties }),
       },
       select: {
         id: true,
         email: true,
         name: true,
+        image: true,
+        displayName: true,
         bio: true,
         website: true,
         location: true,
         role: true,
         isVerified: true,
+        specialties: true,
         createdAt: true,
         updatedAt: true
       }

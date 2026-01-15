@@ -5,6 +5,7 @@ import React from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, MoreHorizontal, ArrowLeft, Shield, User } from 'lucide-react'
+import { DesignerChatBadge } from '@/components/DesignerBadge'
 
 interface ChatMessage {
   id: string
@@ -12,6 +13,7 @@ interface ChatMessage {
   senderId: string
   senderName: string
   senderRole: 'USER' | 'ADMIN'
+  senderDesignerTier?: string | null
   timestamp: string
   isRead: boolean
 }
@@ -292,6 +294,9 @@ export default function CustomerCarePage() {
                   }`}>
                     {message.senderName}
                   </span>
+                  {message.senderDesignerTier && (
+                    <DesignerChatBadge tier={message.senderDesignerTier} />
+                  )}
                 </div>
                 <p className="break-words">{message.message}</p>
                 <p className={`text-[8px] sm:text-[10px] mt-0.5 sm:mt-1 ${

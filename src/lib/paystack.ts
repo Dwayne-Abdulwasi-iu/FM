@@ -94,9 +94,19 @@ export async function getUSDToNGNRate(): Promise<number> {
       console.warn(`Using last cached exchange rate: 1 USD = ${exchangeRateCache.rate} NGN (from ${new Date(exchangeRateCache.timestamp).toISOString()})`)
       return exchangeRateCache.rate
     }
-    // Only use hardcoded rate if there's no cache at all (first failure)
-    console.warn('No cached rate available. Using fallback: 1 USD = 1500 NGN')
-    return 1500
+    // Use environment variable for fallback rate, or throw if not configured
+    const fallbackRate = process.env.FALLBACK_USD_NGN_RATE 
+      ? parseFloat(process.env.FALLBACK_USD_NGN_RATE) 
+      : null
+    
+    if (fallbackRate && !isNaN(fallbackRate)) {
+      console.warn(`No cached rate available. Using configured fallback: 1 USD = ${fallbackRate} NGN`)
+      return fallbackRate
+    }
+    
+    // If no fallback configured, use a conservative recent rate with warning
+    console.error('CRITICAL: No exchange rate available. Using emergency fallback: 1 USD = 1600 NGN. Configure FALLBACK_USD_NGN_RATE env var.')
+    return 1600 // Updated from 1500 to more recent rate
   }
 }
 

@@ -76,7 +76,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { designId, quantity = 1, purchaseType = 'REGULAR' } = await request.json()
+    const { 
+      designId, 
+      quantity = 1, 
+      purchaseType = 'REGULAR',
+      // POD-specific fields
+      podProductId,
+      podProductName,
+      podProvider,
+      price: podPrice
+    } = await request.json()
 
     if (!designId) {
       return NextResponse.json(
@@ -85,9 +94,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!['REGULAR', 'OWNERSHIP'].includes(purchaseType)) {
+    if (!['REGULAR', 'OWNERSHIP', 'POD'].includes(purchaseType)) {
       return NextResponse.json(
         { message: 'Invalid purchase type' },
+        { status: 400 }
+      )
+    }
+
+    // POD items require additional fields
+    if (purchaseType === 'POD' && (!podProductId || !podProductName)) {
+      return NextResponse.json(
+        { message: 'POD product details are required' },
         { status: 400 }
       )
     }
@@ -154,12 +171,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if item already exists in cart with same purchase type
+    // Check if item already exists in cart with same purchase type (and podProductId for POD)
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         userId: session.user.id,
         designId,
-        purchaseType
+        purchaseType,
+        ...(purchaseType === 'POD' ? { podProductId } : {})
       }
     })
 
@@ -172,7 +190,7 @@ export async function POST(request: NextRequest) {
         )
       }
       
-      // Update quantity for regular purchases
+      // For POD, also allow quantity update
       const updatedItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
@@ -202,7 +220,14 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         designId,
         quantity: purchaseType === 'OWNERSHIP' ? 1 : quantity,
-        purchaseType
+        purchaseType,
+        // POD-specific fields
+        ...(purchaseType === 'POD' ? {
+          podProductId,
+          podProductName,
+          podProvider,
+          podPrice
+        } : {})
       },
       include: {
         design: {

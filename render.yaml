@@ -13,3 +13,36 @@ services:
     healthCheckPath: /api/health
     healthCheckInterval: 60
     healthCheckTimeout: 30
+
+  # Cron job for automated dispute resolution - runs every hour
+  - type: cron
+    name: dispute-resolution-cron
+    runtime: node
+    schedule: "0 * * * *"  # Every hour
+    buildCommand: npm install
+    startCommand: |
+      curl -X POST https://fm-wtit.onrender.com/api/cron/dispute-resolution \
+        -H "Authorization: Bearer $CRON_SECRET" \
+        -H "Content-Type: application/json"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
+
+  # Cron job for processing failed notifications - runs every 5 minutes
+  - type: cron
+    name: notification-retry-cron
+    runtime: node
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/process-notifications \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET

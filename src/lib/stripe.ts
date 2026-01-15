@@ -25,12 +25,18 @@ export function getStripe(): Stripe {
   return _stripe
 }
 
-export const PLATFORM_FEE_PERCENTAGE = 0.10 // 10%
+export const PLATFORM_FEE_PERCENTAGE = 0.10 // 10% - DEFAULT, use getCommissionRate() for tiered rates
 
+/**
+ * @deprecated Use getCommissionRate() from commission-tiers.ts for tiered rates
+ */
 export function calculatePlatformFee(amount: number): number {
   return Math.round(amount * PLATFORM_FEE_PERCENTAGE * 100) // Convert to cents
 }
 
+/**
+ * @deprecated Use calculateSellerAmount() from commission-tiers.ts for tiered rates
+ */
 export function calculateSellerAmount(amount: number): number {
   const platformFee = calculatePlatformFee(amount)
   return Math.round(amount * 100) - platformFee // Convert to cents minus platform fee

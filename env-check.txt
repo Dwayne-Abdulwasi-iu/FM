@@ -1,0 +1,64 @@
+
+# Local Redis (already present in your workspace earlier)
+REDIS_URL="redis://localhost:6379"
+FFMPEG_PATH="C:\\Users\\Dwayne\\scoop\\shims\\ffmpeg.exe"
+FFPROBE_PATH="C:\\Users\\Dwayne\\scoop\\shims\\ffprobe.exe"
+MONITOR_BASE_URL="http://192.168.68.115:3000"
+# Local environment variables for Fashion Marketplace (do not commit)
+
+# Database
+# IMPORTANT: Set this to your real MongoDB connection string
+# Example: mongodb+srv://<username>:<password>@cluster0.mongodb.net/fashion_dev?retryWrites=true&w=majority
+SENDGRID_API_KEY=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
+EMAIL_FROM=fashiondwayne@gmail.com
+NEXTAUTH_URL=http://localhost:3000
+DATABASE_URL=mongodb+srv://lytleewayne:Abdulwasiu@cluster0.as7yeiu.mongodb.net/fashion_dev?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://lytleewayne:Abdulwasiu@cluster0.as7yeiu.mongodb.net/fashion_dev?retryWrites=true&w=majority&appName=Cluster0
+
+# NextAuth
+# Generate a strong random string for the secret. For local dev, keep URL as below.
+NEXTAUTH_SECRET=7f8c2a1d9b3e5f4a7c8d2e1f0b9a6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9
+NEXTAUTH_URL=http://localhost:3000
+
+# Cloudinary (optional for image upload)
+CLOUDINARY_CLOUD_NAME=dmjweao69
+CLOUDINARY_API_KEY=618256651238956
+CLOUDINARY_API_SECRET=3X9FAfMxNFjS2zm5pNukujN0vCY
+
+# Stripe (optional)
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# Paystack (optional) - LIVE KEYS
+PAYSTACK_SECRET_KEY=sk_live_16b26e0ba98daf8d056e6423c66ef99880f695d1
+PAYSTACK_PUBLIC_KEY=pk_live_6bb733fad80daa859c11d3c58f4c84d66a823502
+
+# Flutterwave
+PRINTFUL_API_KEY=qVIFEo7luegvlqSVXBNR9rK7NWJGjUN3FqHV3npr
+
+# Email (optional)
+EMAIL_SERVER_HOST=# Print-on-Demand
+PRINTFUL_API_KEY=your_key
+PRINTIFY_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzN2Q0YmQzMDM1ZmUxMWU5YTgwM2FiN2VlYjNjY2M5NyIsImp0aSI6IjRkYWJjMmQwZTU2ZjJiNDA4YzAyYWJlYzNhNzljZDY0MDNlOTNiZDhjZmM2M2MxYzQ0ODA4NDQ3YWU0MDY0Yjk0MmI2YzM0OTVmNjdhYTc2IiwiaWF0IjoxNzY4NDIxMTQzLjM3ODMwNSwibmJmIjoxNzY4NDIxMTQzLjM3ODMwNiwiZXhwIjoxNzk5OTU3MTQzLjM2NzU5Nywic3ViIjoiMjYwMzU1NjkiLCJzY29wZXMiOlsic2hvcHMubWFuYWdlIiwic2hvcHMucmVhZCIsImNhdGFsb2cucmVhZCIsIm9yZGVycy5yZWFkIiwib3JkZXJzLndyaXRlIiwicHJvZHVjdHMucmVhZCIsInByb2R1Y3RzLndyaXRlIiwid2ViaG9va3MucmVhZCIsIndlYmhvb2tzLndyaXRlIiwidXBsb2Fkcy5yZWFkIiwidXBsb2Fkcy53cml0ZSIsInByaW50X3Byb3ZpZGVycy5yZWFkIiwidXNlci5pbmZvIl19.HpSmXkyDmgscU4Nr9b0wY9LQwEYD3UlPYgNBCprNdxdaknXxntbz5O7D4b-qEgnlpzzfbduPxxhy2gvdKLU_C4cAvnHgZwlg82fKB7uC0ns0dOJT7rpF1mNAY7Drs53LaZV0nEGXUXT36Ob2NR3-jQF9Y3kn9yf0j1Jud5QUSGL_4fLtKaMprcm4H1ncSioW0XAcTwYHhEKXaiUfFj7ljo4_ZvRxfZqhDi4QCyFy95SbXYHxD-y8lJ90WfYXEtVSkk0IOCAiFBzFtjkrBVxPRqFkhQoxQWz53EboImCNtrqsfx9iTnA5TcVsJxj3RcpdB-qHBufiIpzCDFvifEb8nu89CC5Eea5HTQ86gIszmAx8-PcpmRVfD-Q8TgvugBotiO__UcN-RJZDm6HQc-1D32VLuSV0hGrEEFKZYTnkMOW7amjPtphuihVTDbWqa74K5njtSaKZKuhji7oLlIO50OKRjNaXoeDed8K6SEkWM8PWBIvqMJ_y-YYaJneA_pc0D-kAghBHq2Jr-pmEtgW8klmr8IZLvFUznffVd7NW-05GN4G38_WT54U-3tFHgjXXEZ7vp2GssZIykCCf70ZfhdmUi-wgiIZpBxhOFq9wb_GLhAw73f8YYf66pGEtevKbqiDS4omSnhmv5KwDnFzbiPjBLGWy8Et_mAnQLLNs4Ns
+PRINTIFY_SHOP_ID=your_shop_id
+
+# Originality Verification  
+TINEYE_API_KEY=your_key
+GOOGLE_VISION_API_KEY=your_key
+
+# Exchange Rates
+EXCHANGERATE_API_KEY=your_key
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=
+EMAIL_SERVER_PASSWORD=
+
+# Sentry (optional): set this to your project's DSN to enable error capture
+# Example: SENTRY_DSN=https://<key>@o0.ingest.sentry.io/<projectId>
+# Keep this secret out of source control (this file is gitignored locally).
+SENTRY_DSN=https://992d63681393812ca4215067c17cc6e6@o4510333857562624.ingest.de.sentry.io/4510333859856464
+NEXT_PUBLIC_SENTRY_DSN=https://992d63681393812ca4215067c17cc6e6@o4510333857562624.ingest.de.sentry.io/4510333859856464
+
+
+CRON_SECRET=03728e6a0f4933afc9969b06299f5dbb9d8235fb12525c427d3bd4a29d7bd891
+

@@ -17,11 +17,70 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Password Reset Fields
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  
+  // Email Verification Fields
+  emailVerified    Boolean  @default(false)
+  verifyToken      String?
+  verifyTokenExpiry DateTime?
+
   bio        String?
   website    String?
   location   String?
   isVerified Boolean  @default(false)
   isAdmin    Boolean  @default(false)
+  
+  // Enhanced Profile Fields
+  displayName     String?
+  coverImage      String?
+  socialLinks     Json?      // { instagram, twitter, pinterest, behance, dribbble }
+  specialties     String[]   // Fashion illustration, Pattern design, etc.
+  experience      String?    // Years of experience
+  education       String?
+  achievements    String[]
+  portfolioUrl    String?
+  
+  // Verification & Trust
+  verificationStatus  String   @default("UNVERIFIED") // UNVERIFIED, PENDING, VERIFIED, REJECTED
+  verificationDate    DateTime?
+  verificationBadge   String?  // RISING_STAR, TOP_SELLER, VERIFIED_PRO
+  designerTier        String?  // DESIGNER, GOLD_DESIGNER, VIP_DESIGNER, VVIP_DESIGNER
+  designerTierUpdatedAt DateTime?
+  trustScore          Float    @default(0)
+  
+  // Analytics Fields
+  profileViews    Int      @default(0)
+  totalSales      Int      @default(0)
+  totalEarnings   Float    @default(0)
+  avgRating       Float    @default(0)
+  responseTime    Int?     // Average response time in hours
+  
+  // Referral System
+  referralCode      String?           // User's unique referral code (enforced at app level)
+  referredBy        String?           // ID of user who referred them
+  totalReferrals    Int      @default(0)
+  referralEarnings  Float    @default(0)
+  
+  // Notification Preferences
+  emailNotifications  Boolean @default(true)
+  pushNotifications   Boolean @default(true)
+
+  // Commission Settings
+  acceptsCommissions    Boolean  @default(false)  // Designer must opt-in to receive commissions
+  commissionStatus      String   @default("CLOSED") // OPEN, BUSY, CLOSED
+  commissionMinBudget   Float?   // Minimum budget for commissions
+  commissionMaxBudget   Float?   // Maximum budget (optional)
+  commissionTurnaround  String?  // e.g., "2-4 weeks", "1 month"
+  commissionTypes       String[] // Types of work: "Custom Design", "Alterations", "Full Pattern", etc.
+  commissionTerms       String?  // Custom terms/conditions for commissions
+  commissionQueueSize   Int?     // How many active commissions they can handle
+
+  // Print-on-Demand (POD) Settings
+  acceptsPOD            Boolean  @default(false)  // Designer must opt-in to offer POD products
+  podDefaultMarkup      Float    @default(20)     // Default markup percentage for POD products
+  podAutoApprove        Boolean  @default(true)   // Auto-approve POD product requests
 
   designs   Design[]
   ownedDesigns Design[] @relation("DesignOwnership")
@@ -34,12 +93,38 @@ model User {
   purchases Purchase[]
   contactMessages ContactMessage[]
   chatSessions ChatSession[]
+  chatMessages ChatMessage[] @relation("ChatMessageSender")
   resources Resource[]
   paystackTransfers PaystackTransfer[]
   transferNotifications TransferNotification[]
+  notifications Notification[]
 
   accounts Account[]
   sessions Session[]
+  
+  // Social Features
+  followers       Follow[]  @relation("Following")
+  following       Follow[]  @relation("Followers")
+  commissions     Commission[]
+  commissionRequests Commission[] @relation("CommissionRequests")
+  
+  // Commission Request System (Admin-mediated)
+  commissionRequestsBy  CommissionRequest[] @relation("CommissionRequestsBy")
+  commissionRequestsFor CommissionRequest[] @relation("CommissionRequestsFor")
+  
+  // Community Features
+  forumPosts      ForumPost[]
+  forumComments   ForumComment[]
+  contestEntries  ContestEntry[]
+  contestsCreated Contest[]
+  
+  // Analytics
+  designViews     DesignView[]
+  trafficSources  TrafficSource[]
+  
+  // Direct Messaging
+  messagesSent     DirectMessage[] @relation("MessagesSent")
+  messagesReceived DirectMessage[] @relation("MessagesReceived")
 
   @@map("users")
 }
@@ -82,6 +167,7 @@ model Design {
   ownershipPrice Float?  // Higher price for ownership option
   imageUrl     String   // Primary/thumbnail image for listings
   thumbnailUrl String?
+  watermarkedUrl String? // Watermarked preview image
   tags         String[]
   category     String
   isActive     Boolean  @default(true)
@@ -93,6 +179,15 @@ model Design {
   featured     Boolean  @default(false) // Admin-selected featured designs
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  
+  // Draft Workflow
+  isDraft      Boolean  @default(false)  // True if design is a draft (not published)
+  publishedAt  DateTime?                 // When design was first published
+  
+  // Inventory/Stock Management
+  stockType    String   @default("UNLIMITED") // UNLIMITED, LIMITED, SOLD_OUT
+  stockQuantity Int?                          // null for unlimited, 0+ for limited
+  lowStockThreshold Int? @default(5)          // Alert when stock falls below this
 
   designerId String
   designer   User   @relation(fields: [designerId], references: [id], onDelete: Cascade)
@@ -100,6 +195,26 @@ model Design {
 
   totalSales   Int    @default(0)
   totalRevenue Float  @default(0)
+  
+  // Enhanced Discovery & Search
+  style           String?   // Minimalist, Bold, Vintage, Modern, etc.
+  colorPalette    String[]  // Primary colors in the design
+  garmentType     String?   // Dress, Suit, Casual, Sportswear, etc.
+  season          String?   // Spring, Summer, Fall, Winter, All-Season
+  occasion        String?   // Casual, Formal, Wedding, Party, etc.
+  targetAudience  String?   // Women, Men, Unisex, Kids
+  
+  // Trending & Analytics
+  viewCount       Int      @default(0)
+  weeklyViews     Int      @default(0)
+  monthlyViews    Int      @default(0)
+  trendingScore   Float    @default(0)
+  lastTrendingCalc DateTime?
+  
+  // Licensing
+  licenseType     String   @default("STANDARD") // STANDARD, EXTENDED, EXCLUSIVE
+  licenseTerms    String?
+  usageRights     String[] // Print, Digital, Commercial, Personal
 
   orderItems OrderItem[]
   reviews    Review[]
@@ -108,8 +223,40 @@ model Design {
   earnings   SellerEarning[]
   purchases  Purchase[]
   mediaFiles DesignMedia[]
+  podConfigs DesignPODConfig[]
+  
+  // New Relations
+  views      DesignView[]
+  licenses   License[]
+  similarTo  DesignSimilarity[] @relation("SimilarDesigns")
+  similarFrom DesignSimilarity[] @relation("SourceDesigns")
+  
+  // Commission requests that reference this design
+  commissionReferences CommissionRequest[] @relation("ReferenceDesign")
 
   @@map("designs")
+}
+
+// POD (Print-on-Demand) product configuration for a design
+model DesignPODConfig {
+  id          String   @id @default(cuid()) @map("_id")
+  designId    String
+  design      Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  
+  provider    String   // printful, printify, gooten, printivo
+  productId   String   // Product ID from the provider (e.g., "printful_12")
+  productName String   // Human-readable name
+  variantIds  String[] // Selected variant IDs
+  markup      Float    @default(30) // Markup percentage (30 = 30%)
+  enabled     Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([designId, productId])
+  @@index([designId])
+  @@index([provider])
+  @@map("design_pod_configs")
 }
 
 model DesignMedia {
@@ -138,16 +285,58 @@ model Order {
   platformFee   Float    
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  paidAt        DateTime?
 
   customerId String
   customer   User   @relation(fields: [customerId], references: [id])
 
+  // Order type: DIGITAL (design download) or POD (print-on-demand physical)
+  orderType     String   @default("DIGITAL") // DIGITAL, POD
+
+  // Payment method tracking
+  paymentMethod String?  // STRIPE, PAYSTACK, MPESA, FLUTTERWAVE
+  paymentError  String?
+
+  // Stripe
   stripePaymentIntentId String?
   stripeFeeId           String?
+
+  // M-Pesa (Kenya/Tanzania)
+  mpesaCheckoutRequestId  String?
+  mpesaMerchantRequestId  String?
+  mpesaReceiptNumber      String?
+  mpesaTransactionDate    String?
+  mpesaPhoneNumber        String?
+
+  // Flutterwave (Pan-African)
+  flutterwaveRef           String?
+  flutterwaveTransactionId String?
+  flutterwaveFlwRef        String?
+
+  // POD (Print-on-Demand) fields
+  podProvider        String?  // printful, printify
+  podOrderId         String?  // External order ID from POD provider
+  podStatus          String?  // pending, in_production, shipped, delivered
+  trackingNumber     String?
+  trackingUrl        String?
+  estimatedDelivery  DateTime?
+  
+  // Shipping address for POD orders
+  shippingName       String?
+  shippingAddress1   String?
+  shippingAddress2   String?
+  shippingCity       String?
+  shippingState      String?
+  shippingCountry    String?
+  shippingZip        String?
+  shippingPhone      String?
 
   items OrderItem[]
   earnings SellerEarning[]
 
+  @@index([paymentMethod])
+  @@index([orderType])
+  @@index([podProvider])
   @@map("orders")
 }
 
@@ -155,13 +344,18 @@ model OrderItem {
   id           String @id @default(cuid()) @map("_id")
   quantity     Int    @default(1)
   price        Float
-  purchaseType String @default("REGULAR") // REGULAR or OWNERSHIP
+  purchaseType String @default("REGULAR") // REGULAR, OWNERSHIP, or POD
 
   orderId  String
   order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   designId String
   design   Design @relation(fields: [designId], references: [id])
 
+  // POD-specific fields
+  podProductId   String?  // Product ID from POD catalog (printful_123, printify_456)
+  podVariantId   String?  // Variant ID (size/color combination)
+  podProductName String?  // "Unisex Cotton Tee - Black / XL"
+  
   @@map("order_items")
 }
 
@@ -196,15 +390,21 @@ model Favorite {
 model CartItem {
   id           String   @id @default(cuid()) @map("_id")
   quantity     Int      @default(1)
-  purchaseType String   @default("REGULAR") // REGULAR or OWNERSHIP
+  purchaseType String   @default("REGULAR") // REGULAR, OWNERSHIP, or POD
   createdAt    DateTime @default(now())
+  
+  // POD-specific fields
+  podProductId   String?  // e.g., "printful_12"
+  podProductName String?  // e.g., "Unisex Cotton Tee"
+  podProvider    String?  // e.g., "printful", "printify"
+  podPrice       Float?   // Price including markup
 
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   designId String
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, designId, purchaseType])
+  @@unique([userId, designId, purchaseType, podProductId])
   @@map("cart_items")
 }
 
@@ -303,6 +503,8 @@ model ChatMessage {
 
   sessionId String
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  sender    User @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
 }
@@ -376,6 +578,33 @@ model TransferNotification {
   @@map("transfer_notifications")
 }
 
+// General in-app notifications
+model Notification {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // COMMISSION_MESSAGE, ORDER_UPDATE, PAYMENT, SYSTEM, etc.
+  title     String
+  message   String
+  data      Json?    // Additional context (commissionId, orderId, etc.)
+  
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  
+  // Soft delete for audit trail
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, isDeleted])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
 model Settings {
   id        String   @id @default(cuid()) @map("_id")
   key       String   @unique
@@ -384,4 +613,985 @@ model Settings {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// ============================================
+// FEATURE 1: Intellectual Property Protection
+// ============================================
+
+model License {
+  id              String   @id @default(cuid()) @map("_id")
+  licenseNumber   String   @unique
+  type            String   // STANDARD, EXTENDED, EXCLUSIVE
+  purchaseDate    DateTime @default(now())
+  expiryDate      DateTime?
+  
+  // Rights granted
+  printRights     Boolean  @default(false)
+  digitalRights   Boolean  @default(true)
+  commercialUse   Boolean  @default(false)
+  exclusiveUse    Boolean  @default(false)
+  modifications   Boolean  @default(false)
+  
+  // Usage tracking
+  downloadCount   Int      @default(0)
+  maxDownloads    Int      @default(5)
+  lastDownload    DateTime?
+  
+  // Verification
+  certificateUrl  String?
+  verificationCode String  @unique
+  
+  designId String
+  design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+  userId   String
+  orderId  String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("licenses")
+}
+
+// ============================================
+// FEATURE 2: Social Proof & Discovery
+// ============================================
+
+model Follow {
+  id          String   @id @default(cuid()) @map("_id")
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  
+  follower  User @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model DesignSimilarity {
+  id            String   @id @default(cuid()) @map("_id")
+  sourceId      String
+  similarId     String
+  score         Float    // Similarity score 0-1
+  createdAt     DateTime @default(now())
+  
+  source  Design @relation("SourceDesigns", fields: [sourceId], references: [id], onDelete: Cascade)
+  similar Design @relation("SimilarDesigns", fields: [similarId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, similarId])
+  @@map("design_similarities")
+}
+
+// ============================================
+// FEATURE 3: Advanced Search & Discovery
+// ============================================
+
+model DesignView {
+  id        String   @id @default(cuid()) @map("_id")
+  designId  String
+  userId    String?
+  sessionId String?
+  source    String?  // search, category, trending, similar, direct
+  createdAt DateTime @default(now())
+  
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("design_views")
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid()) @map("_id")
+  query     String
+  filters   Json?
+  results   Int      @default(0)
+  userId    String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@map("search_history")
+}
+
+model TrendingDesign {
+  id           String   @id @default(cuid()) @map("_id")
+  designId     String   @unique
+  rank         Int
+  score        Float
+  period       String   // DAILY, WEEKLY, MONTHLY
+  calculatedAt DateTime @default(now())
+  
+  @@map("trending_designs")
+}
+
+model Collection {
+  id          String   @id @default(cuid()) @map("_id")
+  name        String
+  description String?
+  coverImage  String?
+  isPublic    Boolean  @default(true)
+  isCurated   Boolean  @default(false) // Admin-curated collections
+  season      String?
+  theme       String?
+  designIds   String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("collections")
+}
+
+// ============================================
+// FEATURE 5: Seller Analytics & Tools
+// ============================================
+
+model TrafficSource {
+  id        String   @id @default(cuid()) @map("_id")
+  sellerId  String
+  source    String   // direct, search, social, referral, email
+  medium    String?
+  campaign  String?
+  visits    Int      @default(1)
+  date      DateTime @default(now())
+  
+  seller User @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@map("traffic_sources")
+}
+
+model Promotion {
+  id          String   @id @default(cuid()) @map("_id")
+  sellerId    String
+  type        String   // DISCOUNT, BUNDLE, FEATURED_SLOT
+  name        String
+  description String?
+  
+  // Discount settings
+  discountType  String?  // PERCENTAGE, FIXED
+  discountValue Float?
+  
+  // Bundle settings
+  designIds   String[]
+  bundlePrice Float?
+  
+  // Validity
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  
+  // Usage tracking
+  usageCount Int @default(0)
+  maxUsage   Int?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("promotions")
+}
+
+model SellerAnalytics {
+  id          String   @id @default(cuid()) @map("_id")
+  sellerId    String
+  date        DateTime
+  
+  // Daily metrics
+  views       Int      @default(0)
+  uniqueViews Int      @default(0)
+  sales       Int      @default(0)
+  revenue     Float    @default(0)
+  favorites   Int      @default(0)
+  cartAdds    Int      @default(0)
+  
+  // Conversion metrics
+  conversionRate Float @default(0)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([sellerId, date])
+  @@map("seller_analytics")
+}
+
+// ============================================
+// FEATURE 6: Trust & Verification
+// ============================================
+
+model VerificationRequest {
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  // Submitted documents
+  portfolioUrl    String?
+  socialProof     String[]  // Links to social media, other platforms
+  idDocument      String?   // Encrypted/hashed reference
+  businessLicense String?
+  
+  // Review info
+  reviewerId  String?
+  reviewNotes String?
+  reviewedAt  DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("verification_requests")
+}
+
+model BuyerProtection {
+  id          String   @id @default(cuid()) @map("_id")
+  orderId     String   @unique
+  status      String   @default("ACTIVE") // ACTIVE, CLAIMED, RESOLVED, EXPIRED
+  
+  // Protection details
+  protectionAmount Float
+  expiresAt        DateTime
+  
+  // Dispute info
+  disputeReason   String?
+  disputeEvidence String[]
+  disputeDate     DateTime?
+  resolution      String?
+  resolvedAt      DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("buyer_protections")
+}
+
+model RefundRequest {
+  id          String   @id @default(cuid()) @map("_id")
+  orderId     String
+  userId      String
+  reason      String
+  description String?
+  evidence    String[]
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, PROCESSING
+  
+  // Processing
+  refundAmount Float?
+  processedBy  String?
+  processedAt  DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("refund_requests")
+}
+
+// ============================================
+// FEATURE 7: Community Features
+// ============================================
+
+model Contest {
+  id          String   @id @default(cuid()) @map("_id")
+  title       String
+  description String
+  rules       String?
+  theme       String?
+  coverImage  String?
+  
+  // Prizes
+  prizes      Json     // { first: { amount, description }, second: {...}, ... }
+  
+  // Timeline
+  startDate   DateTime
+  endDate     DateTime
+  votingStart DateTime?
+  votingEnd   DateTime?
+  
+  // Status
+  status      String   @default("UPCOMING") // UPCOMING, ACTIVE, VOTING, COMPLETED
+  
+  // Settings
+  maxEntries  Int      @default(1)
+  isPublic    Boolean  @default(true)
+  
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  entries     ContestEntry[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contests")
+}
+
+model ContestEntry {
+  id          String   @id @default(cuid()) @map("_id")
+  contestId   String
+  userId      String
+  
+  title       String
+  description String?
+  imageUrl    String
+  
+  // Voting
+  voteCount   Int      @default(0)
+  rank        Int?
+  isWinner    Boolean  @default(false)
+  prize       String?
+  
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([contestId, userId])
+  @@map("contest_entries")
+}
+
+model ForumCategory {
+  id          String   @id @default(cuid()) @map("_id")
+  name        String
+  description String?
+  slug        String   @unique
+  icon        String?
+  color       String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  posts ForumPost[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("forum_categories")
+}
+
+model ForumPost {
+  id          String   @id @default(cuid()) @map("_id")
+  title       String
+  content     String
+  slug        String   @unique
+  
+  // Status
+  isPinned    Boolean  @default(false)
+  isLocked    Boolean  @default(false)
+  isAnswered  Boolean  @default(false)
+  
+  // Engagement
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  
+  categoryId String
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  comments ForumComment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("forum_posts")
+}
+
+model ForumComment {
+  id        String   @id @default(cuid()) @map("_id")
+  content   String
+  likeCount Int      @default(0)
+  isAnswer  Boolean  @default(false)
+  
+  postId   String
+  post     ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Self-relation for nested replies
+  parentId String?
+  parent   ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies  ForumComment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("forum_comments")
+}
+
+// Admin-mediated Commission Request System
+model CommissionRequest {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Requester (buyer)
+  requesterId     String
+  requesterName   String
+  requesterEmail  String
+  
+  // Target Designer
+  designerId      String
+  designerName    String
+  designerEmail   String?
+  designerPageUrl String
+  
+  // Request Details
+  title           String
+  description     String
+  category        String?
+  budget          String?  // Budget range or amount as text
+  deadline        String?  // Preferred deadline as text
+  
+  // Reference Design (when commission is inspired by a specific design)
+  referenceDesignId    String?  // ID of the design that inspired this commission
+  referenceDesign      Design?  @relation("ReferenceDesign", fields: [referenceDesignId], references: [id], onDelete: SetNull)
+  referenceDesignUrl   String?  // URL/path to the reference design (kept for display if design deleted)
+  referenceDesignTitle String?  // Title of the reference design (snapshot, kept if design deleted)
+  
+  // Attachments (Cloudinary URLs)
+  attachments     Json[]   // Array of { url, type, name, size }
+  
+  // Status & Admin Management
+  // PENDING -> FORWARDED -> QUOTED -> PAID -> IN_PROGRESS -> DELIVERED -> COMPLETED
+  // Also: REJECTED, CANCELLED, REVISION, DISPUTED
+  status          String   @default("PENDING")
+  adminNotes      String?
+  forwardedAt     DateTime?
+  forwardedBy     String?  // Admin user ID who forwarded
+  
+  // Designer Response
+  designerResponse    String?   // Designer's message to client
+  designerQuote       Float?    // Quoted price
+  designerDeadline    String?   // Proposed deadline
+  designerAcceptedAt  DateTime?
+  designerRejectedAt  DateTime?
+  rejectionReason     String?
+  responseAt          DateTime?
+  
+  // Work tracking
+  workStartedAt       DateTime?
+  
+  // Payment tracking
+  isPaid              Boolean   @default(false)
+  paidAt              DateTime?
+  paymentReference    String?   // Stripe/Paystack reference
+  paymentMethod       String?   // 'stripe' or 'paystack'
+  platformFee         Float?
+  designerEarnings    Float?
+  
+  // Deliverables & Completion
+  deliverables        Json[]    // Array of { url, type, name, size, uploadedAt }
+  deliveredAt         DateTime?
+  completedAt         DateTime?
+  
+  // Client Review
+  clientRating        Int?      // 1-5 rating from client
+  clientReview        String?
+  reviewedAt          DateTime?
+  
+  // Revision tracking
+  revisionCount       Int       @default(0)
+  maxRevisions        Int       @default(2)
+  revisionNotes       String?   // Client's revision feedback
+  revisionRequestedAt DateTime?
+  
+  // Dispute handling
+  isDisputed          Boolean   @default(false)
+  disputeReason       String?
+  disputedAt          DateTime?
+  disputeResolvedAt   DateTime?
+  disputeResolution   String?   // Admin resolution notes
+  
+  // Cancellation
+  cancelledAt         DateTime?
+  cancelledBy         String?   // User ID who cancelled
+  cancellationReason  String?
+  
+  // Physical vs Digital Commission
+  isPhysical          Boolean   @default(false)  // true = physical item (dress, etc.), false = digital
+  
+  // Physical Delivery (only for isPhysical = true)
+  // Delivery Status: AWAITING_CREATION -> READY_FOR_COLLECTION -> COLLECTED_BY_ADMIN -> IN_TRANSIT -> DELIVERED
+  deliveryStatus      String?   // Delivery workflow status
+  deliveryAddress     Json?     // { name, phone, address, city, state, country, postalCode }
+  deliveryNotes       String?   // Special delivery instructions
+  
+  // Collection from Designer
+  readyForCollectionAt  DateTime?   // When designer marked item ready
+  collectionAddress     Json?       // Designer's address for pickup
+  collectedAt           DateTime?   // When admin collected from designer
+  collectedBy           String?     // Admin user ID who collected
+  collectionNotes       String?     // Admin notes about collection
+  collectionPhotos      Json[]      // Photos of item at collection { url, uploadedAt }
+  
+  // Shipping/Delivery to Client
+  shippedAt             DateTime?   // When admin shipped/dispatched
+  trackingNumber        String?     // Courier tracking number
+  courierName           String?     // e.g., "DHL", "FedEx", "Local Courier"
+  estimatedDeliveryDate DateTime?   // Expected delivery date
+  actualDeliveredAt     DateTime?   // When client received
+  deliveryConfirmedAt   DateTime?   // When client confirmed receipt
+  deliveryPhotos        Json[]      // Proof of delivery photos { url, uploadedAt }
+  
+  // Messaging between client and designer
+  messages              Json[]      // Array of { senderId, senderName, message, timestamp, attachments? }
+  
+  // Progress updates from designer
+  progressUpdates       Json[]      // Array of { message, photos[], timestamp }
+  
+  // Refund tracking
+  refundStatus          String?     // PENDING, PROCESSING, COMPLETED, FAILED
+  refundAmount          Float?
+  refundReference       String?     // Stripe/Paystack refund ID
+  refundedAt            DateTime?
+  refundedBy            String?     // Admin who processed refund
+  refundReason          String?
+  
+  // Payout tracking (designer payment)
+  payoutStatus          String?     // PENDING, PROCESSING, COMPLETED, FAILED
+  payoutAmount          Float?
+  payoutReference       String?     // Paystack transfer reference
+  payoutInitiatedAt     DateTime?   // When payout was first initiated (idempotency)
+  payoutCompletedAt     DateTime?
+  payoutFailedReason    String?
+  
+  // Warning email tracking (for cron idempotency)
+  lastAutoReleaseWarningAt   DateTime?
+  lastDeadlineWarningAt      DateTime?
+  lastAbandonmentWarningAt   DateTime?
+  
+  // Retry tracking (dedicated field for accurate counting)
+  payoutRetryCount           Int       @default(0)
+  
+  requester User @relation("CommissionRequestsBy", fields: [requesterId], references: [id], onDelete: Cascade)
+  designer  User @relation("CommissionRequestsFor", fields: [designerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Composite indexes for cron job performance
+  @@index([status, payoutStatus])
+  @@index([status, isDisputed, payoutInitiatedAt])
+  @@index([status, deliveredAt])
+  @@map("commission_requests")
+}
+
+model Commission {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Parties
+  clientId    String
+  designerId  String
+  
+  // Request details
+  title       String
+  description String
+  category    String
+  style       String?
+  references  String[]  // Reference image URLs
+  
+  // Pricing
+  budgetMin   Float?
+  budgetMax   Float?
+  agreedPrice Float?
+  
+  // Timeline
+  deadline    DateTime?
+  
+  // Status
+  status      String   @default("PENDING") // PENDING, ACCEPTED, IN_PROGRESS, REVISION, COMPLETED, CANCELLED
+  
+  // Deliverables
+  deliverables String[]
+  revisions    Int      @default(0)
+  maxRevisions Int      @default(2)
+  
+  // Communication
+  messages     Json[]   // Array of { senderId, message, timestamp }
+  
+  client   User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  designer User @relation("CommissionRequests", fields: [designerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("commissions")
+}
+
+// Audit log for tracking sensitive financial operations
+model AuditLog {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Action details
+  action      String   // PAYMENT_CONFIRMED, PAYOUT_INITIATED, REFUND_PROCESSED, DISPUTE_RESOLVED, etc.
+  category    String   // PAYMENT, PAYOUT, REFUND, DISPUTE, STATUS_CHANGE
+  
+  // Actor (who performed the action)
+  actorId     String?  // User ID (null for system/cron actions)
+  actorType   String   // USER, ADMIN, SYSTEM, CRON
+  actorEmail  String?
+  
+  // Target (what was affected)
+  targetType  String   // COMMISSION_REQUEST, USER, ORDER, etc.
+  targetId    String
+  
+  // Details
+  metadata    Json?    // Additional context { amount, reference, oldStatus, newStatus, etc. }
+  ipAddress   String?
+  userAgent   String?
+  
+  // Result
+  success     Boolean  @default(true)
+  errorMessage String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([action])
+  @@index([actorId])
+  @@index([targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Database-backed rate limiting for scalability across instances
+model RateLimitEntry {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Rate limit key (e.g., "payment:user123:comm456")
+  key         String   @unique
+  
+  // Tracking
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+  
+  // Auto-cleanup
+  expiresAt   DateTime
+  
+  @@index([expiresAt])
+  @@map("rate_limit_entries")
+}
+
+// System configuration for dynamic settings
+model SystemConfig {
+  id        String   @id @default(cuid()) @map("_id")
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  
+  @@map("system_config")
+}
+
+// Track contact sharing violations for admin review
+model ContentViolation {
+  id              String   @id @default(cuid()) @map("_id")
+  
+  // Who violated
+  userId          String
+  userEmail       String?
+  userRole        String   // CLIENT, DESIGNER
+  
+  // Where it happened
+  commissionId    String
+  commissionTitle String?
+  
+  // What was detected
+  violationType   String   // EMAIL, PHONE, SOCIAL_HANDLE, URL, SUSPICIOUS_KEYWORD
+  originalContent String   // The original content before redaction
+  detectedValue   String   // The specific email/phone/handle detected
+  
+  // Status
+  reviewed        Boolean  @default(false)
+  reviewedBy      String?  // Admin user ID
+  reviewedAt      DateTime?
+  action          String?  // WARNED, BANNED, DISMISSED
+  adminNotes      String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([commissionId])
+  @@index([reviewed])
+  @@index([createdAt])
+  @@map("content_violations")
+}
+
+// Webhook Idempotency - tracks processed webhook events to prevent duplicates
+model ProcessedWebhookEvent {
+  id        String   @id @default(cuid()) @map("_id")
+  eventId   String   @unique // The unique event ID from Stripe/Paystack
+  provider  String   // "stripe" or "paystack"
+  eventType String   // e.g., "checkout.session.completed"
+  processedAt DateTime @default(now())
+  
+  @@index([provider])
+  @@index([processedAt])
+  @@map("processed_webhook_events")
+}
+
+// Coupon/Discount System
+model Coupon {
+  id          String   @id @default(cuid()) @map("_id")
+  code        String   @unique
+  description String?
+  
+  // Discount Configuration
+  discountType  String   // PERCENTAGE, FIXED_AMOUNT
+  discountValue Float    // e.g., 10 for 10% or 500 for $5.00
+  
+  // Usage Limits
+  maxUses       Int?     // null = unlimited
+  usedCount     Int      @default(0)
+  maxUsesPerUser Int     @default(1)
+  
+  // Validity
+  isActive      Boolean  @default(true)
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  
+  // Restrictions
+  minOrderAmount Float?   // Minimum order total required
+  maxDiscount    Float?   // Cap on discount amount (for percentage)
+  designerOnly   Boolean  @default(false) // Only for specific designer
+  designerId     String?  // If designerOnly, which designer
+  categoryOnly   String?  // Only for specific category
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  redemptions   CouponRedemption[]
+  
+  @@index([isActive, startDate, endDate])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  orderId   String?
+  
+  discountApplied Float
+  redeemedAt      DateTime @default(now())
+  
+  @@unique([couponId, userId, orderId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+// Download Tracking System
+model DesignDownload {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  userId    String
+  designId  String
+  purchaseId String
+  
+  // Download details
+  downloadType  String   // ORIGINAL, WATERMARKED, THUMBNAIL
+  fileFormat    String?  // PNG, JPG, PDF, etc.
+  fileSize      Int?     // In bytes
+  
+  // Security
+  ipAddress     String?
+  userAgent     String?
+  
+  downloadedAt  DateTime @default(now())
+  
+  @@index([userId])
+  @@index([designId])
+  @@index([downloadedAt])
+  @@map("design_downloads")
+}
+
+// Referral/Affiliate Program
+model Referral {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  // Referrer (existing user who shared the link)
+  referrerId    String
+  referrerCode  String   @unique  // Unique referral code
+  
+  // Referred user (new user who signed up)
+  referredId    String?  @unique  // Null until someone uses the code
+  referredEmail String?           // Email of referred user
+  
+  // Rewards
+  referrerReward    Float    @default(0)  // Amount earned by referrer
+  referredReward    Float    @default(0)  // Discount given to new user
+  rewardStatus      String   @default("PENDING") // PENDING, EARNED, PAID
+  
+  // Tracking
+  signupCompleted   Boolean  @default(false)
+  firstPurchaseMade Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  convertedAt   DateTime?  // When referral converted to signup
+  rewardedAt    DateTime?  // When reward was paid
+  
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+// Dispute Resolution System
+model Dispute {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  // Parties involved
+  complainantId   String   // User who filed the dispute
+  respondentId    String   // User being complained about
+  
+  // Related entities
+  orderId         String?
+  designId        String?
+  commissionId    String?
+  
+  // Dispute details
+  type            String   // REFUND_REQUEST, QUALITY_ISSUE, NON_DELIVERY, COPYRIGHT, OTHER
+  status          String   @default("OPEN") // OPEN, UNDER_REVIEW, RESOLVED, ESCALATED, CLOSED
+  priority        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  
+  title           String
+  description     String
+  evidence        String[] // URLs to uploaded evidence files
+  
+  // Resolution
+  resolution      String?
+  resolvedBy      String?  // Admin who resolved
+  resolvedAt      DateTime?
+  
+  // Refund details (if applicable)
+  refundRequested Float?
+  refundApproved  Float?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  messages        DisputeMessage[]
+  
+  @@index([complainantId])
+  @@index([respondentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("disputes")
+}
+
+model DisputeMessage {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  disputeId String
+  dispute   Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  
+  senderId  String
+  senderRole String  // COMPLAINANT, RESPONDENT, ADMIN
+  message   String
+  attachments String[]
+  
+  createdAt DateTime @default(now())
+  
+  @@index([disputeId])
+  @@map("dispute_messages")
+}
+
+// Subscription Plans
+model Subscription {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  userId    String   @unique
+  
+  // Plan details
+  planType      String   // FREE, BASIC, PRO, ENTERPRISE
+  planName      String
+  
+  // Billing
+  priceMonthly  Float
+  priceYearly   Float?
+  billingCycle  String   @default("MONTHLY") // MONTHLY, YEARLY
+  
+  // Status
+  status        String   @default("ACTIVE") // ACTIVE, CANCELLED, PAST_DUE, EXPIRED
+  
+  // Features
+  maxDesigns      Int?     // Max designs per month (null = unlimited)
+  maxDownloads    Int?     // Max downloads per month
+  commissionRate  Float    @default(5)  // Platform commission percentage
+  prioritySupport Boolean  @default(false)
+  analyticsAccess Boolean  @default(false)
+  
+  // Payment provider references
+  stripeSubscriptionId   String?
+  paystackSubscriptionCode String?
+  
+  // Dates
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  nextBillingDate DateTime?
+  cancelledAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Direct Messages for Buyer-Seller Communication
+model DirectMessage {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  senderId    String
+  receiverId  String
+  
+  content     String
+  designId    String?   // Optional reference to a design being discussed
+  
+  readAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  sender    User @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User @relation("MessagesReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+  @@map("direct_messages")
+}
+
+// User Preferences for AI Recommendations
+model UserPreference {
+  id        String   @id @default(cuid()) @map("_id")
+  
+  userId    String   @unique
+  
+  // Style preferences
+  favoriteCategories  String[]
+  favoriteStyles      String[]
+  favoriteTags        String[]
+  favoriteDesigners   String[]
+  
+  // Price preferences
+  preferredPriceMin   Float?
+  preferredPriceMax   Float?
+  preferredCurrency   String   @default("USD")
+  
+  // Browsing behavior (JSON for flexibility)
+  viewHistory         Json?    // Recent viewed designs
+  searchHistory       Json?    // Recent searches
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("user_preferences")
+}
+
+// Failed Notification Queue for retry logic
+model FailedNotification {
+  id          String   @id @default(cuid()) @map("_id")
+  type        String   // 'email', 'in_app', 'webhook'
+  payload     Json     // Notification data
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  nextRetryAt DateTime
+  lastError   String?
+  resolved    Boolean  @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([resolved, nextRetryAt])
+  @@map("failed_notifications")
 }

@@ -4,7 +4,9 @@ import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role = "USER" } = await request.json();
+    const { name, email, password } = await request.json()
+    // SECURITY: Role is always USER - never accept from client to prevent privilege escalation
+    const role = "USER";
 
     if (!name || !email || !password) {
       return NextResponse.json(

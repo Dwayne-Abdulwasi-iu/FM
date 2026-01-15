@@ -1,0 +1,91 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+
+/**
+ * GET /api/admin/content-violations - Get all content violations
+ * 
+ * Query params:
+ * - status: "all" | "pending" | "reviewed" (default: "pending")
+ * - userId: Filter by specific user
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 20, max: 100)
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") || "pending";
+    const userId = searchParams.get("userId");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
+    
+    // Build where clause
+    const where: Record<string, unknown> = {};
+    
+    if (status === "pending") {
+      where.reviewed = false;
+    } else if (status === "reviewed") {
+      where.reviewed = true;
+    }
+    // "all" = no filter
+    
+    if (userId) {
+      where.userId = userId;
+    }
+    
+    // Get total count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const total = await (prisma as any).contentViolation.count({ where });
+    
+    // Get violations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const violations = await (prisma as any).contentViolation.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+    
+    // Get stats
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stats = await (prisma as any).contentViolation.groupBy({
+      by: ["violationType"],
+      _count: { violationType: true },
+    });
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pendingCount = await (prisma as any).contentViolation.count({
+      where: { reviewed: false },
+    });
+    
+    return NextResponse.json({
+      violations,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+      stats: {
+        pending: pendingCount,
+        byType: stats.reduce((acc: Record<string, number>, item: { violationType: string; _count: { violationType: number } }) => {
+          acc[item.violationType] = item._count.violationType;
+          return acc;
+        }, {}),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching content violations:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch violations" },
+      { status: 500 }
+    );
+  }
+}

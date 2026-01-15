@@ -8,11 +8,15 @@ import { retryFailedTransfers } from '@/lib/transfer-service'
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
-    const cronSecret = request.headers.get('x-cron-secret')
+    // Verify cron secret (supports both x-cron-secret header and Bearer token)
+    const cronSecretHeader = request.headers.get('x-cron-secret')
+    const authHeader = request.headers.get('authorization')
     const expectedSecret = process.env.CRON_SECRET
 
-    if (!expectedSecret || cronSecret !== expectedSecret) {
+    const isValidCronSecret = cronSecretHeader === expectedSecret
+    const isValidBearer = authHeader === `Bearer ${expectedSecret}`
+
+    if (!expectedSecret || (!isValidCronSecret && !isValidBearer)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

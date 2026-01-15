@@ -43,6 +43,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the message
+    // Get user's designerTier for badge display
+    const senderUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { designerTier: true }
+    })
+    
     const chatMessage = await prisma.chatMessage.create({
       data: {
         sessionId,
@@ -66,6 +72,7 @@ export async function POST(request: NextRequest) {
       senderId: chatMessage.senderId,
       senderName: chatMessage.senderName,
       senderRole: chatMessage.senderRole,
+      senderDesignerTier: senderUser?.designerTier || null,
       isAdmin: chatMessage.senderRole === 'ADMIN',
       timestamp: chatMessage.createdAt,
       createdAt: chatMessage.createdAt,
@@ -131,16 +138,24 @@ export async function GET(request: NextRequest) {
         createdAt: 'asc'
       },
       take: limit,
-      skip: offset
+      skip: offset,
+      include: {
+        sender: {
+          select: {
+            designerTier: true
+          }
+        }
+      }
     })
 
-    type ChatMessageShape = { id: string; message: string; senderId: string; senderName: string; senderRole: string; createdAt: string | Date; isRead: boolean }
+    type ChatMessageShape = { id: string; message: string; senderId: string; senderName: string; senderRole: string; createdAt: string | Date; isRead: boolean; sender?: { designerTier: string | null } }
     const formattedMessages = (messages as ChatMessageShape[]).map((msg) => ({
       id: msg.id,
       message: msg.message,
       senderId: msg.senderId,
       senderName: msg.senderName,
       senderRole: msg.senderRole,
+      senderDesignerTier: msg.sender?.designerTier || null,
       isAdmin: msg.senderRole === 'ADMIN',
       timestamp: msg.createdAt,
       createdAt: msg.createdAt,

@@ -3,13 +3,15 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { DesignerProfileBadge } from '@/components/DesignerBadge'
 
 interface UserProfile {
   id: string
   name: string | null
+  displayName: string | null
   email: string
   bio: string | null
   website: string | null
@@ -17,6 +19,7 @@ interface UserProfile {
   role: string
   createdAt: string
   isVerified: boolean
+  designerTier: string | null
 }
 
 interface UserStats {
@@ -68,7 +71,54 @@ interface PurchasedDesign {
   }
 }
 
-type TabId = 'overview' | 'designs' | 'earnings' | 'account' | 'purchases'
+interface OrderItem {
+  id: string
+  quantity: number
+  price: number
+  purchaseType: string
+  podProductId?: string
+  podProductName?: string
+  design: {
+    id: string
+    title: string
+    imageUrl: string
+    thumbnailUrl?: string | null
+    category: string
+    designer: {
+      id: string
+      name: string | null
+    }
+  }
+}
+
+interface UserOrder {
+  id: string
+  orderNumber: string
+  status: string
+  orderType: 'DIGITAL' | 'POD'
+  totalAmount: number
+  createdAt: string
+  paidAt?: string | null
+  paymentMethod?: string | null
+  podProvider?: string | null
+  podStatus?: string | null
+  trackingNumber?: string | null
+  trackingUrl?: string | null
+  estimatedDelivery?: string | null
+  shipping?: {
+    name?: string | null
+    address1?: string | null
+    address2?: string | null
+    city?: string | null
+    state?: string | null
+    country?: string | null
+    zip?: string | null
+    phone?: string | null
+  } | null
+  items: OrderItem[]
+}
+
+type TabId = 'overview' | 'designs' | 'earnings' | 'account' | 'purchases' | 'orders'
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -77,11 +127,21 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [designs, setDesigns] = useState<Design[]>([])
   const [purchasedDesigns, setPurchasedDesigns] = useState<PurchasedDesign[]>([])
+  const [orders, setOrders] = useState<UserOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    displayName: '',
+    bio: '',
+    website: '',
+    location: ''
+  })
 
   useEffect(() => {
     if (status === 'loading') return
@@ -95,16 +155,24 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const [profileRes, statsRes, designsRes, purchasesRes] = await Promise.all([
+      const [profileRes, statsRes, designsRes, purchasesRes, ordersRes] = await Promise.all([
         fetch('/api/profile'),
         fetch('/api/profile/stats'),
         fetch('/api/profile/designs'),
-        fetch('/api/profile/purchases')
+        fetch('/api/profile/purchases'),
+        fetch('/api/profile/orders')
       ])
 
       if (profileRes.ok) {
         const profileData = await profileRes.json()
         setProfile(profileData.user)
+        setProfileForm({
+          name: profileData.user.name || '',
+          displayName: profileData.user.displayName || '',
+          bio: profileData.user.bio || '',
+          website: profileData.user.website || '',
+          location: profileData.user.location || ''
+        })
       }
 
       if (statsRes.ok) {
@@ -123,11 +191,47 @@ export default function ProfilePage() {
       } else {
         console.warn('Failed to fetch purchases:', purchasesRes.status)
       }
+      
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json()
+        setOrders(ordersData.orders || [])
+      } else {
+        console.warn('Failed to fetch orders:', ordersRes.status)
+      }
     } catch (error) {
       console.error('Failed to fetch profile data:', error)
       setErrorMessage('Failed to load profile')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    try {
+      setProfileSaving(true)
+      setErrorMessage(null)
+      
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileForm)
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data.user)
+        setIsEditingProfile(false)
+        setSuccessMessage('Profile updated successfully!')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        const error = await response.json()
+        setErrorMessage(error.message || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error)
+      setErrorMessage('Failed to save profile')
+    } finally {
+      setProfileSaving(false)
     }
   }
 
@@ -322,7 +426,10 @@ export default function ProfilePage() {
                 <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{profile.name || 'Anonymous User'}</h1>
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{profile.displayName || profile.name || 'Anonymous User'}</h1>
+                {profile.displayName && profile.name && (
+                  <p className="text-[10px] sm:text-xs text-gray-500 truncate">{profile.name}</p>
+                )}
                 <div className="flex items-center text-gray-600 text-[11px] sm:text-xs mt-0.5">
                   <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" />
                   <span className="truncate">{profile.email}</span>
@@ -333,15 +440,20 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-1.5 mt-1 sm:mt-0">
+            <div className="flex items-center space-x-1.5 mt-1 sm:mt-0 flex-wrap gap-1">
+              {profile.designerTier && (
+                <DesignerProfileBadge tier={profile.designerTier} />
+              )}
               {profile.isVerified && (
                 <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
                   Verified
                 </span>
               )}
-              <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium capitalize">
-                {profile.role.toLowerCase()}
-              </span>
+              {!profile.designerTier && (
+                <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium capitalize">
+                  {profile.role.toLowerCase()}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -372,7 +484,7 @@ export default function ProfilePage() {
                 <div className="text-center sm:text-left">
                   <p className="text-[10px] sm:text-xs font-medium text-gray-600">Earnings</p>
                   <p className="text-base sm:text-xl font-bold text-gray-900">{formatPrice(stats?.totalEarnings ?? 0)}</p>
-                  <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5">After 10% fee</p>
+                  <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5">After platform fee</p>
                 </div>
                 <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 mt-1 sm:mt-0 hidden sm:block" />
               </div>
@@ -388,7 +500,8 @@ export default function ProfilePage() {
                 [
                   { id: 'overview' as TabId, label: 'Overview', shortLabel: 'Overview', icon: Eye },
                   { id: 'designs' as TabId, label: 'My Designs', shortLabel: 'Designs', icon: Upload },
-                  { id: 'purchases' as TabId, label: 'Purchases', shortLabel: 'Purchases', icon: Download },
+                  { id: 'purchases' as TabId, label: 'Downloads', shortLabel: 'Downloads', icon: Download },
+                  { id: 'orders' as TabId, label: 'My Orders', shortLabel: 'Orders', icon: Package },
                   { id: 'earnings' as TabId, label: 'Earnings', shortLabel: 'Earnings', icon: DollarSign },
                   { id: 'account' as TabId, label: 'Bank Account', shortLabel: 'Bank', icon: CreditCard }
                 ] as { id: TabId; label: string; shortLabel: string; icon: ElementType }[]
@@ -413,36 +526,142 @@ export default function ProfilePage() {
           <div className="p-2.5 sm:p-4">
             {activeTab === 'overview' && (
               <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2">Account Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Profile Information</h4>
-                    <div className="space-y-1 text-[11px] sm:text-xs text-gray-900">
-                      <p><span className="font-medium">Email:</span> {profile.email}</p>
-                      <p><span className="font-medium">Role:</span> {profile.role}</p>
-                      <p><span className="font-medium">Verified:</span> {profile.isVerified ? 'Yes' : 'No'}</p>
-                      {profile.location && <p><span className="font-medium">Location:</span> {profile.location}</p>}
-                      {profile.website && <p><span className="font-medium">Website:</span> {profile.website}</p>}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Quick Actions</h4>
-                    <div className="flex gap-1.5 sm:flex-col sm:space-y-1.5">
-                      <Link
-                        href="/upload"
-                        className="flex-1 bg-indigo-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-center text-[10px] sm:text-xs"
-                      >
-                        Upload
-                      </Link>
-                      <Link
-                        href="/designs"
-                        className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs"
-                      >
-                        Browse
-                      </Link>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900">Account Overview</h3>
+                  {!isEditingProfile && (
+                    <button
+                      onClick={() => setIsEditingProfile(true)}
+                      className="text-indigo-600 hover:text-indigo-700 text-[10px] sm:text-xs font-medium"
+                    >
+                      Edit Profile
+                    </button>
+                  )}
                 </div>
+                
+                {isEditingProfile ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.name}
+                          onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="Your full name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+                          Display Name / Nickname
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.displayName}
+                          onChange={(e) => setProfileForm({ ...profileForm, displayName: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="Nickname shown in forum & community"
+                        />
+                        <p className="mt-0.5 text-[10px] text-gray-500">This name will be shown in the forum and community sections instead of your full name.</p>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.location}
+                          onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="City, Country"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+                          Website
+                        </label>
+                        <input
+                          type="url"
+                          value={profileForm.website}
+                          onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="https://yourwebsite.com"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+                        Bio
+                      </label>
+                      <textarea
+                        value={profileForm.bio}
+                        onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                        rows={3}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Tell us about yourself..."
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={profileSaving}
+                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-[10px] sm:text-xs disabled:opacity-50"
+                      >
+                        {profileSaving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingProfile(false)
+                          setProfileForm({
+                            name: profile?.name || '',
+                            displayName: profile?.displayName || '',
+                            bio: profile?.bio || '',
+                            website: profile?.website || '',
+                            location: profile?.location || ''
+                          })
+                        }}
+                        className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 text-[10px] sm:text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Profile Information</h4>
+                      <div className="space-y-1 text-[11px] sm:text-xs text-gray-900">
+                        <p><span className="font-medium">Name:</span> {profile.name || 'Not set'}</p>
+                        <p><span className="font-medium">Display Name:</span> {profile.displayName || <span className="text-gray-400 italic">Not set</span>}</p>
+                        <p><span className="font-medium">Email:</span> {profile.email}</p>
+                        <p><span className="font-medium">Role:</span> {profile.role}</p>
+                        <p><span className="font-medium">Verified:</span> {profile.isVerified ? 'Yes' : 'No'}</p>
+                        {profile.location && <p><span className="font-medium">Location:</span> {profile.location}</p>}
+                        {profile.website && <p><span className="font-medium">Website:</span> {profile.website}</p>}
+                        {profile.bio && <p><span className="font-medium">Bio:</span> {profile.bio}</p>}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Quick Actions</h4>
+                      <div className="flex gap-1.5 sm:flex-col sm:space-y-1.5">
+                        <Link
+                          href="/upload"
+                          className="flex-1 bg-indigo-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-center text-[10px] sm:text-xs"
+                        >
+                          Upload
+                        </Link>
+                        <Link
+                          href="/designs"
+                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs"
+                        >
+                          Browse
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -626,6 +845,168 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'orders' && (
+              <div>
+                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Orders</h2>
+                
+                {orders.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8">
+                    <Package className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2 sm:mb-3" />
+                    <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No orders yet</p>
+                    <Link 
+                      href="/designs"
+                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs"
+                    >
+                      Browse Designs
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3 sm:space-y-4">
+                    {/* POD Orders Section */}
+                    {orders.filter(o => o.orderType === 'POD').length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-xs sm:text-sm font-semibold text-orange-700 mb-2 flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5" />
+                          Physical Products (Print-on-Demand)
+                        </h3>
+                        <div className="space-y-2">
+                          {orders.filter(o => o.orderType === 'POD').map(order => (
+                            <div key={order.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+                                    order.podStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                    order.podStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                    order.podStatus === 'in_production' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {order.podStatus === 'delivered' ? '✓ Delivered' :
+                                     order.podStatus === 'shipped' ? '🚚 Shipped' :
+                                     order.podStatus === 'in_production' ? '🏭 In Production' :
+                                     '⏳ Processing'}
+                                  </span>
+                                  <p className="text-xs font-semibold text-orange-700 mt-1">
+                                    {formatPrice(order.totalAmount)}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Order Items */}
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {order.items.map(item => (
+                                  <div key={item.id} className="flex items-center gap-2 bg-white rounded p-1.5 border border-orange-100">
+                                    <div className="w-10 h-10 relative flex-shrink-0">
+                                      <Image
+                                        src={item.design.thumbnailUrl || item.design.imageUrl}
+                                        alt={item.design.title}
+                                        fill
+                                        className="object-cover rounded"
+                                      />
+                                    </div>
+                                    <div className="text-[10px] sm:text-xs">
+                                      <p className="font-medium text-gray-900 line-clamp-1">{item.design.title}</p>
+                                      {item.podProductName && (
+                                        <p className="text-orange-600">{item.podProductName}</p>
+                                      )}
+                                      <p className="text-gray-500">Qty: {item.quantity}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              {/* Shipping & Tracking */}
+                              <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs">
+                                {order.trackingNumber && (
+                                  <a
+                                    href={order.trackingUrl || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    Track Package
+                                  </a>
+                                )}
+                                {order.shipping && (
+                                  <span className="text-gray-500">
+                                    Ships to: {order.shipping.city}, {order.shipping.country}
+                                  </span>
+                                )}
+                                {order.podProvider && (
+                                  <span className="text-gray-400">
+                                    via {order.podProvider}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Digital Orders Section */}
+                    {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
+                          <Download className="w-3.5 h-3.5" />
+                          Digital Downloads
+                        </h3>
+                        <div className="space-y-2">
+                          {orders.filter(o => o.orderType === 'DIGITAL').map(order => (
+                            <div key={order.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+                                    order.status === 'COMPLETED' || order.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {order.status === 'COMPLETED' || order.status === 'PAID' ? '✓ Complete' : order.status}
+                                  </span>
+                                  <p className="text-xs font-semibold text-blue-700 mt-1">
+                                    {formatPrice(order.totalAmount)}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Order Items */}
+                              <div className="flex flex-wrap gap-2">
+                                {order.items.map(item => (
+                                  <div key={item.id} className="flex items-center gap-2 bg-white rounded p-1.5 border border-blue-100">
+                                    <div className="w-10 h-10 relative flex-shrink-0">
+                                      <Image
+                                        src={item.design.thumbnailUrl || item.design.imageUrl}
+                                        alt={item.design.title}
+                                        fill
+                                        className="object-cover rounded"
+                                      />
+                                    </div>
+                                    <div className="text-[10px] sm:text-xs">
+                                      <p className="font-medium text-gray-900 line-clamp-1">{item.design.title}</p>
+                                      <p className="text-blue-600">
+                                        {item.purchaseType === 'OWNERSHIP' ? 'Full Ownership' : 'Standard License'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -879,7 +1260,7 @@ function SellerAccountTab() {
           </div>
           <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-blue-50 rounded-lg\">
             <p className="text-[9px] sm:text-xs text-blue-800 leading-tight">
-              <strong>How it works:</strong> When customers make purchases, 90% of the sale amount will be automatically transferred to this account. The platform retains 10% as commission.
+              <strong>How it works:</strong> When customers make purchases, your earnings (after platform commission of 7-10%) will be automatically transferred to this account. New sellers enjoy their first $100 commission-free!
             </p>
           </div>
           

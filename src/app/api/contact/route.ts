@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,13 +17,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
+    // Rate limit: 5 messages per hour per email or IP
+    const rateLimitKey = session?.user?.id 
+      ? `contact:user:${session.user.id}`
+      : `contact:email:${email.toLowerCase()}`
+    
+    const rateLimit = await checkRateLimit(rateLimitKey, 5, 60 * 60 * 1000)
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          message: 'Too many messages submitted. Please try again later.',
+          retryAfter: rateLimit.resetAt
+        },
+        { status: 429 }
+      )
+    }
+
+    // Validate message length to prevent abuse
+    if (message.length > 5000) {
+      return NextResponse.json(
+        { message: 'Message is too long. Maximum 5000 characters allowed.' },
+        { status: 400 }
+      )
+    }
+
     // Create contact message
     const contactMessage = await prisma.contactMessage.create({
       data: {
-        name,
-        email,
-        subject,
-        message,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        subject: subject.trim(),
+        message: message.trim(),
         priority: priority || 'medium',
         userId: session?.user?.id || null,
         status: 'OPEN',

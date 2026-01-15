@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, User, Search, Menu, Upload, Shield } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { NotificationBell } from "./NotificationBell";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -13,6 +14,7 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -120,15 +122,72 @@ export function Navbar() {
             <Link href="/designs" className="text-gray-800 hover:text-indigo-700 font-medium">
               Browse
             </Link>
+            {/* Community Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setCommunityDropdownOpen(true)}
+              onMouseLeave={() => setCommunityDropdownOpen(false)}
+            >
+              <button
+                onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
+                className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-1"
+              >
+                Community
+                <ChevronDown className={`w-4 h-4 transition-transform ${communityDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {communityDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                  <Link
+                    href="/contests"
+                    onClick={() => setCommunityDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    Contests
+                  </Link>
+                  <Link
+                    href="/forum"
+                    onClick={() => setCommunityDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Forum
+                  </Link>
+                  <Link
+                    href="/commissions"
+                    onClick={() => setCommunityDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Commissions
+                  </Link>
+                  <Link
+                    href="/designers"
+                    onClick={() => setCommunityDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <User className="w-4 h-4" />
+                    Designers
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link href="/contact" className="text-gray-800 hover:text-indigo-700 font-medium">
               Contact
             </Link>
             {session && (
-              <Link href="/upload" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
-                <Upload className="w-4 h-4" />
-                Upload
-              </Link>
+              <>
+                <Link href="/seller/dashboard" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </Link>
+                <Link href="/upload" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
+                  <Upload className="w-4 h-4" />
+                  Upload
+                </Link>
+              </>
             )}
+            {session && <NotificationBell />}
             <Link href="/cart" className="text-gray-800 hover:text-indigo-700 relative">
               <ShoppingBag className="w-5 h-5" />
               {cartCount > 0 && (
@@ -192,15 +251,61 @@ export function Navbar() {
               >
                 Contact
               </Link>
-              {session && (
+              {/* Community Links */}
+              <div className="border-t border-gray-100 my-2 pt-2">
+                <span className="px-3 text-[10px] font-semibold text-gray-400 uppercase">Community</span>
                 <Link 
-                  href="/upload" 
+                  href="/contests" 
                   className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Upload className="w-3 h-3" />
-                  Upload
+                  <Trophy className="w-3 h-3" />
+                  Contests
                 </Link>
+                <Link 
+                  href="/forum" 
+                  className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  Forum
+                </Link>
+                <Link 
+                  href="/commissions" 
+                  className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Palette className="w-3 h-3" />
+                  Commissions
+                </Link>
+                <Link 
+                  href="/designers" 
+                  className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <User className="w-3 h-3" />
+                  Designers
+                </Link>
+              </div>
+              {session && (
+                <>
+                  <Link 
+                    href="/seller/dashboard" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <LayoutDashboard className="w-3 h-3" />
+                    Seller Dashboard
+                  </Link>
+                  <Link 
+                    href="/upload" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Upload className="w-3 h-3" />
+                    Upload
+                  </Link>
+                </>
               )}
               <Link 
                 href="/cart" 
