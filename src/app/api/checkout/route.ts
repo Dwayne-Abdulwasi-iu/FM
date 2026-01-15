@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     // Check if at least one payment system is configured
     const stripeConfigured = isStripeConfigured() && process.env.STRIPE_SECRET_KEY !== 'sk_test_REDACTED'
     const paystackConfigured = isPaystackConfigured()
-    const mpesaConfigured = isMpesaConfigured()
+    const mpesaConfigured = !!(process.env.MPESA_CONSUMER_KEY && process.env.MPESA_CONSUMER_SECRET)
     const flutterwaveConfigured = isFlutterwaveConfigured()
     
     if (!stripeConfigured && !paystackConfigured && !mpesaConfigured && !flutterwaveConfigured) {

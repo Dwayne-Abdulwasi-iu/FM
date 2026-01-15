@@ -47,14 +47,13 @@ export async function GET(request: NextRequest) {
           totalAmount: true,
           createdAt: true,
           // POD fields
-          isPOD: true,
+          orderType: true,
           podProvider: true,
           podStatus: true,
           podOrderId: true,
           trackingNumber: true,
           trackingUrl: true,
-          shippedAt: true,
-          deliveredAt: true,
+          estimatedDelivery: true,
           customer: {
             select: {
               id: true,
@@ -63,14 +62,9 @@ export async function GET(request: NextRequest) {
               image: true,
             },
           },
-          shippingAddress: {
-            select: {
-              fullName: true,
-              city: true,
-              state: true,
-              country: true,
-            },
-          },
+          shippingCity: true,
+          shippingState: true,
+          shippingCountry: true,
           items: {
             where: {
               design: {

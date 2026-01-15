@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, type ComponentType, type SVGProps } from 'react'
+import { useState, useEffect, type ComponentType, type SVGProps } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -18,7 +19,18 @@ import {
   MessageCircle,
   Book,
   Video,
-  FileText
+  FileText,
+  Palette,
+  Printer,
+  Award,
+  PenTool,
+  Star,
+  TrendingUp,
+  Package,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  Layers
 } from 'lucide-react'
 
 interface FAQItem {
@@ -37,9 +49,18 @@ interface HelpCategory {
 }
 
 export default function HelpPage() {
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null)
+
+  // Handle URL query parameter for direct category navigation
+  useEffect(() => {
+    const category = searchParams.get('category')
+    if (category) {
+      setSelectedCategory(category)
+    }
+  }, [searchParams])
 
   const helpCategories: HelpCategory[] = [
     {
@@ -48,6 +69,34 @@ export default function HelpPage() {
       description: 'Learn the basics of using Fashion Marketplace',
       icon: Book,
       color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'digital-designs',
+      title: 'Digital Designs',
+      description: 'Buying & selling digital fashion assets',
+      icon: Palette,
+      color: 'from-violet-500 to-purple-500'
+    },
+    {
+      id: 'commissions',
+      title: 'Commissions',
+      description: 'Custom design requests and how they work',
+      icon: PenTool,
+      color: 'from-pink-500 to-rose-500'
+    },
+    {
+      id: 'pod',
+      title: 'Print-on-Demand',
+      description: 'Create and sell physical products',
+      icon: Printer,
+      color: 'from-amber-500 to-orange-500'
+    },
+    {
+      id: 'seller-tiers',
+      title: 'Seller Tiers',
+      description: 'Rewards and benefits for sellers',
+      icon: Award,
+      color: 'from-yellow-500 to-amber-500'
     },
     {
       id: 'uploads',
@@ -75,7 +124,7 @@ export default function HelpPage() {
       title: 'Account Management',
       description: 'Manage your profile and account settings',
       icon: User,
-      color: 'from-pink-500 to-rose-500'
+      color: 'from-teal-500 to-cyan-500'
     },
     {
       id: 'security',
@@ -91,7 +140,7 @@ export default function HelpPage() {
     {
       id: 'what-is-platform',
       question: 'What is Fashion Marketplace?',
-      answer: 'Fashion Marketplace is a digital platform where fashion designers can upload, sell, and discover fashion designs, patterns, illustrations, and other creative content. It connects designers with buyers looking for unique fashion assets.',
+      answer: 'Fashion Marketplace is a digital platform where fashion designers can upload, sell, and discover fashion designs, patterns, illustrations, and other creative content. It connects designers with buyers looking for unique fashion assets. The platform also offers custom commissions and print-on-demand products.',
       category: 'getting-started'
     },
     {
@@ -105,6 +154,200 @@ export default function HelpPage() {
       question: 'What types of accounts are available?',
       answer: 'We offer both buyer and seller accounts. All accounts can purchase designs, but seller accounts can also upload and sell their own designs. You can upgrade to a seller account anytime from your profile settings.',
       category: 'getting-started'
+    },
+    {
+      id: 'platform-features',
+      question: 'What features does Fashion Marketplace offer?',
+      answer: 'Our platform offers: Digital design marketplace with instant downloads, custom commission system for personalized designs, print-on-demand integration for physical products, seller tier rewards program, secure payment processing, messaging system, and verification badges for trusted designers.',
+      category: 'getting-started'
+    },
+
+    // Digital Designs
+    {
+      id: 'what-are-digital-designs',
+      question: 'What are digital designs?',
+      answer: 'Digital designs are downloadable fashion assets including illustrations, patterns, sketches, technical drawings, embroidery files, and print-ready artwork. Once purchased, you receive instant access to high-resolution files you can use for your fashion projects.',
+      category: 'digital-designs'
+    },
+    {
+      id: 'digital-design-types',
+      question: 'What types of digital designs are available?',
+      answer: 'Categories include: Fashion Illustrations (artistic renderings), Pattern Designs (repeat patterns for fabrics), Technical Drawings (spec sheets and flat sketches), Embroidery Designs (stitch files), Print Designs (ready-to-print graphics), Color Palettes, and Mood Boards.',
+      category: 'digital-designs'
+    },
+    {
+      id: 'buying-types-explained',
+      question: 'What is the difference between Regular and Ownership purchases?',
+      answer: 'Regular Purchase: You get a license to use the design for personal or commercial projects, but the designer retains ownership and can sell to others. Ownership Purchase: You acquire exclusive rights to the design - it becomes yours alone, removed from the marketplace, and the designer transfers all rights to you.',
+      category: 'digital-designs'
+    },
+    {
+      id: 'ownership-benefits',
+      question: 'When should I choose Ownership purchase?',
+      answer: 'Choose Ownership if you want: Exclusive rights (no one else can use it), ability to resell or license the design, full commercial control, or to use it as your brand\'s signature design. Ownership prices are typically 5-20x higher than regular licenses.',
+      category: 'digital-designs'
+    },
+    {
+      id: 'download-formats',
+      question: 'What file formats do I receive?',
+      answer: 'Depending on the design type, you may receive: PNG/JPG (high resolution images), SVG (scalable vector graphics), AI/EPS (Adobe Illustrator files), PSD (Photoshop files), PDF (print-ready), DST/PES (embroidery formats). Check each listing for specific formats included.',
+      category: 'digital-designs'
+    },
+    {
+      id: 'digital-license-usage',
+      question: 'What can I do with purchased digital designs?',
+      answer: 'With a Regular license: Use in your fashion collections, create products for sale, use in marketing materials, modify and adapt for your needs. You cannot resell the original file or claim authorship. With Ownership: Full rights including resale, sublicensing, and claiming as your own work.',
+      category: 'digital-designs'
+    },
+
+    // Commissions
+    {
+      id: 'what-are-commissions',
+      question: 'What is the Commission system?',
+      answer: 'Commissions allow you to request custom, personalized designs from our talented designers. You describe what you need, designers provide quotes, and once you accept and pay, the designer creates your unique design. It\'s perfect for bespoke fashion projects.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-process',
+      question: 'How does the commission process work?',
+      answer: 'Step 1: Submit a request describing your needs, budget, and deadline. Step 2: Your request is sent to your chosen designer. Step 3: Designer reviews and sends a quote with price and timeline. Step 4: Accept the quote and pay securely. Step 5: Designer works on your project with progress updates. Step 6: Review deliverables and request revisions if needed. Step 7: Approve final work and receive your files.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-payment-protection',
+      question: 'How are my commission payments protected?',
+      answer: 'All commission payments are held securely in escrow until you approve the final deliverables. If a designer fails to deliver or the work doesn\'t match what was agreed, you can request a refund or file a dispute. The platform mediates all disputes fairly.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-revisions',
+      question: 'Can I request revisions on my commission?',
+      answer: 'Yes! Most commissions include revision rounds. When you receive deliverables, you can: Approve the work (releases payment to designer), Request revisions (provide feedback for changes), or Dispute (if there are serious issues). Revision limits depend on what the designer specifies in their quote.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-types',
+      question: 'What types of commissions can I request?',
+      answer: 'Common commission types include: Custom illustrations (fashion figures, technical sketches), Pattern development (unique prints and textiles), Full design collections, Logo and branding for fashion brands, Alterations of existing designs, Rush orders for urgent projects, and Bulk/wholesale design packages.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-pricing',
+      question: 'How is commission pricing determined?',
+      answer: 'Designers set their own rates based on: Complexity of the work, Time required, Their experience level, Whether it includes source files, and exclusivity. When you submit a request, designers quote based on your specific requirements. Always discuss pricing before accepting.',
+      category: 'commissions'
+    },
+    {
+      id: 'physical-commissions',
+      question: 'Can I commission physical items?',
+      answer: 'Yes! Designers can create physical fashion items like garments, accessories, or samples. For physical commissions, you\'ll provide a delivery address, and once the designer marks it as shipped, delivery is coordinated through our admin team for secure handling.',
+      category: 'commissions'
+    },
+    {
+      id: 'commission-communication',
+      question: 'How do I communicate with my designer during a commission?',
+      answer: 'Each commission has a built-in messaging system. You can send text messages, share reference images, discuss progress, and receive updates. All communication is logged for transparency and dispute resolution if needed.',
+      category: 'commissions'
+    },
+    {
+      id: 'become-commission-designer',
+      question: 'How do I accept commissions as a designer?',
+      answer: 'Go to Seller Dashboard > Commission Settings. Enable "Accept Commissions," set your minimum/maximum budget, typical turnaround time, and the types of work you do. Clients will then be able to send you commission requests.',
+      category: 'commissions'
+    },
+
+    // Print-on-Demand (POD)
+    {
+      id: 'what-is-pod',
+      question: 'What is Print-on-Demand (POD)?',
+      answer: 'Print-on-Demand lets you sell physical products (t-shirts, hoodies, bags, phone cases, etc.) featuring your designs without holding inventory. When a customer orders, the product is printed and shipped directly to them. You earn profit on each sale!',
+      category: 'pod'
+    },
+    {
+      id: 'pod-how-it-works',
+      question: 'How does POD work on Fashion Marketplace?',
+      answer: 'Step 1: Upload your design. Step 2: Enable POD and select products (t-shirts, mugs, etc.). Step 3: Set your markup/profit margin. Step 4: Customers browse and order. Step 5: Our partners (Printful/Printify) print and ship. Step 6: You receive your profit minus production costs.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-products-available',
+      question: 'What products can I sell through POD?',
+      answer: 'Available products include: Apparel (t-shirts, hoodies, tank tops, dresses), Accessories (bags, hats, phone cases), Home & Living (pillows, blankets, mugs, posters), and more. Product availability depends on the POD provider and your region.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-pricing',
+      question: 'How is POD pricing calculated?',
+      answer: 'Final price = Base cost + Your markup. For example: A t-shirt costs $12 to produce. You set a $8 markup. Customer pays $20. You earn $8 profit. We recommend 20-40% markup for competitive pricing while maintaining good profit margins.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-shipping',
+      question: 'How does POD shipping work?',
+      answer: 'Our POD partners handle all production and shipping. Typical delivery: 3-7 business days (domestic), 7-21 days (international). Tracking is provided automatically. Customers receive shipping updates via email.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-quality',
+      question: 'What is the print quality like?',
+      answer: 'We partner with industry-leading providers (Printful, Printify) known for high-quality printing. Methods include DTG (direct-to-garment), sublimation, and embroidery depending on the product. For best results, upload designs at 300 DPI with transparent backgrounds.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-returns',
+      question: 'How are POD returns handled?',
+      answer: 'Returns are handled on a case-by-case basis. If a product arrives damaged or with print defects, the POD partner will reprint or refund. Size exchanges may be available. Contact support with order details and photos of any issues.',
+      category: 'pod'
+    },
+    {
+      id: 'pod-vs-digital',
+      question: 'Should I offer POD, digital downloads, or both?',
+      answer: 'Offer both for maximum reach! Digital downloads provide instant gratification and higher margins. POD reaches customers who want finished products without DIY. Many successful sellers offer the same design as both a digital download and on POD products.',
+      category: 'pod'
+    },
+
+    // Seller Tiers
+    {
+      id: 'what-are-seller-tiers',
+      question: 'What are Seller Tiers?',
+      answer: 'Seller Tiers is our rewards program that reduces platform fees as you sell more. The more you earn, the lower your fees, and the more you keep! There are 6 tiers: New (15% fee), Bronze (14%), Silver (13%), Gold (12%), Platinum (11%), and Diamond (10%).',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-requirements',
+      question: 'What are the tier requirements?',
+      answer: 'Tiers are based on your lifetime earnings: NEW ($0-$499), BRONZE ($500-$1,999), SILVER ($2,000-$4,999), GOLD ($5,000-$9,999), PLATINUM ($10,000-$24,999), DIAMOND ($25,000+). Pro subscribers get an additional 2% discount on fees.',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-benefits',
+      question: 'What benefits do higher tiers provide?',
+      answer: 'Higher tiers offer: Lower platform fees (keep more of each sale), priority support, featured placement opportunities, early access to new features, verification badge eligibility, and exclusive seller resources. Diamond sellers may get dedicated account managers.',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-fee-comparison',
+      question: 'How much do fees differ between tiers?',
+      answer: 'Fee comparison per $100 sale: NEW keeps $85, BRONZE keeps $86, SILVER keeps $87, GOLD keeps $88, PLATINUM keeps $89, DIAMOND keeps $90. Over time, this adds up significantly! A Diamond seller earning $50,000 saves $2,500 compared to a New seller.',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-progression',
+      question: 'How do I progress through tiers?',
+      answer: 'Simply keep selling! Your tier automatically upgrades when your lifetime earnings cross the threshold. Earnings include digital sales, commission work, and POD profits. You never lose your tier - once achieved, it\'s yours.',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-pro-subscription',
+      question: 'What is the Pro Subscription for sellers?',
+      answer: 'Pro subscribers get an extra 2% off platform fees at any tier. Plus: Advanced analytics, priority listing in search, promotional tools, early feature access, and dedicated support. Monthly subscription that pays for itself with just a few sales.',
+      category: 'seller-tiers'
+    },
+    {
+      id: 'tier-verification',
+      question: 'What are verification badges?',
+      answer: 'Verification badges show buyers that a seller is trusted and legitimate. Types include: Verified (identity confirmed), Featured (selected by platform), Top Seller (high sales volume), and Pro (subscription member). Higher tiers have easier access to verification.',
+      category: 'seller-tiers'
     },
 
     // Uploading Designs
@@ -132,6 +375,12 @@ export default function HelpPage() {
       answer: 'Consider factors like complexity, time invested, uniqueness, and market demand. Research similar designs for pricing guidance. You can offer both free designs to build followers and premium designs for revenue.',
       category: 'uploads'
     },
+    {
+      id: 'multiple-media',
+      question: 'Can I upload multiple images per design?',
+      answer: 'Yes! You can add multiple media files to showcase different views, variations, or included files. Set some as FREE preview and others as PREMIUM (only visible after purchase). This lets buyers see quality while protecting your work.',
+      category: 'uploads'
+    },
 
     // Purchasing
     {
@@ -157,19 +406,25 @@ export default function HelpPage() {
     {
       id: 'payment-methods',
       question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and local payment methods through our secure payment processors Stripe and PayStack.',
+      answer: 'We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and local payment methods through our secure payment processors Stripe (international) and PayStack (Africa). Mobile money is also supported in select regions.',
       category: 'payments'
     },
     {
       id: 'seller-payouts',
       question: 'How do seller payouts work?',
-      answer: 'Sellers receive 70-85% of each sale (depending on volume). Payouts are processed weekly to your connected bank account or PayPal. Minimum payout threshold is $20.',
+      answer: 'Sellers receive 85-90% of each sale depending on their tier. Payouts are processed to your connected bank account. For Nigerian sellers, Paystack transfers are automatic. Minimum payout threshold is $20 or ₦10,000.',
       category: 'payments'
     },
     {
       id: 'refund-policy',
       question: 'What is the refund policy?',
       answer: 'Digital downloads are generally non-refundable. However, if a file is corrupted or significantly different from the description, contact support within 7 days for a refund or replacement.',
+      category: 'payments'
+    },
+    {
+      id: 'currency-support',
+      question: 'What currencies are supported?',
+      answer: 'The platform supports USD, NGN (Nigerian Naira), GHS (Ghanaian Cedi), KES (Kenyan Shilling), and ZAR (South African Rand). Prices are automatically converted based on your location. Sellers receive payouts in their local currency.',
       category: 'payments'
     },
 
@@ -192,6 +447,12 @@ export default function HelpPage() {
       answer: 'Go to Settings > Notifications to control email notifications for sales, new followers, messages, and platform updates. You can customize which notifications you receive.',
       category: 'account'
     },
+    {
+      id: 'bank-account-setup',
+      question: 'How do I set up my bank account for payouts?',
+      answer: 'Go to Seller Dashboard > Bank Account. Enter your bank details including account number and bank name. For Nigerian banks, verification is automatic. International sellers may need additional verification steps.',
+      category: 'account'
+    },
 
     // Security & Privacy
     {
@@ -210,6 +471,12 @@ export default function HelpPage() {
       id: 'copyright-protection',
       question: 'How are my designs protected from theft?',
       answer: 'We use watermarks on preview images, DMCA protection, and monitoring systems. Report any copyright infringement immediately. Original creators retain full rights to their uploaded designs.',
+      category: 'security'
+    },
+    {
+      id: 'escrow-protection',
+      question: 'How does escrow protection work for commissions?',
+      answer: 'When you pay for a commission, funds are held securely by our platform until you approve the final work. This protects buyers from non-delivery and ensures designers get paid for completed work. Disputes are mediated by our support team.',
       category: 'security'
     }
   ]

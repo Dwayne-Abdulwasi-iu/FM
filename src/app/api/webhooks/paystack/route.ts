@@ -19,7 +19,6 @@ type PaystackOrderItem = {
   podProductId?: string
   podVariantId?: string
   podProductName?: string
-  purchaseType?: 'REGULAR' | 'OWNERSHIP'
 }
 
 export async function POST(request: NextRequest) {
@@ -405,7 +404,7 @@ export async function POST(request: NextRequest) {
               status: 'fulfillment_failed',
               provider: 'Unknown',
               reason: fulfillResult.error || 'POD provider order creation failed',
-              customerEmail: order.customer?.email || undefined,
+              customerEmail: undefined,
               totalAmount: order.totalAmount
             })
             

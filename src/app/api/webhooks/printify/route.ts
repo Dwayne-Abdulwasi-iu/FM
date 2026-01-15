@@ -241,8 +241,7 @@ export async function POST(request: NextRequest) {
           data: {
             podStatus: 'shipped',
             trackingNumber: shipment?.number,
-            trackingUrl: shipment?.url,
-            shippedAt: shipment?.shipped_at ? new Date(shipment.shipped_at) : new Date()
+            trackingUrl: shipment?.url
           }
         });
 
@@ -353,8 +352,7 @@ export async function POST(request: NextRequest) {
           where: { id: order.id },
           data: { 
             podStatus: 'delivered',
-            status: 'COMPLETED',
-            deliveredAt: new Date()
+            status: 'COMPLETED'
           }
         });
 
@@ -381,7 +379,7 @@ export async function POST(request: NextRequest) {
           where: { id: order.id },
           data: { 
             podStatus: 'delivery_failed',
-            notes: 'Delivery attempt failed'
+            paymentError: 'Delivery attempt failed'
           }
         });
 

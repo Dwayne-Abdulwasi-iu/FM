@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
           platformCommission: platformFee,
           sellerAmount: designerEarnings,
           quantity: item.quantity,
-          orderId: order.id,
+          orderId: typedOrder.id,
           designId: item.designId,
         },
       });
@@ -211,11 +211,10 @@ export async function POST(request: NextRequest) {
 
       if (shippingAddress) {
         const podFulfillmentItems = podItems.map(item => ({
-          designId: item.designId,
-          podProductId: item.podProductId || '',
-          podVariantId: item.podVariantId || '',
+          productId: item.podProductId || '',
+          variantId: item.podVariantId || '',
           quantity: item.quantity,
-          designUrl: item.design.imageUrl
+          designImageUrl: item.design.imageUrl
         }));
 
         const fulfillResult = await fulfillPODOrder(typedOrder.id, podFulfillmentItems, shippingAddress);

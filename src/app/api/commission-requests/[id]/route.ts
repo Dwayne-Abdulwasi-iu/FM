@@ -67,7 +67,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const { phone: _phone, ...sanitizedAddress } = addr;
       responseData = {
         ...commissionRequest,
-        deliveryAddress: sanitizedAddress,
+        deliveryAddress: sanitizedAddress as typeof commissionRequest.deliveryAddress,
       };
     }
 

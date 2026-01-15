@@ -22,7 +22,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      stats: settings.value as typeof defaultStats,
+      stats: settings.value as typeof _defaultStats,
     });
   } catch (error) {
     console.error("Error fetching stats settings:", error);

@@ -388,7 +388,7 @@ export async function resolveDispute(
   await storeDispute(dispute);
 
   // Process resolution actions
-  await processResolutionActions(dispute, resolution);
+  await processResolutionActions(dispute, dispute.resolution);
 
   // Notify parties
   await notifyResolution(dispute);
@@ -412,7 +412,7 @@ export async function resolveDispute(
  */
 async function processResolutionActions(
   dispute: Dispute,
-  resolution: Dispute['resolution'] & {}
+  resolution: NonNullable<Dispute['resolution']>
 ): Promise<void> {
   const actions: string[] = [];
 

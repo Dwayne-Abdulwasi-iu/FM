@@ -18,7 +18,9 @@ import {
   Settings,
   ChevronRight,
   Palette,
-  Printer
+  Printer,
+  HelpCircle,
+  BookOpen
 } from 'lucide-react'
 
 interface AnalyticsData {
@@ -631,6 +633,70 @@ export default function SellerDashboardPage() {
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </Link>
+        </div>
+
+        {/* Help & Resources Section */}
+        <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Help & Resources</h2>
+              <p className="text-sm text-gray-600">Learn how to maximize your sales</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Link
+              href="/help?category=seller-tiers"
+              className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <span className="font-medium text-gray-900 group-hover:text-indigo-600">Seller Tiers</span>
+              </div>
+              <p className="text-xs text-gray-600">Earn more with lower fees</p>
+            </Link>
+            <Link
+              href="/help?category=commissions"
+              className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Palette className="w-5 h-5 text-pink-500" />
+                <span className="font-medium text-gray-900 group-hover:text-indigo-600">Commissions</span>
+              </div>
+              <p className="text-xs text-gray-600">Custom work guide</p>
+            </Link>
+            <Link
+              href="/help?category=pod"
+              className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Printer className="w-5 h-5 text-cyan-500" />
+                <span className="font-medium text-gray-900 group-hover:text-indigo-600">Print-on-Demand</span>
+              </div>
+              <p className="text-xs text-gray-600">Sell physical products</p>
+            </Link>
+            <Link
+              href="/help?category=digital-designs"
+              className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen className="w-5 h-5 text-purple-500" />
+                <span className="font-medium text-gray-900 group-hover:text-indigo-600">Digital Sales</span>
+              </div>
+              <p className="text-xs text-gray-600">Selling digital designs</p>
+            </Link>
+          </div>
+          <div className="mt-4 text-center">
+            <Link
+              href="/help"
+              className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+            >
+              <HelpCircle className="w-4 h-4" />
+              View Full Help Center
+            </Link>
+          </div>
         </div>
       </div>
     </div>

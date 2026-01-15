@@ -465,18 +465,17 @@ export async function updateDesignSimilarities(designId: string): Promise<void> 
   for (const similar of similarDesigns) {
     await prisma.designSimilarity.upsert({
       where: {
-        sourceDesignId_targetDesignId: {
-          sourceDesignId: designId,
-          targetDesignId: similar.id
+        sourceId_similarId: {
+          sourceId: designId,
+          similarId: similar.id
         }
       },
       update: {
-        score: similar.score,
-        updatedAt: new Date()
+        score: similar.score
       },
       create: {
-        sourceDesignId: designId,
-        targetDesignId: similar.id,
+        sourceId: designId,
+        similarId: similar.id,
         score: similar.score
       }
     });

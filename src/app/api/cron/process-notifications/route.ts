@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
                 type: payload.type,
                 title: payload.title,
                 message: payload.message,
-                data: payload.data || {},
+                data: (payload.data || {}) as object,
                 isRead: false,
               }
             });

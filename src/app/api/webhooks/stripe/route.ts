@@ -379,8 +379,8 @@ async function handleCheckoutCompleted(session: unknown) {
             status: 'fulfillment_failed',
             provider: 'Unknown',
             reason: fulfillResult.error || 'POD provider order creation failed',
-            customerEmail: customerEmail,
-            totalAmount: totalAmount / 100
+            customerEmail: undefined,
+            totalAmount: (s.amount_total ?? 0) / 100
           })
           
           // Queue for retry if alert failed

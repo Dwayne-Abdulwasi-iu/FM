@@ -107,11 +107,16 @@ export async function POST(request: NextRequest) {
     // Create POD order
     const order = await createPODOrder(
       provider as 'printful' | 'printify' | 'gooten' | 'printivo',
-      designUrl,
-      productId,
-      variantId,
-      quantity,
-      shippingAddress
+      {
+        items: [{
+          productId,
+          variantId,
+          quantity,
+          imageUrl: designUrl,
+          designImageUrl: designUrl
+        }],
+        shippingAddress
+      }
     )
 
     return NextResponse.json({ 

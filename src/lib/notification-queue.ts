@@ -37,7 +37,7 @@ export async function queueFailedNotification(
     await prisma.failedNotification.create({
       data: {
         type,
-        payload,
+        payload: payload as object,
         attempts: 1,
         maxAttempts: MAX_RETRY_ATTEMPTS,
         nextRetryAt,
