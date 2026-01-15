@@ -303,13 +303,13 @@ function HelpPageContent() {
     {
       id: 'what-are-seller-tiers',
       question: 'What are Seller Tiers?',
-      answer: 'Seller Tiers is our rewards program that reduces platform fees as you sell more. The more you earn, the lower your fees, and the more you keep! There are 6 tiers: New (15% fee), Bronze (14%), Silver (13%), Gold (12%), Platinum (11%), and Diamond (10%).',
+      answer: 'Seller Tiers is our rewards program that reduces platform fees as you sell more. The more you earn, the lower your fees, and the more you keep! There are 7 tiers: Starter (0.1% fee for first $100), New (10%), Bronze (9.5%), Silver (9%), Gold (8.5%), Platinum (8%), and Diamond (7%).',
       category: 'seller-tiers'
     },
     {
       id: 'tier-requirements',
       question: 'What are the tier requirements?',
-      answer: 'Tiers are based on your lifetime earnings: NEW ($0-$499), BRONZE ($500-$1,999), SILVER ($2,000-$4,999), GOLD ($5,000-$9,999), PLATINUM ($10,000-$24,999), DIAMOND ($25,000+). Pro subscribers get an additional 2% discount on fees.',
+      answer: 'Tiers are based on your lifetime earnings: STARTER ($0-$99 - nearly free!), NEW ($100-$499), BRONZE ($500-$2,499), SILVER ($2,500-$9,999), GOLD ($10,000-$49,999), PLATINUM ($50,000-$99,999), DIAMOND ($100,000+). Pro subscribers get an additional 1% discount on fees.',
       category: 'seller-tiers'
     },
     {
@@ -321,7 +321,7 @@ function HelpPageContent() {
     {
       id: 'tier-fee-comparison',
       question: 'How much do fees differ between tiers?',
-      answer: 'Fee comparison per $100 sale: NEW keeps $85, BRONZE keeps $86, SILVER keeps $87, GOLD keeps $88, PLATINUM keeps $89, DIAMOND keeps $90. Over time, this adds up significantly! A Diamond seller earning $50,000 saves $2,500 compared to a New seller.',
+      answer: 'Fee comparison per $100 sale: STARTER keeps $99.90, NEW keeps $90, BRONZE keeps $90.50, SILVER keeps $91, GOLD keeps $91.50, PLATINUM keeps $92, DIAMOND keeps $93. Over time, this adds up significantly! A Diamond seller earning $100,000 saves $3,000 compared to a New seller.',
       category: 'seller-tiers'
     },
     {
@@ -333,7 +333,7 @@ function HelpPageContent() {
     {
       id: 'tier-pro-subscription',
       question: 'What is the Pro Subscription for sellers?',
-      answer: 'Pro subscribers get an extra 2% off platform fees at any tier. Plus: Advanced analytics, priority listing in search, promotional tools, early feature access, and dedicated support. Monthly subscription that pays for itself with just a few sales.',
+      answer: 'Pro subscribers get an extra 1% off platform fees at any tier (minimum 6% fee). Plus: Advanced analytics, priority listing in search, promotional tools, early feature access, and dedicated support. Monthly subscription that pays for itself with just a few sales.',
       category: 'seller-tiers'
     },
     {
