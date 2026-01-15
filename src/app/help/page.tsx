@@ -309,7 +309,7 @@ function HelpPageContent() {
     {
       id: 'tier-requirements',
       question: 'What are the tier requirements?',
-      answer: 'Tiers are based on your lifetime earnings: STARTER ($0-$99 - nearly free!), NEW ($100-$499), BRONZE ($500-$2,499), SILVER ($2,500-$9,999), GOLD ($10,000-$49,999), PLATINUM ($50,000-$99,999), DIAMOND ($100,000+). Pro subscribers get an additional 1% discount on fees.',
+      answer: 'Tiers are based on your lifetime earnings: STARTER ($0-$99 - nearly free!), NEW ($100-$499), BRONZE ($500-$1,999), SILVER ($2,000-$4,999), GOLD ($5,000-$9,999), PLATINUM ($10,000-$24,999), DIAMOND ($25,000+). Pro subscribers get an additional 1% discount on fees.',
       category: 'seller-tiers'
     },
     {

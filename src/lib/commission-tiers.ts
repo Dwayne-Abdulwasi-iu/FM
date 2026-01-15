@@ -23,15 +23,15 @@ export const FREE_TIER_THRESHOLD = 100
 // Paystack minimum percentage_charge
 export const PAYSTACK_MINIMUM_RATE = 0.001 // 0.1% - lowest Paystack supports
 
-// Commission tiers with thresholds (in USD)
+// Commission tiers with thresholds (in USD) - achievable milestones for sellers
 export const COMMISSION_TIERS = {
   STARTER: { threshold: 0, rate: 0.001, name: 'Starter (0.1%)', nextTier: 'NEW', nextThreshold: 100 },
   NEW: { threshold: 100, rate: 0.10, name: 'New Seller', nextTier: 'BRONZE', nextThreshold: 500 },
-  BRONZE: { threshold: 500, rate: 0.095, name: 'Bronze', nextTier: 'SILVER', nextThreshold: 2500 },
-  SILVER: { threshold: 2500, rate: 0.09, name: 'Silver', nextTier: 'GOLD', nextThreshold: 10000 },
-  GOLD: { threshold: 10000, rate: 0.085, name: 'Gold', nextTier: 'PLATINUM', nextThreshold: 50000 },
-  PLATINUM: { threshold: 50000, rate: 0.08, name: 'Platinum', nextTier: 'DIAMOND', nextThreshold: 100000 },
-  DIAMOND: { threshold: 100000, rate: 0.07, name: 'Diamond', nextTier: null, nextThreshold: null },
+  BRONZE: { threshold: 500, rate: 0.095, name: 'Bronze', nextTier: 'SILVER', nextThreshold: 2000 },
+  SILVER: { threshold: 2000, rate: 0.09, name: 'Silver', nextTier: 'GOLD', nextThreshold: 5000 },
+  GOLD: { threshold: 5000, rate: 0.085, name: 'Gold', nextTier: 'PLATINUM', nextThreshold: 10000 },
+  PLATINUM: { threshold: 10000, rate: 0.08, name: 'Platinum', nextTier: 'DIAMOND', nextThreshold: 25000 },
+  DIAMOND: { threshold: 25000, rate: 0.07, name: 'Diamond', nextTier: null, nextThreshold: null },
 } as const
 
 export type CommissionTierKey = keyof typeof COMMISSION_TIERS
