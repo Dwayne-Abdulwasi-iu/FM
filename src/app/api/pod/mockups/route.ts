@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 /**
  * Generate mock mockup URLs for development
  */
-async function generateMockupMock(productId: string, imageUrl: string): Promise<MockupResult[]> {
+async function generateMockupMock(productId: string, _imageUrl: string): Promise<MockupResult[]> {
   // Simulate delay
   await new Promise(resolve => setTimeout(resolve, 500));
 

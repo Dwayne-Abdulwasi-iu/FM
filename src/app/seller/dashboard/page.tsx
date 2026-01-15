@@ -6,19 +6,13 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  TrendingUp,
-  TrendingDown,
   Eye,
   ShoppingBag,
   DollarSign,
-  Heart,
   Star,
   Package,
-  BarChart3,
-  PieChart,
   Calendar,
   ArrowUpRight,
-  ArrowDownRight,
   Plus,
   Tag,
   Settings,
@@ -149,6 +143,7 @@ export default function SellerDashboardPage() {
       return
     }
     fetchAnalytics()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, period])
 
   const fetchAnalytics = async () => {

@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       if (req.deliveryAddress && typeof req.deliveryAddress === 'object') {
         const addr = req.deliveryAddress as Record<string, unknown>;
         // Remove phone number - designer only needs name and address for creation
-        const { phone, ...sanitizedAddress } = addr;
+        const { phone: _phone, ...sanitizedAddress } = addr;
         return {
           ...req,
           deliveryAddress: sanitizedAddress,

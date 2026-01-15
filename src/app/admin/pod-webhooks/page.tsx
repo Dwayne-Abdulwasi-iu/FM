@@ -76,7 +76,7 @@ export default function PODWebhooksPage() {
           message: data.error || 'Failed to register webhooks'
         });
       }
-    } catch (error) {
+    } catch (_error) {
       setResult({
         success: false,
         message: 'Network error while registering webhooks'

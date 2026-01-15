@@ -611,17 +611,17 @@ async function processRefund(userId: string, amount: number, disputeId: string):
   // Use Paystack/Stripe refund API
 }
 
-async function applySellerPenalty(sellerId: string, amount: number, disputeId: string): Promise<void> {
-  console.log('Applying seller penalty:', { sellerId, amount, disputeId });
+async function applySellerPenalty(sellerId: string, amount: number, _disputeId: string): Promise<void> {
+  console.log('Applying seller penalty:', { sellerId, amount, disputeId: _disputeId });
   // Deduct from seller balance or future payouts
 }
 
-async function applyBuyerCompensation(buyerId: string, amount: number, disputeId: string): Promise<void> {
-  console.log('Applying buyer compensation:', { buyerId, amount, disputeId });
+async function applyBuyerCompensation(buyerId: string, amount: number, _disputeId: string): Promise<void> {
+  console.log('Applying buyer compensation:', { buyerId, amount, disputeId: _disputeId });
   // Credit to buyer account
 }
 
-async function issueAccountWarning(userId: string, disputeId: string): Promise<void> {
+async function issueAccountWarning(userId: string, _disputeId: string): Promise<void> {
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -631,7 +631,7 @@ async function issueAccountWarning(userId: string, disputeId: string): Promise<v
   });
 }
 
-async function suspendAccount(userId: string, disputeId: string): Promise<void> {
+async function suspendAccount(userId: string, _disputeId: string): Promise<void> {
   await prisma.user.update({
     where: { id: userId },
     data: {

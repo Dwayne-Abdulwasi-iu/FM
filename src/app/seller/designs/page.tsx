@@ -15,7 +15,6 @@ import {
   Filter,
   Edit,
   Trash2,
-  MoreVertical,
   Star
 } from 'lucide-react'
 

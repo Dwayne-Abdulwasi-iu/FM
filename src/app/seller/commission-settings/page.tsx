@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Settings, Save, AlertCircle, CheckCircle, Loader2, Info, DollarSign, MessageSquare, Clock, Users } from 'lucide-react'
+import { Settings, Save, AlertCircle, CheckCircle, Loader2, Info, DollarSign, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
 
 interface CommissionSettings {
@@ -92,7 +92,7 @@ export default function CommissionSettingsPage() {
         const error = await response.json()
         setMessage({ type: 'error', text: error.message || 'Failed to save settings' })
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'An error occurred while saving' })
     } finally {
       setSaving(false)

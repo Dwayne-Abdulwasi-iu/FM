@@ -9,7 +9,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
  * POST /api/auth/send-verification
  * Sends email verification token to current user
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     

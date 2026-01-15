@@ -8,8 +8,6 @@ import {
   Shield,
   Award,
   Star,
-  ExternalLink,
-  ChevronRight,
   CheckCircle,
   Clock,
   XCircle,
@@ -54,6 +52,7 @@ export default function VerificationPage() {
       return
     }
     fetchStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, sessionStatus])
 
   const fetchStatus = async () => {
@@ -93,7 +92,7 @@ export default function VerificationPage() {
         const data = await response.json()
         setError(data.error || 'Failed to submit request')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('Failed to submit request')
     } finally {
       setSubmitting(false)

@@ -66,13 +66,13 @@ const COUNTRIES = [
 export default function PaymentMethodSelector({
   selectedMethod,
   onMethodChange,
-  phoneNumber = '',
-  onPhoneChange,
+  phoneNumber: _phoneNumber = '',
+  onPhoneChange: _onPhoneChange,
   countryCode = 'NG',
   onCountryChange,
   availableMethods = ['stripe', 'paystack', 'flutterwave'],
 }: PaymentMethodSelectorProps) {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const [filteredMethods, setFilteredMethods] = useState<PaymentMethodConfig[]>([]);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function PaymentMethodSelector({
     }
   }, [countryCode, availableMethods, selectedMethod, onMethodChange]);
 
-  const selectedConfig = PAYMENT_METHODS.find((m) => m.id === selectedMethod);
+  const _selectedConfig = PAYMENT_METHODS.find((m) => m.id === selectedMethod);
 
   return (
     <div className="space-y-6">

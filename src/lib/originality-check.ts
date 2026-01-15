@@ -68,7 +68,7 @@ export async function checkDesignOriginality(
     const [
       tineyeResult,
       googleVisionResult,
-      hashResult
+      _hashResult
     ] = await Promise.allSettled([
       TINEYE_API_KEY ? checkTinEye(imageUrl) : Promise.resolve(null),
       GOOGLE_VISION_API_KEY ? checkGoogleVision(imageUrl, { checkStockSites, checkSocialMedia }) : Promise.resolve(null),

@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import { initializePayment as initFlutterwavePayment, isFlutterwaveConfigured, getSupportedCountries } from '@/lib/flutterwave'
-import { calculateRefereeDiscount, processReferralReward } from '@/lib/referral-service'
+import { calculateRefereeDiscount } from '@/lib/referral-service'
 import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Grid3X3, List, Search, Filter, TrendingUp } from 'lucide-react'
@@ -21,13 +21,13 @@ interface CategoryInfo {
 }
 export default function CategoriesPage() {
   const router = useRouter()
-  const [categories, setCategories] = useState<CategoryData[]>([])
+  const [categories, _setCategories] = useState<CategoryData[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [sortBy, setSortBy] = useState<'name' | 'count'>('name')
 
-    const categoryInfo: CategoryInfo = React.useMemo(() => ({
+    const _categoryInfo: CategoryInfo = React.useMemo(() => ({
       'Fashion Illustrations': {
         description: 'Hand-drawn and digital fashion sketches, croquis, and artistic illustrations',
         icon: '🎨',

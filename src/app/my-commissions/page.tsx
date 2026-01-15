@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { CommissionMessages, ProgressTimeline } from '@/components/commission/CommissionComms';
 import { useUnreadMessages, UnreadBadge } from '@/hooks/useUnreadMessages';
 
@@ -87,7 +86,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function MyCommissionRequestsPage() {
-  const { data: session, status } = useSession();
+  const { data: _session, status } = useSession();
   const router = useRouter();
   const [requests, setRequests] = useState<CommissionRequest[]>([]);
   const [loading, setLoading] = useState(true);

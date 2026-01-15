@@ -78,6 +78,7 @@ export default function DesignerProfilePage() {
     if (params.id) {
       fetchDesigner(params.id as string)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchDesigner = async (id: string) => {

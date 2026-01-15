@@ -290,7 +290,7 @@ export function formatRelativeTime(
   }
 }
 
-export default {
+const i18nModule = {
   t,
   getTranslations,
   getLocaleConfig,
@@ -304,3 +304,5 @@ export default {
   SUPPORTED_LOCALES,
   DEFAULT_LOCALE,
 };
+
+export default i18nModule;

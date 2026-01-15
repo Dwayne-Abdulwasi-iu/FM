@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, Award, Crown, Gem, Star, Zap } from 'lucide-react'
+import { Award, Crown, Gem, Star, Zap } from 'lucide-react'
 
 interface TierInfo {
   currentTier: string

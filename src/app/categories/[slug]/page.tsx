@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { CollectionPageJsonLd } from '@/components/seo/JsonLd'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Star, ShoppingCart, ArrowLeft, TrendingUp } from 'lucide-react'
+import { Star, ShoppingCart, TrendingUp } from 'lucide-react'
 
 // Category SEO data
 const CATEGORY_SEO: Record<string, { 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { generateWatermarkedUrl, generateLowResPreview, generateBlurredPreview } from '@/lib/watermark'
+import { generateWatermarkedUrl, generateBlurredPreview } from '@/lib/watermark'
 
 /**
  * Protected Media Access API
@@ -22,7 +22,7 @@ interface MediaAccessResponse {
   message?: string
 }
 
-interface MediaFile {
+interface _MediaFile {
   id: string
   url: string
   publicId?: string | null
@@ -123,8 +123,8 @@ export async function GET(request: NextRequest) {
 function getMediaAccess(
   media: { id: string; url: string; publicId?: string | null; accessType: string },
   hasFullAccess: boolean,
-  isDesigner: boolean,
-  isAdmin: boolean
+  _isDesigner: boolean,
+  _isAdmin: boolean
 ): MediaAccessResponse {
   const publicId = media.publicId || extractPublicId(media.url)
   

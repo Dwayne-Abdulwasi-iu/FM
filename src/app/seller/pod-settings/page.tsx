@@ -67,7 +67,7 @@ export default function PODSettingsPage() {
         const error = await response.json()
         setMessage({ type: 'error', text: error.message || 'Failed to save settings' })
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'An error occurred while saving' })
     } finally {
       setSaving(false)

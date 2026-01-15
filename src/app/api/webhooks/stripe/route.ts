@@ -445,7 +445,7 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
       return
     }
 
-    const { commissionRequestId, designerId, requesterId, platformFee, designerEarnings } = metadata
+    const { commissionRequestId, designerId: _designerId, requesterId: _requesterId, platformFee, designerEarnings } = metadata
     
     if (!commissionRequestId) {
       console.error('Commission payment missing commissionRequestId')

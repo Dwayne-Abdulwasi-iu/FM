@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     if (availableProviders.length === 0) {
       // Return mock products for development
-      const mockProducts = await getPODProducts('printful' as 'printful', category);
+      const mockProducts = await getPODProducts('printful' as const, category);
       return NextResponse.json({
         success: true,
         configured: false,

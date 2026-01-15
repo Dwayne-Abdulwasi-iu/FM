@@ -6,12 +6,12 @@ import Link from 'next/link';
 
 export default function CommissionPaymentSuccessPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const _router = useRouter();
   const requestId = searchParams.get('request_id');
   const reference = searchParams.get('reference');
   
   const [verifying, setVerifying] = useState(true);
-  const [verified, setVerified] = useState(false);
+  const [_verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [commission, setCommission] = useState<any>(null);
 
@@ -49,7 +49,7 @@ export default function CommissionPaymentSuccessPage() {
             setError(data.error || 'Payment verification failed');
           }
         }
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to verify payment. Please contact support if the issue persists.');
       } finally {
         setVerifying(false);

@@ -26,7 +26,7 @@ interface LicenseRights {
 /**
  * Get license rights based on license type
  */
-function getLicenseRights(type: string, purchaseType: string): LicenseRights {
+function getLicenseRights(type: string, _purchaseType: string): LicenseRights {
   const baseRights: LicenseRights = {
     printRights: false,
     digitalRights: true,

@@ -15,9 +15,6 @@ interface CachedData {
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// HMR cleanup - prevent memory leaks during hot module replacement
-declare const module: { hot?: { dispose: (cb: () => void) => void } };
-
 class NotificationManager {
   private listeners: Set<Listener> = new Set();
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
@@ -182,8 +179,9 @@ class NotificationManager {
 export const notificationManager = new NotificationManager();
 
 // HMR cleanup to prevent memory leaks during development
-if (isBrowser && typeof module !== 'undefined' && module.hot) {
-  module.hot.dispose(() => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+if (isBrowser && typeof (globalThis as any).module !== 'undefined' && (globalThis as any).module?.hot) {
+  (globalThis as any).module.hot.dispose(() => {
     notificationManager.cleanup();
   });
 }

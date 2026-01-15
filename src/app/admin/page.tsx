@@ -579,7 +579,7 @@ export default function AdminDashboard() {
                           } else {
                             showNotification('error', 'Failed to update stats')
                           }
-                        } catch (error) {
+                        } catch (_error) {
                           showNotification('error', 'Error updating stats')
                         }
                       }}

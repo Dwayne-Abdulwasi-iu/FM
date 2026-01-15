@@ -9,7 +9,7 @@
  */
 
 import prisma from './prisma';
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 
 // Referral configuration
 export const REFERRAL_CONFIG = {

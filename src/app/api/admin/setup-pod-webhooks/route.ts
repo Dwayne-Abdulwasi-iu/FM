@@ -12,7 +12,7 @@ const BASE_URL = process.env.NEXTAUTH_URL || 'https://fm-wtit.onrender.com';
  * This endpoint should only be called once during initial setup
  * or when webhook URLs need to be updated.
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getServerSession(authOptions);
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
  * GET /api/admin/setup-pod-webhooks
  * Check current webhook status
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -315,7 +315,7 @@ export async function GET(request: NextRequest) {
       status
     });
 
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to check webhook status' },
       { status: 500 }

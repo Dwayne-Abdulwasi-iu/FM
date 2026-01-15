@@ -455,7 +455,7 @@ async function handleCommissionPayment(reference: string, metadata: Record<strin
   try {
     // Paystack uses snake_case in metadata
     const commissionRequestId = metadata.commission_request_id as string
-    const designerId = metadata.designer_id as string
+    const _designerId = metadata.designer_id as string
     const platformFee = parseFloat(String(metadata.platform_fee ?? '0'))
     const designerEarnings = parseFloat(String(metadata.designer_earnings ?? '0'))
 

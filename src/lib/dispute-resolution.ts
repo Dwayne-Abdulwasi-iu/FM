@@ -293,7 +293,7 @@ export async function getDisputeStats() {
     totalResolved,
     totalEscalated,
     autoResolvedCount,
-    avgResolutionTime
+    _avgResolutionTime
   ] = await Promise.all([
     prisma.dispute.count({ where: { status: 'OPEN' } }),
     prisma.dispute.count({ where: { status: 'RESOLVED', createdAt: { gte: thirtyDaysAgo } } }),

@@ -27,11 +27,12 @@ export function generateWatermarkedUrl(
   } = options;
 
   // Create transformation based on position
-  let overlay: object;
+  // Build overlay config (kept for potential future use with more complex transformations)
+  let _overlay: object;
 
   if (position === 'tile') {
     // Tiled watermark across the entire image
-    overlay = {
+    _overlay = {
       overlay: {
         font_family: 'Arial',
         font_size: fontSize,
@@ -45,7 +46,7 @@ export function generateWatermarkedUrl(
     };
   } else if (position === 'center') {
     // Single centered watermark
-    overlay = {
+    _overlay = {
       overlay: {
         font_family: 'Arial',
         font_size: fontSize * 2,
@@ -58,7 +59,7 @@ export function generateWatermarkedUrl(
     };
   } else {
     // Corner watermark
-    overlay = {
+    _overlay = {
       overlay: {
         font_family: 'Arial',
         font_size: fontSize,

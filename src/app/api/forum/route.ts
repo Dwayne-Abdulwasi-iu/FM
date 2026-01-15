@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get posts
-    let postsWhere: Record<string, unknown> = {};
+    const postsWhere: Record<string, unknown> = {};
     if (categorySlug) {
       const category = categories.find(c => c.slug === categorySlug);
       if (category) {

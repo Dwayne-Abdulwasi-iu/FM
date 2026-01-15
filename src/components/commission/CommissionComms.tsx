@@ -30,7 +30,7 @@ interface CommissionMessagesProps {
 export function CommissionMessages({ 
   commissionId, 
   commissionStatus,
-  isDesigner = false 
+  isDesigner: _isDesigner = false 
 }: CommissionMessagesProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);

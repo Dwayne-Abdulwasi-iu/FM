@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
 
     const plan = SUBSCRIPTION_PLANS[planType as keyof typeof SUBSCRIPTION_PLANS]
     const cycle = billingCycle || 'MONTHLY'
-    const price = cycle === 'YEARLY' ? (plan.priceYearly || plan.priceMonthly * 12) : plan.priceMonthly
+    const _price = cycle === 'YEARLY' ? (plan.priceYearly || plan.priceMonthly * 12) : plan.priceMonthly
 
     // Check for existing subscription
     const existing = await prisma.subscription.findUnique({
@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
  * DELETE /api/subscriptions
  * Cancel subscription (returns to free tier)
  */
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     

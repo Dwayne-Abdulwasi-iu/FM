@@ -8,12 +8,10 @@ import {
   CheckCircle, 
   ChevronRight, 
   Upload, 
-  Settings, 
   Palette, 
   DollarSign, 
   User,
   Camera,
-  X,
   Sparkles
 } from 'lucide-react'
 
@@ -31,7 +29,7 @@ export default function DesignerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [_showModal, _setShowModal] = useState(false)
   
   // Profile data
   const [displayName, setDisplayName] = useState('')

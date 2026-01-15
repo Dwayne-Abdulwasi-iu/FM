@@ -405,7 +405,7 @@ function getCategoryFromTitle(title: string): string {
 /**
  * Gooten API integration
  */
-async function getGootenProducts(category?: string): Promise<PODProduct[]> {
+async function getGootenProducts(_category?: string): Promise<PODProduct[]> {
   const recipeId = process.env.GOOTEN_RECIPE_ID
   const response = await fetch(`https://api.gooten.com/api/products?recipeid=${recipeId}`, {
     headers: {

@@ -40,7 +40,7 @@ function SignInContent() {
           setError('Failed to create session')
         }
       }
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)

@@ -79,7 +79,7 @@ export default function PODProductSelector() {
   const [designs, setDesigns] = useState<{ id: string; title: string; imageUrl: string }[]>([]);
   const [activeProduct, setActiveProduct] = useState<PODProduct | null>(null);
   const [showVariants, setShowVariants] = useState(false);
-  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [_loadingVariants, setLoadingVariants] = useState(false);
   const [configured, setConfigured] = useState(false);
   const [provider, setProvider] = useState('printful');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);

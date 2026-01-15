@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { processStripeRefund, processPaystackRefund } from "@/lib/refund-service";
 import { convertUSDToNGN } from "@/lib/paystack";
 import { initiateCommissionTransfer } from "@/lib/transfer-service";
-import { auditDisputeResolved, auditRefundProcessed } from "@/lib/audit-log";
+import { auditDisputeResolved } from "@/lib/audit-log";
 import { 
   sendDisputeResolvedToClient, 
   sendDisputeResolvedToDesigner 

@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       deliveryAddress = null,
       // Reference design fields
       referenceDesignId = null,
-      referenceDesignUrl = null,
+      referenceDesignUrl: _referenceDesignUrl = null,
       referenceDesignTitle = null,
     } = body;
 

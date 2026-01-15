@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
 
     // RATE LIMITING: Prevent abuse by tracking last execution time
     // Use a simple in-memory check (for multi-instance, use Redis/DB)
-    const lastRunKey = 'commission_monitor_last_run';
-    const minIntervalMs = 60 * 1000; // Minimum 1 minute between runs
+    const _lastRunKey = 'commission_monitor_last_run';
+    const _minIntervalMs = 60 * 1000; // Minimum 1 minute between runs
     
     // Check for existing running job via query param (set by caller)
     const { searchParams } = new URL(request.url);

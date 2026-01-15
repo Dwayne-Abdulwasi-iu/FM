@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   User,
   Calendar,
-  FileText,
   Shield,
   Lock,
   Clock,
@@ -61,6 +60,7 @@ export default function CommissionPaymentPage({ params }: { params: Promise<{ id
       fetchRequest();
       fetchExchangeRate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus, resolvedParams.id]);
 
   const fetchExchangeRate = async () => {
@@ -145,7 +145,7 @@ export default function CommissionPaymentPage({ params }: { params: Promise<{ id
 
   const platformFeePercent = 10;
   const quote = request?.designerQuote || 0;
-  const platformFee = quote * (platformFeePercent / 100);
+  const _platformFee = quote * (platformFeePercent / 100);
   const total = quote;
   
   // Convert to Naira for Paystack display using dynamic rate

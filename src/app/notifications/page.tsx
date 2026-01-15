@@ -90,6 +90,7 @@ export default function NotificationsPage() {
     if (session) {
       fetchNotifications();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, filter]);
 
   const markAsRead = async (notificationId: string) => {

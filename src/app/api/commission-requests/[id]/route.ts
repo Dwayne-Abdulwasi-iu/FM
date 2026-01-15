@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let responseData = commissionRequest;
     if (isDesigner && !isAdmin && commissionRequest.deliveryAddress) {
       const addr = commissionRequest.deliveryAddress as Record<string, unknown>;
-      const { phone, ...sanitizedAddress } = addr;
+      const { phone: _phone, ...sanitizedAddress } = addr;
       responseData = {
         ...commissionRequest,
         deliveryAddress: sanitizedAddress,

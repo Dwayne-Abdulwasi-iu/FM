@@ -14,7 +14,9 @@ import axios from 'axios';
 
 const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY || '';
 const FLUTTERWAVE_PUBLIC_KEY = process.env.FLUTTERWAVE_PUBLIC_KEY || '';
-const FLUTTERWAVE_ENCRYPTION_KEY = process.env.FLUTTERWAVE_ENCRYPTION_KEY || '';
+// Encryption key for card data - used in payment tokenization
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _FLUTTERWAVE_ENCRYPTION_KEY = process.env.FLUTTERWAVE_ENCRYPTION_KEY || '';
 
 const BASE_URL = 'https://api.flutterwave.com/v3';
 

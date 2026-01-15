@@ -8,7 +8,7 @@ import crypto from 'crypto'
  * GET /api/referrals
  * Get current user's referral info and stats
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     

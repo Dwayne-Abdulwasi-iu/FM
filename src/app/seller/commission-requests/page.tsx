@@ -14,7 +14,6 @@ import {
   DollarSign,
   Calendar,
   FileText,
-  Download,
   Send,
   Eye,
   Loader2,
@@ -111,7 +110,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function DesignerCommissionRequestsPage() {
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: _session, status: sessionStatus } = useSession();
   const router = useRouter();
 
   const [requests, setRequests] = useState<CommissionRequest[]>([]);

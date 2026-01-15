@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status"); // active, expired, all
 
-    let where: Record<string, unknown> = {
+    const where: Record<string, unknown> = {
       sellerId: session.user.id,
     };
 

@@ -40,7 +40,7 @@ export default function ContactPage() {
         const errorData = await response.json()
         setError(errorData.message || 'Failed to send message')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('Failed to send message. Please try again.')
     } finally {
       setLoading(false)

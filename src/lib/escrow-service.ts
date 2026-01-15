@@ -4,7 +4,8 @@
  */
 
 import prisma from '@/lib/prisma';
-import { getPaystackClient, isPaystackConfigured } from '@/lib/paystack';
+import { isPaystackConfigured } from '@/lib/paystack';
+import { getCommissionRate } from '@/lib/commission-tiers';
 
 export interface Milestone {
   id: string;
@@ -485,9 +486,9 @@ async function storeTransaction(transaction: EscrowTransaction): Promise<void> {
 }
 
 async function initiatePayoutTransfer(
-  commissionRequestId: string,
-  amount: number,
-  description: string
+  _commissionRequestId: string,
+  _amount: number,
+  _description: string
 ): Promise<string> {
   // In production, use Paystack/Stripe transfer
   if (isPaystackConfigured()) {
@@ -497,8 +498,8 @@ async function initiatePayoutTransfer(
 }
 
 async function initiateRefund(
-  commissionRequestId: string,
-  amount: number
+  _commissionRequestId: string,
+  _amount: number
 ): Promise<string> {
   // In production, use Paystack/Stripe refund
   return `refund_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -524,8 +525,7 @@ export function calculateEscrowFees(totalAmount: number, designerTotalEarnings: 
   escrowFee: number;
   netToDesigner: number;
 } {
-  // Import commission rate calculator
-  const { getCommissionRate } = require('@/lib/commission-tiers');
+  // Use imported commission rate calculator
   const commissionRate = getCommissionRate(designerTotalEarnings);
   
   const platformFee = totalAmount * commissionRate;

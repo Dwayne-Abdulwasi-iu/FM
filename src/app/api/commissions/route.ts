@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       budget,
       deadline,
       referenceImages,
-      requirements,
+      requirements: _requirements,
     } = body;
 
     // Validation

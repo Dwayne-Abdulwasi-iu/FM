@@ -14,7 +14,9 @@ import axios from 'axios';
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || '';
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || '';
-const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '';
+// Business account ID - for managing templates and account settings
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '';
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || '';
 
 const BASE_URL = 'https://graph.facebook.com/v18.0';

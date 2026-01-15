@@ -33,7 +33,7 @@ export async function GET() {
   }
 }
 
-const defaultStats = [
+const _defaultStats = [
   { number: "10,000+", label: "Active Designers" },
   { number: "50,000+", label: "Designs Sold" },
   { number: "150+", label: "Countries" },

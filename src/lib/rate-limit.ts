@@ -44,7 +44,7 @@ export async function checkRateLimit(
       // Check if window has expired
       if (existing.windowStart < windowStart) {
         // Window expired, reset counter
-        const updated = await prismaAny.rateLimitEntry.update({
+        const _updated = await prismaAny.rateLimitEntry.update({
           where: { key },
           data: {
             count: 1,

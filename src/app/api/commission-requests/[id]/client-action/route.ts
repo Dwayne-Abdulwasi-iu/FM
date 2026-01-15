@@ -8,7 +8,7 @@ import {
   sendCompletionToClient,
   sendDisputeToAdmin,
 } from "@/lib/email";
-import { initiateCommissionTransfer, createTransferNotification } from "@/lib/transfer-service";
+import { initiateCommissionTransfer } from "@/lib/transfer-service";
 
 interface RouteParams {
   params: Promise<{ id: string }>;

@@ -6,9 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { 
   Search, 
-  Filter, 
-  X, 
-  ChevronDown, 
   Grid, 
   List,
   SlidersHorizontal,
@@ -53,7 +50,7 @@ interface FilterOptions {
 }
 
 export default function AdvancedSearchPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const searchParams = useSearchParams()
   
   const [designs, setDesigns] = useState<Design[]>([])

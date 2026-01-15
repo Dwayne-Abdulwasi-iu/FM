@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseWebhookPayload, getWhatsAppVerifyToken, WhatsAppWebhookPayload } from '@/lib/whatsapp';
-import prisma from '@/lib/prisma';
 
 /**
  * GET /api/webhooks/whatsapp - Webhook verification (required by Meta)

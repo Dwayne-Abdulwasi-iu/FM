@@ -13,7 +13,6 @@ import {
   Phone,
   User,
   ArrowLeft,
-  Camera,
   Send,
   Box,
   AlertCircle
@@ -107,6 +106,7 @@ export default function AdminDeliveriesPage() {
       return
     }
     fetchDeliveries()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, activeTab])
 
   const fetchDeliveries = async () => {
