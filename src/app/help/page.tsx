@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ComponentType, type SVGProps } from 'react'
+import { useState, useEffect, type ComponentType, type SVGProps, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -23,14 +23,7 @@ import {
   Palette,
   Printer,
   Award,
-  PenTool,
-  Star,
-  TrendingUp,
-  Package,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  Layers
+  PenTool
 } from 'lucide-react'
 
 interface FAQItem {
@@ -48,7 +41,7 @@ interface HelpCategory {
   color: string
 }
 
-export default function HelpPage() {
+function HelpPageContent() {
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -713,5 +706,20 @@ export default function HelpPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function HelpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading help center...</p>
+        </div>
+      </div>
+    }>
+      <HelpPageContent />
+    </Suspense>
   )
 }

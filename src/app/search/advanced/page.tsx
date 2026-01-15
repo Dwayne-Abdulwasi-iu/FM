@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -49,7 +49,7 @@ interface FilterOptions {
   sortOptions: { value: string; label: string }[]
 }
 
-export default function AdvancedSearchPage() {
+function AdvancedSearchContent() {
   const _router = useRouter()
   const searchParams = useSearchParams()
   
@@ -597,5 +597,20 @@ export default function AdvancedSearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AdvancedSearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading advanced search...</p>
+        </div>
+      </div>
+    }>
+      <AdvancedSearchContent />
+    </Suspense>
   )
 }

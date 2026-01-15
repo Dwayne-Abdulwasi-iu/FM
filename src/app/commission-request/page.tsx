@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -51,7 +51,7 @@ interface ReferenceDesign {
   designerId: string;
 }
 
-export default function CommissionRequestPage() {
+function CommissionRequestContent() {
   const { data: _session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -922,5 +922,20 @@ export default function CommissionRequestPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CommissionRequestPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CommissionRequestContent />
+    </Suspense>
   );
 }

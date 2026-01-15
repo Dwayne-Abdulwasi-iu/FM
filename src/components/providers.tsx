@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -14,7 +15,9 @@ export function Providers({ children }: ProvidersProps) {
       refetchInterval={5 * 60} // Refetch session every 5 minutes
       refetchOnWindowFocus={true}
     >
-      {children}
+      <LanguageProvider>
+        {children}
+      </LanguageProvider>
     </SessionProvider>
   );
 }
