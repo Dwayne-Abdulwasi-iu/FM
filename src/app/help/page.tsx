@@ -321,7 +321,7 @@ function HelpPageContent() {
     {
       id: 'tier-fee-comparison',
       question: 'How much do fees differ between tiers?',
-      answer: 'Fee comparison per $100 sale: STARTER keeps $99.90, NEW keeps $90, BRONZE keeps $90.50, SILVER keeps $91, GOLD keeps $91.50, PLATINUM keeps $92, DIAMOND keeps $93. Over time, this adds up significantly! A Diamond seller earning $100,000 saves $3,000 compared to a New seller.',
+      answer: 'Fee comparison per $100 sale: STARTER keeps $99.90, NEW keeps $90, BRONZE keeps $90.50, SILVER keeps $91, GOLD keeps $91.50, PLATINUM keeps $92, DIAMOND keeps $93. Over time, this adds up significantly! A Diamond seller earning $25,000 saves $750 compared to a New seller.',
       category: 'seller-tiers'
     },
     {

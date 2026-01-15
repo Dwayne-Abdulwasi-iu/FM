@@ -42,10 +42,10 @@ const COMMISSION_TIERS = {
   STARTER: { threshold: 0, rate: 0.001, name: 'Starter (0.1%)' },
   NEW: { threshold: 100, rate: 0.10, name: 'New Seller' },
   BRONZE: { threshold: 500, rate: 0.095, name: 'Bronze' },
-  SILVER: { threshold: 2500, rate: 0.09, name: 'Silver' },
-  GOLD: { threshold: 10000, rate: 0.085, name: 'Gold' },
-  PLATINUM: { threshold: 50000, rate: 0.08, name: 'Platinum' },
-  DIAMOND: { threshold: 100000, rate: 0.07, name: 'Diamond' },
+  SILVER: { threshold: 2000, rate: 0.09, name: 'Silver' },
+  GOLD: { threshold: 5000, rate: 0.085, name: 'Gold' },
+  PLATINUM: { threshold: 10000, rate: 0.08, name: 'Platinum' },
+  DIAMOND: { threshold: 25000, rate: 0.07, name: 'Diamond' },
 }
 
 const PRO_SUBSCRIBER_DISCOUNT = 0.01
