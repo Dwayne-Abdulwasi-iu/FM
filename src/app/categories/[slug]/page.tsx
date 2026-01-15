@@ -5,6 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Star, ShoppingCart, TrendingUp } from 'lucide-react'
 
+// Force dynamic rendering to avoid database calls during build
+export const dynamic = 'force-dynamic'
+
 // Category SEO data
 const CATEGORY_SEO: Record<string, { 
   title: string; 
@@ -69,11 +72,6 @@ const CATEGORY_SEO: Record<string, {
     h1: 'Color Palettes',
     intro: 'Discover carefully curated color palettes for your fashion collections. Stay on-trend with seasonal color forecasts and timeless color schemes.',
   },
-}
-
-// Generate static params for all categories
-export function generateStaticParams() {
-  return Object.keys(CATEGORY_SEO).map((slug) => ({ slug }))
 }
 
 // Generate metadata for SEO
