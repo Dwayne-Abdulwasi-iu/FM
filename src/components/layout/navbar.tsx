@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard, Download, Package, Heart, Settings, Receipt } from "lucide-react";
+import { User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard, Download, Package, Heart, Settings, Receipt } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";

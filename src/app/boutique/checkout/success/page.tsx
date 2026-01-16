@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CheckCircle, Package, ArrowRight, Home, ShoppingBag, Loader2, Mail, MapPin, Phone } from 'lucide-react'
+import { CheckCircle, Package, Home, ShoppingBag, Loader2, Mail, MapPin, Phone } from 'lucide-react'
 
 interface OrderItem {
   id: string

@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Package, Truck, Clock, CheckCircle, AlertTriangle, ChevronRight, Plus, Search, Filter } from 'lucide-react'
+import { Package, Truck, Clock, CheckCircle, AlertTriangle, ChevronRight, Plus, Search } from 'lucide-react'
 
 interface Product {
   id: string

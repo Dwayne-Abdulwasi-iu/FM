@@ -8,7 +8,6 @@ import {
   Settings,
   Bell,
   Lock,
-  User,
   Trash2,
   Save,
   AlertCircle,

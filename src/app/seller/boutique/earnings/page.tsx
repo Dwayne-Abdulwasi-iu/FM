@@ -14,7 +14,6 @@ import {
   TrendingUp,
   Wallet,
   ArrowUpRight,
-  Calendar,
 } from 'lucide-react';
 
 interface Payout {

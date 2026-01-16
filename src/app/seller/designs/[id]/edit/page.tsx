@@ -7,18 +7,14 @@ import {
   Save,
   ArrowLeft,
   Loader2,
-  Image as ImageIcon,
   DollarSign,
   Tag,
   Type,
   FileText,
   AlertCircle,
   CheckCircle,
-  Trash2,
   Eye,
   Lock,
-  Plus,
-  X,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'

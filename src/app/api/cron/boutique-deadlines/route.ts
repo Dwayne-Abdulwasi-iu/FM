@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { FULFILLMENT_METHOD, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
+import { FULFILLMENT_METHOD } from '@/lib/boutique/constants';
 import { sendEmail } from '@/lib/email';
 
 // Verify cron secret

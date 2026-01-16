@@ -10,7 +10,6 @@ import {
   ArrowLeft, 
   Truck,
   CheckCircle,
-  Clock,
   XCircle,
   MapPin,
   Phone,
@@ -197,7 +196,7 @@ export default function BoutiqueOrderDetailPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Status</h2>
             <div className="relative">
               <div className="flex justify-between">
-                {STATUS_STEPS.map((step, idx) => {
+                {STATUS_STEPS.map((step, _idx) => {
                   const isCompleted = currentStatusIndex >= STATUS_ORDER.indexOf(step.key);
                   const isCurrent = order.status === step.key;
                   const Icon = step.icon;

@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import {
-  Upload,
   X,
   Plus,
   Trash2,
@@ -78,7 +77,7 @@ const COMMON_COLORS = [
 ];
 
 export default function BoutiqueUploadPage() {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');

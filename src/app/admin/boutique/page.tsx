@@ -7,28 +7,21 @@ import Image from 'next/image';
 import {
   Package,
   Search,
-  Filter,
-  Eye,
   Check,
   X,
   Truck,
   Clock,
-  AlertTriangle,
   CheckCircle,
   XCircle,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Play,
   ImageIcon,
-  ExternalLink,
-  Calendar,
   User,
-  MapPin,
   Rocket,
   Warehouse,
 } from 'lucide-react';
-import { FULFILLMENT_METHOD, FULFILLMENT_CONFIG, SELLER_TIER_CONFIG, type SellerTier } from '@/lib/boutique/constants';
+import { FULFILLMENT_METHOD, SELLER_TIER_CONFIG, type SellerTier } from '@/lib/boutique/constants';
 
 interface ProductMedia {
   id: string;
@@ -119,9 +112,6 @@ const SELLER_DIRECT_TABS = [
   { key: 'direct_approved', label: 'Approved', status: 'CONTENT_APPROVED' },
   { key: 'direct_live', label: 'Live', status: 'LIVE' },
 ];
-
-// Keep legacy for backwards compat
-const REVIEW_TABS = ADMIN_STOCK_TABS;
 
 export default function AdminBoutiquePage() {
   const { data: session, status: authStatus } = useSession();
@@ -574,7 +564,7 @@ export default function AdminBoutiquePage() {
                   {/* Variants */}
                   <h3 className="font-semibold text-gray-900 mt-4 mb-3">Variants</h3>
                   <div className="space-y-2">
-                    {selectedProduct.variants.map((v, i) => (
+                    {selectedProduct.variants.map((v, _i) => (
                       <div key={v.id} className="flex items-center gap-2 text-sm p-2 bg-gray-50 rounded">
                         {v.colorHex && (
                           <div

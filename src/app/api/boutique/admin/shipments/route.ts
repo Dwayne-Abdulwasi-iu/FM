@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
+import { PRODUCT_STATUS } from '@/lib/boutique/constants';
 
 // GET - List shipments for admin (with filters)
 export async function GET(request: NextRequest) {

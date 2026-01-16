@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   Search,
   Filter,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -17,15 +16,12 @@ import {
   LayoutGrid,
   X,
   Rocket,
-  Truck,
 } from 'lucide-react';
 import { 
   GENDER_OPTIONS, 
   STYLES, 
-  OCCASIONS, 
   PRODUCT_CONDITION,
   FULFILLMENT_METHOD,
-  FULFILLMENT_CONFIG,
 } from '@/lib/boutique/constants';
 
 interface Product {
@@ -61,7 +57,6 @@ const SORT_OPTIONS = [
 ];
 
 export default function BoutiqueShopPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(true);

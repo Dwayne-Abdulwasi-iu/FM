@@ -11,20 +11,12 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  ChevronRight,
-  Search,
-  Filter,
   Rocket,
-  Warehouse,
   Timer,
   Copy,
-  ExternalLink,
 } from 'lucide-react';
 import { 
-  FULFILLMENT_METHOD, 
-  FULFILLMENT_CONFIG,
   SHIPPING_CARRIERS,
-  BOUTIQUE_DEFAULTS,
 } from '@/lib/boutique/constants';
 
 interface OrderItem {

@@ -74,7 +74,7 @@ const WAREHOUSE_ADDRESS: WarehouseAddress = {
 };
 
 export default function ShipProductPage() {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;

@@ -7,8 +7,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { 
   Package, Truck, Search, Filter, ChevronLeft, ChevronRight,
-  Clock, CheckCircle, XCircle, AlertTriangle, Eye, Camera,
-  MapPin, Phone, User, Calendar
+  Clock, CheckCircle, XCircle, AlertTriangle, Eye,
+  User, Calendar
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -144,7 +144,7 @@ export default function AdminShipmentsPage() {
         const data = await res.json()
         toast.error(data.message || 'Failed to confirm receipt')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to confirm receipt')
     }
   }

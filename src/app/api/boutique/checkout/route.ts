@@ -8,9 +8,7 @@ import prisma from '@/lib/prisma';
 import { paystack, isPaystackConfigured } from '@/lib/paystack';
 import { 
   FULFILLMENT_METHOD, 
-  ORDER_STATUS,
   getCommissionRate,
-  BOUTIQUE_DEFAULTS,
   type FulfillmentMethod,
   type SellerTier,
 } from '@/lib/boutique/constants';
@@ -136,7 +134,7 @@ export async function POST(request: NextRequest) {
       sellerEarnings: number;
     }> = [];
 
-    for (const [key, items] of orderGroups) {
+    for (const [_key, items] of orderGroups) {
       const seller = items[0].product.seller;
       const fulfillmentMethod = items[0].product.fulfillmentMethod as FulfillmentMethod;
       
@@ -222,7 +220,6 @@ export async function POST(request: NextRequest) {
 
     // Apply coupon if provided
     let discount = 0;
-    let appliedCoupon: { id: string; discountType: string; discountValue: number; maxDiscount: number | null } | null = null;
     
     if (couponCode) {
       // First get all matching coupons, then filter by usedCount < maxUses
@@ -245,7 +242,6 @@ export async function POST(request: NextRequest) {
         } else {
           discount = coupon.discountValue;
         }
-        appliedCoupon = coupon;
         
         // Increment coupon usage count
         await prisma.boutiqueCoupon.update({
@@ -261,8 +257,6 @@ export async function POST(request: NextRequest) {
     const createdOrders: string[] = [];
     
     for (const orderPreview of orderPreviews) {
-      const isSellerDirect = orderPreview.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT;
-      
       // Calculate proportional discount for this order
       const orderProportion = (orderPreview.subtotal + orderPreview.shippingCost) / grandTotal;
       const orderDiscount = Math.round(discount * orderProportion);
@@ -421,7 +415,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get checkout summary before payment
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     

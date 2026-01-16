@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const parentOnly = searchParams.get('parentOnly') === 'true';
     const parentId = searchParams.get('parentId');
 
-    let whereClause: Record<string, unknown> = { isActive: true };
+    const whereClause: Record<string, unknown> = { isActive: true };
 
     if (parentOnly) {
       whereClause.parentId = null;

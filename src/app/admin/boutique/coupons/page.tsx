@@ -102,7 +102,7 @@ export default function AdminCouponsPage() {
         const data = await res.json()
         toast.error(data.message || 'Failed to save coupon')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to save coupon')
     }
   }
@@ -119,7 +119,7 @@ export default function AdminCouponsPage() {
         toast.success('Coupon deleted')
         setCoupons(coupons.filter(c => c.id !== id))
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to delete coupon')
     } finally {
       setDeletingId(null)
@@ -139,7 +139,7 @@ export default function AdminCouponsPage() {
         ))
         toast.success(`Coupon ${!coupon.isActive ? 'activated' : 'deactivated'}`)
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update coupon')
     }
   }

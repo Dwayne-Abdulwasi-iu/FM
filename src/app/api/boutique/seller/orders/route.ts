@@ -7,8 +7,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { 
   FULFILLMENT_METHOD, 
-  BOUTIQUE_DEFAULTS, 
-  ORDER_STATUS 
+  BOUTIQUE_DEFAULTS 
 } from '@/lib/boutique/constants';
 import { initiateBoutiqueRefund } from '@/lib/boutique/refund';
 import { sendEmail } from '@/lib/email';

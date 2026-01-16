@@ -3,7 +3,7 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, HelpCircle, Settings } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, Settings } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { DesignerProfileBadge } from '@/components/DesignerBadge'

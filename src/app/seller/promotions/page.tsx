@@ -14,7 +14,6 @@ import {
   DollarSign,
   Package,
   Trash2,
-  Edit,
   Eye,
   EyeOff,
   Clock,

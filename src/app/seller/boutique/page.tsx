@@ -64,7 +64,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 };
 
 export default function SellerBoutiquePage() {
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
   const router = useRouter();
   const [products, setProducts] = useState<BoutiqueProduct[]>([]);
   const [loading, setLoading] = useState(true);

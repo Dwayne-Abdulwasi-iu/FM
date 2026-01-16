@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
     // Create variants if provided
     if (variants && variants.length > 0) {
       await prisma.boutiqueProductVariant.createMany({
-        data: variants.map((v: { size?: string; color?: string; colorHex?: string; priceAdjustment?: number; quantity?: number; sku?: string }, index: number) => ({
+        data: variants.map((v: { size?: string; color?: string; colorHex?: string; priceAdjustment?: number; quantity?: number; sku?: string }, _index: number) => ({
           productId: product.id,
           size: v.size,
           color: v.color,
