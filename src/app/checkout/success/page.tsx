@@ -217,7 +217,7 @@ export default function CheckoutSuccessPage() {
                   <p className="text-purple-700 text-sm mb-3">
                     A confirmation email has been sent to your registered email address with all the details.
                   </p>
-                  <Link href="/profile/orders" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                  <Link href="/orders" className="text-purple-600 hover:text-purple-800 text-sm font-medium">
                     View Order History
                   </Link>
                 </div>

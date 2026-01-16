@@ -594,6 +594,20 @@ export default function AdminDashboard() {
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                     <Link
+                      href="/admin/analytics"
+                      className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-200 rounded-lg flex items-center justify-center">
+                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Analytics Dashboard</p>
+                          <p className="text-xs text-gray-500">Revenue, sales &amp; user insights</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
                       href="/admin/commission-requests"
                       className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
                     >
@@ -660,6 +674,76 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
                           <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique"
+                      className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">👗</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Boutique Products</p>
+                          <p className="text-xs text-gray-500">Review &amp; manage physical products</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/shipments"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">📦</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Incoming Shipments</p>
+                          <p className="text-xs text-gray-500">Verify seller shipments to warehouse</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/coupons"
+                      className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🎟️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Boutique Coupons</p>
+                          <p className="text-xs text-gray-500">Create &amp; manage discount codes</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/orders"
+                      className="p-4 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-rose-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🛍️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Boutique Orders</p>
+                          <p className="text-xs text-gray-500">Manage physical product orders</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/disputes"
+                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">⚠️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Disputes</p>
+                          <p className="text-xs text-gray-500">Handle order disputes &amp; issues</p>
                         </div>
                       </div>
                     </Link>

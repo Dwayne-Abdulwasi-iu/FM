@@ -3,7 +3,7 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, HelpCircle } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, HelpCircle, Settings } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { DesignerProfileBadge } from '@/components/DesignerBadge'
@@ -653,17 +653,17 @@ export default function ProfilePage() {
                           Upload
                         </Link>
                         <Link
-                          href="/designs"
+                          href="/orders"
                           className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs"
                         >
-                          Browse
+                          Orders
                         </Link>
                         <Link
-                          href="/help"
-                          className="flex-1 bg-purple-100 text-purple-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-purple-200 text-center text-[10px] sm:text-xs flex items-center justify-center gap-1"
+                          href="/profile/settings"
+                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs flex items-center justify-center gap-1"
                         >
-                          <HelpCircle className="w-3 h-3" />
-                          Help
+                          <Settings className="w-3 h-3" />
+                          Settings
                         </Link>
                       </div>
                     </div>

@@ -521,7 +521,7 @@ export default function PODSetupWizard() {
             Our POD system handles everything - printing, quality control, packaging, and shipping directly to your customers.
           </p>
           <div className="flex gap-4">
-            <Link href="/help/pod" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium">
+            <Link href="/help?category=pod" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium">
               POD Guide
             </Link>
             <Link href="/contact" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium">

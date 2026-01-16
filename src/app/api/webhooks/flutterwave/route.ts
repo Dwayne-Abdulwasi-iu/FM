@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyTransaction, FlutterwaveWebhookEvent, verifyWebhookSignature } from '@/lib/flutterwave';
-import { processReferralReward } from '@/lib/referral-service';
 import { sendOrderConfirmation } from '@/lib/whatsapp';
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers';
 import { checkAndUpdateSellerTier } from '@/lib/tier-management';
@@ -117,9 +116,6 @@ export async function POST(request: NextRequest) {
         paymentMethod: 'FLUTTERWAVE',
       },
     });
-
-    // Process referral reward if applicable
-    await processReferralReward(typedOrder.customerId, typedOrder.totalAmount);
 
     // Update design sales counts and create earnings
     const orderItems = typedOrder.items as FlutterwaveOrderItem[];

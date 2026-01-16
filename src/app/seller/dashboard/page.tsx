@@ -20,7 +20,9 @@ import {
   Palette,
   Printer,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  Store,
+  Truck,
 } from 'lucide-react'
 
 interface AnalyticsData {
@@ -396,6 +398,47 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
+        {/* Boutique Section - Physical Products */}
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-sm p-6 mb-8 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Store className="w-6 h-6" />
+              <h2 className="text-lg font-semibold">Physical Boutique</h2>
+            </div>
+            <Link href="/seller/boutique/upload" className="text-sm bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition">
+              + Add Product
+            </Link>
+          </div>
+          <p className="text-sm opacity-90 mb-4">
+            Sell your physical fashion items! Upload clothing, accessories, bags, and more. 
+            Ship to our warehouse or directly to customers.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Link href="/seller/boutique/upload" className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition">
+              <p className="text-2xl font-bold">📦</p>
+              <p className="text-sm mt-1">Upload Product</p>
+            </Link>
+            <Link href="/seller/boutique" className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition">
+              <p className="text-2xl font-bold">👗</p>
+              <p className="text-sm mt-1">My Products</p>
+            </Link>
+            <Link href="/seller/boutique/orders" className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition">
+              <p className="text-2xl font-bold">🛍️</p>
+              <p className="text-sm mt-1">Boutique Orders</p>
+            </Link>
+            <Link href="/seller/boutique/earnings" className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition">
+              <p className="text-2xl font-bold">💰</p>
+              <p className="text-sm mt-1">Earnings</p>
+            </Link>
+            <Link href="/seller/boutique/ship" className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition">
+              <p className="text-2xl font-bold flex items-center gap-1">
+                <Truck className="w-5 h-5" />
+              </p>
+              <p className="text-sm mt-1">Ship to Warehouse</p>
+            </Link>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Top Designs */}
           <div className="bg-white rounded-xl shadow-sm p-6">
@@ -551,11 +594,39 @@ export default function SellerDashboardPage() {
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Link
-            href="/seller/commission-requests"
+            href="/seller/boutique"
+            className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-purple-100"
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Store className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Boutique Products</p>
+              <p className="text-sm text-gray-500">Manage physical items</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+
+          <Link
+            href="/seller/boutique/orders"
             className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-pink-100"
           >
             <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-              <Palette className="w-6 h-6 text-pink-600" />
+              <ShoppingBag className="w-6 h-6 text-pink-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Boutique Orders</p>
+              <p className="text-sm text-gray-500">Track & fulfill orders</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+
+          <Link
+            href="/seller/commission-requests"
+            className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-rose-100"
+          >
+            <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center">
+              <Palette className="w-6 h-6 text-rose-600" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-gray-900">Commission Requests</p>
@@ -593,6 +664,20 @@ export default function SellerDashboardPage() {
           </Link>
 
           <Link
+            href="/seller/earnings"
+            className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-green-100"
+          >
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Earnings & Payouts</p>
+              <p className="text-sm text-gray-500">Track revenue & withdrawals</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+
+          <Link
             href="/seller/commission-settings"
             className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
           >
@@ -602,6 +687,20 @@ export default function SellerDashboardPage() {
             <div className="flex-1">
               <p className="font-medium text-gray-900">Commission Settings</p>
               <p className="text-sm text-gray-500">Manage commission availability</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+
+          <Link
+            href="/seller/settings"
+            className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-100"
+          >
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Settings className="w-6 h-6 text-gray-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Seller Settings</p>
+              <p className="text-sm text-gray-500">Bank account & payout preferences</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </Link>

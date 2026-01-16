@@ -84,7 +84,7 @@ interface EmailOptions {
   text?: string;
 }
 
-async function sendEmail(options: EmailOptions): Promise<boolean> {
+export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const transport = getTransporter();
   
   if (!transport) {

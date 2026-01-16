@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard, Download, Package, Heart, Settings, Receipt } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";
@@ -11,6 +11,7 @@ export function Navbar() {
   const { data: session } = useSession();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const [boutiqueCartCount, setBoutiqueCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,10 +20,12 @@ export function Navbar() {
   useEffect(() => {
     if (session) {
       fetchCartCount();
+      fetchBoutiqueCartCount();
       
       // Retry cart count fetch after a delay if it initially fails
       const retryTimer = setTimeout(() => {
         fetchCartCount();
+        fetchBoutiqueCartCount();
       }, 2000);
       
       return () => clearTimeout(retryTimer);
@@ -35,8 +38,18 @@ export function Navbar() {
       }
     };
     
+    const handleBoutiqueCartUpdate = () => {
+      if (session) {
+        fetchBoutiqueCartCount();
+      }
+    };
+    
     window.addEventListener('cartUpdated', handleCartUpdate);
-    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('boutiqueCartUpdated', handleBoutiqueCartUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('boutiqueCartUpdated', handleBoutiqueCartUpdate);
+    };
   }, [session]);
 
   const fetchCartCount = async () => {
@@ -60,6 +73,19 @@ export function Navbar() {
         console.debug('Cart fetch failed (normal during development):', error instanceof Error ? error.message : 'Unknown error')
       }
       setCartCount(0)
+    }
+  };
+
+  const fetchBoutiqueCartCount = async () => {
+    try {
+      const response = await fetch('/api/boutique/cart');
+      if (response.ok) {
+        const data = await response.json();
+        setBoutiqueCartCount(data.cart?.items?.length || 0);
+      }
+    } catch (error) {
+      void error;
+      setBoutiqueCartCount(0);
     }
   };
 
@@ -119,8 +145,22 @@ export function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/designs" className="text-gray-800 hover:text-indigo-700 font-medium">
-              Browse
+            {/* Direct Designs Link */}
+            <Link
+              href="/designs"
+              className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-1.5"
+            >
+              <Download className="w-4 h-4" />
+              Designs
+            </Link>
+            
+            {/* Direct Boutique Link - Prominent */}
+            <Link
+              href="/boutique"
+              className="text-gray-800 hover:text-purple-700 font-medium flex items-center gap-1.5"
+            >
+              <Package className="w-4 h-4" />
+              Boutique
             </Link>
             {/* Community Dropdown */}
             <div 
@@ -188,11 +228,21 @@ export function Navbar() {
               </>
             )}
             {session && <NotificationBell />}
-            <Link href="/cart" className="text-gray-800 hover:text-indigo-700 relative">
-              <ShoppingBag className="w-5 h-5" />
+            {/* Digital Cart */}
+            <Link href="/cart" className="text-indigo-700 hover:text-indigo-800 relative" title="Digital Downloads Cart">
+              <Download className="w-5 h-5" />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-indigo-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
+                </span>
+              )}
+            </Link>
+            {/* Boutique Cart */}
+            <Link href="/boutique/cart" className="text-purple-700 hover:text-purple-800 relative" title="Physical Items Cart">
+              <Package className="w-5 h-5" />
+              {boutiqueCartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-purple-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {boutiqueCartCount}
                 </span>
               )}
             </Link>
@@ -237,13 +287,32 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="md:hidden pb-2 border-t border-gray-200">
             <div className="space-y-1 py-2">
-              <Link 
-                href="/designs" 
-                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Browse
-              </Link>
+              {/* Shop Section */}
+              <div className="border-b border-gray-100 pb-2 mb-2">
+                <span className="px-3 text-[10px] font-semibold text-gray-400 uppercase">Shop</span>
+                <Link 
+                  href="/designs" 
+                  className="block px-3 py-2 text-xs text-gray-800 hover:bg-indigo-50 rounded-lg flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="p-1 bg-indigo-100 rounded">
+                    <Download className="w-3 h-3 text-indigo-700" />
+                  </div>
+                  <span>Digital Designs</span>
+                  <span className="text-[9px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded ml-auto">INSTANT</span>
+                </Link>
+                <Link 
+                  href="/boutique" 
+                  className="block px-3 py-2 text-xs text-gray-800 hover:bg-purple-50 rounded-lg flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="p-1 bg-purple-100 rounded">
+                    <Package className="w-3 h-3 text-purple-700" />
+                  </div>
+                  <span>Physical Boutique</span>
+                  <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded ml-auto">SHIPPED</span>
+                </Link>
+              </div>
               <Link 
                 href="/contact" 
                 className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg"
@@ -309,13 +378,31 @@ export function Navbar() {
               )}
               <Link 
                 href="/cart" 
-                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center justify-between"
+                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-indigo-50 rounded-lg flex items-center justify-between"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Cart</span>
+                <span className="flex items-center gap-2">
+                  <Download className="w-3 h-3 text-indigo-700" />
+                  Digital Cart
+                </span>
                 {cartCount > 0 && (
                   <span className="bg-indigo-700 text-white text-[10px] rounded-full px-1.5 py-0.5">
                     {cartCount}
+                  </span>
+                )}
+              </Link>
+              <Link 
+                href="/boutique/cart" 
+                className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-purple-50 rounded-lg flex items-center justify-between"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className="flex items-center gap-2">
+                  <Package className="w-3 h-3 text-purple-700" />
+                  Boutique Cart
+                </span>
+                {boutiqueCartCount > 0 && (
+                  <span className="bg-purple-700 text-white text-[10px] rounded-full px-1.5 py-0.5">
+                    {boutiqueCartCount}
                   </span>
                 )}
               </Link>
@@ -332,12 +419,36 @@ export function Navbar() {
                     </Link>
                   )}
                   <Link 
+                    href="/boutique/favorites" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-pink-50 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Heart className="w-3 h-3 text-pink-600" />
+                    My Favorites
+                  </Link>
+                  <Link 
+                    href="/orders" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Receipt className="w-3 h-3" />
+                    My Orders
+                  </Link>
+                  <Link 
                     href="/profile" 
                     className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <User className="w-3 h-3" />
                     Profile
+                  </Link>
+                  <Link 
+                    href="/profile/settings" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Settings className="w-3 h-3" />
+                    Settings
                   </Link>
                   <button 
                     onClick={() => {

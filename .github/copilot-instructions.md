@@ -1,127 +1,188 @@
-# Fashion Marketplace - AI Coding Instructions
+# Fashion Marketplace - Copilot Instructions
 
 ## Architecture Overview
 
-This is a **Next.js 15 App Router** fashion marketplace with MongoDB (via Prisma), NextAuth, and dual payment processing (Stripe + Paystack).
+Next.js 15 App Router marketplace where designers sell fashion illustrations. Uses MongoDB (via Prisma), Cloudinary for media, and dual payment processors (Stripe for USD, Paystack for NGN).
 
-### Core Stack
-- **Frontend**: Next.js 15 App Router, React 18, Tailwind CSS, Zustand (state)
-- **Backend**: Next.js API Routes (`src/app/api/`), Prisma ORM
-- **Database**: MongoDB Atlas (replica set required for transactions)
-- **Auth**: NextAuth v4 with JWT strategy, credentials + Google OAuth
-- **Payments**: Stripe (international) + Paystack (Nigeria/Africa)
-- **Storage**: Cloudinary for design images/media
+**Key directories:**
+- `src/app/` — App Router pages and API routes
+- `src/lib/` — Core utilities (auth, db, payments, uploads)
+- `src/components/` — React components (`ui/`, `layout/`, `home/`, `pwa/`)
+- `prisma/schema.prisma` — MongoDB data models (**do NOT use `prisma migrate`**)
+- `migrations/` — `migrate-mongo` files for production DB changes
+- `scripts/` — Maintenance scripts (`.mjs` for ESM)
 
-### Key Data Flow
-```
-User → API Route → Prisma → MongoDB Atlas
-                 → Cloudinary (uploads)
-                 → Stripe/Paystack (payments)
-```
+### Data Flow
+1. **Auth**: NextAuth credentials + Google OAuth → JWT session via `src/lib/auth.ts`
+2. **Uploads**: Form → `/api/designs` → Cloudinary → MongoDB `Design` + `DesignMedia`
+3. **Payments**: Cart → `/api/checkout` → Stripe/Paystack → webhook → `Order` + `SellerEarning`
+4. **Background Jobs**: Video uploads → BullMQ thumbnail queue → `scripts/thumbnail-worker.mjs`
 
-## Project Structure Patterns
+## Critical Patterns
 
-### API Routes Convention
-All API routes in `src/app/api/` follow Next.js 15 patterns:
-```typescript
-// Pattern: src/app/api/{resource}/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+### Database Access
+- **Always check `DATABASE_URL`** before Prisma calls — the proxy in [src/lib/prisma.ts](src/lib/prisma.ts) throws if missing
+- Use `prismaErrorResponse()` from [src/lib/prismaError.ts](src/lib/prismaError.ts) to handle transient DB errors (returns 503):
+  ```typescript
+  const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable')
+  if (prismaResp) return prismaResp
+  ```
 
-export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  // Always check session for protected routes
-}
-```
+### API Route Structure
+- All API routes are in `src/app/api/` using Next.js route handlers
+- Authenticate with `getServerSession(authOptions)` from [src/lib/auth.ts](src/lib/auth.ts)
+- Rate limiting via [middleware.ts](middleware.ts) (60 req/min/IP, excludes `/api/health` and `/api/status`)
 
-### Authentication Pattern
-- Session extended with `id` and `role` via `src/types/auth.d.ts`
-- Use `getServerSession(authOptions)` in API routes
-- Use `useSession()` hook in client components
-- Roles: `USER`, `SELLER`, `ADMIN` - check via `session.user.role`
+### File Uploads
+- **Production requires Cloudinary** — no local filesystem persistence
+- Use `uploadToCloudinary()` from [src/lib/cloudinary.ts](src/lib/cloudinary.ts)
+- Videos trigger async thumbnail jobs via BullMQ when `REDIS_URL` is set (see [src/lib/thumbnailQueue.ts](src/lib/thumbnailQueue.ts))
 
-### Component Organization
-- `src/components/layout/` - Navbar, Footer (global layout)
-- `src/components/home/` - Homepage sections
-- `src/components/providers.tsx` - SessionProvider wrapper
-- Client components marked with `'use client'` directive
+### Payment Processing
+- **Stripe** for USD payments (10% platform fee via Stripe Connect)
+- **Paystack** for NGN payments with subaccount splits
+- Both use lazy initialization — won't crash if keys are missing until actually called
+- Webhooks: `/api/webhooks/stripe`, `/api/webhooks/paystack`
 
-## Critical Developer Commands
+### State Management
+- Session: NextAuth with JWT strategy
+- Client state: React hooks for simple state, `react-hot-toast` for notifications
+- Toast notifications: `react-hot-toast` via `<Toaster>` in [providers.tsx](src/components/providers.tsx)
+
+### Currency & Pricing
+- Prices stored in USD, converted on-demand for NGN display
+- Use `convertFromUSDLive()` for live exchange rates (caches for 2 minutes) or `formatPriceLocalizedSync()` for static rates
+- `convertUSDToNGN()` and `convertNGNToUSD()` helpers in `src/lib/paystack.ts`
+- Designs store `submittedPrice`/`submittedCurrency` for audit trail and historical accuracy
+
+### Admin & Role-Based Access
+- Check role via `session.user.role` (default: `'USER'`, admin: `'ADMIN'`)
+- Admin routes in `/app/admin/` — guard with `if (session?.user?.role !== 'ADMIN') return 401`
+- Admin features: analytics, design approval, seller verification, resource management
+
+## Development Commands
 
 ```bash
-# Development
-npm run dev              # Start Next.js dev server
+npm run dev              # Start dev server
+npm run build            # Production build (standalone output)
+npm run start:standalone:3000  # Run production build locally
 
-# Database
-npm run db:push          # Push Prisma schema to MongoDB
-npm run db:seed          # Seed sample data (tsx prisma/seed.ts)
-npx prisma generate      # Regenerate Prisma client after schema changes
+npm test                 # Jest unit tests
+npm run test:integration # Integration tests (requires running server)
+npm run type-check       # TypeScript validation
 
-# Testing
-npm test                 # Run Jest tests
-npm run test:watch       # Watch mode
-npm run type-check       # TypeScript check without emit
-
-# Verify MongoDB connection
-node scripts/check-mongo-env.js && node src/test-mongo.js
+npm run db:push          # Push Prisma schema to DB
+npm run db:seed          # Seed sample data
+npm run migrate:cloudinary # Migrate local uploads to Cloudinary
+npm run thumbnail:worker # Start background thumbnail processor
 ```
 
-## Database Specifics (MongoDB + Prisma)
+### Local Redis Setup (Optional but Recommended)
 
-- **Prisma schema**: `prisma/schema.prisma` - Uses `mongodb` provider
-- **IDs**: Use `@id @default(cuid()) @map("_id")` pattern for MongoDB
-- **Relations**: MongoDB doesn't support foreign keys - Prisma handles at app level
-- **Transactions**: Require MongoDB replica set (Atlas provides this automatically)
-  - Local dev with single-node mongod fails with error `P2031`
+For production-like rate limiting and BullMQ job queues in development:
 
-## Testing Conventions
-
-Tests in `src/__tests__/` with this structure:
-```
-__tests__/
-  api/           # API route tests
-  components/    # React component tests
-  webhooks/      # Webhook handler tests
+**Windows (PowerShell):**
+```powershell
+.\scripts\setup-redis.ps1
 ```
 
-Key mocking patterns (see `src/__tests__/api/designs.test.ts`):
-- Mock `next-auth` before imports to avoid ESM issues
-- Mock `@/lib/prisma` with Jest mock functions
-- Mock `next/server` NextResponse for route tests
-
-## External Service Integration
-
-### Cloudinary (`src/lib/cloudinary.ts`)
-- Upload via `uploadToCloudinary(buffer, { folder: 'fashion-marketplace/designs' })`
-- Generates thumbnail URLs automatically
-
-### Payments
-- **Stripe** (`src/lib/stripe.ts`): Lazy init with `getStripe()`, 10% platform fee
-- **Paystack** (`src/lib/paystack.ts`): For African markets, verify with `verifyTransaction(reference)`
-- Webhooks in `src/app/api/webhooks/{stripe,paystack}/route.ts`
-
-## Admin Features
-- Admin dashboard at `/admin` - role-based access
-- Admin API routes under `src/app/api/admin/`
-- Make user admin: `node scripts/make-user-admin.js`
-
-## Environment Variables Required
+**Linux/macOS:**
+```bash
+./scripts/setup-redis.sh
 ```
-DATABASE_URL          # MongoDB Atlas connection string
-NEXTAUTH_SECRET       # Random string for JWT signing
-NEXTAUTH_URL          # http://localhost:3000 for dev
-CLOUDINARY_*          # Cloud name, API key, API secret
-STRIPE_SECRET_KEY     # Stripe API key
-STRIPE_WEBHOOK_SECRET # For webhook verification
-PAYSTACK_SECRET_KEY   # Paystack API key
-GOOGLE_CLIENT_ID      # OAuth (optional)
-GOOGLE_CLIENT_SECRET  # OAuth (optional)
-```
+
+These helpers start Docker-based Redis and auto-configure `REDIS_URL` in `.env.local`.
+
+## Testing Approach
+
+- Jest + React Testing Library for unit tests
+- Tests mock `next/navigation`, `next-auth/react`, and Redis by default (`jest.setup.js`)
+- Integration tests: `npm run test:integration` (requires running server + `TEST_UPLOAD_ENDPOINT`)
+- Path alias: `@/` maps to `src/`
+- Test files in `src/__tests__/` (unit) and `__tests__/` (integration)
+
+## Key Conventions
+
+1. **Client components**: Mark with `'use client'` at file top
+2. **Images**: Use `SafeImage` component or Next.js `Image` with Cloudinary `remotePatterns`
+3. **Styling**: Tailwind CSS with custom `primary` color scale and `xs` breakpoint
+4. **Error handling**: Return structured JSON with appropriate HTTP status codes
+5. **Currency**: Designs store `submittedPrice`/`submittedCurrency` for audit trail
+
+## Environment Variables
+
+Required for full functionality:
+- `DATABASE_URL` — MongoDB connection string
+- `NEXTAUTH_SECRET`, `NEXTAUTH_URL` — Auth configuration
+- `CLOUDINARY_*` — Media storage (required in production)
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — USD payments
+- `PAYSTACK_SECRET_KEY` — NGN payments
+- `REDIS_URL` — Optional but recommended for rate limiting and job queues
+
+Additional recommended:
+- `SENDGRID_API_KEY` — Preferred email provider (falls back to SMTP if not set)
+- `EMAIL_FROM` — Verified sender address (must be verified in SendGrid when using API)
+- `SENTRY_DSN` — Optional error tracking
+- Local Redis: run `.\scripts\setup-redis.ps1` or `./scripts/setup-redis.sh` to auto-configure
+
+## Deployment
+
+- Render deployment via `render.yaml` with standalone Next.js output
+- Health check endpoint: `/api/health`
+- CI runs lint, type-check, tests, and build on Node 20.x
 
 ## Common Pitfalls
-- Always run `npx prisma generate` after schema changes
-- MongoDB Atlas required (local mongod needs replica set config)
-- Check `isStripeConfigured()` / `isPaystackConfigured()` before payment calls
-- Path alias `@/` maps to `src/` - configured in tsconfig.json and jest.config.js
+
+- **Never commit `.env.local`** — secrets go in hosting provider's env vars
+- MongoDB schema changes: use `npx migrate-mongo up` (see `MIGRATIONS.md`), not `prisma migrate`
+- Webhook handlers must return 200 quickly or payment providers retry
+- Call `revalidatePath()` after mutations to bust Next.js cache
+- Lazy-initialized services (Stripe, Paystack) throw only when first used, not at import
+
+## Maintenance Scripts
+
+Located in `scripts/` directory. Run with `node scripts/<name>.mjs` (ESM) or `node scripts/<name>.js` (CJS):
+
+| Script | Purpose |
+|--------|---------|
+| `make-admin.js` | Promote user to ADMIN role |
+| `seed-admin.js` | Create initial admin user |
+| `backfill-submitted-prices.mjs` | Backfill `submittedPrice`/`submittedCurrency` for existing designs |
+| `fix-cloudinary-*.mjs` | Repair Cloudinary URL/protocol issues |
+| `find-and-enqueue-thumbnail.mjs` | Queue video thumbnails for processing |
+| `thumbnail-worker.mjs` | BullMQ worker for async thumbnail generation |
+| `export-db-backup.mjs` | Export MongoDB collections for backup |
+| `check-cloudinary-mongo-client.mjs` | Verify Cloudinary/DB sync |
+
+## Boutique (ADMIN_STOCK) Shipping Flow
+
+Physical products sold via the boutique use the **ADMIN_STOCK** fulfillment model:
+
+### Workflow
+1. Seller uploads product → Admin reviews content → `CONTENT_APPROVED`
+2. Seller ships to warehouse (pays shipping out-of-pocket) → `SHIPPED_TO_ADMIN`
+3. Admin receives & verifies → `RECEIVED_BY_ADMIN` → `VERIFICATION_PASSED` → `LIVE`
+4. Buyer purchases → Platform calculates shipping fee → Buyer pays → Admin ships to buyer
+5. Buyer's shipping fee goes entirely to platform account
+
+### Key Models
+- `BoutiqueProduct` — Physical product with status workflow
+- `SellerToAdminShipment` — Tracks shipment from seller to warehouse with receipt verification
+- `WarehouseInventory` — Tracks product location/condition in warehouse
+
+### Receipt Verification (Prevents Gaming)
+Admin records actual items received vs expected:
+- `itemsExpected`, `itemsReceived`, `itemsMissing`, `itemsDamaged`
+- `receiptPhotos[]` — Evidence of condition on arrival
+- `hasDiscrepancy` flag triggers dispute flow
+
+### Dispute Resolution
+- **Routes**: `/api/boutique/admin/shipments`, `/api/boutique/admin/shipments/[id]/dispute`
+- **Resolutions**: `SELLER_FAULT`, `CARRIER_FAULT`, `WRITTEN_OFF`, `SELLER_RESHIP`
+- Carrier faults can trigger insurance claims
+
+### Auto-Cancel Cron
+- **Route**: `/api/cron/boutique-shipment-deadlines`
+- Sends warnings 2 days before deadline
+- Auto-cancels products if shipment doesn't arrive within 7 days
+- Notifies seller and admin of cancellations

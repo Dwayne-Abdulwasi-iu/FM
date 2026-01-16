@@ -125,6 +125,17 @@ model User {
   // Direct Messaging
   messagesSent     DirectMessage[] @relation("MessagesSent")
   messagesReceived DirectMessage[] @relation("MessagesReceived")
+  
+  // Fashion Boutique (Physical Products)
+  boutiqueProducts       BoutiqueProduct[] @relation("BoutiqueSeller")
+  boutiqueOrdersBuyer    BoutiqueOrder[] @relation("BoutiqueOrderBuyer")
+  boutiqueOrdersSeller   BoutiqueOrder[] @relation("BoutiqueOrderSeller")
+  boutiqueCart           BoutiqueCartItem[] @relation("BoutiqueCart")
+  boutiqueFavorites      BoutiqueFavorite[] @relation("BoutiqueFavorites")
+  boutiqueReviews        BoutiqueReview[] @relation("BoutiqueReviews")
+  boutiquePayouts        BoutiqueSellerPayout[] @relation("BoutiquePayouts")
+  sellerShipments        SellerToAdminShipment[] @relation("SellerShipments")
+  boutiqueReturns        BoutiqueReturn[] @relation("BoutiqueReturns")
 
   @@map("users")
 }
@@ -1594,4 +1605,833 @@ model FailedNotification {
   
   @@index([resolved, nextRetryAt])
   @@map("failed_notifications")
+}
+
+// ============================================================================
+// FASHION BOUTIQUE - Physical Products Marketplace
+// ============================================================================
+
+// Boutique Categories (hierarchical)
+model BoutiqueCategory {
+  id          String   @id @default(cuid()) @map("_id")
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?  // Emoji or icon name
+  image       String?  // Category banner image
+  
+  // Hierarchy
+  parentId    String?
+  parent      BoutiqueCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children    BoutiqueCategory[] @relation("CategoryHierarchy")
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Display
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  
+  products    BoutiqueProduct[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([parentId])
+  @@map("boutique_categories")
+}
+
+// Main Physical Product Model
+model BoutiqueProduct {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Basic Info
+  title       String
+  slug        String   @unique
+  description String
+  brand       String?
+  material    String?
+  careInstructions String?
+  
+  // Thumbnail (cached from primary image)
+  thumbnailUrl String?
+  
+  // Average rating (cached)
+  avgRating   Float?
+  
+  // Pricing
+  basePrice   Float    // Original price set by seller
+  salePrice   Float?   // Discounted price if on sale
+  currency    String   @default("NGN")
+  
+  // Category
+  categoryId  String
+  category    BoutiqueCategory @relation(fields: [categoryId], references: [id])
+  subcategory String?  // Free-form subcategory
+  
+  // Tags for search
+  tags        String[]
+  style       String?  // Traditional, Modern, Casual, Formal, etc.
+  occasion    String?  // Wedding, Casual, Office, Party, etc.
+  gender      String?  // Men, Women, Unisex, Kids
+  
+  // Seller Info
+  sellerId    String
+  seller      User     @relation("BoutiqueSeller", fields: [sellerId], references: [id])
+  
+  // Verification Status (The workflow)
+  status      String   @default("DRAFT")
+  // DRAFT - Seller creating
+  // PENDING_CONTENT_REVIEW - Awaiting admin review of images/videos
+  // CONTENT_APPROVED - Admin approved media, awaiting physical shipment
+  // SHIPPED_TO_ADMIN - Seller shipped product
+  // RECEIVED_BY_ADMIN - Admin received physical product
+  // VERIFICATION_PASSED - Physical product verified, ready to go live
+  // LIVE - Available for purchase
+  // SOLD - Product sold
+  // REJECTED - Admin rejected (content or physical)
+  // CANCELLED - Auto-cancelled (shipment timeout)
+  // RETURNED_TO_SELLER - Returned to seller (unsold/rejected)
+  // LIQUIDATED - Sold at discount after storage limit
+  
+  rejectionReason String?
+  rejectionDate   DateTime?
+  
+  // Content Review
+  contentReviewedAt DateTime?
+  contentReviewedBy String?    // Admin user ID
+  contentNotes      String?    // Admin notes on content
+  
+  // Physical Verification
+  physicalVerifiedAt DateTime?
+  physicalVerifiedBy String?    // Admin user ID
+  physicalNotes      String?    // Admin notes on physical product
+  qualityScore       Int?       // 1-5 quality rating by admin
+  
+  // Shipment Tracking (Seller to Admin)
+  shipmentId         String?    // Reference to SellerToAdminShipment
+  
+  // Warehouse Info (after received)
+  warehouseLocation  String?    // Shelf/bin location in admin warehouse
+  warehouseReceivedAt DateTime?
+  
+  // Storage Fees
+  storageFeeStartDate DateTime? // When storage fees start (30 days after receipt)
+  storageFeesAccrued  Float     @default(0)
+  lastStorageFeeDate  DateTime?
+  
+  // Inventory
+  condition   String   @default("NEW") // NEW, LIKE_NEW, GOOD, FAIR
+  
+  // Fulfillment Method
+  fulfillmentMethod String @default("ADMIN_STOCK")
+  // ADMIN_STOCK - Seller ships to admin, admin ships to buyer (default)
+  // SELLER_DIRECT - Seller ships directly to buyer (Tier 3+ only)
+  
+  // Seller Direct Shipping Fields (only used when fulfillmentMethod = SELLER_DIRECT)
+  sellerDirectApproved    Boolean  @default(false)  // Admin approved for seller direct
+  sellerDirectApprovedAt  DateTime?
+  sellerDirectApprovedBy  String?
+  sellerShippingLocations String[] // Regions/states seller can ship to
+  sellerShippingTime      String?  // e.g., "2-3 business days"
+  sellerReturnPolicy      String?  // Seller's return policy
+  sellerShippingFee       Float?   // Shipping fee set by seller (SELLER_DIRECT only)
+  
+  // Performance Metrics (for seller direct)
+  ordersFulfilled        Int      @default(0)
+  ordersOnTime           Int      @default(0)
+  averageShipTime        Float?   // Average hours to ship
+  directShipRating       Float?   // 1-5 shipping performance
+  
+  // Shipping (to buyer)
+  weight      Float?   // in kg
+  dimensions  Json?    // { length, width, height } in cm
+  shipsFrom   String   @default("ADMIN_WAREHOUSE") // ADMIN_WAREHOUSE or SELLER_LOCATION
+  
+  // Analytics
+  viewCount   Int      @default(0)
+  favoriteCount Int    @default(0)
+  
+  // Timestamps
+  submittedAt DateTime? // When seller submitted for review
+  approvedAt  DateTime? // When went live
+  goLiveAt    DateTime? // When product actually went live for buyers
+  soldAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  media       BoutiqueProductMedia[]
+  variants    BoutiqueProductVariant[]
+  orders      BoutiqueOrder[]
+  orderItems  BoutiqueOrderItem[]
+  favorites   BoutiqueFavorite[]
+  reviews     BoutiqueReview[]
+  cartItems   BoutiqueCartItem[]
+  
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([fulfillmentMethod])
+  @@index([createdAt])
+  @@map("boutique_products")
+}
+
+// Product Media (Images and Videos)
+model BoutiqueProductMedia {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  type        String   // IMAGE, VIDEO
+  url         String
+  thumbnailUrl String?
+  
+  // For images
+  isPrimary   Boolean  @default(false)
+  altText     String?
+  
+  // For videos
+  duration    Int?     // in seconds
+  
+  // Metadata
+  fileName    String?
+  fileSize    Int?     // in bytes
+  mimeType    String?
+  width       Int?
+  height      Int?
+  
+  sortOrder   Int      @default(0)
+  
+  // Admin verification
+  isApproved  Boolean  @default(false)
+  approvedAt  DateTime?
+  approvedBy  String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([productId])
+  @@map("boutique_product_media")
+}
+
+// Product Variants (Size, Color combinations)
+model BoutiqueProductVariant {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // Variant attributes
+  size        String?  // XS, S, M, L, XL, XXL, or specific measurements
+  color       String?
+  colorHex    String?  // #FF5733
+  
+  // Custom attributes (for special items)
+  customAttributes Json? // { "waist": "32", "length": "34" }
+  
+  // Pricing (if variant has different price)
+  priceAdjustment Float @default(0) // Add/subtract from base price
+  
+  // Stock
+  quantity    Int      @default(1)  // Usually 1 for unique items
+  reserved    Int      @default(0)  // Items reserved during checkout
+  sku         String?  // Stock Keeping Unit
+  
+  // Variant-specific images
+  imageUrl    String?
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  orderItems  BoutiqueOrderItem[]
+  cartItems   BoutiqueCartItem[]
+  
+  @@index([productId])
+  @@map("boutique_product_variants")
+}
+
+// Seller to Admin Shipment Tracking
+model SellerToAdminShipment {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  sellerId    String
+  seller      User     @relation("SellerShipments", fields: [sellerId], references: [id])
+  
+  // Products in this shipment
+  productIds  String[]
+  
+  // Shipment Details
+  trackingNumber  String?
+  carrier         String?  // DHL, FedEx, GIGL, etc.
+  
+  // Shipping Cost (paid by seller out-of-pocket)
+  shippingCost    Float?
+  shippingPaidAt  DateTime?
+  shippingPaidMethod String? // PREPAID (seller paid carrier directly)
+  
+  // Status
+  status      String   @default("PENDING")
+  // PENDING - Awaiting seller to ship
+  // SHIPPED - Seller shipped
+  // IN_TRANSIT - With carrier
+  // DELIVERED - Received by admin
+  // PARTIAL_DELIVERY - Some items missing/damaged
+  // DISPUTED - Dispute opened for missing/damaged items
+  // CANCELLED - Shipment cancelled (auto or manual)
+  // RESOLVED - Dispute resolved
+  
+  // Seller's shipping address (pickup)
+  sellerAddress   Json?  // { street, city, state, country, postalCode, phone }
+  
+  // Admin warehouse address
+  warehouseAddress Json? // { street, city, state, country, postalCode }
+  
+  // Timestamps
+  expectedDeliveryDate DateTime? // 7 days from content approval
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  // Warning tracking (for cron job)
+  deadlineWarningSentAt DateTime?  // Last warning sent about approaching deadline
+  
+  // ===== RECEIPT VERIFICATION (Admin fills this) =====
+  // Quantity tracking
+  itemsExpected   Int      @default(1)   // Number of products seller claims shipped
+  itemsReceived   Int?                   // Actual count by admin
+  itemsMissing    Int?                   // itemsExpected - itemsReceived
+  itemsDamaged    Int?                   // Items received but damaged
+  
+  // Receipt verification
+  receivedBy      String?               // Admin user ID who received
+  receiptVerifiedAt DateTime?
+  receiptPhotos   String[]              // Photos taken by admin during receipt
+  
+  // Condition assessment
+  conditionOnReceipt String?            // EXCELLENT, GOOD, FAIR, DAMAGED, MIXED
+  conditionNotes     String?            // Admin notes on condition
+  
+  // ===== DISPUTE TRACKING =====
+  hasDiscrepancy  Boolean  @default(false) // True if itemsReceived != itemsExpected or damaged
+  disputeStatus   String?                  // NONE, OPENED, UNDER_REVIEW, RESOLVED, SELLER_FAULT, CARRIER_FAULT
+  disputeOpenedAt DateTime?
+  disputeResolvedAt DateTime?
+  disputeResolution String?              // SELLER_REFUND, INSURANCE_CLAIM, WRITTEN_OFF, SELLER_RESHIP
+  disputeNotes    String?
+  
+  // If carrier is at fault (insurance claim)
+  insuranceClaimId    String?
+  insuranceClaimStatus String?           // PENDING, APPROVED, DENIED
+  insuranceClaimAmount Float?
+  
+  // Notes
+  sellerNotes     String?
+  adminNotes      String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([sellerId])
+  @@index([status])
+  @@index([hasDiscrepancy])
+  @@map("seller_to_admin_shipments")
+}
+
+// Admin Warehouse Inventory
+model WarehouseInventory {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String   @unique
+  
+  // Location in warehouse
+  zone        String?  // A, B, C, etc.
+  shelf       String?  // 1, 2, 3, etc.
+  bin         String?  // A1, A2, etc.
+  
+  // Status
+  status      String   @default("IN_STOCK")
+  // IN_STOCK - Available
+  // RESERVED - Reserved for an order
+  // SHIPPED - Shipped to buyer
+  // RETURNED - Returned by buyer
+  // PENDING_RETURN_TO_SELLER - Awaiting return to seller
+  // RETURNED_TO_SELLER - Sent back to seller
+  // DISPOSED - Donated/disposed
+  
+  // Condition tracking
+  conditionOnReceipt String? // NEW, LIKE_NEW, GOOD, FAIR, DAMAGED
+  conditionNotes     String?
+  
+  // Photos taken by admin during verification
+  verificationPhotos String[]
+  
+  // Storage fees
+  storageStartDate   DateTime?
+  storageFreeUntil   DateTime? // 30 days free
+  monthlyStorageFee  Float     @default(0) // 2% of product price per month
+  totalStorageFees   Float     @default(0)
+  lastFeeChargeDate  DateTime?
+  
+  // Return to seller tracking
+  returnRequestedAt  DateTime?
+  returnShippedAt    DateTime?
+  returnDeliveredAt  DateTime?
+  returnTrackingNumber String?
+  returnCost         Float?    // Seller pays this
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("warehouse_inventory")
+}
+
+// Boutique Orders
+model BoutiqueOrder {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  orderNumber String   @unique // BOT-2024-XXXXX
+  
+  // Buyer
+  buyerId     String
+  buyer       User     @relation("BoutiqueOrderBuyer", fields: [buyerId], references: [id])
+  
+  // Seller
+  sellerId    String
+  seller      User     @relation("BoutiqueOrderSeller", fields: [sellerId], references: [id])
+  
+  // Product
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id])
+  
+  // Fulfillment Method (determines who ships)
+  fulfillmentMethod String @default("ADMIN_STOCK")
+  // ADMIN_STOCK - Admin ships from warehouse to buyer
+  // SELLER_DIRECT - Seller ships directly to buyer
+  
+  // Order Status
+  status      String   @default("PENDING_PAYMENT")
+  // PENDING_PAYMENT - Awaiting payment
+  // PAID - Payment received
+  // AWAITING_SELLER_CONFIRMATION - (Seller Direct) Waiting for seller to confirm stock
+  // PROCESSING - Preparing shipment (seller packing for SELLER_DIRECT)
+  // SHIPPED - Shipped to buyer
+  // DELIVERED - Delivered to buyer
+  // COMPLETED - Order complete, funds released
+  // RETURN_REQUESTED - Buyer requested return
+  // RETURN_APPROVED - Return approved
+  // RETURN_SHIPPED - Buyer shipped return
+  // RETURN_RECEIVED - Return received
+  // REFUNDED - Refund processed
+  // CANCELLED - Order cancelled
+  // DISPUTED - Under dispute
+  
+  // Seller Direct Specific Fields
+  sellerConfirmedAt     DateTime? // When seller confirmed order
+  sellerShipDeadline    DateTime? // Deadline for seller to ship
+  sellerShippedLate     Boolean   @default(false)
+  sellerCancelled       Boolean   @default(false)
+  
+  // Pricing
+  subtotal        Float
+  shippingCost    Float
+  tax             Float       @default(0)
+  discount        Float       @default(0)
+  platformFee     Float       // Commission to platform
+  sellerPayout    Float       // Amount seller receives
+  total           Float
+  currency        String      @default("NGN")
+  
+  // Shipping
+  shippingAddress Json        // { name, street, city, state, country, postalCode, phone }
+  shippingMethod  String?
+  trackingNumber  String?
+  carrier         String?
+  
+  // Estimated & Actual Dates
+  estimatedDelivery DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  // Payment
+  paymentMethod   String?     // PAYSTACK, STRIPE, etc.
+  paymentReference String?
+  paidAt          DateTime?
+  paymentStatus   String?     // PENDING, COMPLETED, FAILED
+  
+  // Refund
+  refundStatus    String?     // NONE, PENDING, REFUNDED
+  refundedAt      DateTime?
+  refundAmount    Float?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  
+  // Notes
+  buyerNotes      String?
+  sellerNotes     String?
+  adminNotes      String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  items       BoutiqueOrderItem[]
+  returns     BoutiqueReturn[]
+  refunds     BoutiqueRefund[]
+  
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@map("boutique_orders")
+}
+
+// Order Items (for variant tracking)
+model BoutiqueOrderItem {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  orderId     String
+  order       BoutiqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Link to product (for reference even after sold)
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id])
+  
+  variantId   String?
+  variant     BoutiqueProductVariant? @relation(fields: [variantId], references: [id])
+  
+  quantity    Int      @default(1)
+  price       Float    // Price at time of purchase
+  finalPrice  Float    // Final price after any adjustments
+  
+  // Variant details snapshot (in case variant changes)
+  variantSnapshot Json? // { size, color, etc. }
+  
+  // Return relation
+  returns     BoutiqueReturn[]
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([orderId])
+  @@index([productId])
+  @@map("boutique_order_items")
+}
+
+// Return Requests
+model BoutiqueReturn {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // User who requested return
+  userId      String
+  user        User     @relation("BoutiqueReturns", fields: [userId], references: [id])
+  
+  orderId     String
+  order       BoutiqueOrder @relation(fields: [orderId], references: [id])
+  
+  orderItemId String
+  orderItem   BoutiqueOrderItem @relation(fields: [orderItemId], references: [id])
+  
+  returnNumber String  @unique // RET-2024-XXXXX
+  
+  // Reason
+  reason      String   // DAMAGED, WRONG_ITEM, NOT_AS_DESCRIBED, CHANGED_MIND, OTHER
+  description String?
+  imageUrls   String[] // Photos of issue
+  
+  // Status
+  status      String   @default("PENDING")
+  // PENDING - Return requested, awaiting admin review
+  // APPROVED - Return approved, waiting for item
+  // REJECTED - Return rejected
+  // ITEM_SHIPPED - Buyer shipped return
+  // ITEM_RECEIVED - Return received by admin
+  // REFUNDED - Refund complete
+  // CLOSED - Return closed
+  
+  // Resolution
+  refundAmount     Float?
+  resolvedAt       DateTime?
+  adminNotes       String?
+  
+  // Return Shipping
+  returnTrackingNumber String?
+  returnCarrier        String?
+  returnShippedAt      DateTime?
+  returnReceivedAt     DateTime?
+  
+  // Admin handling
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  reviewNotes     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([orderId])
+  @@index([status])
+  @@map("boutique_returns")
+}
+
+// Refund tracking for boutique orders
+model BoutiqueRefund {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  orderId     String
+  order       BoutiqueOrder @relation(fields: [orderId], references: [id])
+  
+  amount      Float
+  currency    String   @default("NGN")
+  
+  reason      String
+  status      String   @default("PENDING")
+  // PENDING - Refund requested
+  // PENDING_MANUAL - Requires manual processing
+  // PROCESSING - Being processed
+  // COMPLETED - Refund successful
+  // FAILED - Refund failed
+  
+  // Payment provider reference
+  providerRefundId String?
+  
+  // Timestamps
+  requestedAt DateTime @default(now())
+  processedAt DateTime?
+  
+  // Admin notes
+  notes       String?
+  processedBy String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([orderId])
+  @@index([status])
+  @@map("boutique_refunds")
+}
+
+// Shopping Cart for Boutique
+model BoutiqueCartItem {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  userId      String
+  user        User     @relation("BoutiqueCart", fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  variantId   String?
+  variant     BoutiqueProductVariant? @relation(fields: [variantId], references: [id])
+  
+  quantity    Int      @default(1)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, productId, variantId])
+  @@index([userId])
+  @@map("boutique_cart_items")
+}
+
+// Favorites/Wishlist for Boutique
+model BoutiqueFavorite {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  userId      String
+  user        User     @relation("BoutiqueFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("boutique_favorites")
+}
+
+// Reviews for Boutique Products
+model BoutiqueReview {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation("BoutiqueReviews", fields: [userId], references: [id])
+  
+  orderId     String?  // Link to order for verified purchase
+  
+  rating      Int      // 1-5
+  title       String?
+  comment     String?
+  
+  // Photos from buyer
+  photos      String[]
+  
+  // Fit feedback
+  fitRating   String?  // RUNS_SMALL, TRUE_TO_SIZE, RUNS_LARGE
+  
+  // Verified purchase badge
+  isVerifiedPurchase Boolean @default(false)
+  
+  // Admin moderation
+  isApproved  Boolean  @default(true)
+  isHidden    Boolean  @default(false)
+  
+  // Helpful votes
+  helpfulCount Int     @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([rating])
+  @@map("boutique_reviews")
+}
+
+// Coupons for Boutique
+model BoutiqueCoupon {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  code        String   @unique
+  description String?
+  
+  discountType  String   // PERCENTAGE, FIXED
+  discountValue Float    // Percentage or fixed amount
+  maxDiscount   Float?   // Max discount for percentage coupons
+  
+  minPurchase   Float?   // Minimum purchase amount required
+  
+  maxUses       Int      @default(1)
+  usedCount     Int      @default(0)
+  
+  // Restrictions
+  sellerId      String?  // If coupon is seller-specific
+  categoryId    String?  // If coupon is category-specific
+  
+  validFrom     DateTime @default(now())
+  validUntil    DateTime
+  
+  isActive      Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([isActive])
+  @@map("boutique_coupons")
+}
+
+// Shipping Zones and Rates
+model ShippingZone {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  name        String   // e.g., "Lagos", "South-West Nigeria", "International"
+  
+  // Countries/regions covered
+  countries   String[] // ["NG", "GH", "KE"]
+  states      String[] // For country-specific zones
+  
+  // Rate calculation
+  baseRate    Float    // Base shipping cost
+  perKgRate   Float    @default(0) // Additional per kg
+  freeShippingThreshold Float? // Free shipping above this amount
+  
+  // Delivery estimates
+  minDays     Int
+  maxDays     Int
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("shipping_zones")
+}
+
+// Seller Payout Records for Boutique
+model BoutiqueSellerPayout {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  sellerId    String
+  seller      User     @relation("BoutiquePayouts", fields: [sellerId], references: [id])
+  
+  orderId     String?
+  
+  amount      Float
+  currency    String   @default("NGN")
+  
+  // Deductions
+  platformFee     Float    @default(0)
+  storageFees     Float    @default(0)
+  returnDeductions Float   @default(0)
+  netAmount       Float    // Final amount to seller
+  
+  status      String   @default("PENDING")
+  // PENDING - Awaiting processing
+  // PROCESSING - Being processed
+  // COMPLETED - Payout sent
+  // FAILED - Payout failed
+  
+  paymentMethod   String?  // BANK_TRANSFER, PAYSTACK
+  paymentReference String?
+  
+  processedAt DateTime?
+  
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([sellerId])
+  @@index([status])
+  @@map("boutique_seller_payouts")
+}
+
+// Boutique Platform Settings (singleton)
+model BoutiqueSettings {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Commission rates
+  platformCommission Float @default(15) // 15% default
+  
+  // Storage policy
+  freeStorageDays    Int   @default(30)
+  storageFeePct      Float @default(2)  // 2% per month after free period
+  maxStorageDays     Int   @default(90) // Max days before liquidation option
+  
+  // Shipment policy
+  shipmentDeadlineDays Int @default(7)  // Days to ship after content approval
+  
+  // Return policy
+  returnWindowDays   Int   @default(7)  // Days buyer can request return
+  
+  // Liquidation
+  liquidationDiscountPct Float @default(50) // Sell at 50% off
+  sellerLiquidationSharePct Float @default(40) // Seller gets 40% of liquidation sale
+  
+  // Admin warehouse address
+  warehouseAddress   Json?
+  
+  // Minimum product requirements
+  minImages          Int   @default(3)
+  minVideos          Int   @default(2)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Cron job distributed locks (database fallback when Redis unavailable)
+model CronLock {
+  id        String   @id @default(cuid()) @map("_id")
+  key       String   @unique  // Lock key, e.g., "boutique-shipment-deadline-cron"
+  lockId    String            // Unique ID of lock holder
+  lockedAt  DateTime          // When lock was acquired
+  expiresAt DateTime          // When lock auto-expires
+  
+  @@index([expiresAt])
+  @@map("cron_locks")
 }

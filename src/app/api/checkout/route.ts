@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import { initializePayment as initFlutterwavePayment, isFlutterwaveConfigured, getSupportedCountries } from '@/lib/flutterwave'
-import { calculateRefereeDiscount } from '@/lib/referral-service'
 import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
 
@@ -39,14 +38,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let cartItems, paymentMethod, phoneNumber, countryCode, referralCode, shippingAddress
+    let cartItems, paymentMethod, phoneNumber, countryCode, shippingAddress
     try {
       const body = await request.json()
       cartItems = body.cartItems
       paymentMethod = body.paymentMethod || 'stripe'
       phoneNumber = body.phoneNumber // For M-Pesa
       countryCode = body.countryCode || 'KE' // For Flutterwave/M-Pesa
-      referralCode = body.referralCode // For referral discounts
       shippingAddress = body.shippingAddress // For POD orders
     } catch (parseError) {
       console.error('Failed to parse checkout request body:', parseError)
@@ -168,40 +166,6 @@ export async function POST(request: NextRequest) {
   }
   const orderItems: OrderItem[] = []
 
-  // First pass: calculate total for referral discount
-  for (const item of cartItems) {
-    const design = await prisma.design.findUnique({
-      where: { id: item.designId },
-      select: { price: true, ownershipPrice: true }
-    })
-    if (design) {
-      // For POD items, use the podPrice from the cart; otherwise use design price
-      let price: number
-      if (item.purchaseType === 'POD' && item.podPrice) {
-        price = item.podPrice
-      } else if (item.purchaseType === 'OWNERSHIP' && design.ownershipPrice) {
-        price = design.ownershipPrice
-      } else {
-        price = design.price
-      }
-      totalAmount += price * item.quantity
-    }
-  }
-
-  // Calculate referral discount if applicable
-  let referralDiscount = 0
-  let referralDiscountPercent = 0
-  if (referralCode && session.user.id) {
-    const discount = await calculateRefereeDiscount(session.user.id, totalAmount)
-    if (discount.hasDiscount) {
-      referralDiscountPercent = discount.discountPercent
-      referralDiscount = discount.discountAmount
-    }
-  }
-
-  // Reset total for second pass
-  totalAmount = 0
-
     for (const item of cartItems) {
       const design = await prisma.design.findUnique({
         where: { 
@@ -247,38 +211,6 @@ export async function POST(request: NextRequest) {
 
       const itemTotal = price * item.quantity
       totalAmount += itemTotal
-    }
-
-    // Apply referral discount if applicable
-    if (referralDiscountPercent > 0) {
-      referralDiscount = totalAmount * (referralDiscountPercent / 100)
-      totalAmount = totalAmount - referralDiscount
-      console.log(`[CHECKOUT] Applied ${referralDiscountPercent}% referral discount: -$${referralDiscount.toFixed(2)}`)
-    }
-
-    // Rebuild line items with discounted prices for payment gateways
-    for (const item of cartItems) {
-      const design = await prisma.design.findUnique({
-        where: { id: item.designId },
-        include: { designer: true }
-      })
-
-      if (!design) continue
-
-      // For POD items, use the podPrice from the cart; otherwise use design price
-      let price: number
-      if (item.purchaseType === 'POD' && item.podPrice) {
-        price = item.podPrice
-      } else if (item.purchaseType === 'OWNERSHIP' && design.ownershipPrice) {
-        price = design.ownershipPrice
-      } else {
-        price = design.price
-      }
-
-      // Apply discount proportionally
-      const discountedPrice = referralDiscountPercent > 0 
-        ? price * (1 - referralDiscountPercent / 100)
-        : price
 
       // Customer pays the full listed price - no additional fees
       const isPodItem = item.purchaseType === 'POD'
@@ -294,7 +226,7 @@ export async function POST(request: NextRequest) {
                 : design.description || undefined,
             images: design.thumbnailUrl ? [design.thumbnailUrl] : undefined,
           },
-          unit_amount: Math.round(discountedPrice * 100), // Convert to cents (with discount applied)
+          unit_amount: Math.round(price * 100), // Convert to cents
         },
         quantity: item.quantity,
       })
@@ -303,7 +235,7 @@ export async function POST(request: NextRequest) {
       const orderItem: OrderItem = {
         designId: design.id,
         quantity: item.quantity,
-        price: discountedPrice, // Store discounted price
+        price: price,
         purchaseType: item.purchaseType || 'REGULAR',
         designerId: design.designerId
       }
@@ -477,8 +409,7 @@ export async function POST(request: NextRequest) {
         url: transaction.data.authorization_url,
         paymentMethod: 'paystack',
         splitPaymentEnabled: subaccounts.length > 0,
-        designersWithSubaccounts: subaccounts.length,
-        referralDiscount: referralDiscount > 0 ? referralDiscount : undefined
+        designersWithSubaccounts: subaccounts.length
       })
     } else if (paymentMethod === 'flutterwave') {
       // Flutterwave for pan-African payments
@@ -571,8 +502,7 @@ export async function POST(request: NextRequest) {
           url: flwResult.data.link,
           paymentMethod: 'flutterwave',
           currency: currency,
-          amount: amountLocal,
-          referralDiscount: referralDiscount > 0 ? referralDiscount : undefined
+          amount: amountLocal
         })
       } catch (flwError) {
         // Rollback order if Flutterwave fails

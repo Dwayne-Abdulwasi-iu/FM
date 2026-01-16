@@ -23,6 +23,12 @@ export function Hero() {
               Browse Designs
             </Link>
             <Link 
+              href="/boutique" 
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-1.5 sm:py-2 px-4 sm:px-6 rounded-lg transition-colors shadow-lg text-[9px] sm:text-xs"
+            >
+              Browse Boutique
+            </Link>
+            <Link 
               href="/upload" 
               className="bg-indigo-800 hover:bg-indigo-900 text-white font-semibold py-1.5 sm:py-2 px-4 sm:px-6 rounded-lg border border-indigo-500 transition-colors shadow-lg text-[9px] sm:text-xs"
             >

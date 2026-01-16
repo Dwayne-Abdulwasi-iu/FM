@@ -30,6 +30,7 @@ export function Footer() {
             <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider mb-2">Support</h4>
             <ul className="space-y-1 text-gray-400 text-xs sm:text-sm">
               <li><Link href="/help" className="hover:text-white">Help Center</Link></li>
+              <li><Link href="/customer-care" className="hover:text-white">Customer Care</Link></li>
               <li><Link href="/contact" className="hover:text-white">Contact Us</Link></li>
               <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
             </ul>
