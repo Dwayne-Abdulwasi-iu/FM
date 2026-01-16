@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -56,7 +56,16 @@ const SORT_OPTIONS = [
   { value: 'price_high', label: 'Price: High to Low' },
 ];
 
-export default function BoutiqueShopPage() {
+// Loading fallback for Suspense
+function BoutiqueLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full"></div>
+    </div>
+  );
+}
+
+function BoutiqueShopContent() {
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(true);
@@ -517,5 +526,14 @@ export default function BoutiqueShopPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Wrap content in Suspense for useSearchParams
+export default function BoutiqueShopPage() {
+  return (
+    <Suspense fallback={<BoutiqueLoading />}>
+      <BoutiqueShopContent />
+    </Suspense>
   );
 }

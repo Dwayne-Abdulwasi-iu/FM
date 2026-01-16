@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -76,7 +76,7 @@ const COMMON_COLORS = [
   { name: 'Silver', hex: '#C0C0C0' },
 ];
 
-export default function BoutiqueUploadPage() {
+function BoutiqueUploadContent() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1145,5 +1145,18 @@ export default function BoutiqueUploadPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrap content in Suspense for useSearchParams
+export default function BoutiqueUploadPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full"></div>
+      </div>
+    }>
+      <BoutiqueUploadContent />
+    </Suspense>
   );
 }
