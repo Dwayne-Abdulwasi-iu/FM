@@ -60,7 +60,7 @@ describe('Navbar', () => {
       </MockSessionProvider>
     )
 
-    expect(screen.getByText('Browse')).toBeInTheDocument()
+    expect(screen.getByText('Designs')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Search designs...')).toBeInTheDocument()
   })
 })
