@@ -170,4 +170,20 @@ export const RATE_LIMITS = {
   COMMISSION_CREATION: { limit: 10, windowMs: 24 * 60 * 60 * 1000 }, // 10 per day
   DISPUTE_FILING: { limit: 1, windowMs: 24 * 60 * 60 * 1000 }, // 1 per day per commission
   QUOTE_SUBMISSION: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 per hour per commission
+  ADMIN_MESSAGE: { limit: 50, windowMs: 60 * 60 * 1000 }, // 50 messages per hour per admin
+  ADMIN_BROADCAST: { limit: 5, windowMs: 24 * 60 * 60 * 1000 }, // 5 broadcasts per day
 };
+
+/**
+ * Generate a rate limit key for admin messaging
+ */
+export function adminMessageRateLimitKey(adminId: string): string {
+  return `admin_message:${adminId}`;
+}
+
+/**
+ * Generate a rate limit key for admin broadcasts
+ */
+export function adminBroadcastRateLimitKey(adminId: string): string {
+  return `admin_broadcast:${adminId}`;
+}

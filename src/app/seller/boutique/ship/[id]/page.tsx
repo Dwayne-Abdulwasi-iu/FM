@@ -247,27 +247,28 @@ export default function ShipProductPage() {
   const totalQuantity = product.variants.reduce((sum, v) => sum + v.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-16 sm:pb-20">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-4">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => router.push('/seller/boutique')}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg"
+            aria-label="Go back to boutique"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Ship Your Product</h1>
-            <p className="text-sm text-gray-500">Send your product to our warehouse</p>
+            <h1 className="text-base sm:text-xl font-bold text-gray-900">Ship Your Product</h1>
+            <p className="text-[10px] sm:text-sm text-gray-500">Send your product to our warehouse</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Product Summary */}
-        <div className="bg-white rounded-xl p-4 mb-6 flex gap-4">
-          <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+        <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-3 sm:gap-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
             {product.thumbnailUrl ? (
               <Image
                 src={product.thumbnailUrl}
@@ -278,44 +279,43 @@ export default function ShipProductPage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-8 h-8 text-gray-400" />
+                <Package className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
             )}
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">{product.title}</h3>
-            <p className="text-sm text-gray-500">{product.category.name}</p>
-            <div className="flex items-center gap-4 mt-2 text-sm">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{product.title}</h3>
+            <p className="text-xs sm:text-sm text-gray-500">{product.category.name}</p>
+            <div className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm">
               <span className="text-purple-600 font-medium">
                 ₦{product.basePrice.toLocaleString()}
               </span>
               <span className="text-gray-500">
-                {totalQuantity} item{totalQuantity !== 1 ? 's' : ''} to ship
+                {totalQuantity} item{totalQuantity !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
         </div>
 
         {/* Deadline Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <Clock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex items-start gap-2 sm:gap-3">
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-yellow-800">Ship within 7 days</h4>
-            <p className="text-sm text-yellow-700 mt-1">
-              Your product was approved for shipping. Please ship within 7 days to avoid
-              delays in getting your listing live.
+            <h4 className="font-semibold text-yellow-800 text-xs sm:text-base">Ship within 7 days</h4>
+            <p className="text-[10px] sm:text-sm text-yellow-700 mt-0.5 sm:mt-1">
+              Please ship within 7 days to avoid delays.
             </p>
           </div>
         </div>
 
         {/* Existing Shipment */}
         {existingShipment && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h4 className="font-semibold text-green-800">Shipment Recorded</h4>
-                <div className="mt-2 text-sm text-green-700 space-y-1">
+                <h4 className="font-semibold text-green-800 text-xs sm:text-base">Shipment Recorded</h4>
+                <div className="mt-1 sm:mt-2 text-[10px] sm:text-sm text-green-700 space-y-0.5 sm:space-y-1">
                   <p><strong>Courier:</strong> {existingShipment.courier}</p>
                   <p><strong>Tracking #:</strong> {existingShipment.trackingNumber}</p>
                   <p><strong>Status:</strong> {existingShipment.status}</p>
@@ -326,78 +326,79 @@ export default function ShipProductPage() {
         )}
 
         {/* Warehouse Address */}
-        <div className="bg-white rounded-xl p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-purple-600" />
-              <h2 className="text-lg font-bold text-gray-900">Warehouse Address</h2>
+        <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex items-start justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              <h2 className="text-sm sm:text-lg font-bold text-gray-900">Warehouse Address</h2>
             </div>
             <button
               onClick={copyAddress}
-              className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+              className="flex items-center gap-1 text-[10px] sm:text-sm text-purple-600 hover:text-purple-700"
             >
               {copiedAddress ? (
                 <>
-                  <Check className="w-4 h-4" />
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
-                  Copy Address
+                  <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Copy
                 </>
               )}
             </button>
           </div>
           
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="font-semibold text-gray-900">{WAREHOUSE_ADDRESS.name}</p>
-            <p className="text-gray-700">{WAREHOUSE_ADDRESS.address}</p>
-            <p className="text-gray-700">{WAREHOUSE_ADDRESS.city}, {WAREHOUSE_ADDRESS.state}</p>
-            <p className="text-gray-700">Phone: {WAREHOUSE_ADDRESS.phone}</p>
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-sm text-purple-700 flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                <strong>Product Reference:</strong> #{productId.slice(0, 8).toUpperCase()}
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <p className="font-semibold text-gray-900 text-sm sm:text-base">{WAREHOUSE_ADDRESS.name}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">{WAREHOUSE_ADDRESS.address}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">{WAREHOUSE_ADDRESS.city}, {WAREHOUSE_ADDRESS.state}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">Phone: {WAREHOUSE_ADDRESS.phone}</p>
+            <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200">
+              <p className="text-[10px] sm:text-sm text-purple-700 flex items-center gap-1.5 sm:gap-2">
+                <Info className="w-3 h-3 sm:w-4 sm:h-4" />
+                <strong>Ref:</strong> #{productId.slice(0, 8).toUpperCase()}
               </p>
             </div>
           </div>
           
-          <p className="text-sm text-gray-500 mt-3">
-            📦 Please write the Product Reference on your package clearly
+          <p className="text-[10px] sm:text-sm text-gray-500 mt-2 sm:mt-3">
+            📦 Write the Reference on your package
           </p>
         </div>
 
         {/* Shipping Form */}
         {!existingShipment && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-purple-600" />
+          <form onSubmit={handleSubmit} className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-1.5 sm:gap-2">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               Shipping Details
             </h2>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-red-700 text-xs sm:text-sm">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-green-700 text-sm flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
+              <div className="bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-green-700 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2">
+                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                 {success}
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Courier / Shipping Company <span className="text-red-500">*</span>
+                <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
+                  Courier <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={courier}
                   onChange={(e) => setCourier(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                  aria-label="Select courier"
                 >
                   <option value="">Select courier</option>
                   {COURIERS.map(c => (
@@ -409,15 +410,15 @@ export default function ShipProductPage() {
                     href={COURIERS.find(c => c.id === courier)?.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-purple-600 mt-1 hover:underline"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-sm text-purple-600 mt-1 hover:underline"
                   >
-                    Visit courier website <ExternalLink className="w-3 h-3" />
+                    Visit website <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   </a>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
                   Tracking Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -425,40 +426,41 @@ export default function ShipProductPage() {
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="e.g., GIG123456789"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Get this from your courier after booking the shipment
+                <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                  Get this from your courier
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Estimated Arrival Date (optional)
+                <label htmlFor="estimatedArrival" className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
+                  Est. Arrival (optional)
                 </label>
                 <input
+                  id="estimatedArrival"
                   type="date"
                   value={estimatedArrival}
                   onChange={(e) => setEstimatedArrival(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
 
-              <div className="pt-4 border-t">
-                <label className="flex items-start gap-3 cursor-pointer">
+              <div className="pt-3 sm:pt-4 border-t">
+                <label className="flex items-start gap-2 sm:gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={shippingPaid}
                     onChange={(e) => setShippingPaid(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    className="mt-0.5 sm:mt-1 w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 rounded focus:ring-purple-500"
                   />
                   <div>
-                    <span className="font-medium text-gray-900">
-                      I confirm I have arranged and paid for shipping
+                    <span className="font-medium text-gray-900 text-xs sm:text-base">
+                      I confirm shipping is arranged and paid
                     </span>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Shipping costs are your responsibility. The item will be verified upon arrival.
+                    <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
+                      Shipping costs are your responsibility.
                     </p>
                   </div>
                 </label>
@@ -468,16 +470,16 @@ export default function ShipProductPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 flex items-center justify-center gap-2"
+              className="w-full mt-4 sm:mt-6 py-2.5 sm:py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 flex items-center justify-center gap-1.5 sm:gap-2 text-sm"
             >
               {submitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Recording Shipment...
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                  Recording...
                 </>
               ) : (
                 <>
-                  <Truck className="w-5 h-5" />
+                  <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                   Record Shipment
                 </>
               )}
@@ -486,14 +488,13 @@ export default function ShipProductPage() {
         )}
 
         {/* Tips */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <h3 className="font-semibold text-blue-800 mb-2">📦 Packaging Tips</h3>
-          <ul className="text-sm text-blue-700 space-y-2">
-            <li>• Use sturdy packaging to protect your item during transit</li>
-            <li>• Include the Product Reference ID inside and outside the package</li>
-            <li>• Take photos of the packaged item before shipping</li>
-            <li>• Keep your courier receipt as proof of shipping</li>
-            <li>• Consider insurance for high-value items</li>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+          <h3 className="font-semibold text-blue-800 mb-1.5 sm:mb-2 text-xs sm:text-base">📦 Packaging Tips</h3>
+          <ul className="text-[10px] sm:text-sm text-blue-700 space-y-1 sm:space-y-2">
+            <li>• Use sturdy packaging to protect your item</li>
+            <li>• Include Reference ID inside and outside</li>
+            <li>• Take photos before shipping</li>
+            <li>• Keep courier receipt as proof</li>
           </ul>
         </div>
       </div>

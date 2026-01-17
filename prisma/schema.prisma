@@ -10,6 +10,10 @@ datasource db {
 model User {
   id        String   @id @default(cuid()) @map("_id")
   email     String   @unique
+  phone     String   @unique // Required & unique - Admin can contact for disputes/urgent updates
+  phoneVerified Boolean @default(false) // Must verify via OTP before account is active
+  phoneOTP       String?   // 6-digit OTP code
+  phoneOTPExpiry DateTime? // OTP expires after 10 minutes
   name      String?
   image     String?
   password  String?
@@ -66,6 +70,10 @@ model User {
   // Notification Preferences
   emailNotifications  Boolean @default(true)
   pushNotifications   Boolean @default(true)
+  
+  // Display Preferences (synced across devices)
+  preferredCurrency   String?  // USD, NGN, EUR, etc.
+  preferredLanguage   String?  // en, fr, es, zh, ar, ru, etc.
 
   // Commission Settings
   acceptsCommissions    Boolean  @default(false)  // Designer must opt-in to receive commissions
@@ -136,6 +144,10 @@ model User {
   boutiquePayouts        BoutiqueSellerPayout[] @relation("BoutiquePayouts")
   sellerShipments        SellerToAdminShipment[] @relation("SellerShipments")
   boutiqueReturns        BoutiqueReturn[] @relation("BoutiqueReturns")
+  
+  // Admin Messaging
+  adminBroadcasts        AdminBroadcast[] @relation("AdminBroadcasts")
+  broadcastRecipients    AdminBroadcastRecipient[] @relation("BroadcastRecipients")
 
   @@map("users")
 }
@@ -174,8 +186,14 @@ model Design {
   id           String   @id @default(cuid()) @map("_id")
   title        String
   description  String?
-  price        Float
-  ownershipPrice Float?  // Higher price for ownership option
+  price        Float    // Price in USD (normalized for processing)
+  ownershipPrice Float?  // Higher price for ownership option (in USD)
+  
+  // Submitted Price (original currency for audit trail)
+  submittedPrice    Float?   // Original price as entered by seller
+  submittedCurrency String?  // Currency code (USD, NGN, etc.) - null = legacy USD
+  submittedOwnershipPrice Float?  // Original ownership price as entered
+  
   imageUrl     String   // Primary/thumbnail image for listings
   thumbnailUrl String?
   watermarkedUrl String? // Watermarked preview image
@@ -244,6 +262,18 @@ model Design {
   
   // Commission requests that reference this design
   commissionReferences CommissionRequest[] @relation("ReferenceDesign")
+  
+  // A/B Price Testing (VIP Designer+ only)
+  priceTestActive     Boolean  @default(false)
+  priceTestVariant    Float?   // The B variant price
+  priceTestStartedAt  DateTime?
+  priceTestEndsAt     DateTime?
+  priceTestViewsA     Int      @default(0) // Views of original price
+  priceTestViewsB     Int      @default(0) // Views of variant price
+  priceTestSalesA     Int      @default(0) // Sales at original price
+  priceTestSalesB     Int      @default(0) // Sales at variant price
+  priceTestRevenueA   Float    @default(0) // Revenue at original price
+  priceTestRevenueB   Float    @default(0) // Revenue at variant price
 
   @@map("designs")
 }
@@ -409,6 +439,10 @@ model CartItem {
   podProductName String?  // e.g., "Unisex Cotton Tee"
   podProvider    String?  // e.g., "printful", "printify"
   podPrice       Float?   // Price including markup
+  
+  // A/B Price Test fields (for digital designs only)
+  priceTestVariant String?  // 'A' or 'B' - which variant user was shown
+  priceTestPrice   Float?   // The price user saw (for validation at checkout)
 
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1550,6 +1584,8 @@ model DirectMessage {
   designId    String?   // Optional reference to a design being discussed
   
   readAt      DateTime?
+  editedAt    DateTime?  // Track when message was edited
+  sentOnBehalfBy String? // ID of main admin who sent on behalf of another admin
   
   createdAt   DateTime @default(now())
   
@@ -2050,12 +2086,15 @@ model BoutiqueOrder {
   shippingAddress Json        // { name, street, city, state, country, postalCode, phone }
   shippingMethod  String?
   trackingNumber  String?
+  trackingUrl     String?     // URL to track the shipment
   carrier         String?
   
   // Estimated & Actual Dates
   estimatedDelivery DateTime?
   shippedAt       DateTime?
   deliveredAt     DateTime?
+  completedAt     DateTime?     // When order is marked complete
+  buyerConfirmedAt DateTime?    // When buyer confirmed delivery
   
   // Payment
   paymentMethod   String?     // PAYSTACK, STRIPE, etc.
@@ -2422,6 +2461,70 @@ model BoutiqueSettings {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Admin Broadcast Messages (for sending messages to user segments)
+model AdminBroadcast {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  // Admin who sent the message
+  adminId     String
+  admin       User     @relation("AdminBroadcasts", fields: [adminId], references: [id])
+  
+  subject     String
+  content     String   // Message content (can be HTML)
+  
+  // Target Segment
+  targetType  String   // ALL, USERS, SELLERS, DESIGNERS, TIER_SPECIFIC, VERIFIED_ONLY
+  targetTier  String?  // DESIGNER, GOLD_DESIGNER, VIP_DESIGNER, VVIP_DESIGNER
+  
+  // Delivery stats
+  recipientCount Int   @default(0)
+  deliveredCount Int   @default(0)
+  readCount      Int   @default(0)
+  
+  // Channels
+  sendViaEmail   Boolean @default(true)
+  sendViaInApp   Boolean @default(true)
+  
+  // Status
+  status      String   @default("DRAFT") // DRAFT, SENT, FAILED
+  sentAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  recipients  AdminBroadcastRecipient[]
+  
+  @@index([adminId])
+  @@index([targetType])
+  @@index([sentAt])
+  @@map("admin_broadcasts")
+}
+
+// Track which users received a broadcast
+model AdminBroadcastRecipient {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  broadcastId String
+  broadcast   AdminBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation("BroadcastRecipients", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Delivery
+  sentViaEmail Boolean @default(false)
+  sentViaInApp Boolean @default(false)
+  
+  emailSentAt DateTime?
+  inAppSentAt DateTime?
+  readAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([broadcastId, userId])
+  @@index([userId])
+  @@map("admin_broadcast_recipients")
 }
 
 // Cron job distributed locks (database fallback when Redis unavailable)

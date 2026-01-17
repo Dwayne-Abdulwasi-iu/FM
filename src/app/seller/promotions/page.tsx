@@ -391,10 +391,11 @@ export default function SellerPromotionsPage() {
               </div>
               <form onSubmit={handleCreatePromotion} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="promotionType" className="block text-sm font-medium text-gray-700 mb-1">
                     Promotion Type
                   </label>
                   <select
+                    id="promotionType"
                     value={newPromotion.type}
                     onChange={(e) =>
                       setNewPromotion({ ...newPromotion, type: e.target.value as 'DISCOUNT' | 'BUNDLE' | 'FLASH_SALE' })
@@ -432,10 +433,11 @@ export default function SellerPromotionsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="discountType" className="block text-sm font-medium text-gray-700 mb-1">
                       Discount Type
                     </label>
                     <select
+                      id="discountType"
                       value={newPromotion.discountType}
                       onChange={(e) =>
                         setNewPromotion({
@@ -450,10 +452,11 @@ export default function SellerPromotionsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="discountValue" className="block text-sm font-medium text-gray-700 mb-1">
                       {newPromotion.discountType === 'PERCENTAGE' ? 'Discount %' : 'Discount $'}
                     </label>
                     <input
+                      id="discountValue"
                       type="number"
                       min="1"
                       max={newPromotion.discountType === 'PERCENTAGE' ? 100 : undefined}
@@ -469,8 +472,9 @@ export default function SellerPromotionsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                     <input
+                      id="startDate"
                       type="date"
                       value={newPromotion.startDate}
                       onChange={(e) => setNewPromotion({ ...newPromotion, startDate: e.target.value })}
@@ -479,8 +483,9 @@ export default function SellerPromotionsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                     <input
+                      id="endDate"
                       type="date"
                       value={newPromotion.endDate}
                       onChange={(e) => setNewPromotion({ ...newPromotion, endDate: e.target.value })}
@@ -491,10 +496,11 @@ export default function SellerPromotionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="maxUsage" className="block text-sm font-medium text-gray-700 mb-1">
                     Max Usage (Optional)
                   </label>
                   <input
+                    id="maxUsage"
                     type="number"
                     min="1"
                     value={newPromotion.maxUsage || ''}

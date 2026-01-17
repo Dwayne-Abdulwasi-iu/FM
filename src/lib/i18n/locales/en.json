@@ -26,6 +26,8 @@
   "nav": {
     "home": "Home",
     "designs": "Designs",
+    "boutique": "Boutique",
+    "upload": "Upload",
     "categories": "Categories",
     "trending": "Trending",
     "designers": "Designers",
@@ -187,7 +189,8 @@
     "subscribeNewsletter": "Subscribe to our newsletter",
     "emailPlaceholder": "Enter your email",
     "subscribe": "Subscribe",
-    "allRightsReserved": "All rights reserved"
+    "allRightsReserved": "All rights reserved",
+    "buyerProtection": "Buyer Protection"
   },
   "errors": {
     "somethingWentWrong": "Something went wrong",

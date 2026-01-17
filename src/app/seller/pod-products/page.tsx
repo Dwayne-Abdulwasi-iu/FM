@@ -376,6 +376,7 @@ export default function PODProductSelector() {
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+              aria-label="Select POD provider"
             >
               <option value="printful">Printful</option>
               <option value="printify">Printify</option>
@@ -458,6 +459,7 @@ export default function PODProductSelector() {
                             value={selectedData.markup}
                             onChange={(e) => updateProductMarkup(product.id, parseInt(e.target.value))}
                             className="flex-1 accent-purple-600"
+                            aria-label="Markup percentage"
                           />
                           <span className="text-sm font-medium text-purple-600 w-12">
                             {selectedData.markup}%
@@ -571,6 +573,7 @@ function VariantModal({
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Close modal"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

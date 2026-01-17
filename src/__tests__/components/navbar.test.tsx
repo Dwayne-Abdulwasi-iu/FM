@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { Navbar } from '@/components/layout/navbar'
 import { SessionProvider } from 'next-auth/react'
+import { LanguageProvider } from '@/contexts/LanguageContext'
+import { CurrencyProvider } from '@/components/CurrencyProvider'
 import type { ReactNode } from 'react'
 import type { Session } from 'next-auth'
 
@@ -17,7 +19,13 @@ const mockSession: Session = {
 
 type MockProps = { children: ReactNode; session?: Session | null }
 const MockSessionProvider = ({ children, session = null }: MockProps) => (
-  <SessionProvider session={session}>{children}</SessionProvider>
+  <SessionProvider session={session}>
+    <LanguageProvider>
+      <CurrencyProvider>
+        {children}
+      </CurrencyProvider>
+    </LanguageProvider>
+  </SessionProvider>
 )
 
 describe('Navbar', () => {
@@ -61,6 +69,6 @@ describe('Navbar', () => {
     )
 
     expect(screen.getByText('Designs')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Search designs...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument()
   })
 })

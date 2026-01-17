@@ -4,7 +4,7 @@ import { initiateSellerTransfer, createTransferNotification } from '@/lib/transf
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import { checkAndPromoteDesigners } from '@/lib/seller-promotion'
-import { sendPaymentReceivedToDesigner, sendAdminPODAlert } from '@/lib/email'
+import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail } from '@/lib/email'
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers'
 import { checkAndUpdateSellerTier } from '@/lib/tier-management'
 import { fulfillPODOrder } from '@/lib/pod-service'
@@ -165,6 +165,23 @@ export async function POST(request: NextRequest) {
             designId: item.designId
           }
         })
+
+        // Send sale notification email to seller
+        const sellerUser = await prisma.user.findUnique({
+          where: { id: sellerId },
+          select: { email: true, name: true, displayName: true }
+        })
+        
+        if (sellerUser?.email) {
+          sendSaleNotificationEmail(
+            sellerUser.email,
+            sellerUser.displayName || sellerUser.name || 'Designer',
+            item.design?.title || 'Design',
+            saleAmount,
+            sellerAmount,
+            item.purchaseType || 'REGULAR'
+          ).catch(err => console.error('Failed to send sale notification:', err))
+        }
 
         // For ownership purchases, use atomic conditional update to prevent race conditions
         if (item.purchaseType === 'OWNERSHIP') {

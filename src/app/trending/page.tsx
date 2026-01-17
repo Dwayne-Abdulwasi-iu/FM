@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown, TrendingUp, Flame } from 'lucide-react'
 import Image from 'next/image'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Design {
   id: string
@@ -66,12 +67,7 @@ export default function TrendingPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
+  const { formatPrice } = useCurrency()
 
   const handleAddToCart = async (designId: string, designTitle: string) => {
     if (!session) {

@@ -16,7 +16,11 @@ import {
   Building,
   User,
   RefreshCw,
+  Globe,
+  Languages,
 } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface BankAccount {
   bankName: string
@@ -36,6 +40,8 @@ interface SellerSettings {
 export default function SellerSettingsPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const { currency, setCurrency, currencies } = useCurrency()
+  const { locale, setLocale, supportedLocales, currentLocaleConfig } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<SellerSettings>({
@@ -304,8 +310,9 @@ export default function SellerSettingsPage() {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bank</label>
+                  <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 mb-1">Bank</label>
                   <select
+                    id="bankCode"
                     value={bankForm.bankCode}
                     onChange={(e) => {
                       setBankForm({ ...bankForm, bankCode: e.target.value, accountName: '' })
@@ -471,6 +478,75 @@ export default function SellerSettingsPage() {
               </>
             )}
           </button>
+        </div>
+
+        {/* Currency & Language Section */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Globe className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Display Preferences</h2>
+              <p className="text-sm text-gray-500">Customize how prices and content are displayed</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Currency Selector */}
+            <div>
+              <label htmlFor="displayCurrency" className="block text-sm font-medium text-gray-700 mb-2">
+                Display Currency
+              </label>
+              <select
+                id="displayCurrency"
+                value={currency}
+                onChange={(e) => {
+                  setCurrency(e.target.value)
+                  setMessage({ type: 'success', text: 'Currency preference saved!' })
+                  setTimeout(() => setMessage(null), 3000)
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+              >
+                {currencies.map((curr) => (
+                  <option key={curr.code} value={curr.code}>
+                    {curr.flag} {curr.code} - {curr.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                All prices across the platform will be displayed in your selected currency.
+                Actual payments are processed in the original currency.
+              </p>
+            </div>
+
+            {/* Language Selector */}
+            <div className="pt-4 border-t border-gray-200">
+              <label htmlFor="displayLanguage" className="block text-sm font-medium text-gray-700 mb-2">
+                <Languages className="w-4 h-4 inline mr-1" />
+                Language
+              </label>
+              <select
+                id="displayLanguage"
+                value={locale}
+                onChange={(e) => {
+                  setLocale(e.target.value as typeof locale)
+                  setMessage({ type: 'success', text: 'Language preference saved!' })
+                  setTimeout(() => setMessage(null), 3000)
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+              >
+                {supportedLocales.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.nativeName} ({lang.name})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Interface text will be displayed in your selected language where translations are available.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Security Section */}

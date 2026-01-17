@@ -20,9 +20,10 @@ export async function GET(request: NextRequest) {
 
     // Parse pagination parameters
     const { searchParams } = new URL(request.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-    const requestedLimit = parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10)
-    const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE) // Enforce max
+    const pageParam = parseInt(searchParams.get('page') || '1', 10)
+    const limitParam = parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10)
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
+    const limit = Number.isNaN(limitParam) || limitParam < 1 ? DEFAULT_PAGE_SIZE : Math.min(limitParam, MAX_PAGE_SIZE)
     const skip = (page - 1) * limit
 
     // Parallel fetch: designs and total count

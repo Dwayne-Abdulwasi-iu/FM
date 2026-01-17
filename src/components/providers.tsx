@@ -3,6 +3,8 @@
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { CurrencyProvider } from "@/components/CurrencyProvider";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -16,7 +18,10 @@ export function Providers({ children }: ProvidersProps) {
       refetchOnWindowFocus={true}
     >
       <LanguageProvider>
-        {children}
+        <CurrencyProvider>
+          {children}
+          <OnboardingTour />
+        </CurrencyProvider>
       </LanguageProvider>
     </SessionProvider>
   );

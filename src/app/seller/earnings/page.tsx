@@ -283,6 +283,7 @@ export default function SellerEarningsPage() {
                   value={filter}
                   onChange={(e) => setFilter(e.target.value as typeof filter)}
                   className="text-sm border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                  aria-label="Filter by transaction type"
                 >
                   <option value="ALL">All Types</option>
                   <option value="EARNING">Earnings</option>
@@ -295,6 +296,7 @@ export default function SellerEarningsPage() {
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
                   className="text-sm border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                  aria-label="Select date range"
                 >
                   <option value="7">Last 7 days</option>
                   <option value="30">Last 30 days</option>

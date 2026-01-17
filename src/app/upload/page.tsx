@@ -39,7 +39,8 @@ export default function EnhancedUploadPage() {
     ownershipPrice: '',
     category: 'Fashion Illustrations',
     tags: '',
-    buyingTypes: 'REGULAR'
+    buyingTypes: 'REGULAR',
+    currency: 'USD'
   })
 
   const categories = [
@@ -170,6 +171,7 @@ export default function EnhancedUploadPage() {
       uploadFormData.append('category', formData.category)
       uploadFormData.append('tags', formData.tags)
       uploadFormData.append('buyingTypes', formData.buyingTypes)
+      uploadFormData.append('currency', formData.currency)
 
       // Add media files with metadata
       filesWithContent.forEach((media, index) => {
@@ -570,18 +572,34 @@ export default function EnhancedUploadPage() {
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     <DollarSign className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
-                    Regular Price (USD)
+                    Regular Price
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                    placeholder="0.00"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.currency}
+                      onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                      className="border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black bg-gray-50"
+                      title="Select currency"
+                    >
+                      <option value="USD">🇺🇸 USD</option>
+                      <option value="NGN">🇳🇬 NGN</option>
+                    </select>
+                    <input
+                      type="number"
+                      step={formData.currency === 'NGN' ? '1' : '0.01'}
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      className="flex-1 border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                      placeholder={formData.currency === 'NGN' ? '0' : '0.00'}
+                      required
+                    />
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                    {formData.currency === 'NGN' 
+                      ? 'Enter price in Nigerian Naira. It will be converted to USD for international buyers.'
+                      : 'Enter price in US Dollars. Nigerian buyers will see the NGN equivalent.'}
+                  </p>
                 </div>
 
                 <div>
@@ -604,16 +622,16 @@ export default function EnhancedUploadPage() {
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                       <DollarSign className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
-                      Ownership Price (USD)
+                      Ownership Price ({formData.currency})
                     </label>
                     <input
                       type="number"
-                      step="0.01"
+                      step={formData.currency === 'NGN' ? '1' : '0.01'}
                       min="0"
                       value={formData.ownershipPrice}
                       onChange={(e) => setFormData({...formData, ownershipPrice: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
-                      placeholder="0.00"
+                      placeholder={formData.currency === 'NGN' ? '0' : '0.00'}
                       required={formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH'}
                     />
                     <p className="text-[10px] sm:text-xs text-gray-500 mt-1">

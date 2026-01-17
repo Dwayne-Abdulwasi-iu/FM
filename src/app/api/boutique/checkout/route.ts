@@ -1,5 +1,24 @@
 // POST /api/boutique/checkout - Create boutique order and initiate payment
 // GET /api/boutique/checkout/[orderId] - Get order status
+//
+// PAYMENT & REFUND POLICY:
+// -------------------------
+// ADMIN_STOCK orders:
+//   - Platform receives 100% of payment (15% commission after seller payout)
+//   - Platform handles shipping, returns, and refunds directly via Paystack
+//   - Full refund control since platform holds the funds
+//
+// SELLER_DIRECT orders:
+//   - Paystack split pays seller directly at checkout (minus tiered 7-10% commission)
+//   - Refunds/Returns require MANUAL seller coordination:
+//     1. Buyer requests return via /api/boutique/returns
+//     2. Admin reviews and approves/rejects
+//     3. Seller processes refund directly to buyer
+//     4. If seller unresponsive, admin intervenes (warn/suspend/ban)
+//   - Platform can only automatically refund its commission portion
+//   - This is industry standard (Amazon, Etsy model) for marketplace sellers
+//   - See: /src/lib/boutique/refund.ts for refund utilities
+//   - See: /src/app/api/boutique/returns/route.ts for return requests
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -25,13 +44,33 @@ function generateOrderNumber(): string {
 }
 
 // Calculate platform fee based on fulfillment method and seller tier
-function calculatePlatformFee(
+// For SELLER_DIRECT: uses tiered rates based on seller's total earnings
+// For ADMIN_STOCK: uses flat 15% rate
+async function calculatePlatformFee(
   amount: number, 
   fulfillmentMethod: FulfillmentMethod, 
-  sellerTier: SellerTier | null
-): number {
-  const commissionRate = getCommissionRate(sellerTier, fulfillmentMethod);
-  return Math.round(amount * commissionRate) / 100;
+  sellerTier: SellerTier | null,
+  sellerId: string
+): Promise<number> {
+  let sellerTotalEarnings = 0;
+  let isProSubscriber = false;
+  
+  // For SELLER_DIRECT, we need to fetch seller's earnings for tiered rate
+  if (fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
+    const sellerStats = await prisma.user.findUnique({
+      where: { id: sellerId },
+      select: { 
+        totalEarnings: true,
+        designerTier: true, // VIP/VVIP are pro subscribers
+      },
+    });
+    sellerTotalEarnings = sellerStats?.totalEarnings || 0;
+    // VIP and VVIP tiers are considered pro subscribers
+    isProSubscriber = sellerStats?.designerTier === 'VIP_DESIGNER' || sellerStats?.designerTier === 'VVIP_DESIGNER';
+  }
+  
+  const commissionRate = getCommissionRate(sellerTier, fulfillmentMethod, sellerTotalEarnings, isProSubscriber);
+  return Math.round(amount * commissionRate * 100) / 100; // Return in same currency unit
 }
 
 export async function POST(request: NextRequest) {
@@ -49,7 +88,6 @@ export async function POST(request: NextRequest) {
     const { 
       shippingAddress, 
       paymentMethod = 'paystack',
-      couponCode,
     } = body;
 
     // Validate shipping address
@@ -181,16 +219,17 @@ export async function POST(request: NextRequest) {
       }
 
       // Calculate platform fee
-      // For SELLER_DIRECT: Commission applies to (product + shipping)
-      // For ADMIN_STOCK: Commission only on products, shipping 100% to platform
+      // For SELLER_DIRECT: Uses tiered commission like digital designs (0.1% - 10%)
+      // For ADMIN_STOCK: Commission only on products (15%), shipping 100% to platform
       const commissionableAmount = fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT
         ? subtotal + shippingCost  // Commission on products + shipping
         : subtotal;  // Commission only on products
         
-      const platformFee = calculatePlatformFee(
+      const platformFee = await calculatePlatformFee(
         commissionableAmount, 
         fulfillmentMethod, 
-        seller.designerTier as SellerTier | null
+        seller.designerTier as SellerTier | null,
+        seller.id
       );
 
       // Calculate seller earnings
@@ -217,50 +256,13 @@ export async function POST(request: NextRequest) {
     }
 
     const grandTotal = grandSubtotal + grandShipping;
-
-    // Apply coupon if provided
-    let discount = 0;
-    
-    if (couponCode) {
-      // First get all matching coupons, then filter by usedCount < maxUses
-      const coupon = await prisma.boutiqueCoupon.findFirst({
-        where: {
-          code: couponCode.toUpperCase(),
-          isActive: true,
-          validFrom: { lte: new Date() },
-          validUntil: { gte: new Date() },
-        },
-      });
-
-      // Check if coupon exists and has uses remaining
-      if (coupon && coupon.usedCount < coupon.maxUses) {
-        if (coupon.discountType === 'PERCENTAGE') {
-          discount = Math.round(grandTotal * coupon.discountValue / 100);
-          if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-            discount = coupon.maxDiscount;
-          }
-        } else {
-          discount = coupon.discountValue;
-        }
-        
-        // Increment coupon usage count
-        await prisma.boutiqueCoupon.update({
-          where: { id: coupon.id },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-    }
-
-    const finalTotal = grandTotal - discount;
+    const finalTotal = grandTotal;
 
     // Create orders in database
     const createdOrders: string[] = [];
     
     for (const orderPreview of orderPreviews) {
-      // Calculate proportional discount for this order
-      const orderProportion = (orderPreview.subtotal + orderPreview.shippingCost) / grandTotal;
-      const orderDiscount = Math.round(discount * orderProportion);
-      const orderTotal = orderPreview.subtotal + orderPreview.shippingCost - orderDiscount;
+      const orderTotal = orderPreview.subtotal + orderPreview.shippingCost;
       
       // Create order
       const order = await prisma.boutiqueOrder.create({
@@ -272,7 +274,7 @@ export async function POST(request: NextRequest) {
           status: 'PENDING_PAYMENT',
           fulfillmentMethod: orderPreview.fulfillmentMethod,
           subtotal: orderPreview.subtotal,
-          discount: orderDiscount,
+          discount: 0,
           shippingCost: orderPreview.shippingCost,
           platformFee: orderPreview.platformFee,
           sellerPayout: orderPreview.sellerEarnings,
@@ -329,7 +331,74 @@ export async function POST(request: NextRequest) {
       // Paystack amount in kobo
       const amountKobo = Math.round(finalTotal * 100);
       
-      const paystackResponse = await paystack.transaction.initialize({
+      // Build subaccount splits for SELLER_DIRECT orders
+      // SELLER_DIRECT uses automatic Paystack splits (tiered commission like digital designs)
+      // ADMIN_STOCK goes fully to platform (manual payout after delivery)
+      type SubaccountSplit = { subaccount: string; share: number };
+      const sellerDirectSplits: SubaccountSplit[] = [];
+      const sellerDirectOrderIds: string[] = [];
+      const adminStockOrderIds: string[] = [];
+      
+      for (const orderPreview of orderPreviews) {
+        const orderId = createdOrders[orderPreviews.indexOf(orderPreview)];
+        
+        if (orderPreview.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
+          sellerDirectOrderIds.push(orderId);
+          
+          // Get seller's subaccount
+          const sellerAccount = await prisma.sellerAccount.findUnique({
+            where: { userId: orderPreview.sellerId },
+            select: { subaccountCode: true },
+          });
+          
+          if (sellerAccount?.subaccountCode) {
+            // Seller's share = sellerEarnings in kobo
+            // Note: sellerEarnings already accounts for platformFee
+            const sellerShareKobo = Math.round(orderPreview.sellerEarnings * 100);
+            
+            sellerDirectSplits.push({
+              subaccount: sellerAccount.subaccountCode,
+              share: sellerShareKobo,
+            });
+          } else {
+            // SELLER_DIRECT seller without subaccount - this is a problem
+            // Block checkout and ask them to set up payment
+            console.error(`[Boutique Checkout] SELLER_DIRECT seller ${orderPreview.sellerId} has no subaccount`);
+            
+            // Rollback: restore inventory and delete orders
+            for (const rollbackOrderId of createdOrders) {
+              const rollbackOrder = await prisma.boutiqueOrder.findUnique({
+                where: { id: rollbackOrderId },
+                include: { items: true },
+              });
+              if (rollbackOrder) {
+                for (const item of rollbackOrder.items) {
+                  if (item.variantId) {
+                    await prisma.boutiqueProductVariant.update({
+                      where: { id: item.variantId },
+                      data: {
+                        quantity: { increment: item.quantity },
+                        reserved: { decrement: item.quantity },
+                      },
+                    });
+                  }
+                }
+                await prisma.boutiqueOrder.delete({ where: { id: rollbackOrderId } });
+              }
+            }
+            
+            return NextResponse.json({
+              success: false,
+              message: `Seller "${orderPreview.sellerName}" needs to complete payment setup. Please contact the seller or remove their products.`,
+            }, { status: 400 });
+          }
+        } else {
+          adminStockOrderIds.push(orderId);
+        }
+      }
+      
+      // Build transaction data
+      const transactionData: Record<string, unknown> = {
         email: user?.email || session.user.email!,
         amount: amountKobo,
         currency: 'NGN',
@@ -339,12 +408,30 @@ export async function POST(request: NextRequest) {
           orderIds: createdOrders,
           orderType: 'boutique',
           buyerId: session.user.id,
+          sellerDirectOrderIds,
+          adminStockOrderIds,
+          hasSplitPayment: sellerDirectSplits.length > 0,
           custom_fields: [
             { display_name: 'Order Type', variable_name: 'order_type', value: 'Boutique' },
             { display_name: 'Customer Name', variable_name: 'customer_name', value: user?.name || 'Customer' },
           ],
         },
-      });
+      };
+      
+      // Add split payment configuration for SELLER_DIRECT orders
+      // Always use flat split (not direct subaccount) to ensure our calculated tiered commission is used
+      // Direct subaccount would use the subaccount's percentage_charge which may be outdated
+      if (sellerDirectSplits.length > 0) {
+        transactionData.split = {
+          type: 'flat',
+          bearer_type: 'account', // Platform pays transaction fees
+          subaccounts: sellerDirectSplits,
+        };
+        console.log('[Boutique Checkout] Split payment configured:', JSON.stringify(transactionData.split, null, 2));
+      }
+      // If no sellerDirectSplits, all goes to platform (ADMIN_STOCK only)
+      
+      const paystackResponse = await paystack.transaction.initialize(transactionData);
 
       if (!paystackResponse.status) {
         // Rollback: restore inventory and delete orders
@@ -389,7 +476,6 @@ export async function POST(request: NextRequest) {
         orderIds: createdOrders,
         subtotal: grandSubtotal,
         shipping: grandShipping,
-        discount,
         total: finalTotal,
       });
     }
@@ -401,7 +487,6 @@ export async function POST(request: NextRequest) {
       orderIds: createdOrders,
       subtotal: grandSubtotal,
       shipping: grandShipping,
-      discount,
       total: finalTotal,
     });
 

@@ -18,7 +18,11 @@ import {
   EyeOff,
   Mail,
   Smartphone,
+  Globe,
+  Languages,
 } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface UserSettings {
   emailNotifications: boolean
@@ -28,8 +32,10 @@ interface UserSettings {
 export default function SettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { currency, setCurrency, currencies } = useCurrency()
+  const { locale, setLocale, supportedLocales } = useLanguage()
 
-  const [activeTab, setActiveTab] = useState<'notifications' | 'password' | 'danger'>('notifications')
+  const [activeTab, setActiveTab] = useState<'display' | 'notifications' | 'password' | 'danger'>('display')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -222,10 +228,21 @@ export default function SettingsPage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {/* Tabs */}
           <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+            <nav className="flex -mb-px overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('display')}
+                className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'display'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Globe className="w-4 h-4 inline mr-2" />
+                Display
+              </button>
               <button
                 onClick={() => setActiveTab('notifications')}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'notifications'
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -261,6 +278,84 @@ export default function SettingsPage() {
 
           {/* Content */}
           <div className="p-6">
+            {/* Display Tab */}
+            {activeTab === 'display' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Display Preferences</h3>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Customize how prices and content are displayed across the platform.
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Currency Selector */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Globe className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Display Currency</p>
+                        <p className="text-sm text-gray-500">All prices will be shown in your selected currency</p>
+                      </div>
+                    </div>
+                    <select
+                      value={currency}
+                      onChange={(e) => {
+                        setCurrency(e.target.value)
+                        setMessage({ type: 'success', text: 'Currency preference saved!' })
+                        setTimeout(() => setMessage(null), 3000)
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                      aria-label="Select display currency"
+                    >
+                      {currencies.map((curr) => (
+                        <option key={curr.code} value={curr.code}>
+                          {curr.flag} {curr.code} - {curr.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Prices are converted from USD at current exchange rates. Actual payments are processed in the original currency.
+                    </p>
+                  </div>
+
+                  {/* Language Selector */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Languages className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Language</p>
+                        <p className="text-sm text-gray-500">Choose your preferred interface language</p>
+                      </div>
+                    </div>
+                    <select
+                      value={locale}
+                      onChange={(e) => {
+                        setLocale(e.target.value as typeof locale)
+                        setMessage({ type: 'success', text: 'Language preference saved!' })
+                        setTimeout(() => setMessage(null), 3000)
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                      aria-label="Select language"
+                    >
+                      {supportedLocales.map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.flag} {lang.nativeName} ({lang.name})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Interface text will be displayed in your selected language where translations are available.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Notifications Tab */}
             {activeTab === 'notifications' && (
               <div className="space-y-6">
@@ -288,6 +383,7 @@ export default function SettingsPage() {
                         checked={settings.emailNotifications}
                         onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
                         className="sr-only peer"
+                        aria-label="Toggle email notifications"
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
@@ -309,6 +405,7 @@ export default function SettingsPage() {
                         checked={settings.pushNotifications}
                         onChange={(e) => setSettings({ ...settings, pushNotifications: e.target.checked })}
                         className="sr-only peer"
+                        aria-label="Toggle push notifications"
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
@@ -338,11 +435,12 @@ export default function SettingsPage() {
 
                 <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       Current Password
                     </label>
                     <div className="relative">
                       <input
+                        id="currentPassword"
                         type={showCurrentPassword ? 'text' : 'password'}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
@@ -353,6 +451,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
+                        aria-label="Toggle current password visibility"
                       >
                         {showCurrentPassword ? (
                           <EyeOff className="w-4 h-4 text-gray-400" />
@@ -364,11 +463,12 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       New Password
                     </label>
                     <div className="relative">
                       <input
+                        id="newPassword"
                         type={showNewPassword ? 'text' : 'password'}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
@@ -380,6 +480,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2"
+                        aria-label="Toggle new password visibility"
                       >
                         {showNewPassword ? (
                           <EyeOff className="w-4 h-4 text-gray-400" />
@@ -392,10 +493,11 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       Confirm New Password
                     </label>
                     <input
+                      id="confirmPassword"
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}

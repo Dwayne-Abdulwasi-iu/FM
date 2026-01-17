@@ -35,18 +35,28 @@ export async function GET() {
       }
     })
 
-    // Calculate total based on purchase type
+    // Calculate total based on purchase type and A/B test prices
     type CartItemWithDesign = {
       purchaseType?: string | null
       quantity: number
+      priceTestVariant?: string | null
+      priceTestPrice?: number | null
       design: { ownershipPrice?: number | null; price: number }
     }
 
     const typedCartItems = cartItems as unknown as CartItemWithDesign[]
     const total = typedCartItems.reduce((sum: number, item) => {
-      const price = item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice 
-        ? item.design.ownershipPrice 
-        : item.design.price
+      let price: number
+      
+      if (item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice) {
+        price = item.design.ownershipPrice
+      } else if (item.priceTestVariant && item.priceTestPrice) {
+        // Use the A/B test price that was shown to the user
+        price = item.priceTestPrice
+      } else {
+        price = item.design.price
+      }
+      
       return sum + (price * item.quantity)
     }, 0)
 
@@ -84,7 +94,10 @@ export async function POST(request: NextRequest) {
       podProductId,
       podProductName,
       podProvider,
-      price: podPrice
+      price: podPrice,
+      // A/B Price Test fields
+      variant,
+      testPrice,
     } = await request.json()
 
     if (!designId) {
@@ -227,6 +240,11 @@ export async function POST(request: NextRequest) {
           podProductName,
           podProvider,
           podPrice
+        } : {}),
+        // A/B Price Test fields (only for non-POD items)
+        ...(variant && purchaseType !== 'POD' ? {
+          priceTestVariant: variant,
+          priceTestPrice: testPrice
         } : {})
       },
       include: {

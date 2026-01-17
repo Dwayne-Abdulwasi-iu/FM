@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const badge = searchParams.get('badge')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+    const limitParam = parseInt(searchParams.get('limit') || '50')
+    const limit = Number.isNaN(limitParam) || limitParam < 1 ? 50 : Math.min(limitParam, 100)
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
 
     const where: Record<string, unknown> = {

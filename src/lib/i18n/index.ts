@@ -3,17 +3,23 @@
  * 
  * Supports:
  * - English (en) - Default
- * - French (fr) - West/Central Africa
- * - Swahili (sw) - East Africa
- * - Hausa (ha) - West Africa (Nigeria, Niger, Ghana)
+ * - French (fr) - Europe, Africa
+ * - Spanish (es) - Americas, Europe
+ * - Portuguese (pt) - Brazil, Portugal, Africa
+ * - Chinese (zh) - China, Taiwan, Singapore
+ * - Arabic (ar) - Middle East, North Africa
+ * - Russian (ru) - Russia, Eastern Europe
  */
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
-import sw from './locales/sw.json';
-import ha from './locales/ha.json';
+import es from './locales/es.json';
+import pt from './locales/pt.json';
+import zh from './locales/zh.json';
+import ar from './locales/ar.json';
+import ru from './locales/ru.json';
 
-export type Locale = 'en' | 'fr' | 'sw' | 'ha';
+export type Locale = 'en' | 'fr' | 'es' | 'pt' | 'zh' | 'ar' | 'ru';
 
 export interface LocaleConfig {
   code: Locale;
@@ -31,7 +37,7 @@ export const SUPPORTED_LOCALES: LocaleConfig[] = [
     nativeName: 'English',
     direction: 'ltr',
     flag: '🇬🇧',
-    countries: ['NG', 'GH', 'KE', 'ZA', 'TZ', 'UG', 'ZM', 'ZW'],
+    countries: ['US', 'GB', 'AU', 'CA', 'NG', 'GH', 'KE', 'ZA'],
   },
   {
     code: 'fr',
@@ -39,23 +45,47 @@ export const SUPPORTED_LOCALES: LocaleConfig[] = [
     nativeName: 'Français',
     direction: 'ltr',
     flag: '🇫🇷',
-    countries: ['SN', 'CI', 'CM', 'CD', 'CG', 'GA', 'BF', 'ML', 'NE', 'TG', 'BJ'],
+    countries: ['FR', 'BE', 'CH', 'CA', 'SN', 'CI', 'CM'],
   },
   {
-    code: 'sw',
-    name: 'Swahili',
-    nativeName: 'Kiswahili',
+    code: 'es',
+    name: 'Spanish',
+    nativeName: 'Español',
     direction: 'ltr',
-    flag: '🇰🇪',
-    countries: ['KE', 'TZ', 'UG', 'RW', 'BI', 'CD'],
+    flag: '🇪🇸',
+    countries: ['ES', 'MX', 'AR', 'CO', 'PE', 'CL'],
   },
   {
-    code: 'ha',
-    name: 'Hausa',
-    nativeName: 'Hausa',
+    code: 'pt',
+    name: 'Portuguese',
+    nativeName: 'Português',
     direction: 'ltr',
-    flag: '🇳🇬',
-    countries: ['NG', 'NE', 'GH', 'CM', 'BF'],
+    flag: '🇧🇷',
+    countries: ['BR', 'PT', 'AO', 'MZ'],
+  },
+  {
+    code: 'zh',
+    name: 'Chinese',
+    nativeName: '中文',
+    direction: 'ltr',
+    flag: '🇨🇳',
+    countries: ['CN', 'TW', 'SG', 'HK'],
+  },
+  {
+    code: 'ar',
+    name: 'Arabic',
+    nativeName: 'العربية',
+    direction: 'rtl',
+    flag: '🇸🇦',
+    countries: ['SA', 'AE', 'EG', 'MA', 'DZ', 'IQ'],
+  },
+  {
+    code: 'ru',
+    name: 'Russian',
+    nativeName: 'Русский',
+    direction: 'ltr',
+    flag: '🇷🇺',
+    countries: ['RU', 'BY', 'KZ', 'UA'],
   },
 ];
 
@@ -67,8 +97,11 @@ type TranslationKeys = typeof en;
 const translations: Record<Locale, TranslationKeys> = {
   en,
   fr: fr as unknown as TranslationKeys,
-  sw: sw as unknown as TranslationKeys,
-  ha: ha as unknown as TranslationKeys,
+  es: es as unknown as TranslationKeys,
+  pt: pt as unknown as TranslationKeys,
+  zh: zh as unknown as TranslationKeys,
+  ar: ar as unknown as TranslationKeys,
+  ru: ru as unknown as TranslationKeys,
 };
 
 /**
@@ -202,8 +235,11 @@ export function formatCurrency(
   const localeMap: Record<Locale, string> = {
     en: 'en-US',
     fr: 'fr-FR',
-    sw: 'sw-KE',
-    ha: 'ha-NG',
+    es: 'es-ES',
+    pt: 'pt-BR',
+    zh: 'zh-CN',
+    ar: 'ar-SA',
+    ru: 'ru-RU',
   };
 
   try {
@@ -233,8 +269,11 @@ export function formatDate(
   const localeMap: Record<Locale, string> = {
     en: 'en-US',
     fr: 'fr-FR',
-    sw: 'sw-KE',
-    ha: 'ha-NG',
+    es: 'es-ES',
+    pt: 'pt-BR',
+    zh: 'zh-CN',
+    ar: 'ar-SA',
+    ru: 'ru-RU',
   };
 
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -262,8 +301,11 @@ export function formatRelativeTime(
   const localeMap: Record<Locale, string> = {
     en: 'en-US',
     fr: 'fr-FR',
-    sw: 'sw-KE',
-    ha: 'ha-NG',
+    es: 'es-ES',
+    pt: 'pt-BR',
+    zh: 'zh-CN',
+    ar: 'ar-SA',
+    ru: 'ru-RU',
   };
 
   const d = typeof date === 'string' ? new Date(date) : date;

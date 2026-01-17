@@ -154,6 +154,7 @@ export default function BoutiqueOrdersPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-200 rounded-lg text-gray-900"
+              aria-label="Filter orders by status"
             >
               <option value="">All Orders</option>
               <option value="PAID">Paid</option>

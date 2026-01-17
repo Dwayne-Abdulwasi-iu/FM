@@ -364,10 +364,11 @@ export default function BoutiqueCheckoutPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="addressState" className="block text-sm font-medium text-gray-700 mb-1">
                     State *
                   </label>
                   <select
+                    id="addressState"
                     value={address.state}
                     onChange={(e) => setAddress({ ...address, state: e.target.value })}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${

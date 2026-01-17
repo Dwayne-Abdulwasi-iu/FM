@@ -26,6 +26,8 @@
   "nav": {
     "home": "Accueil",
     "designs": "Créations",
+    "boutique": "Boutique",
+    "upload": "Téléverser",
     "categories": "Catégories",
     "trending": "Tendances",
     "designers": "Créateurs",
@@ -187,7 +189,8 @@
     "subscribeNewsletter": "Abonnez-vous à notre newsletter",
     "emailPlaceholder": "Entrez votre e-mail",
     "subscribe": "S'abonner",
-    "allRightsReserved": "Tous droits réservés"
+    "allRightsReserved": "Tous droits réservés",
+    "buyerProtection": "Protection des acheteurs"
   },
   "errors": {
     "somethingWentWrong": "Quelque chose s'est mal passé",

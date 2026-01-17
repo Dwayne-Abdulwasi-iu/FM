@@ -73,8 +73,8 @@ export async function getUSDToNGNRate(): Promise<number> {
     return exchangeRateCache.rate
   }
 
+  // Try primary API: exchangerate-api.com
   try {
-    // Fetch live rate from exchangerate-api.com (free tier)
     const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
     if (!response.ok) throw new Error(`API error: ${response.status}`)
     
@@ -85,29 +85,70 @@ export async function getUSDToNGNRate(): Promise<number> {
     
     // Cache the rate
     exchangeRateCache = { rate, timestamp: Date.now() }
-    console.log(`Updated exchange rate: 1 USD = ${rate} NGN`)
+    console.log(`Updated exchange rate (primary API): 1 USD = ${rate} NGN`)
     return rate
-  } catch (error) {
-    console.error('Failed to fetch live exchange rate:', error)
-    // Fallback to last cached rate (even if expired)
-    if (exchangeRateCache) {
-      console.warn(`Using last cached exchange rate: 1 USD = ${exchangeRateCache.rate} NGN (from ${new Date(exchangeRateCache.timestamp).toISOString()})`)
-      return exchangeRateCache.rate
-    }
-    // Use environment variable for fallback rate, or throw if not configured
-    const fallbackRate = process.env.FALLBACK_USD_NGN_RATE 
-      ? parseFloat(process.env.FALLBACK_USD_NGN_RATE) 
-      : null
-    
-    if (fallbackRate && !isNaN(fallbackRate)) {
-      console.warn(`No cached rate available. Using configured fallback: 1 USD = ${fallbackRate} NGN`)
-      return fallbackRate
-    }
-    
-    // If no fallback configured, use a conservative recent rate with warning
-    console.error('CRITICAL: No exchange rate available. Using emergency fallback: 1 USD = 1600 NGN. Configure FALLBACK_USD_NGN_RATE env var.')
-    return 1600 // Updated from 1500 to more recent rate
+  } catch (primaryError) {
+    console.warn('Primary exchange rate API failed:', primaryError)
   }
+
+  // Try secondary API: open.er-api.com (backup)
+  try {
+    const response = await fetch('https://open.er-api.com/v6/latest/USD')
+    if (!response.ok) throw new Error(`API error: ${response.status}`)
+    
+    const data = await response.json()
+    const rate = data.rates?.NGN
+    
+    if (!rate) throw new Error('NGN rate not found')
+    
+    // Cache the rate
+    exchangeRateCache = { rate, timestamp: Date.now() }
+    console.log(`Updated exchange rate (secondary API): 1 USD = ${rate} NGN`)
+    return rate
+  } catch (secondaryError) {
+    console.warn('Secondary exchange rate API failed:', secondaryError)
+  }
+
+  // Try tertiary API: fawazahmed0 currency API (another backup)
+  try {
+    const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json')
+    if (!response.ok) throw new Error(`API error: ${response.status}`)
+    
+    const data = await response.json()
+    const rate = data.usd?.ngn
+    
+    if (!rate) throw new Error('NGN rate not found')
+    
+    // Cache the rate
+    exchangeRateCache = { rate, timestamp: Date.now() }
+    console.log(`Updated exchange rate (tertiary API): 1 USD = ${rate} NGN`)
+    return rate
+  } catch (tertiaryError) {
+    console.warn('Tertiary exchange rate API failed:', tertiaryError)
+  }
+
+  // All APIs failed - use fallbacks
+  console.error('All exchange rate APIs failed')
+  
+  // Fallback to last cached rate (even if expired)
+  if (exchangeRateCache) {
+    console.warn(`Using last cached exchange rate: 1 USD = ${exchangeRateCache.rate} NGN (from ${new Date(exchangeRateCache.timestamp).toISOString()})`)
+    return exchangeRateCache.rate
+  }
+  
+  // Use environment variable for fallback rate, or throw if not configured
+  const fallbackRate = process.env.FALLBACK_USD_NGN_RATE 
+    ? parseFloat(process.env.FALLBACK_USD_NGN_RATE) 
+    : null
+  
+  if (fallbackRate && !isNaN(fallbackRate)) {
+    console.warn(`No cached rate available. Using configured fallback: 1 USD = ${fallbackRate} NGN`)
+    return fallbackRate
+  }
+  
+  // If no fallback configured, use a conservative recent rate with warning
+  console.error('CRITICAL: No exchange rate available. Using emergency fallback: 1 USD = 1600 NGN. Configure FALLBACK_USD_NGN_RATE env var.')
+  return 1600 // Emergency fallback - should rarely be reached with 3 APIs
 }
 
 export async function convertUSDToNGN(usdAmount: number): Promise<number> {

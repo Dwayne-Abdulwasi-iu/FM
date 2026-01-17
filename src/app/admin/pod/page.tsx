@@ -217,6 +217,7 @@ export default function AdminPODPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border rounded-lg bg-white"
+            aria-label="Filter by order status"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -228,6 +229,7 @@ export default function AdminPODPage() {
             value={providerFilter}
             onChange={(e) => setProviderFilter(e.target.value)}
             className="px-4 py-2 border rounded-lg bg-white"
+            aria-label="Filter by POD provider"
           >
             <option value="all">All Providers</option>
             <option value="printful">Printful</option>

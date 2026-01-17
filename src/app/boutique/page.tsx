@@ -157,42 +157,42 @@ function BoutiqueShopContent() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <h1 className="text-4xl font-bold mb-2">Fashion Boutique</h1>
-          <p className="text-purple-100 text-lg">Verified fashion items, ready to ship</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+          <h1 className="text-xl sm:text-4xl font-bold mb-1 sm:mb-2">Fashion Boutique</h1>
+          <p className="text-purple-100 text-xs sm:text-lg">Verified fashion items, ready to ship</p>
         </div>
       </div>
 
       {/* Search & Filters Bar */}
       <div className="bg-white border-b sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4">
+          <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-4">
             {/* Search */}
             <form onSubmit={handleSearch} className="flex-1 w-full">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search dresses, bags, shoes..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
+                  className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 text-xs sm:text-sm"
                 />
               </div>
             </form>
 
             {/* Sort & View */}
-            <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-2 sm:gap-4 w-full md:w-auto">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm ${
                   hasActiveFilters ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-gray-200 text-gray-900'
                 }`}
               >
-                <Filter className="w-4 h-4" />
+                <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Filters
                 {hasActiveFilters && (
-                  <span className="w-5 h-5 bg-purple-600 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 bg-purple-600 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center">
                     !
                   </span>
                 )}
@@ -201,7 +201,8 @@ function BoutiqueShopContent() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 text-xs sm:text-sm"
+                aria-label="Sort products by"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value} className="text-gray-900">{opt.label}</option>
@@ -212,12 +213,14 @@ function BoutiqueShopContent() {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}
+                  aria-label="Grid view"
                 >
                   <Grid3X3 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('large')}
                   className={`p-1.5 rounded ${viewMode === 'large' ? 'bg-gray-100' : ''}`}
+                  aria-label="Large view"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
@@ -227,11 +230,12 @@ function BoutiqueShopContent() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t grid grid-cols-2 md:grid-cols-6 gap-2 sm:gap-4">
               <select
                 value={selectedCategory}
                 onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
+                aria-label="Filter by category"
               >
                 <option value="" className="text-gray-900">All Categories</option>
                 {categories.map(cat => (
@@ -242,7 +246,8 @@ function BoutiqueShopContent() {
               <select
                 value={selectedGender}
                 onChange={(e) => { setSelectedGender(e.target.value); setPage(1); }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
+                aria-label="Filter by gender"
               >
                 <option value="" className="text-gray-900">All Genders</option>
                 {GENDER_OPTIONS.map(g => (
@@ -253,7 +258,8 @@ function BoutiqueShopContent() {
               <select
                 value={selectedStyle}
                 onChange={(e) => { setSelectedStyle(e.target.value); setPage(1); }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
+                aria-label="Filter by style"
               >
                 <option value="" className="text-gray-900">All Styles</option>
                 {STYLES.map(s => (
@@ -264,7 +270,8 @@ function BoutiqueShopContent() {
               <select
                 value={selectedCondition}
                 onChange={(e) => { setSelectedCondition(e.target.value); setPage(1); }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
+                aria-label="Filter by condition"
               >
                 <option value="" className="text-gray-900">All Conditions</option>
                 {Object.entries(PRODUCT_CONDITION).map(([key, label]) => (
@@ -272,29 +279,29 @@ function BoutiqueShopContent() {
                 ))}
               </select>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 <input
                   type="number"
                   placeholder="Min ₦"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
                 />
                 <input
                   type="number"
                   placeholder="Max ₦"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
                 />
               </div>
 
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center justify-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm text-purple-600 hover:text-purple-700"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Clear All
                 </button>
               )}
@@ -305,11 +312,11 @@ function BoutiqueShopContent() {
 
       {/* Category Pills */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2">
             <button
               onClick={() => { setSelectedCategory(''); setPage(1); }}
-              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap ${
+              className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
                 !selectedCategory ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -319,7 +326,7 @@ function BoutiqueShopContent() {
               <button
                 key={cat.id}
                 onClick={() => { setSelectedCategory(cat.slug); setPage(1); }}
-                className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap ${
+                className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
                   selectedCategory === cat.slug ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -331,20 +338,20 @@ function BoutiqueShopContent() {
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600"></div>
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-20">
-            <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900">No Products Found</h3>
-            <p className="text-gray-500 mt-2">Try adjusting your filters or search terms</p>
+          <div className="text-center py-12 sm:py-20">
+            <ShoppingBag className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-xl font-semibold text-gray-900">No Products Found</h3>
+            <p className="text-xs sm:text-base text-gray-500 mt-1 sm:mt-2">Try adjusting your filters or search terms</p>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+                className="mt-3 sm:mt-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg text-sm"
               >
                 Clear Filters
               </button>
@@ -352,11 +359,11 @@ function BoutiqueShopContent() {
           </div>
         ) : (
           <>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-4">
               Showing {products.length} of {pagination.total} products
             </p>
 
-            <div className={`grid gap-6 ${
+            <div className={`grid gap-2 sm:gap-3 ${
               viewMode === 'grid' 
                 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
                 : 'grid-cols-1 md:grid-cols-2'
@@ -365,10 +372,10 @@ function BoutiqueShopContent() {
                 <Link
                   key={product.id}
                   href={`/boutique/${product.slug}`}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow group"
+                  className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
                 >
                   {/* Image */}
-                  <div className={`relative ${viewMode === 'grid' ? 'aspect-[3/4]' : 'aspect-[4/3]'} bg-gray-100`}>
+                  <div className={`relative ${viewMode === 'grid' ? 'aspect-square' : 'aspect-[4/3]'} bg-gray-100`}>
                     {product.thumbnailUrl ? (
                       <Image
                         src={product.thumbnailUrl}
@@ -378,13 +385,13 @@ function BoutiqueShopContent() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-12 h-12 text-gray-300" />
+                        <ShoppingBag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300" />
                       </div>
                     )}
                     
                     {/* Sale Badge */}
                     {product.salePrice && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      <div className="absolute top-1.5 sm:top-3 left-1.5 sm:left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                         SALE
                       </div>
                     )}
@@ -392,24 +399,25 @@ function BoutiqueShopContent() {
                     {/* Wishlist Button */}
                     <button
                       onClick={(e) => { e.preventDefault(); }}
-                      className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1.5 sm:top-3 right-1.5 sm:right-3 p-1.5 sm:p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Add to wishlist"
                     >
-                      <Heart className="w-4 h-4 text-gray-600" />
+                      <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
                     </button>
 
                     {/* Available Colors */}
                     {product.availableColors.length > 0 && (
-                      <div className="absolute bottom-3 left-3 flex gap-1">
+                      <div className="absolute bottom-1.5 sm:bottom-3 left-1.5 sm:left-3 flex gap-0.5 sm:gap-1">
                         {product.availableColors.slice(0, 4).map((c, i) => (
                           <div
                             key={i}
-                            className="w-4 h-4 rounded-full border-2 border-white shadow"
+                            className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow"
                             style={{ backgroundColor: c.hex || '#ccc' }}
                             title={c.color}
                           />
                         ))}
                         {product.availableColors.length > 4 && (
-                          <div className="w-4 h-4 rounded-full bg-gray-200 border-2 border-white shadow flex items-center justify-center text-[8px] text-gray-600">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-200 border-2 border-white shadow flex items-center justify-center text-[6px] sm:text-[8px] text-gray-600">
                             +{product.availableColors.length - 4}
                           </div>
                         )}
@@ -418,19 +426,19 @@ function BoutiqueShopContent() {
                   </div>
 
                   {/* Info */}
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">{product.category.name}</p>
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{product.title}</h3>
+                  <div className="p-2 sm:p-3">
+                    <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5">{product.category.name}</p>
+                    <h3 className="font-semibold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 sm:mb-2">{product.title}</h3>
                     
                     {/* Fulfillment Badge */}
                     {product.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                          <Rocket className="w-3 h-3" />
+                      <div className="flex items-center gap-1 mb-1 sm:mb-2">
+                        <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700">
+                          <Rocket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                           Seller Direct
                         </span>
                         {product.sellerShippingTime && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-[10px] sm:text-xs text-gray-500">
                             • {product.sellerShippingTime}
                           </span>
                         )}
@@ -438,12 +446,12 @@ function BoutiqueShopContent() {
                     )}
                     
                     {/* Price */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-purple-600">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="text-sm sm:text-lg font-bold text-purple-600">
                         ₦{(product.salePrice || product.basePrice).toLocaleString()}
                       </span>
                       {product.salePrice && (
-                        <span className="text-sm text-gray-400 line-through">
+                        <span className="text-[10px] sm:text-sm text-gray-400 line-through">
                           ₦{product.basePrice.toLocaleString()}
                         </span>
                       )}
@@ -451,9 +459,9 @@ function BoutiqueShopContent() {
 
                     {/* Rating */}
                     {product.reviewCount > 0 && (
-                      <div className="flex items-center gap-1 mt-2">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="text-sm text-gray-600">
+                      <div className="flex items-center gap-0.5 sm:gap-1 mt-1 sm:mt-2">
+                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-yellow-400" />
+                        <span className="text-[10px] sm:text-sm text-gray-600">
                           {product.avgRating?.toFixed(1)} ({product.reviewCount})
                         </span>
                       </div>
@@ -461,7 +469,7 @@ function BoutiqueShopContent() {
 
                     {/* Sizes */}
                     {product.availableSizes.length > 0 && (
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 sm:mt-2">
                         Sizes: {product.availableSizes.slice(0, 4).join(', ')}
                         {product.availableSizes.length > 4 && '...'}
                       </p>
@@ -473,17 +481,17 @@ function BoutiqueShopContent() {
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-12">
+              <div className="flex items-center justify-center gap-2 sm:gap-4 mt-6 sm:mt-12">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="flex items-center gap-1 px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Previous</span>
                 </button>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                     let pageNum;
                     if (pagination.totalPages <= 5) {
@@ -500,7 +508,7 @@ function BoutiqueShopContent() {
                       <button
                         key={pageNum}
                         onClick={() => setPage(pageNum)}
-                        className={`w-10 h-10 rounded-lg ${
+                        className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg text-xs sm:text-sm ${
                           page === pageNum
                             ? 'bg-purple-600 text-white'
                             : 'hover:bg-gray-100'
@@ -515,10 +523,10 @@ function BoutiqueShopContent() {
                 <button
                   onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
                   disabled={page === pagination.totalPages}
-                  className="flex items-center gap-1 px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                 >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             )}

@@ -1,5 +1,9 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, Shield, Eye, Lock, Database, Users, Mail, Globe, AlertCircle, FileText } from 'lucide-react'
+import { generateSEOMetadata, SEO_CONFIGS } from '@/lib/seo-config'
+
+export const metadata: Metadata = generateSEOMetadata(SEO_CONFIGS.privacy)
 
 export default function PrivacyPolicyPage() {
   return (

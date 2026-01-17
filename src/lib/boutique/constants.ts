@@ -1,5 +1,16 @@
 // Fashion Boutique - Constants and Configuration
 
+// Import tiered commission system for SELLER_DIRECT
+import { 
+  getCommissionRate as getDigitalCommissionRate,
+  getCommissionTier,
+  COMMISSION_TIERS,
+  type CommissionTierKey,
+} from '@/lib/commission-tiers';
+
+// Re-export for convenience
+export { getCommissionTier, COMMISSION_TIERS, type CommissionTierKey };
+
 // Fulfillment Methods
 export const FULFILLMENT_METHOD = {
   ADMIN_STOCK: 'ADMIN_STOCK',      // Seller ships to admin, admin ships to buyer
@@ -377,13 +388,33 @@ export function getSellerTierLevel(tier: SellerTier | null | undefined): number 
   return SELLER_TIER_CONFIG[tier]?.level ?? 0;
 }
 
-export function getCommissionRate(tier: SellerTier | null | undefined, fulfillmentMethod: FulfillmentMethod): number {
-  const baseRate = tier ? SELLER_TIER_CONFIG[tier]?.commissionRate ?? BOUTIQUE_DEFAULTS.platformCommission : BOUTIQUE_DEFAULTS.platformCommission;
-  // Seller direct gets discount since no storage costs
+/**
+ * Get commission rate for boutique sales based on fulfillment method
+ * 
+ * ADMIN_STOCK (warehouse): 15% flat - platform handles storage, verification, shipping
+ * SELLER_DIRECT: Uses tiered rates like digital designs (0.1%, 10%, 9.5%, 9%, 8.5%, 8%, 7%)
+ *                since platform doesn't handle any physical aspects
+ * 
+ * @param tier - Seller's tier (used for eligibility check, not rate calculation for SELLER_DIRECT)
+ * @param fulfillmentMethod - ADMIN_STOCK or SELLER_DIRECT
+ * @param sellerTotalEarnings - Total earnings for tiered rate calculation (SELLER_DIRECT only)
+ * @param isProSubscriber - Whether seller has VIP/VVIP subscription
+ */
+export function getCommissionRate(
+  tier: SellerTier | null | undefined, 
+  fulfillmentMethod: FulfillmentMethod,
+  sellerTotalEarnings: number = 0,
+  isProSubscriber: boolean = false
+): number {
   if (fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
-    return Math.max(baseRate - BOUTIQUE_DEFAULTS.sellerDirect.commissionDiscount, 5); // Min 5%
+    // SELLER_DIRECT: Use tiered commission like digital designs
+    // Platform doesn't handle shipping, storage, or physical verification
+    const tieredRate = getDigitalCommissionRate(sellerTotalEarnings, isProSubscriber);
+    return tieredRate; // Returns decimal like 0.10 for 10%
   }
-  return baseRate;
+  
+  // ADMIN_STOCK: Flat 15% commission (platform handles everything)
+  return BOUTIQUE_DEFAULTS.platformCommission / 100; // Convert 15 to 0.15
 }
 
 export function getDirectShipDeadline(): { hours: number; graceHours: number } {

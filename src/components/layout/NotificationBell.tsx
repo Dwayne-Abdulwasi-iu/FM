@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, MessageSquare, CreditCard, AlertCircle, CheckCircle, Package, X, Check } from 'lucide-react';
+import { Bell, MessageSquare, CreditCard, AlertCircle, CheckCircle, Package, X, Check, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { notificationManager } from '@/lib/notification-manager';
@@ -29,13 +29,22 @@ interface Notification {
   createdAt: string;
 }
 
-type TabType = 'all' | 'messages' | 'notifications';
+interface AdminUpdate {
+  id: string;
+  subject: string;
+  content: string;
+  isRead: boolean;
+  sentAt: string;
+}
+
+type TabType = 'all' | 'messages' | 'notifications' | 'announcements';
 
 const NOTIFICATION_ICONS: Record<string, typeof MessageSquare> = {
   COMMISSION_MESSAGE: MessageSquare,
   ORDER_UPDATE: Package,
   PAYMENT: CreditCard,
   SYSTEM: AlertCircle,
+  ADMIN_BROADCAST: Megaphone,
 };
 
 const NOTIFICATION_COLORS: Record<string, string> = {
@@ -43,6 +52,7 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   ORDER_UPDATE: 'bg-purple-100 text-purple-600',
   PAYMENT: 'bg-green-100 text-green-600',
   SYSTEM: 'bg-yellow-100 text-yellow-600',
+  ADMIN_BROADCAST: 'bg-indigo-100 text-indigo-600',
 };
 
 export function NotificationBell() {
@@ -50,15 +60,17 @@ export function NotificationBell() {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [messageUnread, setMessageUnread] = useState(0);
   const [notificationUnread, setNotificationUnread] = useState(0);
+  const [announcementUnread, setAnnouncementUnread] = useState(0);
   const [commissions, setCommissions] = useState<UnreadCommission[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [announcements, setAnnouncements] = useState<AdminUpdate[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
 
-  const totalUnread = messageUnread + notificationUnread;
+  const totalUnread = messageUnread + notificationUnread + announcementUnread;
 
   // Fetch all data - wrapped in useCallback to avoid stale closures
   const fetchData = useCallback(async () => {
@@ -72,9 +84,10 @@ export function NotificationBell() {
     
     try {
       // Use shared manager to deduplicate requests across components
-      const [messagesData, notificationsData] = await Promise.all([
+      const [messagesData, notificationsData, updatesRes] = await Promise.all([
         notificationManager.fetchMessages(),
         notificationManager.fetchNotifications(10),
+        fetch('/api/updates?limit=5').then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       
       // Guard against state updates after unmount
@@ -90,6 +103,11 @@ export function NotificationBell() {
         const data = notificationsData as { unreadCount?: number; notifications?: Notification[] };
         setNotificationUnread(data.unreadCount || 0);
         setNotifications(data.notifications || []);
+      }
+      
+      if (updatesRes) {
+        setAnnouncementUnread(updatesRes.unreadCount || 0);
+        setAnnouncements(updatesRes.updates || []);
       }
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -246,7 +264,7 @@ export function NotificationBell() {
           <div className="flex border-b border-gray-100">
             <button
               onClick={() => setActiveTab('all')}
-              className={`flex-1 py-2 text-sm font-medium transition ${
+              className={`flex-1 py-2 text-xs font-medium transition ${
                 activeTab === 'all' 
                   ? 'text-indigo-600 border-b-2 border-indigo-600' 
                   : 'text-gray-500 hover:text-gray-700'
@@ -256,7 +274,7 @@ export function NotificationBell() {
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`flex-1 py-2 text-sm font-medium transition relative ${
+              className={`flex-1 py-2 text-xs font-medium transition relative ${
                 activeTab === 'messages' 
                   ? 'text-indigo-600 border-b-2 border-indigo-600' 
                   : 'text-gray-500 hover:text-gray-700'
@@ -270,8 +288,23 @@ export function NotificationBell() {
               )}
             </button>
             <button
+              onClick={() => setActiveTab('announcements')}
+              className={`flex-1 py-2 text-xs font-medium transition relative ${
+                activeTab === 'announcements' 
+                  ? 'text-indigo-600 border-b-2 border-indigo-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Announce
+              {announcementUnread > 0 && (
+                <span className="ml-1 bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded-full">
+                  {announcementUnread}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab('notifications')}
-              className={`flex-1 py-2 text-sm font-medium transition relative ${
+              className={`flex-1 py-2 text-xs font-medium transition relative ${
                 activeTab === 'notifications' 
                   ? 'text-indigo-600 border-b-2 border-indigo-600' 
                   : 'text-gray-500 hover:text-gray-700'
@@ -396,10 +429,53 @@ export function NotificationBell() {
                   </div>
                 )}
 
+                {/* Announcements Section */}
+                {(activeTab === 'all' || activeTab === 'announcements') && announcements.length > 0 && (
+                  <div>
+                    {activeTab === 'all' && (commissions.length > 0 || notifications.length > 0) && (
+                      <div className="px-3 py-2 bg-indigo-50 text-xs font-medium text-indigo-600 uppercase flex items-center gap-1">
+                        <Megaphone className="w-3 h-3" />
+                        Platform Announcements
+                      </div>
+                    )}
+                    <div className="divide-y divide-gray-50">
+                      {announcements.slice(0, 3).map((announcement) => (
+                        <Link
+                          key={announcement.id}
+                          href="/updates"
+                          onClick={() => setIsOpen(false)}
+                          className={`flex items-start gap-3 p-3 hover:bg-gray-50 transition ${
+                            !announcement.isRead ? 'bg-indigo-50/50' : ''
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                            <Megaphone className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm ${!announcement.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                              {announcement.subject}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                              {announcement.content.replace(/<[^>]*>/g, '').substring(0, 60)}...
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {formatTime(announcement.sentAt)}
+                            </p>
+                          </div>
+                          {!announcement.isRead && (
+                            <span className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-2" />
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Empty State */}
-                {((activeTab === 'all' && commissions.length === 0 && notifications.length === 0) ||
+                {((activeTab === 'all' && commissions.length === 0 && notifications.length === 0 && announcements.length === 0) ||
                   (activeTab === 'messages' && commissions.length === 0) ||
-                  (activeTab === 'notifications' && notifications.length === 0)) && (
+                  (activeTab === 'notifications' && notifications.length === 0) ||
+                  (activeTab === 'announcements' && announcements.length === 0)) && (
                   <div className="p-8 text-center">
                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
                       <CheckCircle className="w-6 h-6 text-gray-400" />
@@ -407,6 +483,7 @@ export function NotificationBell() {
                     <p className="text-gray-500 text-sm">
                       {activeTab === 'messages' ? 'No unread messages' : 
                        activeTab === 'notifications' ? 'No notifications' : 
+                       activeTab === 'announcements' ? 'No announcements' :
                        'You\'re all caught up!'}
                     </p>
                   </div>
@@ -420,14 +497,21 @@ export function NotificationBell() {
             <Link
               href="/my-commissions"
               onClick={() => setIsOpen(false)}
-              className="flex-1 text-center text-sm text-indigo-600 hover:text-indigo-800 py-2 hover:bg-indigo-50 rounded transition"
+              className="flex-1 text-center text-xs text-indigo-600 hover:text-indigo-800 py-2 hover:bg-indigo-50 rounded transition"
             >
-              My Commissions
+              Commissions
+            </Link>
+            <Link
+              href="/updates"
+              onClick={() => setIsOpen(false)}
+              className="flex-1 text-center text-xs text-indigo-600 hover:text-indigo-800 py-2 hover:bg-indigo-50 rounded transition"
+            >
+              Updates
             </Link>
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="flex-1 text-center text-sm text-indigo-600 hover:text-indigo-800 py-2 hover:bg-indigo-50 rounded transition"
+              className="flex-1 text-center text-xs text-indigo-600 hover:text-indigo-800 py-2 hover:bg-indigo-50 rounded transition"
             >
               View All
             </Link>

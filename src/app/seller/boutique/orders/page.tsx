@@ -203,19 +203,19 @@ export default function SellerOrdersPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
-          <p className="text-gray-500 mt-1">Manage your boutique orders</p>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Orders</h1>
+          <p className="text-gray-500 mt-0.5 sm:mt-1 text-xs sm:text-base">Manage your boutique orders</p>
         </div>
       </div>
 
       {/* Urgent Orders Banner */}
       {orders.some(o => o.isOverdue || (o.hoursUntilDeadline && o.hoursUntilDeadline < 12)) && (
         <div className="bg-red-50 border-b border-red-200">
-          <div className="max-w-6xl mx-auto px-4 py-3">
-            <div className="flex items-center gap-3 text-red-800">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-medium">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+            <div className="flex items-center gap-2 sm:gap-3 text-red-800">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-medium">
                 You have orders that need immediate attention!
               </span>
             </div>
@@ -225,20 +225,21 @@ export default function SellerOrdersPage() {
 
       {/* Tabs */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex overflow-x-auto gap-1 py-2">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4">
+          <div className="flex overflow-x-auto gap-1 py-2 -mx-1 px-1">
             {TABS.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium flex items-center gap-2 transition-colors ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg whitespace-nowrap text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2 transition-colors ${
                   activeTab === tab.key
                     ? 'bg-purple-100 text-purple-700'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {tab.label}
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                <span className="hidden xs:inline">{tab.label}</span>
+                <span className="xs:hidden">{tab.key === 'all' ? 'All' : tab.key === 'pending' ? 'Action' : tab.key === 'processing' ? 'Ship' : tab.key}</span>
+                <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs ${
                   activeTab === tab.key ? 'bg-purple-200' : 'bg-gray-200'
                 }`}>
                   {getTabCount(tab.key)}
@@ -249,16 +250,16 @@ export default function SellerOrdersPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Orders List */}
         {orders.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">No Orders</h3>
-            <p className="text-gray-500 mt-1">No orders in this category</p>
+          <div className="bg-white rounded-xl p-8 sm:p-12 text-center">
+            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">No Orders</h3>
+            <p className="text-sm text-gray-500 mt-1">No orders in this category</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {orders.map(order => {
               const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.PAID;
               const StatusIcon = status.icon;
@@ -271,31 +272,32 @@ export default function SellerOrdersPage() {
                   }`}
                 >
                   {/* Order Header */}
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${status.bgColor}`}>
-                        <StatusIcon className={`w-5 h-5 ${status.color}`} />
+                  <div className="p-3 sm:p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className={`p-1.5 sm:p-2 rounded-lg ${status.bgColor}`}>
+                        <StatusIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${status.color}`} />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">#{order.orderNumber}</span>
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base">#{order.orderNumber}</span>
                           {order.isSellerDirect && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                              <Rocket className="w-3 h-3" />
-                              Direct Ship
+                            <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700">
+                              <Rocket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span className="hidden xs:inline">Direct Ship</span>
+                              <span className="xs:hidden">Direct</span>
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-[10px] sm:text-sm text-gray-500">
                           {new Date(order.createdAt).toLocaleDateString()} • {order.buyer.name}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${status.bgColor} ${status.color}`}>
+                    <div className="text-left sm:text-right flex items-center sm:block gap-2 mt-1 sm:mt-0">
+                      <span className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-sm font-medium ${status.bgColor} ${status.color}`}>
                         {status.label}
                       </span>
-                      <p className="text-lg font-bold text-purple-600 mt-1">
+                      <p className="text-sm sm:text-lg font-bold text-purple-600 sm:mt-1">
                         ₦{order.total.toLocaleString()}
                       </p>
                     </div>
@@ -303,40 +305,40 @@ export default function SellerOrdersPage() {
 
                   {/* Deadline Warning */}
                   {order.isSellerDirect && order.status === 'PROCESSING' && (
-                    <div className={`px-4 py-2 flex items-center gap-2 text-sm ${
+                    <div className={`px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm ${
                       order.isOverdue 
                         ? 'bg-red-50 text-red-800' 
                         : order.hoursUntilDeadline && order.hoursUntilDeadline < 12 
                           ? 'bg-yellow-50 text-yellow-800'
                           : 'bg-blue-50 text-blue-800'
                     }`}>
-                      <Timer className="w-4 h-4" />
+                      <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
                       {order.isOverdue ? (
-                        <span className="font-medium">⚠️ OVERDUE! Ship immediately to avoid penalties.</span>
+                        <span className="font-medium">⚠️ OVERDUE! Ship immediately</span>
                       ) : (
                         <span>
-                          Ship deadline: {order.hoursUntilDeadline?.toFixed(0)} hours remaining
+                          <span className="hidden xs:inline">Ship deadline: </span>{order.hoursUntilDeadline?.toFixed(0)}h left
                         </span>
                       )}
                     </div>
                   )}
 
                   {/* Order Items */}
-                  <div className="p-4">
-                    <div className="flex items-start gap-4">
+                  <div className="p-3 sm:p-4">
+                    <div className="flex items-start gap-2 sm:gap-4">
                       {order.product.thumbnailUrl && (
                         <Image
                           src={order.product.thumbnailUrl}
                           alt={order.product.title}
                           width={80}
                           height={80}
-                          className="rounded-lg object-cover"
+                          className="rounded-lg object-cover w-16 h-16 sm:w-20 sm:h-20"
                         />
                       )}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{order.product.title}</h4>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{order.product.title}</h4>
                         {order.items.map(item => (
-                          <p key={item.id} className="text-sm text-gray-500">
+                          <p key={item.id} className="text-[10px] sm:text-sm text-gray-500">
                             {item.variant?.size && `Size: ${item.variant.size}`}
                             {item.variant?.size && item.variant?.color && ' • '}
                             {item.variant?.color && `Color: ${item.variant.color}`}
@@ -348,48 +350,49 @@ export default function SellerOrdersPage() {
                   </div>
 
                   {/* Shipping Address */}
-                  <div className="px-4 py-3 bg-gray-50 border-t">
-                    <p className="text-sm font-medium text-gray-700">Ship to:</p>
-                    <p className="text-sm text-gray-600">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 border-t">
+                    <p className="text-[10px] sm:text-sm font-medium text-gray-700">Ship to:</p>
+                    <p className="text-[10px] sm:text-sm text-gray-600">
                       {order.shippingAddress?.name} • {order.shippingAddress?.street}, {order.shippingAddress?.city}, {order.shippingAddress?.state}
                     </p>
-                    <p className="text-sm text-gray-600">📞 {order.shippingAddress?.phone}</p>
+                    <p className="text-[10px] sm:text-sm text-gray-600">📞 {order.shippingAddress?.phone}</p>
                   </div>
 
                   {/* Tracking Info (if shipped) */}
                   {order.trackingNumber && (
-                    <div className="px-4 py-3 bg-green-50 border-t flex items-center justify-between">
+                    <div className="px-3 sm:px-4 py-2 sm:py-3 bg-green-50 border-t flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-green-800">Tracking Number:</p>
-                        <p className="text-sm text-green-700 font-mono">{order.trackingNumber}</p>
+                        <p className="text-[10px] sm:text-sm font-medium text-green-800">Tracking:</p>
+                        <p className="text-[10px] sm:text-sm text-green-700 font-mono">{order.trackingNumber}</p>
                       </div>
                       <button
                         onClick={() => navigator.clipboard.writeText(order.trackingNumber!)}
-                        className="p-2 hover:bg-green-100 rounded-lg"
+                        className="p-1.5 sm:p-2 hover:bg-green-100 rounded-lg"
+                        aria-label="Copy tracking number"
                       >
-                        <Copy className="w-4 h-4 text-green-700" />
+                        <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" />
                       </button>
                     </div>
                   )}
 
                   {/* Actions */}
                   {order.isSellerDirect && ['PAID', 'AWAITING_SELLER_CONFIRMATION', 'PROCESSING'].includes(order.status) && (
-                    <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
+                    <div className="p-3 sm:p-4 border-t bg-gray-50 flex items-center justify-between gap-2">
                       <button
                         onClick={() => handleAction(order.id, 'cancel')}
                         disabled={actionLoading}
-                        className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                        className="px-2 sm:px-4 py-1.5 sm:py-2 text-red-600 hover:bg-red-50 rounded-lg text-[10px] sm:text-sm"
                       >
-                        Cancel Order
+                        Cancel
                       </button>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 sm:gap-2">
                         {(order.status === 'PAID' || order.status === 'AWAITING_SELLER_CONFIRMATION') && (
                           <button
                             onClick={() => handleAction(order.id, 'confirm')}
                             disabled={actionLoading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                            className="px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg text-[10px] sm:text-sm hover:bg-blue-700"
                           >
-                            Confirm Order
+                            Confirm
                           </button>
                         )}
                         {order.status === 'PROCESSING' && (
@@ -399,9 +402,9 @@ export default function SellerOrdersPage() {
                               setShowShipModal(true);
                             }}
                             disabled={actionLoading}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
+                            className="px-2 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg text-[10px] sm:text-sm hover:bg-purple-700"
                           >
-                            Mark as Shipped
+                            <span className="hidden xs:inline">Mark as </span>Shipped
                           </button>
                         )}
                       </div>
@@ -416,18 +419,18 @@ export default function SellerOrdersPage() {
 
       {/* Ship Modal */}
       {showShipModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
               Mark Order as Shipped
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
               Order #{selectedOrder.orderNumber} for {selectedOrder.buyer.name}
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Tracking Number *
                 </label>
                 <input
@@ -435,18 +438,19 @@ export default function SellerOrdersPage() {
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="Enter tracking number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Shipping Carrier
                 </label>
                 <select
                   value={carrier}
                   onChange={(e) => setCarrier(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                  aria-label="Select shipping carrier"
                 >
                   <option value="">Select carrier</option>
                   {SHIPPING_CARRIERS.map(c => (
@@ -456,23 +460,23 @@ export default function SellerOrdersPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => {
                   setShowShipModal(false);
                   setTrackingNumber('');
                   setCarrier('');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAction(selectedOrder.id, 'ship')}
                 disabled={actionLoading || !trackingNumber.trim()}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                className="flex-1 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm"
               >
-                {actionLoading ? 'Processing...' : 'Confirm Shipment'}
+                {actionLoading ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>

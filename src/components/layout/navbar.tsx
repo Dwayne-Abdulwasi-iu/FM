@@ -6,10 +6,12 @@ import { User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, Che
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function Navbar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [cartCount, setCartCount] = useState(0);
   const [boutiqueCartCount, setBoutiqueCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,7 +133,7 @@ export function Navbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="Search designs..."
+                placeholder={t('common.search') + '...'}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                 disabled={isSearching}
               />
@@ -151,7 +153,7 @@ export function Navbar() {
               className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-1.5"
             >
               <Download className="w-4 h-4" />
-              Designs
+              {t('nav.designs')}
             </Link>
             
             {/* Direct Boutique Link - Prominent */}
@@ -160,7 +162,7 @@ export function Navbar() {
               className="text-gray-800 hover:text-purple-700 font-medium flex items-center gap-1.5"
             >
               <Package className="w-4 h-4" />
-              Boutique
+              {t('nav.boutique') || 'Boutique'}
             </Link>
             {/* Community Dropdown */}
             <div 
@@ -213,17 +215,17 @@ export function Navbar() {
               )}
             </div>
             <Link href="/contact" className="text-gray-800 hover:text-indigo-700 font-medium">
-              Contact
+              {t('nav.contact')}
             </Link>
             {session && (
               <>
                 <Link href="/seller/dashboard" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
                   <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
+                  {t('nav.dashboard')}
                 </Link>
                 <Link href="/upload" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
                   <Upload className="w-4 h-4" />
-                  Upload
+                  {t('nav.upload') || 'Upload'}
                 </Link>
               </>
             )}
@@ -260,7 +262,7 @@ export function Navbar() {
                   onClick={() => signOut()}
                   className="text-gray-800 hover:text-indigo-700 text-sm font-medium"
                 >
-                  Sign Out
+                  {t('nav.signOut')}
                 </button>
               </div>
             ) : (
@@ -268,7 +270,7 @@ export function Navbar() {
                 onClick={() => signIn()}
                 className="bg-indigo-700 text-white px-4 py-2 rounded-lg hover:bg-indigo-800 font-medium"
               >
-                Sign In
+                {t('nav.signIn')}
               </button>
             )}
           </div>

@@ -18,7 +18,9 @@ import {
   Search,
   Mail,
   MessageCircle,
-  BookOpen
+  BookOpen,
+  Megaphone,
+  MessageSquare
 } from 'lucide-react'
 
 interface User {
@@ -594,6 +596,20 @@ export default function AdminDashboard() {
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                     <Link
+                      href="/admin/users"
+                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">User Management</p>
+                          <p className="text-xs text-gray-500">Search, message &amp; manage users</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
                       href="/admin/analytics"
                       className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
                     >
@@ -646,6 +662,34 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Resources</p>
                           <p className="text-xs text-gray-500">Manage learning resources</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/broadcasts"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <Megaphone className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
+                          <p className="text-xs text-gray-500">View sent announcements</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/messages"
+                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
+                          <MessageSquare className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Message Center</p>
+                          <p className="text-xs text-gray-500">Manage admin-user messages</p>
                         </div>
                       </div>
                     </Link>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { checkAndPromoteDesigners } from '@/lib/seller-promotion'
-import { sendPaymentReceivedToDesigner, sendAdminPODAlert } from '@/lib/email'
+import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail } from '@/lib/email'
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers'
 import { checkAndUpdateSellerTier } from '@/lib/tier-management'
 import { fulfillPODOrder } from '@/lib/pod-service'
@@ -17,6 +17,7 @@ type StripeOrderItem = {
   price: number
   purchaseType?: 'REGULAR' | 'OWNERSHIP' | 'POD'
   designerId?: string
+  designTitle?: string
   podProductId?: string
   podVariantId?: string
   podProductName?: string
@@ -238,6 +239,23 @@ async function handleCheckoutCompleted(session: unknown) {
           quantity: item.quantity
         }
       })
+
+      // Send sale notification email to seller
+      const sellerUser = await prisma.user.findUnique({
+        where: { id: sellerId },
+        select: { email: true, name: true, displayName: true }
+      })
+      
+      if (sellerUser?.email) {
+        sendSaleNotificationEmail(
+          sellerUser.email,
+          sellerUser.displayName || sellerUser.name || 'Designer',
+          item.designTitle || 'Design',
+          saleAmount,
+          sellerEarning,
+          item.purchaseType || 'REGULAR'
+        ).catch(err => console.error('Failed to send sale notification:', err))
+      }
 
       // Create purchase record for access control
       await prisma.purchase.create({

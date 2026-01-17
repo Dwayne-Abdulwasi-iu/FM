@@ -177,19 +177,19 @@ export default function AdminShipmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-4">
-            <ChevronLeft className="w-4 h-4" />
+        <div className="mb-4 sm:mb-8">
+          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-3 sm:mb-4 text-xs sm:text-sm">
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             Back to Admin
           </Link>
-          <div className="flex items-center gap-3">
-            <Truck className="w-8 h-8 text-purple-600" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Incoming Shipments</h1>
-              <p className="text-gray-600">
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Incoming Shipments</h1>
+              <p className="text-xs sm:text-base text-gray-600">
                 {pendingCount} awaiting receipt
               </p>
             </div>
@@ -197,34 +197,35 @@ export default function AdminShipmentsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="flex flex-col md:flex-row gap-2 sm:gap-4">
             <form onSubmit={handleSearch} className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by tracking number, seller, or product..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                  placeholder="Search shipments..."
+                  className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
             </form>
             <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value)
                   setPage(1)
                 }}
-                className="border rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500"
+                className="border rounded-lg px-2 sm:px-3 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 text-xs sm:text-sm"
+                aria-label="Filter by shipment status"
               >
-                <option value="">All Statuses</option>
+                <option value="">All</option>
                 <option value="PENDING">Pending</option>
                 <option value="IN_TRANSIT">In Transit</option>
-                <option value="DELIVERED">Delivered (Awaiting Receipt)</option>
+                <option value="DELIVERED">Awaiting Receipt</option>
                 <option value="RECEIVED">Received</option>
                 <option value="DISCREPANCY">Discrepancy</option>
               </select>
@@ -234,17 +235,17 @@ export default function AdminShipmentsPage() {
 
         {/* Shipments List */}
         {shipments.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-            <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No shipments found</h3>
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl shadow-sm p-8 sm:p-12 text-center">
+            <Truck className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No shipments found</h3>
+            <p className="text-xs sm:text-base text-gray-500">
               {statusFilter || searchQuery
                 ? 'Try adjusting your filters'
-                : 'Shipments from sellers will appear here'}
+                : 'Shipments will appear here'}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {shipments.map((shipment) => {
               const statusConfig = STATUS_CONFIG[shipment.status] || STATUS_CONFIG.PENDING
               const StatusIcon = statusConfig.icon
@@ -255,10 +256,10 @@ export default function AdminShipmentsPage() {
                   key={shipment.id}
                   className={`bg-white rounded-xl shadow-sm overflow-hidden ${needsAction ? 'ring-2 ring-purple-200' : ''}`}
                 >
-                  <div className="p-4 md:p-6">
-                    <div className="flex flex-col md:flex-row gap-4">
+                  <div className="p-3 sm:p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       {/* Product Image */}
-                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         <Image
                           src={shipment.product.thumbnailUrl || '/images/placeholder.png'}
                           alt={shipment.product.title}
@@ -270,41 +271,41 @@ export default function AdminShipmentsPage() {
 
                       {/* Shipment Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
                           <div>
-                            <h3 className="font-semibold text-gray-900">
+                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
                               {shipment.product.title}
                             </h3>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs sm:text-sm text-gray-500">
                               {formatCurrency(shipment.product.basePrice)}
                             </p>
                           </div>
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
-                            <StatusIcon className="w-3 h-3" />
-                            {statusConfig.label}
+                          <span className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                            <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            <span className="hidden xs:inline">{statusConfig.label}</span>
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-[10px] sm:text-sm">
                           <div>
                             <p className="text-gray-500">Seller</p>
-                            <p className="font-medium text-gray-900 flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              {shipment.seller.name}
+                            <p className="font-medium text-gray-900 flex items-center gap-0.5 sm:gap-1 truncate">
+                              <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                              <span className="truncate">{shipment.seller.name}</span>
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Courier</p>
                             <p className="font-medium text-gray-900">{shipment.courier}</p>
                           </div>
-                          <div>
+                          <div className="hidden sm:block">
                             <p className="text-gray-500">Tracking</p>
-                            <p className="font-mono text-gray-900">{shipment.trackingNumber}</p>
+                            <p className="font-mono text-gray-900 text-[10px] sm:text-sm">{shipment.trackingNumber}</p>
                           </div>
-                          <div>
+                          <div className="hidden md:block">
                             <p className="text-gray-500">ETA</p>
                             <p className="font-medium text-gray-900 flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                               {shipment.estimatedArrival ? formatDate(shipment.estimatedArrival) : 'N/A'}
                             </p>
                           </div>
@@ -312,22 +313,22 @@ export default function AdminShipmentsPage() {
 
                         {/* Discrepancy Info */}
                         {shipment.hasDiscrepancy && (
-                          <div className="mt-3 p-3 bg-orange-50 rounded-lg">
-                            <p className="text-sm text-orange-800">
-                              <AlertTriangle className="w-4 h-4 inline mr-1" />
-                              Discrepancy reported: {shipment.itemsMissing} missing, {shipment.itemsDamaged} damaged
+                          <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-orange-50 rounded-lg">
+                            <p className="text-[10px] sm:text-sm text-orange-800">
+                              <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 inline mr-0.5 sm:mr-1" />
+                              Discrepancy: {shipment.itemsMissing} missing, {shipment.itemsDamaged} damaged
                             </p>
                           </div>
                         )}
 
                         {/* Actions */}
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-3 sm:mt-4 flex gap-1.5 sm:gap-2">
                           {(shipment.status === 'IN_TRANSIT' || shipment.status === 'DELIVERED') && (
                             <button
                               onClick={() => openReceiveModal(shipment)}
-                              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition"
+                              className="flex items-center gap-1 sm:gap-2 bg-purple-600 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium hover:bg-purple-700 transition"
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                               Confirm Receipt
                             </button>
                           )}
@@ -350,21 +351,23 @@ export default function AdminShipmentsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Previous page"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="text-gray-600">Page {page} of {totalPages}</span>
+            <span className="text-xs sm:text-base text-gray-600">Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Next page"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         )}
@@ -372,94 +375,97 @@ export default function AdminShipmentsPage() {
 
       {/* Receive Modal */}
       {showReceiveModal && selectedShipment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900">Confirm Receipt</h2>
-              <p className="text-gray-600 mt-1">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 border-b">
+              <h2 className="text-base sm:text-xl font-bold text-gray-900">Confirm Receipt</h2>
+              <p className="text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1 truncate">
                 {selectedShipment.product.title}
               </p>
             </div>
             
-            <div className="p-6 space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Expected Items</p>
-                <p className="text-2xl font-bold text-gray-900">{selectedShipment.itemsExpected}</p>
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-[10px] sm:text-sm text-gray-600">Expected Items</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{selectedShipment.itemsExpected}</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="itemsReceived" className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
                     Received
                   </label>
                   <input
+                    id="itemsReceived"
                     type="number"
                     value={receiveForm.itemsReceived}
                     onChange={(e) => setReceiveForm({ ...receiveForm, itemsReceived: parseInt(e.target.value) || 0 })}
                     min={0}
-                    className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-2 sm:px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="itemsMissing" className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
                     Missing
                   </label>
                   <input
+                    id="itemsMissing"
                     type="number"
                     value={receiveForm.itemsMissing}
                     onChange={(e) => setReceiveForm({ ...receiveForm, itemsMissing: parseInt(e.target.value) || 0 })}
                     min={0}
-                    className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-2 sm:px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="itemsDamaged" className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
                     Damaged
                   </label>
                   <input
+                    id="itemsDamaged"
                     type="number"
                     value={receiveForm.itemsDamaged}
                     onChange={(e) => setReceiveForm({ ...receiveForm, itemsDamaged: parseInt(e.target.value) || 0 })}
                     min={0}
-                    className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-2 sm:px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
                   />
                 </div>
               </div>
 
               {(receiveForm.itemsMissing > 0 || receiveForm.itemsDamaged > 0) && (
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <p className="text-sm text-orange-800 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    This will flag the shipment as having a discrepancy
+                <div className="p-2 sm:p-3 bg-orange-50 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-orange-800 flex items-center gap-1 sm:gap-2">
+                    <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
+                    This will flag as discrepancy
                   </p>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
                   Notes
                 </label>
                 <textarea
                   value={receiveForm.notes}
                   onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
                   rows={3}
-                  placeholder="Any notes about the shipment condition..."
-                  className="w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                  placeholder="Notes about condition..."
+                  className="w-full px-2 sm:px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4">
                 <button
                   onClick={() => setShowReceiveModal(false)}
-                  className="flex-1 px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                  className="flex-1 px-3 sm:px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmReceipt}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                  className="flex-1 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
                 >
-                  Confirm Receipt
+                  Confirm
                 </button>
               </div>
             </div>

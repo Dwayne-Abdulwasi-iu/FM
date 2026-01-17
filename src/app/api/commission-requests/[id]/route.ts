@@ -64,10 +64,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let responseData = commissionRequest;
     if (isDesigner && !isAdmin && commissionRequest.deliveryAddress) {
       const addr = commissionRequest.deliveryAddress as Record<string, unknown>;
-      const { phone: _phone, ...sanitizedAddress } = addr;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { phone, ...sanitizedAddress } = addr;
       responseData = {
         ...commissionRequest,
-        deliveryAddress: sanitizedAddress as typeof commissionRequest.deliveryAddress,
+        deliveryAddress: JSON.parse(JSON.stringify(sanitizedAddress)),
       };
     }
 

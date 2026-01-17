@@ -2,22 +2,58 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
+import type Stripe from 'stripe'
 import { paystack, isPaystackConfigured, convertUSDToNGN } from '@/lib/paystack'
 import { initializePayment as initFlutterwavePayment, isFlutterwaveConfigured, getSupportedCountries } from '@/lib/flutterwave'
 import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
+import { fetchExchangeRates, convertFromUSD } from '@/lib/currency'
 
-// Currency conversion rates (in production, fetch from API)
-const EXCHANGE_RATES: Record<string, number> = {
-  USD: 1,
-  NGN: 1550, // Nigerian Naira
-  GHS: 15,   // Ghanaian Cedi
-  ZAR: 18,   // South African Rand
+/**
+ * Get the effective price for a design, considering A/B price tests
+ * 
+ * @param design - The design object with price test fields
+ * @param variant - The variant the user was assigned ('A' = original, 'B' = test price)
+ * @returns The price to charge and variant info
+ */
+function getEffectivePrice(
+  design: {
+    price: number
+    priceTestActive: boolean
+    priceTestVariant: number | null
+    priceTestEndsAt: Date | null
+  },
+  variant?: 'A' | 'B'
+): { price: number; variant: 'A' | 'B'; isTestPrice: boolean } {
+  // Check if test is still active
+  const isTestActive = design.priceTestActive && 
+    design.priceTestVariant !== null && 
+    design.priceTestEndsAt && 
+    new Date(design.priceTestEndsAt) > new Date()
+  
+  if (!isTestActive || !variant || variant === 'A') {
+    return { price: design.price, variant: 'A', isTestPrice: false }
+  }
+  
+  // User saw variant B (test price)
+  return { 
+    price: design.priceTestVariant!, 
+    variant: 'B', 
+    isTestPrice: true 
+  }
 }
 
-function convertCurrency(amountUSD: number, targetCurrency: string): number {
-  const rate = EXCHANGE_RATES[targetCurrency] || 1
-  return Math.round(amountUSD * rate * 100) / 100
+async function convertCurrencyLive(amountUSD: number, targetCurrency: string): Promise<number> {
+  if (targetCurrency === 'USD') return amountUSD
+  
+  // For NGN, use the paystack live rate (more reliable for payments)
+  if (targetCurrency === 'NGN') {
+    return await convertUSDToNGN(amountUSD)
+  }
+  
+  // For other currencies, use the currency lib which fetches from API
+  const rates = await fetchExchangeRates()
+  return Math.round(convertFromUSD(amountUSD, targetCurrency, rates) * 100) / 100
 }
 
 export async function GET() {
@@ -159,10 +195,14 @@ export async function POST(request: NextRequest) {
     price: number; 
     purchaseType?: string; 
     designerId?: string;
+    designTitle?: string;
     // POD-specific fields
     podProductId?: string;
     podProductName?: string;
     podProvider?: string;
+    // A/B test tracking
+    priceTestVariant?: 'A' | 'B';
+    isTestPrice?: boolean;
   }
   const orderItems: OrderItem[] = []
 
@@ -173,7 +213,8 @@ export async function POST(request: NextRequest) {
           isActive: true, 
           approvalStatus: 'APPROVED' 
         },
-        include: { designer: true }
+        include: { designer: true },
+        // We need the raw design for price test fields
       })
 
       if (!design) {
@@ -193,13 +234,39 @@ export async function POST(request: NextRequest) {
 
       // Get correct price based on purchase type
       // For POD items, use the podPrice from the cart; otherwise use design price
+      // For A/B test items, use the variant price the user was shown
       let price: number
+      let priceTestVariant: 'A' | 'B' | undefined
+      let isTestPrice = false
+      
       if (item.purchaseType === 'POD' && item.podPrice) {
         price = item.podPrice
       } else if (item.purchaseType === 'OWNERSHIP' && design.ownershipPrice) {
         price = design.ownershipPrice
       } else {
-        price = design.price
+        // Check for A/B price test
+        // The cart item may include a 'variant' field indicating which price the user saw
+        const effectivePrice = getEffectivePrice(
+          {
+            price: design.price,
+            priceTestActive: design.priceTestActive,
+            priceTestVariant: design.priceTestVariant,
+            priceTestEndsAt: design.priceTestEndsAt,
+          },
+          item.variant as 'A' | 'B' | undefined
+        )
+        price = effectivePrice.price
+        priceTestVariant = effectivePrice.variant
+        isTestPrice = effectivePrice.isTestPrice
+        
+        // Security: If user claims variant B but test is not active or variant price doesn't match,
+        // fall back to original price (prevents manipulation)
+        if (item.variant === 'B' && !effectivePrice.isTestPrice) {
+          console.warn(`[Checkout] User tried variant B but test not active for design ${design.id}`)
+          price = design.price
+          priceTestVariant = 'A'
+          isTestPrice = false
+        }
       }
 
       if (item.purchaseType === 'OWNERSHIP' && !design.ownershipPrice) {
@@ -237,7 +304,8 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         price: price,
         purchaseType: item.purchaseType || 'REGULAR',
-        designerId: design.designerId
+        designerId: design.designerId,
+        designTitle: design.title
       }
       
       // Add POD-specific fields if this is a POD item
@@ -247,24 +315,47 @@ export async function POST(request: NextRequest) {
         orderItem.podProvider = item.podProvider
       }
       
+      // Track A/B price test variant if applicable
+      if (priceTestVariant) {
+        orderItem.priceTestVariant = priceTestVariant
+        orderItem.isTestPrice = isTestPrice
+        
+        // Update the test statistics for this sale
+        if (isTestPrice) {
+          // Async update - don't block checkout
+          prisma.design.update({
+            where: { id: design.id },
+            data: {
+              priceTestSalesB: { increment: item.quantity },
+              priceTestRevenueB: { increment: price * item.quantity },
+            },
+          }).catch(err => console.error('[Checkout] Failed to update price test stats:', err))
+        } else {
+          prisma.design.update({
+            where: { id: design.id },
+            data: {
+              priceTestSalesA: { increment: item.quantity },
+              priceTestRevenueA: { increment: price * item.quantity },
+            },
+          }).catch(err => console.error('[Checkout] Failed to update price test stats:', err))
+        }
+      }
+      
       orderItems.push(orderItem)
     }
 
-    // Platform commission is tiered (0.1% - 10%) based on seller earnings
-    // For multi-seller orders, we use 10% as an estimate here; actual is calculated per-seller in webhook
-    const platformFeeEstimate = Math.round(totalAmount * 0.10 * 100) // Estimated 10% in cents
-    
     // Check if any items are POD orders
     const hasPodItems = orderItems.some(item => item.purchaseType === 'POD')
 
     if (paymentMethod === 'stripe') {
       // Create Stripe checkout session (initialize Stripe lazily)
+      // Note: Platform collects full payment, then calculates tiered commission per-seller in webhook
+      // Commission rates range from 0.1% (STARTER) to 10% (NEW) based on seller earnings tier
       const stripe = getStripe()
       
       // Build metadata - include shipping address if POD items present
       const sessionMetadata: Record<string, string> = {
         userId: session.user.id,
-        platformFee: platformFeeEstimate.toString(),
         orderItems: JSON.stringify(orderItems),
         orderType: hasPodItems ? 'POD' : 'DIGITAL'
       }
@@ -276,22 +367,13 @@ export async function POST(request: NextRequest) {
       
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: lineItems,
+        line_items: lineItems as Stripe.Checkout.SessionCreateParams.LineItem[],
         mode: 'payment',
         success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
         customer_email: session.user.email || undefined,
-        metadata: sessionMetadata,
-        payment_intent_data: {
-          application_fee_amount: platformFeeEstimate,
-          metadata: {
-            userId: session.user.id,
-            platformFee: platformFeeEstimate.toString()
-          }
-        }
-    // Stripe's SDK typing can be noisy here; narrow the rest of our code and allow this single cast.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+        metadata: sessionMetadata
+      })
 
       return NextResponse.json({
         sessionId: checkoutSession.id,
@@ -416,7 +498,7 @@ export async function POST(request: NextRequest) {
       const supportedCountries = getSupportedCountries()
       const countryInfo = supportedCountries.find(c => c.code === countryCode) || supportedCountries.find(c => c.code === 'NG')!
       const currency = countryInfo.currency
-      const amountLocal = convertCurrency(totalAmount, currency)
+      const amountLocal = await convertCurrencyLive(totalAmount, currency)
 
       // Build order data with POD fields if applicable
       const orderData: Record<string, unknown> = {
@@ -454,14 +536,11 @@ export async function POST(request: NextRequest) {
       })
 
       try {
-        const txRef = `FM_${order.id}_${Date.now()}`
-        
         // Build Flutterwave meta with POD info if applicable
         const flwMeta: Record<string, string> = {
           orderId: order.id,
           userId: session.user.id,
           platformFee: Math.round(totalAmount * 0.10).toString(),
-          txRef: txRef,
           orderType: hasPodItems ? 'POD' : 'DIGITAL'
         }
         
@@ -470,7 +549,7 @@ export async function POST(request: NextRequest) {
         }
         
         const flwResult = await initFlutterwavePayment({
-          orderId: order.id,
+          orderId: order.id,  // This becomes tx_ref in Flutterwave
           amount: amountLocal,
           currency: currency,
           email: session.user.email || 'customer@example.com',
@@ -488,17 +567,17 @@ export async function POST(request: NextRequest) {
           throw new Error('Failed to get Flutterwave payment link')
         }
 
-        // Update order with Flutterwave reference
+        // Store Flutterwave reference (order.id is used as tx_ref)
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            flutterwaveRef: txRef
+            flutterwaveRef: order.id  // tx_ref in Flutterwave = order.id
           }
         })
 
         return NextResponse.json({
           orderId: order.id,
-          reference: txRef,
+          reference: order.id,
           url: flwResult.data.link,
           paymentMethod: 'flutterwave',
           currency: currency,

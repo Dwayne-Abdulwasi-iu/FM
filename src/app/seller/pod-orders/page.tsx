@@ -257,6 +257,7 @@ export default function PODOrdersPage() {
                       <button
                         onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label={selectedOrder?.id === order.id ? 'Collapse order details' : 'Expand order details'}
                       >
                         <svg 
                           className={`w-5 h-5 transition-transform ${selectedOrder?.id === order.id ? 'rotate-180' : ''}`} 

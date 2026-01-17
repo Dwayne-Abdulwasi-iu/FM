@@ -8,6 +8,7 @@ import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
 import Image from 'next/image'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
 import { DesignerBadgeCompact } from '@/components/DesignerBadge'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Design {
   id: string
@@ -36,6 +37,7 @@ interface Design {
 export default function DesignsPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -83,13 +85,6 @@ export default function DesignsPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
   }
 
   const handleAddToCart = async (designId: string, designTitle: string) => {

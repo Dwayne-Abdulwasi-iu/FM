@@ -250,6 +250,7 @@ export default function DesignProductsPage() {
                               ${activeMockup === mockup 
                                 ? 'border-purple-600 ring-2 ring-purple-200' 
                                 : 'border-gray-200 hover:border-gray-300'}`}
+                    aria-label={`View ${mockup.placement} mockup`}
                   >
                     <Image
                       src={mockup.url}
@@ -426,6 +427,7 @@ export default function DesignProductsPage() {
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
                           className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center
                                    hover:bg-gray-50 transition-colors"
+                          aria-label="Decrease quantity"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -436,6 +438,7 @@ export default function DesignProductsPage() {
                           onClick={() => setQuantity(quantity + 1)}
                           className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center
                                    hover:bg-gray-50 transition-colors"
+                          aria-label="Increase quantity"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

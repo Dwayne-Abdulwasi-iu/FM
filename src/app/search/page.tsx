@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Eye, Crown, Search, ArrowLeft } from 'lucide-react'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Design {
   id: string
@@ -94,12 +95,7 @@ export default function SearchPage() {
     if (query) performSearch()
   }, [query, page, selectedCategory, performSearch])
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
+  const { formatPrice } = useCurrency()
 
   if (!query) {
     return (

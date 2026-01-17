@@ -5,7 +5,7 @@ import { sendOrderConfirmation } from '@/lib/whatsapp';
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers';
 import { checkAndUpdateSellerTier } from '@/lib/tier-management';
 import { fulfillPODOrder } from '@/lib/pod-service';
-import { sendAdminPODAlert } from '@/lib/email';
+import { sendAdminPODAlert, sendSaleNotificationEmail } from '@/lib/email';
 import { queueFailedNotification } from '@/lib/notification-queue';
 
 const FLUTTERWAVE_WEBHOOK_SECRET = process.env.FLUTTERWAVE_WEBHOOK_SECRET || '';
@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
         items: {
           include: {
             design: {
-              include: {
+              select: {
+                id: true,
+                title: true,
+                designerId: true,
+                imageUrl: true,
                 designer: {
                   select: {
                     id: true,
@@ -158,6 +162,23 @@ export async function POST(request: NextRequest) {
         },
       });
       
+      // Send sale notification email to seller
+      const sellerUser = await prisma.user.findUnique({
+        where: { id: sellerId },
+        select: { email: true, name: true, displayName: true }
+      });
+      
+      if (sellerUser?.email) {
+        sendSaleNotificationEmail(
+          sellerUser.email,
+          sellerUser.displayName || sellerUser.name || 'Designer',
+          item.design.title || 'Design',
+          saleAmount,
+          designerEarnings,
+          item.purchaseType || 'REGULAR'
+        ).catch(err => console.error('Failed to send sale notification:', err));
+      }
+      
       // Store previous earnings before updating (for tier change detection)
       const previousEarnings = totalEarnings;
       
@@ -187,6 +208,17 @@ export async function POST(request: NextRequest) {
           purchasePrice: item.price * item.quantity,
           purchaseType: item.purchaseType,
         },
+      });
+    }
+
+    // Clear user's cart - need to account for purchase type
+    for (const item of orderItems) {
+      await prisma.cartItem.deleteMany({
+        where: {
+          userId: typedOrder.customerId,
+          designId: item.designId,
+          purchaseType: item.purchaseType || 'REGULAR'
+        }
       });
     }
 

@@ -27,17 +27,19 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
 ]
 
 // Exchange rates cache (updated via API)
+// NOTE: These are fallback values only - live rates are fetched from API
+// Last updated: January 2026 - update periodically as a safety net
 let exchangeRatesCache: Record<string, number> = {
   USD: 1,
-  NGN: 1550,  // Default fallback
+  NGN: 1600,  // Default fallback (aligned with paystack.ts)
   GBP: 0.79,
   EUR: 0.92,
-  GHS: 15.5,
-  KES: 153,
-  ZAR: 18.5,
-  CAD: 1.36,
-  AUD: 1.53,
-  INR: 83.5,
+  GHS: 16,
+  KES: 155,
+  ZAR: 19,
+  CAD: 1.38,
+  AUD: 1.55,
+  INR: 85,
 }
 
 let lastFetchTime = 0

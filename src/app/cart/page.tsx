@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, X, AlertCircle, Package, Download, Truck } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface CartItem {
   id: string
@@ -16,6 +17,9 @@ interface CartItem {
   podProductName?: string
   podProvider?: string
   podPrice?: number
+  // A/B Price Test fields
+  priceTestVariant?: 'A' | 'B'
+  priceTestPrice?: number
   design: {
     id: string
     title: string
@@ -164,6 +168,11 @@ export default function CartPage() {
               podProductName: item.podProductName,
               podProvider: item.podProvider,
               podPrice: item.podPrice
+            } : {}),
+            // Include A/B test variant if present
+            ...(item.priceTestVariant ? {
+              variant: item.priceTestVariant,
+              testPrice: item.priceTestPrice
             } : {})
           })),
           paymentMethod,
@@ -201,19 +210,12 @@ export default function CartPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
+  const { formatPrice } = useCurrency()
 
   const calculateTotal = () => {
     return cartItems.reduce((sum, item) => {
-      // For POD items, use podPrice; for digital, use design.price
-      const itemPrice = item.purchaseType === 'POD' && item.podPrice 
-        ? item.podPrice 
-        : item.design.price
+      // Use the same logic as getItemPrice
+      const itemPrice = getItemPrice(item)
       return sum + (itemPrice * item.quantity)
     }, 0)
   }
@@ -224,7 +226,21 @@ export default function CartPage() {
   
   // Helper to get item price
   const getItemPrice = (item: CartItem) => {
-    return item.purchaseType === 'POD' && item.podPrice ? item.podPrice : item.design.price
+    // POD items use podPrice
+    if (item.purchaseType === 'POD' && item.podPrice) {
+      return item.podPrice
+    }
+    // A/B test items use the stored test price
+    if (item.priceTestVariant && item.priceTestPrice) {
+      return item.priceTestPrice
+    }
+    // Default to design price
+    return item.design.price
+  }
+  
+  // Check if item has a test price (for display purposes)
+  const hasTestPrice = (item: CartItem) => {
+    return item.priceTestVariant === 'B' && item.priceTestPrice && item.priceTestPrice !== item.design.price
   }
   
   // Helper to get item type badge
@@ -390,6 +406,11 @@ export default function CartPage() {
                       </div>
                       <p className="font-semibold text-gray-900 mt-1">
                         {formatPrice(getItemPrice(item))}
+                        {hasTestPrice(item) && (
+                          <span className="ml-2 text-sm text-gray-400 line-through font-normal">
+                            {formatPrice(item.design.price)}
+                          </span>
+                        )}
                       </p>
                     </div>
                     
@@ -581,6 +602,7 @@ export default function CartPage() {
                           value={countryCode}
                           onChange={(e) => setCountryCode(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          aria-label="Select your country for Flutterwave payment"
                         >
                           <option value="NG">🇳🇬 Nigeria (NGN)</option>
                           <option value="GH">🇬🇭 Ghana (GHS)</option>
@@ -660,6 +682,7 @@ export default function CartPage() {
                           value={shippingAddress.country}
                           onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          aria-label="Select shipping country"
                         >
                           <option value="NG">🇳🇬 Nigeria</option>
                           <option value="GH">🇬🇭 Ghana</option>

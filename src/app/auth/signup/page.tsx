@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react'
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -11,6 +11,7 @@ export default function SignUpPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   })
@@ -36,6 +37,12 @@ export default function SignUpPage() {
       return
     }
 
+    if (!formData.phone) {
+      setError('Phone number is required')
+      setLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -45,14 +52,16 @@ export default function SignUpPage() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           password: formData.password,
         }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        router.push('/auth/signin?message=Account created successfully')
+        router.push('/auth/signin?message=Account created successfully! Please sign in.')
       } else {
-        const data = await response.json()
         setError(data.error || 'Failed to create account')
       }
     } catch (_error) {
@@ -138,6 +147,29 @@ export default function SignUpPage() {
             </div>
 
             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  required
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="+234 xxx xxx xxxx"
+                />
+                <Phone className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Include country code. Used for important account notifications.
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
@@ -200,6 +232,17 @@ export default function SignUpPage() {
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
             </div>
+
+            <p className="text-xs text-center text-gray-500">
+              By creating an account, you agree to our{' '}
+              <Link href="/terms" className="text-indigo-600 hover:text-indigo-500">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-indigo-600 hover:text-indigo-500">
+                Privacy Policy
+              </Link>
+            </p>
           </form>
         </div>
       </div>

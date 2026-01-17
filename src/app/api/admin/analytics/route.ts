@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const days = parseInt(searchParams.get('days') || '30')
+    const daysParam = parseInt(searchParams.get('days') || '30')
+    const days = Number.isNaN(daysParam) || daysParam < 1 ? 30 : Math.min(daysParam, 365)
 
     const dateFrom = new Date()
     dateFrom.setDate(dateFrom.getDate() - days)

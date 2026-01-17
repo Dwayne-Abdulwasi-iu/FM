@@ -17,6 +17,8 @@ import {
   ExternalLink,
   Copy,
   AlertCircle,
+  RotateCcw,
+  Star,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -87,6 +89,11 @@ export default function BoutiqueOrderDetailPage() {
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnDescription, setReturnDescription] = useState('');
+  const [selectedItemId, setSelectedItemId] = useState('');
 
   useEffect(() => {
     if (authStatus === 'unauthenticated') {
@@ -95,6 +102,57 @@ export default function BoutiqueOrderDetailPage() {
       fetchOrder();
     }
   }, [authStatus, router, orderId]);
+
+  const confirmDelivery = async () => {
+    setConfirming(true);
+    try {
+      const response = await fetch(`/api/boutique/orders/${orderId}/confirm`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Order confirmed! Thank you for your purchase.');
+        fetchOrder();
+      } else {
+        toast.error(data.message || 'Failed to confirm delivery');
+      }
+    } catch (error) {
+      toast.error('Failed to confirm delivery');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const submitReturnRequest = async () => {
+    if (!returnReason || !selectedItemId) {
+      toast.error('Please select an item and reason');
+      return;
+    }
+    setConfirming(true);
+    try {
+      const response = await fetch('/api/boutique/returns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderItemId: selectedItemId,
+          reason: returnReason,
+          description: returnDescription,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Return request submitted!');
+        setShowReturnModal(false);
+        fetchOrder();
+      } else {
+        toast.error(data.message || 'Failed to submit return request');
+      }
+    } catch (error) {
+      toast.error('Failed to submit return request');
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   const fetchOrder = async () => {
     try {
@@ -245,6 +303,7 @@ export default function BoutiqueOrderDetailPage() {
                 <button
                   onClick={() => copyToClipboard(order.trackingNumber!, 'Tracking number')}
                   className="p-2 hover:bg-purple-100 rounded-lg transition"
+                  aria-label="Copy tracking number"
                 >
                   <Copy className="w-4 h-4 text-purple-600" />
                 </button>
@@ -254,6 +313,7 @@ export default function BoutiqueOrderDetailPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 hover:bg-purple-100 rounded-lg transition"
+                    aria-label="Track shipment on carrier website"
                   >
                     <ExternalLink className="w-4 h-4 text-purple-600" />
                   </a>
@@ -412,7 +472,140 @@ export default function BoutiqueOrderDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Action Buttons - Confirm Delivery / Request Return */}
+        {!isCancelled && (
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            {/* Confirm Delivery - Only show when DELIVERED status */}
+            {order.status === 'DELIVERED' && (
+              <button
+                onClick={confirmDelivery}
+                disabled={confirming}
+                className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+              >
+                <CheckCircle className="w-5 h-5" />
+                {confirming ? 'Confirming...' : 'Confirm Delivery'}
+              </button>
+            )}
+
+            {/* Request Return - Show for DELIVERED or COMPLETED orders */}
+            {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.boutiqueReturn && (
+              <button
+                onClick={() => setShowReturnModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 font-medium"
+              >
+                <RotateCcw className="w-5 h-5" />
+                Request Return
+              </button>
+            )}
+
+            {/* Leave Review - Show for COMPLETED orders */}
+            {order.status === 'COMPLETED' && (
+              <Link
+                href={`/boutique/${order.items[0]?.product.slug}#reviews`}
+                className="flex-1 flex items-center justify-center gap-2 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 font-medium"
+              >
+                <Star className="w-5 h-5" />
+                Leave a Review
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* Return Status Banner */}
+        {order.boutiqueReturn && (
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <RotateCcw className="w-5 h-5 text-blue-600" />
+              <div>
+                <h3 className="font-medium text-blue-900">Return Request</h3>
+                <p className="text-sm text-blue-700">
+                  Status: {order.boutiqueReturn.status.replace(/_/g, ' ')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Return Request Modal */}
+      {showReturnModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Request Return</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="returnItemSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Item
+                </label>
+                <select
+                  id="returnItemSelect"
+                  value={selectedItemId}
+                  onChange={(e) => setSelectedItemId(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                >
+                  <option value="" className="text-gray-900">Choose an item...</option>
+                  {order.items.map((item) => (
+                    <option key={item.id} value={item.id} className="text-gray-900">
+                      {item.product.title} (Qty: {item.quantity})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="returnReasonSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Return
+                </label>
+                <select
+                  id="returnReasonSelect"
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                >
+                  <option value="" className="text-gray-900">Select a reason...</option>
+                  <option value="WRONG_SIZE" className="text-gray-900">Wrong Size</option>
+                  <option value="DEFECTIVE" className="text-gray-900">Defective/Damaged</option>
+                  <option value="NOT_AS_DESCRIBED" className="text-gray-900">Not as Described</option>
+                  <option value="WRONG_ITEM" className="text-gray-900">Wrong Item Received</option>
+                  <option value="CHANGED_MIND" className="text-gray-900">Changed My Mind</option>
+                  <option value="OTHER" className="text-gray-900">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={returnDescription}
+                  onChange={(e) => setReturnDescription(e.target.value)}
+                  rows={3}
+                  className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                  placeholder="Provide more details about your return request..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowReturnModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReturnRequest}
+                disabled={confirming || !returnReason || !selectedItemId}
+                className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                {confirming ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -191,6 +191,7 @@ export default function OrdersPage() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                aria-label="Filter by order status"
               >
                 <option value="all">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -205,6 +206,7 @@ export default function OrdersPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as 'all' | 'DIGITAL' | 'POD')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+              aria-label="Filter by order type"
             >
               <option value="all">All Types</option>
               <option value="DIGITAL">Digital Downloads</option>
@@ -328,6 +330,7 @@ export default function OrdersPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-indigo-600 hover:text-indigo-800"
+                            aria-label="Track shipment"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -367,6 +370,7 @@ export default function OrdersPage() {
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -377,6 +381,7 @@ export default function OrdersPage() {
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import { usePreferencesSync, savePreference } from '@/hooks/usePreferencesSync';
 import i18n, {
   Locale,
   DEFAULT_LOCALE,
@@ -35,10 +37,21 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children, defaultLocale }: LanguageProviderProps) {
+  const { status } = useSession();
   const [locale, setLocaleState] = useState<Locale>(defaultLocale || DEFAULT_LOCALE);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize locale from storage or browser
+  // Sync from database when user logs in (uses shared fetch with CurrencyProvider)
+  const handlePreferencesSync = useCallback((data: { language?: string | null }) => {
+    if (data.language && SUPPORTED_LOCALES.some((l: LocaleConfig) => l.code === data.language)) {
+      setLocaleState(data.language as Locale);
+      saveLocale(data.language as Locale);
+    }
+  }, []);
+
+  usePreferencesSync(handlePreferencesSync);
+
+  // Initialize locale from storage or browser (instant)
   useEffect(() => {
     const stored = getStoredLocale();
     if (stored) {
@@ -61,10 +74,16 @@ export function LanguageProvider({ children, defaultLocale }: LanguageProviderPr
     }
   }, [locale]);
 
+  // Save to both localStorage and database
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
     saveLocale(newLocale);
-  }, []);
+    
+    // Sync to database in background if logged in
+    if (status === 'authenticated') {
+      savePreference('language', newLocale);
+    }
+  }, [status]);
 
   const t = useCallback(
     (key: string, variables?: Record<string, string | number>) => {

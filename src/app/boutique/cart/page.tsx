@@ -343,6 +343,7 @@ export default function BoutiqueCartPage() {
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           disabled={updating === item.id || item.quantity <= 1}
                           className="p-1 rounded border hover:bg-gray-50 disabled:opacity-50"
+                          aria-label="Decrease quantity"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
@@ -351,6 +352,7 @@ export default function BoutiqueCartPage() {
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={updating === item.id || item.quantity >= item.maxQuantity}
                           className="p-1 rounded border hover:bg-gray-50 disabled:opacity-50"
+                          aria-label="Increase quantity"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -370,6 +372,7 @@ export default function BoutiqueCartPage() {
                           onClick={() => removeItem(item.id)}
                           disabled={updating === item.id}
                           className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                          aria-label="Remove item from cart"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

@@ -260,12 +260,14 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => setSelectedMedia(i => (i - 1 + allMedia.length) % allMedia.length)}
                     className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-md hover:bg-white"
+                    aria-label="Previous image"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setSelectedMedia(i => (i + 1) % allMedia.length)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-md hover:bg-white"
+                    aria-label="Next image"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -283,6 +285,7 @@ export default function ProductDetailPage() {
                     className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 ${
                       selectedMedia === index ? 'border-purple-600' : 'border-transparent'
                     }`}
+                    aria-label={`View ${media.type === 'VIDEO' ? 'video' : 'image'} ${index + 1}`}
                   >
                     {media.type === 'VIDEO' ? (
                       <div className="w-full h-full bg-gray-900 flex items-center justify-center">
@@ -422,6 +425,7 @@ export default function ProductDetailPage() {
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="p-2 hover:bg-gray-50"
                     disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
@@ -430,6 +434,7 @@ export default function ProductDetailPage() {
                     onClick={() => setQuantity(q => Math.min(getMaxQuantity(), q + 1))}
                     className="p-2 hover:bg-gray-50"
                     disabled={quantity >= getMaxQuantity()}
+                    aria-label="Increase quantity"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -455,10 +460,11 @@ export default function ProductDetailPage() {
                 className={`p-3 border rounded-xl hover:bg-gray-50 ${
                   isFavorite ? 'border-red-200 bg-red-50' : 'border-gray-200'
                 }`}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <Heart className={`w-6 h-6 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
               </button>
-              <button className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50">
+              <button className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50" aria-label="Share product">
                 <Share2 className="w-6 h-6 text-gray-600" />
               </button>
             </div>

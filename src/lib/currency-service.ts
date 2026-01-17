@@ -118,25 +118,26 @@ async function tryOpenExchangeRates(baseCurrency: string): Promise<Record<string
 /**
  * Fallback exchange rates (updated periodically)
  * These should be updated regularly to reflect approximate real rates
+ * Last updated: January 2026 - aligned with paystack.ts fallback
  */
 function getFallbackRates(baseCurrency: string): Record<string, number> {
-  // Rates relative to USD as of early 2026 (approximate)
+  // Rates relative to USD as of January 2026 (approximate)
   const usdRates: Record<string, number> = {
     USD: 1,
     EUR: 0.92,
     GBP: 0.79,
-    NGN: 1550,
-    GHS: 14.5,
-    KES: 153,
-    ZAR: 18.5,
-    TZS: 2650,
-    UGX: 3700,
-    RWF: 1350,
-    XOF: 605,
-    XAF: 605,
-    INR: 83.5,
-    BRL: 4.95,
-    MXN: 17.2
+    NGN: 1600,
+    GHS: 16,
+    KES: 155,
+    ZAR: 19,
+    TZS: 2700,
+    UGX: 3800,
+    RWF: 1400,
+    XOF: 610,
+    XAF: 610,
+    INR: 85,
+    BRL: 5.0,
+    MXN: 17.5
   };
 
   if (baseCurrency === 'USD') {

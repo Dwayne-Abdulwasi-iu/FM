@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { fetchExchangeRates, convertToUSD } from '@/lib/currency'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -120,8 +121,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const title = formData.get('title') as string
     const description = formData.get('description') as string
-    const price = parseFloat(formData.get('price') as string)
-    const ownershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
+    const submittedPrice = parseFloat(formData.get('price') as string)
+    const submittedOwnershipPrice = formData.get('ownershipPrice') ? parseFloat(formData.get('ownershipPrice') as string) : null
+    const submittedCurrency = (formData.get('currency') as string) || 'USD'
     const category = formData.get('category') as string
     const tagsString = formData.get('tags') as string
     // Parse tags from comma-separated string to array
@@ -129,6 +131,18 @@ export async function POST(request: NextRequest) {
       ? tagsString.split(',').map(t => t.trim()).filter(t => t.length > 0)
       : []
     const buyingTypes = formData.get('buyingTypes') as string || 'REGULAR'
+
+    // Convert to USD for storage (all prices stored in USD for consistency)
+    let price = submittedPrice
+    let ownershipPrice = submittedOwnershipPrice
+    
+    if (submittedCurrency !== 'USD') {
+      const rates = await fetchExchangeRates()
+      price = convertToUSD(submittedPrice, submittedCurrency, rates)
+      if (submittedOwnershipPrice) {
+        ownershipPrice = convertToUSD(submittedOwnershipPrice, submittedCurrency, rates)
+      }
+    }
 
     // Get all files and metadata
     const files = formData.getAll('files') as File[]
@@ -141,9 +155,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!title || !price || price <= 0) {
+    if (!title || !submittedPrice || submittedPrice <= 0) {
       return NextResponse.json(
         { message: 'Title and valid price are required' },
+        { status: 400 }
+      )
+    }
+    
+    // Validate currency
+    if (submittedCurrency && !['USD', 'NGN'].includes(submittedCurrency)) {
+      return NextResponse.json(
+        { message: 'Invalid currency. Supported currencies: USD, NGN' },
         { status: 400 }
       )
     }
@@ -255,6 +277,9 @@ export async function POST(request: NextRequest) {
         description: description || null,
         price,
         ownershipPrice,
+        submittedPrice,
+        submittedCurrency,
+        submittedOwnershipPrice,
         imageUrl: primaryImageUrl,
         thumbnailUrl,
         category,

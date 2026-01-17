@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Heart, ShoppingCart, ArrowLeft, Share2, CheckCircle, X, Shield, MessageCircle, Star } from 'lucide-react'
+import { Heart, ShoppingCart, ArrowLeft, CheckCircle, X, Shield, MessageCircle, Star } from 'lucide-react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import DesignerBadge from '@/components/DesignerBadge'
 import { ProductJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { useCurrency } from '@/components/CurrencyProvider'
+import SimilarDesigns from '@/components/SimilarDesigns'
+import { ShareButton } from '@/components/social/SocialShare'
+import { usePriceTest, trackVariantView } from '@/lib/price-test'
 
 
 interface MediaFile {
@@ -45,6 +49,10 @@ interface Design {
   tags: string | null
   createdAt: string
   avgRating?: number
+  // A/B Price Testing fields
+  priceTestActive?: boolean
+  priceTestVariant?: number | null
+  priceTestEndsAt?: string | null
   designer: {
     id: string
     name: string | null
@@ -104,6 +112,24 @@ export default function DesignPage() {
   const [showPODSection, setShowPODSection] = useState(false)
   const [submittingReview, setSubmittingReview] = useState(false)
   const [hasReviewed, setHasReviewed] = useState(false)
+  
+  // A/B Price Testing - get the price to show this user
+  const priceTest = usePriceTest(
+    {
+      designId: design?.id || '',
+      originalPrice: design?.price || 0,
+      variantPrice: design?.priceTestVariant,
+      isTestActive: design?.priceTestActive,
+    },
+    session?.user?.id
+  )
+  
+  // Track view when user sees the design with a price test
+  useEffect(() => {
+    if (design?.priceTestActive && priceTest.isTestActive) {
+      trackVariantView(design.id, priceTest.variant)
+    }
+  }, [design?.id, design?.priceTestActive, priceTest.isTestActive, priceTest.variant])
 
   // Check if admin is viewing this page via ?admin=true
   const isAdminViewing = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === 'true' && session?.user?.role === 'ADMIN'
@@ -303,7 +329,12 @@ export default function DesignPage() {
         },
         body: JSON.stringify({
           designId: design?.id,
-          quantity: 1
+          quantity: 1,
+          // Include A/B test variant if active
+          ...(priceTest.isTestActive && {
+            variant: priceTest.variant,
+            testPrice: priceTest.price,
+          }),
         })
       })
 
@@ -341,7 +372,12 @@ export default function DesignPage() {
         },
         body: JSON.stringify({
           designId: design?.id,
-          quantity: 1
+          quantity: 1,
+          // Include A/B test variant if active
+          ...(priceTest.isTestActive && {
+            variant: priceTest.variant,
+            testPrice: priceTest.price,
+          }),
         })
       })
 
@@ -400,12 +436,7 @@ export default function DesignPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
+  const { formatPrice } = useCurrency()
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -764,7 +795,12 @@ export default function DesignPage() {
           <div className="space-y-3 sm:space-y-4">
             <div>
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{design.title}</h1>
-              <p className="text-lg sm:text-xl font-bold text-indigo-600">{formatPrice(design.price)}</p>
+              <p className="text-lg sm:text-xl font-bold text-indigo-600">
+                {formatPrice(priceTest.price)}
+                {priceTest.isTestActive && priceTest.variant === 'B' && priceTest.price !== design.price && (
+                  <span className="ml-2 text-sm text-gray-400 line-through">{formatPrice(design.price)}</span>
+                )}
+              </p>
             </div>
 
             {/* Designer Info */}
@@ -932,9 +968,13 @@ export default function DesignPage() {
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} />
                 </button>
                 
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Share design">
-                  <Share2 className="h-5 w-5 text-gray-600" />
-                </button>
+                <ShareButton
+                  url={typeof window !== 'undefined' ? window.location.href : ''}
+                  title={`${design.title} by ${design.designer.name || 'Designer'} | DesignDrop`}
+                  description={design.description || `Check out this amazing fashion design on DesignDrop`}
+                  imageUrl={design.imageUrl}
+                  className="p-1"
+                />
 
               </div>
 
@@ -1322,6 +1362,16 @@ export default function DesignPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Similar Designs Section */}
+      <div className="mt-8">
+        <SimilarDesigns 
+          designId={design.id} 
+          category={design.category}
+          designerId={design.designer.id}
+          limit={4}
+        />
       </div>
     </div>
   )

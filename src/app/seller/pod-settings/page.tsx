@@ -230,6 +230,7 @@ export default function PODSettingsPage() {
                     value={settings.podDefaultMarkup}
                     onChange={(e) => setSettings({ ...settings, podDefaultMarkup: parseInt(e.target.value) })}
                     className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-600"
+                    aria-label="Default markup percentage"
                   />
                   <div className="w-20 text-center">
                     <span className="text-2xl font-bold text-orange-600">{settings.podDefaultMarkup}%</span>
@@ -260,6 +261,7 @@ export default function PODSettingsPage() {
                       className="sr-only peer"
                       checked={settings.podAutoApprove}
                       onChange={(e) => setSettings({ ...settings, podAutoApprove: e.target.checked })}
+                      aria-label="Auto-approve products"
                     />
                     <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>

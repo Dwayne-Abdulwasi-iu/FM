@@ -2,27 +2,93 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
+/**
+ * Validate and normalize phone number
+ * Accepts Nigerian numbers (0803... -> +234803...) and international formats
+ */
+function validatePhoneNumber(phone: string): { valid: boolean; normalized: string; error?: string } {
+  // Remove all spaces, dashes, parentheses
+  let normalized = phone.replace(/[\s\-\(\)]/g, '')
+
+  // Handle Nigerian local format (0803... -> +234803...)
+  if (normalized.startsWith('0') && normalized.length === 11) {
+    normalized = '+234' + normalized.slice(1)
+  }
+
+  // Ensure it starts with +
+  if (!normalized.startsWith('+')) {
+    normalized = '+' + normalized
+  }
+
+  // Basic validation: + followed by 7-15 digits
+  const phoneRegex = /^\+[1-9]\d{6,14}$/
+  if (!phoneRegex.test(normalized)) {
+    return { 
+      valid: false, 
+      normalized, 
+      error: 'Invalid phone number. Include country code (e.g., +234 for Nigeria)' 
+    }
+  }
+
+  return { valid: true, normalized }
+}
+
+/**
+ * POST /api/auth/register
+ * 
+ * Simple single-step registration.
+ * Phone is required but not OTP-verified (admin can contact via email if phone fails).
+ */
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
+    const { name, email, phone, password } = await request.json()
     // SECURITY: Role is always USER - never accept from client to prevent privilege escalation
     const role = "USER";
 
-    if (!name || !email || !password) {
+    if (!name || !email || !phone || !password) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields (name, email, phone, password)" },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Validate and normalize phone number
+    const phoneValidation = validatePhoneNumber(phone)
+    if (!phoneValidation.valid) {
+      return NextResponse.json(
+        { error: phoneValidation.error },
+        { status: 400 }
+      )
+    }
+    const normalizedPhone = phoneValidation.normalized
+
+    // Check if email already exists
+    const existingEmail = await prisma.user.findUnique({
       where: { email }
     });
 
-    if (existingUser) {
+    if (existingEmail) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: "Email is already registered" },
+        { status: 400 }
+      );
+    }
+
+    // Check if phone already exists
+    const existingPhone = await prisma.user.findUnique({
+      where: { phone: normalizedPhone }
+    });
+
+    if (existingPhone) {
+      return NextResponse.json(
+        { error: "Phone number is already registered" },
         { status: 400 }
       );
     }
@@ -35,6 +101,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
+        phone: normalizedPhone,
         password: hashedPassword,
         role: role.toUpperCase(),
       },
@@ -47,21 +114,31 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json({ 
+      success: true,
+      message: "Account created successfully. You can now sign in.",
+      user 
+    }, { status: 201 });
+
   } catch (error) {
     console.error("Registration error:", error);
-    // Prisma error P2031 occurs when MongoDB transactions are attempted but
-    // the server is not a replica set (common for local single-node mongod).
-    // Provide a clearer message so devs can fix their local Mongo setup.
-    // See: https://pris.ly/d/mongodb-replica-set
-    // If other errors occur, fall back to generic 500.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e: any = error
+    
+    // Handle duplicate key errors
+    if (e?.code === 'P2002') {
+      const field = e.meta?.target?.[0] || 'field'
+      return NextResponse.json(
+        { error: `This ${field} is already registered` },
+        { status: 400 }
+      )
+    }
+
     if (e && e.code === 'P2031') {
       return NextResponse.json(
         {
           error:
-            'Prisma requires MongoDB to be run as a replica set for transactions (P2031). For local dev: start mongod with --replSet and run rs.initiate(), or use MongoDB Atlas.'
+            'Database connection issue. Please try again.'
         },
         { status: 503 }
       )
