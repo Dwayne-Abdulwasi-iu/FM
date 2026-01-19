@@ -216,7 +216,7 @@ export default function NotificationsPage() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as 'all' | 'unread')}
-                className="text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                 aria-label="Filter by read status"
               >
                 <option value="all">All notifications</option>
@@ -229,7 +229,7 @@ export default function NotificationsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                 aria-label="Filter by notification type"
               >
                 <option value="">All types</option>

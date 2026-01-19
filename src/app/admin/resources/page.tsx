@@ -208,44 +208,44 @@ export default function AdminResourcesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Resources</h1>
-            <p className="text-gray-600 mt-1">Add and manage educational resources for the platform</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Manage Resources</h1>
+            <p className="text-xs sm:text-sm text-gray-900 mt-0.5 sm:mt-1">Add and manage educational resources for the platform</p>
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+            className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors text-xs sm:text-sm"
           >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Resource
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Add</span> Resource
           </button>
         </div>
 
         {/* Add/Edit Form */}
         {showAddForm && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 md:mb-8">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">
                 {editingResource ? 'Edit Resource' : 'Add New Resource'}
               </h2>
               <button
                 onClick={resetForm}
-                className="p-2 text-gray-400 hover:text-gray-600"
+                className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600"
                 title="Close form"
                 aria-label="Close add resource form"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Title */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Title *
                   </label>
                   <input
@@ -253,14 +253,14 @@ export default function AdminResourcesPage() {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="Enter resource title"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Description *
                   </label>
                   <textarea
@@ -268,14 +268,14 @@ export default function AdminResourcesPage() {
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="Describe the resource and its value"
                   />
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Resource Type *
                   </label>
                   <select
@@ -284,7 +284,7 @@ export default function AdminResourcesPage() {
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                     title="Select resource type"
                     aria-label="Select resource type"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                   >
                     {resourceTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -294,7 +294,7 @@ export default function AdminResourcesPage() {
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Category *
                   </label>
                   <select
@@ -303,7 +303,7 @@ export default function AdminResourcesPage() {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     title="Select resource category"
                     aria-label="Select resource category"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                   >
                     {categories.map(category => (
                       <option key={category.value} value={category.value}>{category.label}</option>
@@ -313,7 +313,7 @@ export default function AdminResourcesPage() {
 
                 {/* Difficulty */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Difficulty Level *
                   </label>
                   <select
@@ -322,7 +322,7 @@ export default function AdminResourcesPage() {
                     onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
                     title="Select difficulty level"
                     aria-label="Select difficulty level"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                   >
                     {difficulties.map(difficulty => (
                       <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>
@@ -332,7 +332,7 @@ export default function AdminResourcesPage() {
 
                 {/* Format */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Format *
                   </label>
                   <select
@@ -341,7 +341,7 @@ export default function AdminResourcesPage() {
                     onChange={(e) => setFormData({ ...formData, format: e.target.value })}
                     title="Select resource format"
                     aria-label="Select resource format"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                   >
                     {formats.map(format => (
                       <option key={format.value} value={format.value}>{format.label}</option>
@@ -351,70 +351,70 @@ export default function AdminResourcesPage() {
 
                 {/* URL */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     URL
                   </label>
                   <input
                     type="url"
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="https://example.com"
                   />
                 </div>
 
                 {/* Download URL */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Download URL
                   </label>
                   <input
                     type="url"
                     value={formData.downloadUrl}
                     onChange={(e) => setFormData({ ...formData, downloadUrl: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="https://example.com/file.pdf"
                   />
                 </div>
 
                 {/* Duration */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Duration (for videos)
                   </label>
                   <input
                     type="text"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="e.g., 45 min, 2 hours"
                   />
                 </div>
 
                 {/* Thumbnail */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Thumbnail URL
                   </label>
                   <input
                     type="url"
                     value={formData.thumbnail}
                     onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
 
                 {/* Tags */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1 sm:mb-2">
                     Tags (comma separated)
                   </label>
                   <input
                     type="text"
                     value={formData.tags}
                     onChange={(e) => handleTagsChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                     placeholder="fashion, design, tutorial, beginner"
                   />
                 </div>
@@ -426,27 +426,27 @@ export default function AdminResourcesPage() {
                       type="checkbox"
                       checked={formData.featured}
                       onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Featured Resource</span>
+                    <span className="ml-2 text-xs sm:text-sm text-gray-900">Featured Resource</span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end space-x-2 sm:space-x-4">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors text-xs sm:text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50"
+                  className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 text-xs sm:text-sm"
                 >
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   {saving ? 'Saving...' : editingResource ? 'Update Resource' : 'Add Resource'}
                 </button>
               </div>
@@ -456,80 +456,80 @@ export default function AdminResourcesPage() {
 
         {/* Resources List */}
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Existing Resources</h2>
-            <p className="text-gray-600 mt-1">{resources.length} resources total</p>
+          <div className="p-4 sm:p-5 md:p-6 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900">Existing Resources</h2>
+            <p className="text-xs sm:text-sm text-gray-900 mt-0.5 sm:mt-1">{resources.length} resources total</p>
           </div>
 
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="text-gray-500">Loading resources...</div>
+            <div className="p-4 sm:p-6 md:p-8 text-center">
+              <div className="text-gray-900 text-xs sm:text-sm">Loading resources...</div>
             </div>
           ) : resources.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="text-gray-500">No resources found. Add your first resource!</div>
+            <div className="p-4 sm:p-6 md:p-8 text-center">
+              <div className="text-gray-900 text-xs sm:text-sm">No resources found. Add your first resource!</div>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
               {resources.map((resource) => (
-                <div key={resource.id} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{resource.title}</h3>
+                <div key={resource.id} className="p-3 sm:p-4 md:p-6 hover:bg-gray-50">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{resource.title}</h3>
                         {resource.featured && (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                            <Star className="h-3 w-3 mr-1" />
+                          <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                            <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                             Featured
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-600 mb-2">{resource.description}</p>
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                      <p className="text-gray-900 text-xs sm:text-sm mb-1.5 sm:mb-2 line-clamp-2">{resource.description}</p>
+                      <div className="flex flex-wrap gap-1 sm:gap-2 text-[10px] sm:text-xs">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-800 rounded">
                           {categories.find(c => c.value === resource.category)?.label}
                         </span>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-100 text-green-800 rounded">
                           {resource.type}
                         </span>
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-100 text-purple-800 rounded">
                           {resource.difficulty}
                         </span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-800 rounded">
                           {resource.format}
                         </span>
                       </div>
                       {resource.tags && resource.tags.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-sm text-gray-500">Tags: {resource.tags}</span>
+                        <div className="mt-1 sm:mt-2">
+                          <span className="text-[10px] sm:text-xs text-gray-900">Tags: {resource.tags}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="flex items-center space-x-0.5 sm:space-x-2 flex-shrink-0">
                       {resource.url && (
                         <a
                           href={resource.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gray-400 hover:text-blue-600"
+                          className="p-1.5 sm:p-2 text-gray-500 hover:text-blue-600"
                           title="View Resource"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </a>
                       )}
                       <button
                         onClick={() => startEdit(resource)}
-                        className="p-2 text-gray-400 hover:text-indigo-600"
+                        className="p-1.5 sm:p-2 text-gray-500 hover:text-indigo-600"
                         title="Edit Resource"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </button>
                       <button
                         onClick={() => resource.id && handleDelete(resource.id)}
-                        className="p-2 text-gray-400 hover:text-red-600"
+                        className="p-1.5 sm:p-2 text-gray-500 hover:text-red-600"
                         title="Delete Resource"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                   </div>

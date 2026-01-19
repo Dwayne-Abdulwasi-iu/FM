@@ -175,6 +175,13 @@
     "leaderboard": "Classement des Parrainages"
   },
   "footer": {
+    "tagline": "La destination de choix pour les créateurs de mode pour présenter et vendre leurs œuvres créatives.",
+    "forDesigners": "Pour les Créateurs",
+    "startSelling": "Commencer à Vendre",
+    "resources": "Ressources",
+    "forBuyers": "Pour les Acheteurs",
+    "support": "Support",
+    "customerCare": "Service Client",
     "aboutUs": "À Propos",
     "careers": "Carrières",
     "press": "Presse",

@@ -187,48 +187,48 @@ export default function ResourcesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 md:mb-8">
           <Link 
             href="/" 
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4"
+            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Back to Home
           </Link>
           
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <BookOpen className="h-12 w-12 text-indigo-600 mr-3" />
-              <h1 className="text-4xl font-bold text-gray-900">Design Resources</h1>
+          <div className="text-center mb-4 sm:mb-6 md:mb-8">
+            <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
+              <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-indigo-600 mr-2 sm:mr-3" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Design Resources</h1>
             </div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xs sm:text-sm md:text-lg text-gray-900 max-w-3xl mx-auto">
               Discover tools, guides, templates, and tutorials to enhance your fashion design skills and workflow
             </p>
           </div>
 
           {/* Search and Filters */}
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                 <input
                   type="text"
                   placeholder="Search resources..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                  className="w-full pl-10 pr-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 text-xs sm:text-sm"
                 />
               </div>
               
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   title="Filter by category"
                   aria-label="Filter resources by category"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                 >
                   <option value="all">All Categories</option>
                   {categories.map(cat => (
@@ -241,7 +241,7 @@ export default function ResourcesPage() {
                   onChange={(e) => setSelectedType(e.target.value)}
                   title="Filter by resource type"
                   aria-label="Filter resources by type"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                 >
                   <option value="all">All Types</option>
                   <option value="guide">Guides</option>
@@ -257,7 +257,7 @@ export default function ResourcesPage() {
                   onChange={(e) => setSelectedDifficulty(e.target.value)}
                   title="Filter by difficulty level"
                   aria-label="Filter resources by difficulty level"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white text-xs sm:text-sm"
                 >
                   <option value="all">All Levels</option>
                   <option value="beginner">Beginner</option>
@@ -271,12 +271,12 @@ export default function ResourcesPage() {
 
         {/* Featured Resources */}
         {searchQuery === '' && selectedCategory === 'all' && selectedType === 'all' && selectedDifficulty === 'all' && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <Star className="h-6 w-6 text-yellow-500 mr-2" />
+          <div className="mb-6 sm:mb-8 md:mb-12">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6 flex items-center">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 mr-2" />
               Featured Resources
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {featuredResources.map((resource) => {
                 const TypeIcon = getTypeIcon(resource.type)
                 const FormatIcon = getFormatIcon(resource.format)
@@ -304,32 +304,32 @@ export default function ResourcesPage() {
                       </div>
                     </div>
                     
-                    <div className="p-4">
+                    <div className="p-3 sm:p-4">
                       <div className="flex items-center mb-2">
                         <TypeIcon className="h-4 w-4 text-indigo-600 mr-2" />
-                        <span className="text-sm text-indigo-600 font-medium capitalize">{resource.type}</span>
+                        <span className="text-[10px] sm:text-xs md:text-sm text-indigo-600 font-medium capitalize">{resource.type}</span>
                       </div>
                       
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 line-clamp-2 text-xs sm:text-sm md:text-base">
                         {resource.title}
                       </h3>
                       
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mb-2 sm:mb-3 line-clamp-2">
                         {resource.description}
                       </p>
                       
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                      <div className="flex items-center justify-between text-[10px] sm:text-xs text-gray-900 mb-2 sm:mb-3">
                         <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           {resource.views.toLocaleString()}
                         </div>
                         <div className="flex items-center">
-                          <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                          <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 mr-1" />
                           {resource.rating}
                         </div>
                         {resource.duration && (
                           <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-1" />
+                            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {resource.duration}
                           </div>
                         )}
@@ -339,9 +339,9 @@ export default function ResourcesPage() {
                         {resource.downloadUrl ? (
                           <a
                             href={resource.downloadUrl}
-                            className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors"
+                            className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs sm:text-sm transition-colors"
                           >
-                            <Download className="h-4 w-4 mr-2" />
+                            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             Download
                           </a>
                         ) : resource.url ? (
@@ -349,13 +349,13 @@ export default function ResourcesPage() {
                             href={resource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors"
+                            className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs sm:text-sm transition-colors"
                           >
-                            <ExternalLink className="h-4 w-4 mr-2" />
+                            <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             View
                           </a>
                         ) : (
-                          <button className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors">
+                          <button className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-xs sm:text-sm transition-colors">
                             Coming Soon
                           </button>
                         )}
@@ -370,28 +370,28 @@ export default function ResourcesPage() {
 
         {/* Categories Overview */}
         {searchQuery === '' && selectedCategory === 'all' && selectedType === 'all' && selectedDifficulty === 'all' && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Browse by Category</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="mb-6 sm:mb-8 md:mb-12">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6">Browse by Category</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {categories.map((category) => {
                 const IconComponent = category.icon
                 return (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left group"
+                    className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left group"
                   >
-                    <div className={`w-12 h-12 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center mb-4`}>
-                      <IconComponent className="h-6 w-6 text-white" />
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center mb-2 sm:mb-3 md:mb-4`}>
+                      <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors">
+                    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-700 transition-colors text-sm sm:text-base">
                       {category.title}
                     </h3>
-                    <p className="text-gray-600 text-sm mb-3">
+                    <p className="text-gray-900 text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3">
                       {category.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-[10px] sm:text-xs text-gray-900">
                         {category.count} resources
                       </span>
                       <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
@@ -405,19 +405,19 @@ export default function ResourcesPage() {
 
         {/* All Resources */}
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
               {selectedCategory !== 'all' 
                 ? categories.find(cat => cat.id === selectedCategory)?.title || 'Resources'
                 : 'All Resources'
               }
             </h2>
-            <span className="text-gray-600">
+            <span className="text-gray-900 text-xs sm:text-sm">
               {filteredResources.length} {filteredResources.length === 1 ? 'resource' : 'resources'}
             </span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {filteredResources.map((resource) => {
               const TypeIcon = getTypeIcon(resource.type)
               const FormatIcon = getFormatIcon(resource.format)
@@ -453,32 +453,32 @@ export default function ResourcesPage() {
                     )}
                   </div>
                   
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     <div className="flex items-center mb-2">
                       <TypeIcon className="h-4 w-4 text-indigo-600 mr-2" />
-                      <span className="text-sm text-indigo-600 font-medium capitalize">{resource.type}</span>
+                      <span className="text-[10px] sm:text-xs md:text-sm text-indigo-600 font-medium capitalize">{resource.type}</span>
                     </div>
                     
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 line-clamp-2 text-xs sm:text-sm md:text-base">
                       {resource.title}
                     </h3>
                     
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mb-2 sm:mb-3 line-clamp-2">
                       {resource.description}
                     </p>
                     
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs text-gray-900 mb-2 sm:mb-3">
                       <div className="flex items-center">
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         {resource.views.toLocaleString()}
                       </div>
                       <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 mr-1" />
                         {resource.rating}
                       </div>
                       {resource.duration && (
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           {resource.duration}
                         </div>
                       )}
@@ -488,9 +488,9 @@ export default function ResourcesPage() {
                       {resource.downloadUrl ? (
                         <a
                           href={resource.downloadUrl}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors"
+                          className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs sm:text-sm transition-colors"
                         >
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Download
                         </a>
                       ) : resource.url ? (
@@ -498,13 +498,13 @@ export default function ResourcesPage() {
                           href={resource.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors"
+                          className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs sm:text-sm transition-colors"
                         >
-                          <ExternalLink className="h-4 w-4 mr-2" />
+                          <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           View
                         </a>
                       ) : (
-                        <button className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors">
+                        <button className="flex-1 inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-xs sm:text-sm transition-colors">
                           Coming Soon
                         </button>
                       )}
@@ -517,10 +517,10 @@ export default function ResourcesPage() {
 
           {/* Empty State */}
           {filteredResources.length === 0 && (
-            <div className="text-center py-12">
-              <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">No resources found</h3>
-              <p className="text-gray-600 mb-6">
+            <div className="text-center py-6 sm:py-8 md:py-12">
+              <Search className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">No resources found</h3>
+              <p className="text-gray-900 mb-3 sm:mb-4 md:mb-6 text-xs sm:text-sm md:text-base">
                 Try adjusting your search criteria or browse different categories
               </p>
               <button
@@ -530,7 +530,7 @@ export default function ResourcesPage() {
                   setSelectedType('all')
                   setSelectedDifficulty('all')
                 }}
-                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors text-xs sm:text-sm md:text-base"
               >
                 Clear All Filters
               </button>
@@ -539,23 +539,23 @@ export default function ResourcesPage() {
         </div>
 
         {/* Call to Action */}
-        <div className="mt-16 text-center bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-8">
-          <TrendingUp className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Have a resource to share?</h2>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+        <div className="mt-8 sm:mt-12 md:mt-16 text-center bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 sm:p-6 md:p-8">
+          <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-2 sm:mb-3 md:mb-4" />
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">Have a resource to share?</h2>
+          <p className="text-gray-900 mb-4 sm:mb-5 md:mb-6 max-w-2xl mx-auto text-xs sm:text-sm md:text-base">
             Help the community grow by suggesting valuable resources, tools, or tutorials that have helped you in your design journey.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Link 
               href="/contact"
-              className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+              className="inline-flex items-center justify-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors text-xs sm:text-sm md:text-base"
             >
-              <LinkIcon className="h-5 w-5 mr-2" />
+              <LinkIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Suggest Resource
             </Link>
             <Link 
               href="/help"
-              className="inline-flex items-center px-6 py-3 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              className="inline-flex items-center justify-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors text-xs sm:text-sm md:text-base"
             >
               Need Help?
             </Link>

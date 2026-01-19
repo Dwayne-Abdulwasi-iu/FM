@@ -99,43 +99,43 @@ export default function PODWebhooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">POD Webhook Management</h1>
-          <p className="text-gray-600 mt-2">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">POD Webhook Management</h1>
+          <p className="text-xs sm:text-sm text-gray-900 mt-1 sm:mt-2">
             Configure webhooks for Print-on-Demand providers (Printful & Printify)
           </p>
         </div>
 
         {/* Webhook URLs */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Webhook Endpoints</h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-              <div>
-                <span className="font-medium">Printful Webhook URL:</span>
-                <code className="ml-2 text-sm bg-gray-200 px-2 py-1 rounded">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 text-gray-900">Webhook Endpoints</h2>
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-3 bg-gray-50 rounded">
+              <div className="overflow-hidden">
+                <span className="font-medium text-xs sm:text-sm text-gray-900">Printful Webhook URL:</span>
+                <code className="block sm:inline sm:ml-2 text-[10px] sm:text-xs md:text-sm bg-gray-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded mt-1 sm:mt-0 truncate">
                   https://fm-wtit.onrender.com/api/webhooks/printful
                 </code>
               </div>
               <button
                 onClick={() => navigator.clipboard.writeText('https://fm-wtit.onrender.com/api/webhooks/printful')}
-                className="text-purple-600 hover:text-purple-800"
+                className="text-purple-600 hover:text-purple-800 text-xs sm:text-sm self-end sm:self-auto"
               >
                 Copy
               </button>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-              <div>
-                <span className="font-medium">Printify Webhook URL:</span>
-                <code className="ml-2 text-sm bg-gray-200 px-2 py-1 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-3 bg-gray-50 rounded">
+              <div className="overflow-hidden">
+                <span className="font-medium text-xs sm:text-sm text-gray-900">Printify Webhook URL:</span>
+                <code className="block sm:inline sm:ml-2 text-[10px] sm:text-xs md:text-sm bg-gray-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded mt-1 sm:mt-0 truncate">
                   https://fm-wtit.onrender.com/api/webhooks/printify
                 </code>
               </div>
               <button
                 onClick={() => navigator.clipboard.writeText('https://fm-wtit.onrender.com/api/webhooks/printify')}
-                className="text-purple-600 hover:text-purple-800"
+                className="text-purple-600 hover:text-purple-800 text-xs sm:text-sm self-end sm:self-auto"
               >
                 Copy
               </button>
@@ -144,78 +144,78 @@ export default function PODWebhooksPage() {
         </div>
 
         {/* Current Status */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Current Webhook Status</h2>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 text-gray-900">Current Webhook Status</h2>
           
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             {/* Printful Status */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">📦 Printful</h3>
+            <div className="border rounded-lg p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900">📦 Printful</h3>
                 {webhookStatus?.printful?.configured ? (
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Connected</span>
+                  <span className="bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs md:text-sm">Connected</span>
                 ) : (
-                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">Not Connected</span>
+                  <span className="bg-red-100 text-red-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs md:text-sm">Not Connected</span>
                 )}
               </div>
               
               {webhookStatus?.printful?.error && (
-                <p className="text-red-600 text-sm mb-2">{webhookStatus.printful.error}</p>
+                <p className="text-red-600 text-[10px] sm:text-xs md:text-sm mb-2">{webhookStatus.printful.error}</p>
               )}
               
               {webhookStatus?.printful?.webhooks && webhookStatus.printful.webhooks.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Registered webhooks:</p>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-900">Registered webhooks:</p>
                   {webhookStatus.printful.webhooks.map((wh, i) => (
-                    <div key={i} className="text-xs bg-gray-50 p-2 rounded">
-                      <div className="font-mono truncate">{wh.url}</div>
-                      <div className="text-gray-500 mt-1">
+                    <div key={i} className="text-[10px] sm:text-xs bg-gray-50 p-1.5 sm:p-2 rounded text-gray-900">
+                      <div className="font-mono truncate text-gray-900">{wh.url}</div>
+                      <div className="text-gray-900 mt-0.5 sm:mt-1">
                         Events: {Array.isArray(wh.types) ? wh.types.join(', ') : 'All'}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No webhooks registered</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-900">No webhooks registered</p>
               )}
             </div>
 
             {/* Printify Status */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">🖨️ Printify</h3>
+            <div className="border rounded-lg p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900">🖨️ Printify</h3>
                 {webhookStatus?.printify?.configured ? (
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Connected</span>
+                  <span className="bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs md:text-sm">Connected</span>
                 ) : (
-                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">Not Connected</span>
+                  <span className="bg-red-100 text-red-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs md:text-sm">Not Connected</span>
                 )}
               </div>
               
               {webhookStatus?.printify?.error && (
-                <p className="text-red-600 text-sm mb-2">{webhookStatus.printify.error}</p>
+                <p className="text-red-600 text-[10px] sm:text-xs md:text-sm mb-2">{webhookStatus.printify.error}</p>
               )}
               
               {webhookStatus?.printify?.webhooks && webhookStatus.printify.webhooks.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Registered webhooks:</p>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-900">Registered webhooks:</p>
                   {webhookStatus.printify.webhooks.map((wh, i) => (
-                    <div key={i} className="text-xs bg-gray-50 p-2 rounded flex justify-between">
-                      <span className="font-medium">{wh.topic}</span>
-                      <span className="text-gray-500 truncate ml-2">{wh.url}</span>
+                    <div key={i} className="text-[10px] sm:text-xs bg-gray-50 p-1.5 sm:p-2 rounded flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-2 text-gray-900">
+                      <span className="font-medium text-gray-900">{wh.topic}</span>
+                      <span className="text-gray-900 truncate">{wh.url}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No webhooks registered</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-900">No webhooks registered</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Register Button */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Register Webhooks</h2>
-          <p className="text-gray-600 mb-4">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 text-gray-900">Register Webhooks</h2>
+          <p className="text-gray-900 mb-3 sm:mb-4 text-xs sm:text-sm">
             Click the button below to automatically register webhooks with Printful and Printify.
             This will remove any existing webhooks and create new ones with fresh secrets.
           </p>
@@ -223,7 +223,7 @@ export default function PODWebhooksPage() {
           <button
             onClick={registerWebhooks}
             disabled={registering}
-            className={`px-6 py-3 rounded-lg font-medium text-white ${
+            className={`px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg font-medium text-white text-xs sm:text-sm md:text-base ${
               registering 
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-purple-600 hover:bg-purple-700'
@@ -231,7 +231,7 @@ export default function PODWebhooksPage() {
           >
             {registering ? (
               <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -245,18 +245,18 @@ export default function PODWebhooksPage() {
 
         {/* Result */}
         {result && (
-          <div className={`rounded-lg shadow p-6 ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
-            <h3 className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+          <div className={`rounded-lg shadow p-4 sm:p-5 md:p-6 ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
+            <h3 className={`font-semibold text-sm sm:text-base ${result.success ? 'text-green-800' : 'text-red-800'}`}>
               {result.success ? '✅ Success' : '❌ Error'}
             </h3>
-            <p className={`mt-2 ${result.success ? 'text-green-700' : 'text-red-700'}`}>
+            <p className={`mt-1.5 sm:mt-2 text-xs sm:text-sm ${result.success ? 'text-green-700' : 'text-red-700'}`}>
               {result.message}
             </p>
             
             {result.secrets && (
-              <div className="mt-4">
-                <p className="font-medium text-gray-800 mb-2">Add these secrets to your .env file:</p>
-                <div className="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm overflow-x-auto">
+              <div className="mt-3 sm:mt-4">
+                <p className="font-medium text-gray-800 mb-1.5 sm:mb-2 text-xs sm:text-sm">Add these secrets to your .env file:</p>
+                <div className="bg-gray-900 text-green-400 p-3 sm:p-4 rounded font-mono text-[10px] sm:text-xs md:text-sm overflow-x-auto">
                   {Object.entries(result.secrets).map(([key, value]) => (
                     <div key={key}>
                       {key}={value}
@@ -269,9 +269,9 @@ export default function PODWebhooksPage() {
         )}
 
         {/* Help Section */}
-        <div className="bg-blue-50 rounded-lg p-6 mt-6">
-          <h3 className="font-semibold text-blue-800 mb-2">ℹ️ How POD Webhooks Work</h3>
-          <ul className="text-blue-700 space-y-1 text-sm">
+        <div className="bg-blue-50 rounded-lg p-4 sm:p-5 md:p-6 mt-4 sm:mt-5 md:mt-6">
+          <h3 className="font-semibold text-blue-800 mb-1.5 sm:mb-2 text-xs sm:text-sm md:text-base">ℹ️ How POD Webhooks Work</h3>
+          <ul className="text-blue-700 space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs md:text-sm">
             <li>• When a POD order status changes, the provider sends a webhook to your server</li>
             <li>• The webhook includes tracking info when orders are shipped</li>
             <li>• Customers and sellers are automatically notified of status updates</li>

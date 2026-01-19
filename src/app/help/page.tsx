@@ -540,11 +540,14 @@ function HelpPageContent() {
             <p className="text-gray-600 text-[10px] sm:text-xs">Get help</p>
           </Link>
 
-          <div className="bg-white p-2 sm:p-3 rounded-lg shadow-sm">
+          <Link 
+            href="/resources"
+            className="bg-white p-2 sm:p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+          >
             <Video className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mb-1 sm:mb-2" />
             <h3 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">Videos</h3>
-            <p className="text-gray-600 text-[10px] sm:text-xs">Coming Soon</p>
-          </div>
+            <p className="text-gray-600 text-[10px] sm:text-xs">Learn & guides</p>
+          </Link>
 
           <Link 
             href="/terms"

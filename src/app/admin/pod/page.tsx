@@ -118,77 +118,77 @@ export default function AdminPODPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">POD Management</h1>
-            <p className="text-gray-600">Monitor and manage Print-on-Demand orders across all providers</p>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">POD Management</h1>
+            <p className="text-xs sm:text-sm text-gray-900">Monitor and manage Print-on-Demand orders across all providers</p>
           </div>
-          <Link href="/admin" className="text-gray-500 hover:text-gray-700">
+          <Link href="/admin" className="text-gray-900 hover:text-gray-700 text-xs sm:text-sm">
             ← Back to Admin
           </Link>
         </div>
 
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-            <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Total POD Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
+            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-900">Total POD Orders</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
             </div>
-            <div className="bg-yellow-50 rounded-xl p-4 shadow-sm border border-yellow-200">
-              <p className="text-sm text-yellow-700">Pending</p>
-              <p className="text-2xl font-bold text-yellow-800">{stats.pendingOrders}</p>
+            <div className="bg-yellow-50 rounded-xl p-3 sm:p-4 shadow-sm border border-yellow-200">
+              <p className="text-[10px] sm:text-xs md:text-sm text-yellow-700">Pending</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-800">{stats.pendingOrders}</p>
             </div>
-            <div className="bg-blue-50 rounded-xl p-4 shadow-sm border border-blue-200">
-              <p className="text-sm text-blue-700">In Production</p>
-              <p className="text-2xl font-bold text-blue-800">{stats.inProductionOrders}</p>
+            <div className="bg-blue-50 rounded-xl p-3 sm:p-4 shadow-sm border border-blue-200">
+              <p className="text-[10px] sm:text-xs md:text-sm text-blue-700">In Production</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-800">{stats.inProductionOrders}</p>
             </div>
-            <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
-              <p className="text-sm text-green-700">Shipped</p>
-              <p className="text-2xl font-bold text-green-800">{stats.shippedOrders}</p>
+            <div className="bg-green-50 rounded-xl p-3 sm:p-4 shadow-sm border border-green-200">
+              <p className="text-[10px] sm:text-xs md:text-sm text-green-700">Shipped</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-800">{stats.shippedOrders}</p>
             </div>
-            <div className="bg-purple-50 rounded-xl p-4 shadow-sm border border-purple-200">
-              <p className="text-sm text-purple-700">Total Revenue</p>
-              <p className="text-2xl font-bold text-purple-800">{formatCurrency(stats.totalRevenue)}</p>
+            <div className="bg-purple-50 rounded-xl p-3 sm:p-4 shadow-sm border border-purple-200">
+              <p className="text-[10px] sm:text-xs md:text-sm text-purple-700">Total Revenue</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-purple-800">{formatCurrency(stats.totalRevenue)}</p>
             </div>
-            <div className="bg-indigo-50 rounded-xl p-4 shadow-sm border border-indigo-200">
-              <p className="text-sm text-indigo-700">Platform Fees</p>
-              <p className="text-2xl font-bold text-indigo-800">{formatCurrency(stats.totalPlatformFees)}</p>
+            <div className="bg-indigo-50 rounded-xl p-3 sm:p-4 shadow-sm border border-indigo-200">
+              <p className="text-[10px] sm:text-xs md:text-sm text-indigo-700">Platform Fees</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-indigo-800">{formatCurrency(stats.totalPlatformFees)}</p>
             </div>
           </div>
         )}
 
         {/* Provider Stats */}
         {stats && (
-          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Orders by Provider</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-3xl font-bold text-gray-900">{stats.byProvider.printful}</p>
-                <p className="text-sm text-gray-600 mt-1">Printful</p>
+          <div className="bg-white rounded-xl p-4 sm:p-5 md:p-6 shadow-sm mb-4 sm:mb-6 md:mb-8">
+            <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Orders by Provider</h2>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.byProvider.printful}</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mt-0.5 sm:mt-1">Printful</p>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-3xl font-bold text-gray-900">{stats.byProvider.printify}</p>
-                <p className="text-sm text-gray-600 mt-1">Printify</p>
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.byProvider.printify}</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mt-0.5 sm:mt-1">Printify</p>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-3xl font-bold text-gray-900">{stats.byProvider.other}</p>
-                <p className="text-sm text-gray-600 mt-1">Other</p>
+              <div className="text-center p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{stats.byProvider.other}</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mt-0.5 sm:mt-1">Other</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Admin Role Explanation */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 mb-8 text-white">
-          <h2 className="text-lg font-bold mb-3">🔐 Admin Role in POD Process</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 md:mb-8 text-white">
+          <h2 className="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">🔐 Admin Role in POD Process</h2>
+          <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             <div>
-              <h3 className="font-semibold mb-2">What Admins Do:</h3>
-              <ul className="space-y-1 text-sm text-purple-100">
+              <h3 className="font-semibold mb-1 sm:mb-2 text-xs sm:text-sm">What Admins Do:</h3>
+              <ul className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs md:text-sm text-purple-100">
                 <li>• Monitor all POD orders across providers</li>
                 <li>• Handle escalated customer issues</li>
                 <li>• Configure POD provider API keys</li>
@@ -198,8 +198,8 @@ export default function AdminPODPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">What&apos;s Automated:</h3>
-              <ul className="space-y-1 text-sm text-purple-100">
+              <h3 className="font-semibold mb-1 sm:mb-2 text-xs sm:text-sm">What&apos;s Automated:</h3>
+              <ul className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs md:text-sm text-purple-100">
                 <li>✓ Order creation with Printful/Printify</li>
                 <li>✓ Payment processing & webhook handling</li>
                 <li>✓ Tiered commission calculation</li>
@@ -212,11 +212,11 @@ export default function AdminPODPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
+            className="px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 border rounded-lg bg-white text-xs sm:text-sm text-gray-900"
             aria-label="Filter by order status"
           >
             <option value="all">All Statuses</option>
@@ -228,7 +228,7 @@ export default function AdminPODPage() {
           <select
             value={providerFilter}
             onChange={(e) => setProviderFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
+            className="px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 border rounded-lg bg-white text-xs sm:text-sm text-gray-900"
             aria-label="Filter by POD provider"
           >
             <option value="all">All Providers</option>
@@ -239,21 +239,22 @@ export default function AdminPODPage() {
 
         {/* Orders Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking</th>
+                <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Order</th>
+                <th className="hidden sm:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Customer</th>
+                <th className="hidden md:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Provider</th>
+                <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Status</th>
+                <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Amount</th>
+                <th className="hidden lg:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-900 uppercase">Tracking</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 text-center text-gray-900 text-xs sm:text-sm">
                     No POD orders yet. Orders will appear here when customers purchase POD products.
                   </td>
                 </tr>
@@ -263,39 +264,39 @@ export default function AdminPODPage() {
                   .filter(o => providerFilter === 'all' || o.podProvider === providerFilter)
                   .map(order => (
                     <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-medium text-gray-900">{order.orderNumber}</p>
-                        <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                      <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                        <p className="font-medium text-gray-900 text-xs sm:text-sm">{order.orderNumber}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-gray-900">{order.customer.name}</p>
-                        <p className="text-sm text-gray-500">{order.customer.email}</p>
+                      <td className="hidden sm:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                        <p className="text-gray-900 text-xs sm:text-sm">{order.customer.name}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-900">{order.customer.email}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-sm font-medium">
+                      <td className="hidden md:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 rounded text-[10px] sm:text-xs md:text-sm font-medium">
                           {order.podProvider || 'N/A'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.podStatus)}`}>
+                      <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
+                        <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusColor(order.podStatus)}`}>
                           {order.podStatus || 'pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-gray-900 text-xs sm:text-sm">
                         {formatCurrency(order.totalAmount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
                         {order.trackingUrl ? (
                           <a 
                             href={order.trackingUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-purple-600 hover:text-purple-800 text-sm"
+                            className="text-purple-600 hover:text-purple-800 text-xs sm:text-sm"
                           >
                             {order.trackingNumber || 'Track'}
                           </a>
                         ) : (
-                          <span className="text-gray-400 text-sm">No tracking</span>
+                          <span className="text-gray-500 text-xs sm:text-sm">No tracking</span>
                         )}
                       </td>
                     </tr>
@@ -303,71 +304,72 @@ export default function AdminPODPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Commission Tiers Info */}
-        <div className="mt-8 bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">💰 POD Commission Tiers</h2>
-          <p className="text-gray-600 mb-4">
+        <div className="mt-4 sm:mt-6 md:mt-8 bg-white rounded-xl p-4 sm:p-5 md:p-6 shadow-sm">
+          <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-4">💰 POD Commission Tiers</h2>
+          <p className="text-gray-900 mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm">
             POD sales use the same tiered commission system as digital sales. 
             Sellers earn more as they sell more!
           </p>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-[10px] sm:text-xs md:text-sm">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Tier</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Total Earnings</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Platform Fee</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Seller Keeps</th>
+                  <th className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-left font-medium text-gray-900">Tier</th>
+                  <th className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-left font-medium text-gray-900">Total Earnings</th>
+                  <th className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-left font-medium text-gray-900">Platform Fee</th>
+                  <th className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-left font-medium text-gray-900">Seller Keeps</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y text-gray-900">
                 <tr className="bg-green-50">
-                  <td className="px-4 py-2 font-medium">🌱 Starter</td>
-                  <td className="px-4 py-2">$0 - $99</td>
-                  <td className="px-4 py-2 text-green-600 font-bold">0.1%</td>
-                  <td className="px-4 py-2">99.9%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">🌱 Starter</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$0 - $99</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-green-700 font-bold">0.1%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">99.9%</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">📦 New Seller</td>
-                  <td className="px-4 py-2">$100 - $499</td>
-                  <td className="px-4 py-2">10%</td>
-                  <td className="px-4 py-2">90%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">📦 New Seller</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$100 - $499</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">10%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">90%</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">🥉 Bronze</td>
-                  <td className="px-4 py-2">$500 - $2,499</td>
-                  <td className="px-4 py-2">9.5%</td>
-                  <td className="px-4 py-2">90.5%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">🥉 Bronze</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$500 - $2,499</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">9.5%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">90.5%</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">🥈 Silver</td>
-                  <td className="px-4 py-2">$2,500 - $9,999</td>
-                  <td className="px-4 py-2">9%</td>
-                  <td className="px-4 py-2">91%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">🥈 Silver</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$2,500 - $9,999</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">9%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">91%</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">🥇 Gold</td>
-                  <td className="px-4 py-2">$10,000 - $49,999</td>
-                  <td className="px-4 py-2">8.5%</td>
-                  <td className="px-4 py-2">91.5%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">🥇 Gold</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$10,000 - $49,999</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">8.5%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">91.5%</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-medium">💎 Platinum</td>
-                  <td className="px-4 py-2">$50,000 - $99,999</td>
-                  <td className="px-4 py-2">8%</td>
-                  <td className="px-4 py-2">92%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">💎 Platinum</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$50,000 - $99,999</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">8%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">92%</td>
                 </tr>
                 <tr className="bg-purple-50">
-                  <td className="px-4 py-2 font-medium">👑 Diamond</td>
-                  <td className="px-4 py-2">$100,000+</td>
-                  <td className="px-4 py-2 text-purple-600 font-bold">7%</td>
-                  <td className="px-4 py-2">93%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-medium text-gray-900">👑 Diamond</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">$100,000+</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-purple-700 font-bold">7%</td>
+                  <td className="hidden sm:table-cell px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-gray-900">93%</td>
                 </tr>
               </tbody>
             </table>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-[10px] sm:text-xs text-gray-900 mt-1.5 sm:mt-2">
               * VIP/VVIP sellers get an additional 1% discount (minimum 6%)
             </p>
           </div>

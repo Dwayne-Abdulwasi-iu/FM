@@ -206,42 +206,43 @@ export default function AdminDeliveriesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-full">
-                <ArrowLeft className="h-5 w-5" />
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link href="/admin" className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Physical Deliveries</h1>
-                <p className="text-gray-600">Manage physical commission deliveries</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Physical Deliveries</h1>
+                <p className="text-xs sm:text-base text-gray-900">Manage physical commission deliveries</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Package className="h-8 w-8 text-pink-500" />
+              <Package className="h-6 w-6 sm:h-8 sm:w-8 text-pink-500" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Status Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4 sm:mb-6">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors ${
                   activeTab === tab.id
                     ? 'bg-pink-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                    : 'bg-white text-gray-900 hover:bg-gray-100 border'
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs ${
                   activeTab === tab.id ? 'bg-pink-600' : 'bg-gray-200'
                 }`}>
                   {tab.count}
@@ -253,59 +254,59 @@ export default function AdminDeliveriesPage() {
 
         {/* Deliveries Grid */}
         {deliveries.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No deliveries</h3>
-            <p className="text-gray-600">No physical commissions with this status</p>
+          <div className="bg-white rounded-lg shadow p-8 sm:p-12 text-center">
+            <Package className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-sm sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No deliveries</h3>
+            <p className="text-xs sm:text-base text-gray-900">No physical commissions with this status</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {deliveries.map((delivery) => (
               <div key={delivery.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                 {/* Status Badge */}
-                <div className={`px-4 py-2 ${STATUS_COLORS[delivery.deliveryStatus]} border-b`}>
-                  <span className="font-medium text-sm">
+                <div className={`px-3 sm:px-4 py-1.5 sm:py-2 ${STATUS_COLORS[delivery.deliveryStatus]} border-b`}>
+                  <span className="font-medium text-xs sm:text-sm">
                     {STATUS_LABELS[delivery.deliveryStatus]}
                   </span>
                 </div>
                 
                 {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-1">{delivery.title}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{delivery.description}</p>
+                <div className="p-3 sm:p-4">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1">{delivery.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-900 mb-2 sm:mb-3 line-clamp-2">{delivery.description}</p>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">Client:</span>
-                      <span className="font-medium">{delivery.requester.name || delivery.requester.email}</span>
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                      <span className="text-gray-900">Client:</span>
+                      <span className="font-medium text-gray-900 truncate">{delivery.requester.name || delivery.requester.email}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">Designer:</span>
-                      <span className="font-medium">{delivery.designer.displayName || delivery.designer.name}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                      <span className="text-gray-900">Designer:</span>
+                      <span className="font-medium text-gray-900 truncate">{delivery.designer.displayName || delivery.designer.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">Value:</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Package className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                      <span className="text-gray-900">Value:</span>
                       <span className="font-medium text-pink-600">{formatPrice(delivery.agreedPrice)}</span>
                     </div>
                   </div>
 
                   {/* Delivery Address */}
                   {delivery.deliveryAddress && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-pink-500 mt-1" />
-                        <div className="text-sm">
-                          <p className="font-medium">{delivery.deliveryAddress.name}</p>
-                          <p className="text-gray-600">{delivery.deliveryAddress.address}</p>
-                          <p className="text-gray-600">
+                    <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-start gap-1.5 sm:gap-2">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-pink-500 mt-0.5 sm:mt-1 flex-shrink-0" />
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium text-gray-900">{delivery.deliveryAddress.name}</p>
+                          <p className="text-gray-900">{delivery.deliveryAddress.address}</p>
+                          <p className="text-gray-900">
                             {delivery.deliveryAddress.city}, {delivery.deliveryAddress.state}
                           </p>
                           <div className="flex items-center gap-1 mt-1">
-                            <Phone className="h-3 w-3" />
-                            <span>{delivery.deliveryAddress.phone}</span>
+                            <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <span className="text-gray-900">{delivery.deliveryAddress.phone}</span>
                           </div>
                         </div>
                       </div>
@@ -314,21 +315,21 @@ export default function AdminDeliveriesPage() {
 
                   {/* Collection Address (for ready items) */}
                   {delivery.collectionAddress && delivery.deliveryStatus === 'READY_FOR_COLLECTION' && (
-                    <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <p className="text-xs font-medium text-yellow-800 mb-1">COLLECT FROM:</p>
-                      <div className="text-sm">
-                        <p className="font-medium">{delivery.collectionAddress.name}</p>
-                        <p className="text-gray-600">{delivery.collectionAddress.address}</p>
-                        <p className="text-gray-600">
+                    <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <p className="text-[10px] sm:text-xs font-medium text-yellow-800 mb-1">COLLECT FROM:</p>
+                      <div className="text-xs sm:text-sm">
+                        <p className="font-medium text-gray-900">{delivery.collectionAddress.name}</p>
+                        <p className="text-gray-900">{delivery.collectionAddress.address}</p>
+                        <p className="text-gray-900">
                           {delivery.collectionAddress.city}, {delivery.collectionAddress.state}
                         </p>
                         <div className="flex items-center gap-1 mt-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{delivery.collectionAddress.phone}</span>
+                          <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                          <span className="text-gray-900">{delivery.collectionAddress.phone}</span>
                         </div>
                       </div>
                       {delivery.collectionNotes && (
-                        <p className="mt-2 text-xs text-gray-600 italic">
+                        <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-gray-900 italic">
                           Note: {delivery.collectionNotes}
                         </p>
                       )}
@@ -337,12 +338,12 @@ export default function AdminDeliveriesPage() {
 
                   {/* Tracking Info */}
                   {delivery.trackingNumber && (
-                    <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <p className="text-xs font-medium text-purple-800 mb-1">TRACKING</p>
-                      <p className="font-mono text-sm">{delivery.trackingNumber}</p>
-                      <p className="text-xs text-gray-600">via {delivery.courierName}</p>
+                    <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <p className="text-[10px] sm:text-xs font-medium text-purple-800 mb-1">TRACKING</p>
+                      <p className="font-mono text-xs sm:text-sm text-gray-900">{delivery.trackingNumber}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-900">via {delivery.courierName}</p>
                       {delivery.estimatedDeliveryDate && (
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-[10px] sm:text-xs text-gray-900 mt-1">
                           Est. delivery: {formatDate(delivery.estimatedDeliveryDate)}
                         </p>
                       )}
@@ -350,7 +351,7 @@ export default function AdminDeliveriesPage() {
                   )}
 
                   {/* Timeline */}
-                  <div className="mt-4 pt-4 border-t text-xs text-gray-500 space-y-1">
+                  <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t text-[10px] sm:text-xs text-gray-900 space-y-0.5 sm:space-y-1">
                     {delivery.readyForCollectionAt && (
                       <p>Ready: {formatDate(delivery.readyForCollectionAt)}</p>
                     )}
@@ -370,14 +371,14 @@ export default function AdminDeliveriesPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="px-4 py-3 bg-gray-50 border-t">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 border-t">
                   {delivery.deliveryStatus === 'READY_FOR_COLLECTION' && (
                     <button
                       onClick={() => setSelectedDelivery(delivery)}
                       disabled={actionLoading === delivery.id}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-xs sm:text-sm"
                     >
-                      <Box className="h-4 w-4" />
+                      <Box className="h-3 w-3 sm:h-4 sm:w-4" />
                       Mark as Collected
                     </button>
                   )}
@@ -386,9 +387,9 @@ export default function AdminDeliveriesPage() {
                     <button
                       onClick={() => setSelectedDelivery(delivery)}
                       disabled={actionLoading === delivery.id}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 text-xs sm:text-sm"
                     >
-                      <Send className="h-4 w-4" />
+                      <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                       Ship Item
                     </button>
                   )}
@@ -397,28 +398,28 @@ export default function AdminDeliveriesPage() {
                     <button
                       onClick={() => handleAction('mark_delivered', delivery.id)}
                       disabled={actionLoading === delivery.id}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs sm:text-sm"
                     >
                       {actionLoading === delivery.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent" />
                       ) : (
-                        <CheckCircle className="h-4 w-4" />
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
                       Mark as Delivered
                     </button>
                   )}
                   
                   {delivery.deliveryStatus === 'DELIVERED' && !delivery.deliveryConfirmedAt && (
-                    <div className="flex items-center gap-2 text-yellow-600">
-                      <AlertCircle className="h-4 w-4" />
-                      <span className="text-sm">Awaiting client confirmation</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-yellow-600">
+                      <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">Awaiting client confirmation</span>
                     </div>
                   )}
                   
                   {delivery.deliveryConfirmedAt && (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="text-sm">Delivery confirmed by client</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-green-600">
+                      <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">Delivery confirmed by client</span>
                     </div>
                   )}
                 </div>
@@ -430,37 +431,37 @@ export default function AdminDeliveriesPage() {
 
       {/* Collection Modal */}
       {selectedDelivery && selectedDelivery.deliveryStatus === 'READY_FOR_COLLECTION' && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold mb-4">Collect Item</h3>
-            <p className="text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Collect Item</h3>
+            <p className="text-xs sm:text-base text-gray-900 mb-3 sm:mb-4">
               Mark &quot;{selectedDelivery.title}&quot; as collected from the designer?
             </p>
             
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-3 sm:mb-4">
+              <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">
                 Collection Notes (optional)
               </label>
               <textarea
                 value={collectionNotes}
                 onChange={(e) => setCollectionNotes(e.target.value)}
                 placeholder="Any notes about the collection..."
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-xs sm:text-sm text-gray-900"
                 rows={3}
               />
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => setSelectedDelivery(null)}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="flex-1 px-3 sm:px-4 py-2 border rounded-lg hover:bg-gray-50 text-xs sm:text-sm text-gray-900"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAction('collect', selectedDelivery.id)}
                 disabled={actionLoading === selectedDelivery.id}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                className="flex-1 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-xs sm:text-sm"
               >
                 {actionLoading === selectedDelivery.id ? 'Collecting...' : 'Confirm Collection'}
               </button>
@@ -471,16 +472,16 @@ export default function AdminDeliveriesPage() {
 
       {/* Ship Modal */}
       {selectedDelivery && selectedDelivery.deliveryStatus === 'COLLECTED_BY_ADMIN' && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold mb-4">Ship Item</h3>
-            <p className="text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Ship Item</h3>
+            <p className="text-xs sm:text-base text-gray-900 mb-3 sm:mb-4">
               Enter shipping details for &quot;{selectedDelivery.title}&quot;
             </p>
             
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">
                   Courier / Shipping Company *
                 </label>
                 <input
@@ -488,12 +489,12 @@ export default function AdminDeliveriesPage() {
                   value={courierName}
                   onChange={(e) => setCourierName(e.target.value)}
                   placeholder="e.g., GIG Logistics, DHL, FedEx"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-xs sm:text-sm text-gray-900"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">
                   Tracking Number *
                 </label>
                 <input
@@ -501,12 +502,12 @@ export default function AdminDeliveriesPage() {
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="Enter tracking number"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-xs sm:text-sm text-gray-900"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-900 mb-1">
                   Estimated Delivery (days)
                 </label>
                 <input
@@ -517,26 +518,26 @@ export default function AdminDeliveriesPage() {
                   max={30}
                   placeholder="3"
                   title="Estimated number of days for delivery"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-xs sm:text-sm text-gray-900"
                 />
               </div>
             </div>
             
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => {
                   setSelectedDelivery(null)
                   setTrackingNumber('')
                   setCourierName('')
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="flex-1 px-3 sm:px-4 py-2 border rounded-lg hover:bg-gray-50 text-xs sm:text-sm text-gray-900"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAction('ship', selectedDelivery.id)}
                 disabled={actionLoading === selectedDelivery.id || !trackingNumber.trim() || !courierName.trim()}
-                className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
+                className="flex-1 px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 text-xs sm:text-sm"
               >
                 {actionLoading === selectedDelivery.id ? 'Shipping...' : 'Confirm Shipment'}
               </button>
