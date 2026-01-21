@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown, TrendingUp, Flame } from 'lucide-react'
 import Image from 'next/image'
 import { useCurrency } from '@/components/CurrencyProvider'
+import toast from 'react-hot-toast'
 
 interface Design {
   id: string
@@ -90,15 +91,15 @@ export default function TrendingPage() {
       })
 
       if (response.ok) {
-        alert(`"${designTitle}" added to cart successfully!`)
+        toast.success(`"${designTitle}" added to cart successfully!`)
         window.dispatchEvent(new CustomEvent('cartUpdated'))
       } else {
         const error = await response.json()
-        alert(`Failed to add to cart: ${error.message}`)
+        toast.error(`Failed to add to cart: ${error.message}`)
       }
     } catch (error) {
       console.error('Add to cart error:', error)
-      alert('Failed to add to cart. Please try again.')
+      toast.error('Failed to add to cart. Please try again.')
     } finally {
       setAddingToCart(null)
     }

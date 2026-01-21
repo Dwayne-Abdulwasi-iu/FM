@@ -160,6 +160,7 @@ export async function initializePayment(request: PaymentInitRequest): Promise<Pa
   }
 
   try {
+    console.log('[Flutterwave] Initializing payment for order:', request.orderId);
     const response = await axios.post<PaymentInitResponse>(
       `${BASE_URL}/payments`,
       {
@@ -184,15 +185,47 @@ export async function initializePayment(request: PaymentInitRequest): Promise<Pa
         headers: {
           Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}`,
           'Content-Type': 'application/json',
+          'User-Agent': 'Fashion-Marketplace/1.0',
         },
+        timeout: 10000,
       }
     );
 
+    console.log('[Flutterwave] Payment initialization successful:', response.data.data?.link);
     return response.data;
   } catch (error: unknown) {
-    console.error('Flutterwave payment init error:', error);
-    const axiosError = error as { response?: { data?: unknown } };
-    throw new Error(`Flutterwave payment failed: ${JSON.stringify(axiosError.response?.data || error)}`);
+    const axiosError = error as { response?: { status?: number; data?: unknown; statusText?: string; headers?: Record<string, string> } };
+    const status = axiosError.response?.status;
+    const responseData = axiosError.response?.data;
+    const responseStr = typeof responseData === 'string' ? responseData : JSON.stringify(responseData);
+    
+    console.error('[Flutterwave] ❌ FULL ERROR RESPONSE:');
+    console.error('[Flutterwave] Status:', status);
+    console.error('[Flutterwave] Response Body:', responseStr?.substring(0, 500));
+    
+    // Extract IP from Cloudflare error response - look for any IPv4 pattern
+    const ipMatch = responseStr?.match(/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/);
+    const ipFromError = ipMatch ? ipMatch[1] : null;
+    
+    if (status === 403) {
+      console.error('[Flutterwave] 403 Forbidden');
+      if (ipFromError) {
+        console.error(`[Flutterwave] ⚠️  IP may be blocked: ${ipFromError}`);
+      } else {
+        console.error('[Flutterwave] ⚠️  Check: Account status, Payment method restrictions, Webhook config');
+      }
+    } else if (status === 401) {
+      console.error('[Flutterwave] 401 Unauthorized - Likely invalid API key');
+    } else if (status === 429) {
+      console.error('[Flutterwave] 429 Too Many Requests - Rate limited');
+    } else if (responseStr?.includes('Cloudflare') || responseStr?.includes('blocked')) {
+      console.error('[Flutterwave] Cloudflare blocked request');
+      if (ipFromError) {
+        console.error(`[Flutterwave] ⚠️  YOUR CURRENT IP: ${ipFromError}`);
+      }
+    }
+    
+    throw new Error(`Flutterwave payment failed (${status}): Check server logs for details`);
   }
 }
 
@@ -210,14 +243,25 @@ export async function verifyTransaction(transactionId: string): Promise<Transact
       {
         headers: {
           Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}`,
+          'User-Agent': 'Fashion-Marketplace/1.0',
         },
+        timeout: 10000,
       }
     );
 
     return response.data;
   } catch (error: unknown) {
-    console.error('Flutterwave verification error:', error);
-    const axiosError = error as { response?: { data?: unknown } };
+    const axiosError = error as { response?: { status?: number; data?: unknown; statusText?: string } };
+    const status = axiosError.response?.status;
+    
+    if (status === 403) {
+      console.error('[Flutterwave] 403 Forbidden - IP may be blocked');
+    } else if (status === 401) {
+      console.error('[Flutterwave] 401 Unauthorized - Invalid API key');
+    } else {
+      console.error('[Flutterwave] Verification error (Status: ' + status + '):', error);
+    }
+    
     throw new Error(`Flutterwave verification failed: ${JSON.stringify(axiosError.response?.data || error)}`);
   }
 }

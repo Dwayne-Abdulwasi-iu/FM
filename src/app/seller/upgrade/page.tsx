@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { 
   Check, 
   Zap, 
@@ -136,7 +137,7 @@ export default function UpgradePage() {
 
       if (data.demoMode) {
         // Demo mode - show message
-        alert('Pro subscription is not yet available. We\'ll notify you when it launches!')
+        toast.error('Pro subscription is not yet available. We\'ll notify you when it launches!')
         return
       }
 

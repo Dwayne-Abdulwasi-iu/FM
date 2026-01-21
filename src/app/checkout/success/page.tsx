@@ -3,9 +3,32 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 // import { useRouter } from 'next/navigation'
-import { CheckCircle, Download, ArrowRight } from 'lucide-react'
+import { CheckCircle, Download, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import toast from 'react-hot-toast'
+import { downloadFilesAsZip } from '@/lib/downloadUtils'
+
+interface OrderItem {
+  id: string
+  quantity: number
+  price: number
+  design: {
+    id: string
+    title: string
+    imageUrl: string
+    mediaFiles?: Array<{
+      id: string
+      fileUrl: string
+      fileName: string
+      fileType: string
+      mimeType: string
+    }>
+    designer: {
+      name: string | null
+    }
+  }
+}
 
 interface OrderDetails {
   id: string
@@ -13,19 +36,7 @@ interface OrderDetails {
   totalAmount: number
   platformFee: number
   createdAt: string
-  items: Array<{
-    id: string
-    quantity: number
-    price: number
-    design: {
-      id: string
-      title: string
-      imageUrl: string
-      designer: {
-        name: string | null
-      }
-    }
-  }>
+  items: OrderItem[]
 }
 
 export default function CheckoutSuccessPage() {
@@ -34,6 +45,8 @@ export default function CheckoutSuccessPage() {
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [downloadingItemId, setDownloadingItemId] = useState<string | null>(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -74,10 +87,16 @@ export default function CheckoutSuccessPage() {
 
   const fetchOrderDetails = async (sessionId: string) => {
     try {
+      console.log('Fetching order for sessionId:', sessionId)
       const response = await fetch(`/api/orders/session/${sessionId}`)
+      console.log('Order fetch response status:', response.status)
       if (response.ok) {
         const data = await response.json()
+        console.log('Order found:', data.order)
         setOrder(data.order)
+      } else {
+        const errorData = await response.json()
+        console.error('Order fetch error:', response.status, errorData)
       }
     } catch (error) {
       console.error('Failed to fetch order details:', error)
@@ -91,6 +110,71 @@ export default function CheckoutSuccessPage() {
       style: 'currency',
       currency: 'USD'
     }).format(price)
+  }
+
+  const handleDownloadItem = async (item: OrderItem) => {
+    setDownloadingItemId(item.id)
+    
+    try {
+      if (!item.design.mediaFiles || item.design.mediaFiles.length === 0) {
+        toast.error('No files available for this design')
+        setDownloadingItemId(null)
+        return
+      }
+
+      const files = item.design.mediaFiles.map((media) => ({
+        url: media.fileUrl,
+        name: media.fileName || `${item.design.title}-${media.id}`
+      }))
+
+      await downloadFilesAsZip(files, `${item.design.title}`)
+      toast.success(`Downloaded ${files.length} file(s)`)
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download files. Please try again.')
+    } finally {
+      setDownloadingItemId(null)
+    }
+  }
+
+  const handleDownloadAll = async () => {
+    if (!order || order.items.length === 0) {
+      toast.error('No items to download')
+      return
+    }
+
+    setDownloadingAll(true)
+    
+    try {
+      const allFiles: Array<{ url: string; name: string; folder?: string }> = []
+      
+      // Collect all files organized by design name
+      order.items.forEach((item) => {
+        if (item.design.mediaFiles && item.design.mediaFiles.length > 0) {
+          item.design.mediaFiles.forEach((media) => {
+            allFiles.push({
+              url: media.fileUrl,
+              name: media.fileName || `${item.design.title}-${media.id}`,
+              folder: item.design.title // Create subfolder for each design
+            })
+          })
+        }
+      })
+
+      if (allFiles.length === 0) {
+        toast.error('No files available for download')
+        setDownloadingAll(false)
+        return
+      }
+
+      await downloadFilesAsZip(allFiles, `Order-${order.orderNumber}`)
+      toast.success(`Downloaded ${allFiles.length} file(s) from ${order.items.length} design(s)`)
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download files. Please try again.')
+    } finally {
+      setDownloadingAll(false)
+    }
   }
 
   if (loading) {
@@ -161,9 +245,22 @@ export default function CheckoutSuccessPage() {
                     <p className="font-semibold text-gray-900">
                       {formatPrice(item.price * item.quantity)}
                     </p>
-                    <button className="mt-2 text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1">
-                      <Download className="h-4 w-4" />
-                      Download
+                    <button 
+                      onClick={() => handleDownloadItem(item)}
+                      disabled={downloadingItemId === item.id}
+                      className="mt-2 text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {downloadingItemId === item.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Preparing...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Download as ZIP
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -206,9 +303,22 @@ export default function CheckoutSuccessPage() {
                   <p className="text-blue-700 text-sm mb-3">
                     Your purchased designs are now available for download. You have lifetime access to these files.
                   </p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
-                    <Download className="h-4 w-4" />
-                    Download All
+                  <button 
+                    onClick={handleDownloadAll}
+                    disabled={downloadingAll}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {downloadingAll ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Preparing...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Download All
+                      </>
+                    )}
                   </button>
                 </div>
                 

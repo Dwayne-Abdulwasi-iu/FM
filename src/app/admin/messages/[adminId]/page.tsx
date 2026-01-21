@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { 
   MessageSquare, 
   ArrowLeft,
-  Mail,
   Clock,
   ChevronRight,
   BadgeCheck,

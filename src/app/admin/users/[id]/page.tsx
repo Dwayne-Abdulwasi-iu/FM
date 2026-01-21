@@ -15,7 +15,6 @@ import {
   Palette,
   MessageSquare,
   Send,
-  ExternalLink,
   DollarSign,
   Star,
   Globe,

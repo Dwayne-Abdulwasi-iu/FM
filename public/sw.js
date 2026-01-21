@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fashion-marketplace-v1';
+const _CACHE_NAME = 'fashion-marketplace-v1';
 const STATIC_CACHE = 'static-v1';
 const DYNAMIC_CACHE = 'dynamic-v1';
 

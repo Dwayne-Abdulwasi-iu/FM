@@ -106,28 +106,72 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Invalid metadata' }, { status: 400 })
       }
 
-      // Create order in database
-      const order = await prisma.order.create({
-        data: {
-          orderNumber: reference ?? `PS-${Date.now()}`,
-          customerId: userId,
-          totalAmount: originalAmountUSD, // Store in USD
-          platformFee: platformFee,
-          status: 'COMPLETED',
-          stripePaymentIntentId: reference ?? undefined, // Use reference for tracking
+      // Find existing order created during checkout (or create if missing for some reason)
+      let order = await prisma.order.findUnique({
+        where: { orderNumber: reference ?? '' },
+        include: {
           items: {
-            create: orderItems.map((item) => ({
-              designId: item.designId,
-              quantity: item.quantity,
-              price: item.price,
-              purchaseType: item.purchaseType || 'REGULAR'
-            }))
+            include: {
+              design: {
+                select: {
+                  id: true,
+                  title: true,
+                  designerId: true
+                }
+              }
+            }
           }
+        }
+      })
+
+      if (!order) {
+        // Fallback: create order if it doesn't exist (shouldn't happen but safe fallback)
+        console.log(`[Paystack Webhook] Order not found, creating new order for reference: ${reference}`)
+        order = await prisma.order.create({
+          data: {
+            orderNumber: reference ?? `PS-${Date.now()}`,
+            customerId: userId,
+            totalAmount: originalAmountUSD, // Store in USD
+            platformFee: platformFee,
+            status: 'PENDING',
+            paymentMethod: 'PAYSTACK',
+            items: {
+              create: orderItems.map((item) => ({
+                designId: item.designId,
+                quantity: item.quantity,
+                price: item.price,
+                purchaseType: item.purchaseType || 'REGULAR'
+              }))
+            }
+          },
+          include: {
+            items: {
+              include: {
+                design: true
+              }
+            }
+          }
+        })
+      }
+
+      // Update existing order to COMPLETED
+      order = await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'COMPLETED',
+          paidAt: new Date(),
+          paymentMethod: 'PAYSTACK'
         },
         include: {
           items: {
             include: {
-              design: true
+              design: {
+                select: {
+                  id: true,
+                  title: true,
+                  designerId: true
+                }
+              }
             }
           }
         }

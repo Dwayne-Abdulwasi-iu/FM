@@ -74,11 +74,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[CHECKOUT] POST /api/checkout called', { userId: session.user.id })
+    
     let cartItems, paymentMethod, phoneNumber, countryCode, shippingAddress
     try {
       const body = await request.json()
       cartItems = body.cartItems
       paymentMethod = body.paymentMethod || 'stripe'
+      console.log('[CHECKOUT] Request body:', { paymentMethod, itemCount: cartItems?.length })
       phoneNumber = body.phoneNumber // For M-Pesa
       countryCode = body.countryCode || 'KE' // For Flutterwave/M-Pesa
       shippingAddress = body.shippingAddress // For POD orders
@@ -158,7 +161,7 @@ export async function POST(request: NextRequest) {
         console.log('[CHECKOUT] Stripe not configured, auto-redirecting to Flutterwave')
       } else {
         return NextResponse.json(
-          { message: 'Stripe not activated and no alternative payment methods available.' },
+          { message: 'Stripe not configured. Please choose another payment method.' },
           { status: 503 }
         )
       }
@@ -173,7 +176,7 @@ export async function POST(request: NextRequest) {
         console.log('[CHECKOUT] Paystack not configured, auto-redirecting to Flutterwave')
       } else {
         return NextResponse.json(
-          { message: 'Paystack not activated and no alternative payment methods available.' },
+          { message: 'Paystack not configured. Please choose another payment method.' },
           { status: 503 }
         )
       }
@@ -381,6 +384,7 @@ export async function POST(request: NextRequest) {
         paymentMethod: 'stripe'
       })
     } else if (paymentMethod === 'paystack') {
+      console.log('[CHECKOUT] Processing Paystack payment')
       // Convert USD to NGN for Paystack
       const amountInNGN = await convertUSDToNGN(totalAmount)
       
@@ -428,9 +432,48 @@ export async function POST(request: NextRequest) {
         return sum + (s.designerTotal * s.commissionRate)
       }, 0)
       
+      const paymentReference = `fashion_${Date.now()}_${session.user.id}`
+      
+      // CREATE ORDER FIRST - this was missing!
+      console.log('[CHECKOUT] Creating Paystack order with reference:', paymentReference)
+      const paystackOrder = await prisma.order.create({
+        data: {
+          orderNumber: paymentReference,
+          customerId: session.user.id,
+          status: 'PENDING',
+          totalAmount: totalAmount,
+          platformFee: totalPlatformFee,
+          paymentMethod: 'PAYSTACK',
+          orderType: hasPodItems ? 'POD' : 'DIGITAL',
+          items: {
+            create: orderItems.map(item => ({
+              designId: item.designId,
+              quantity: item.quantity,
+              price: item.price,
+              purchaseType: item.purchaseType || 'REGULAR'
+            }))
+          },
+          ...(hasPodItems && shippingAddress ? {
+            shippingName: shippingAddress.fullName,
+            shippingAddress1: shippingAddress.address,
+            shippingCity: shippingAddress.city,
+            shippingState: shippingAddress.state,
+            shippingZip: shippingAddress.postalCode,
+            shippingCountry: shippingAddress.country,
+            shippingPhone: shippingAddress.phone,
+          } : {})
+        }
+      })
+      
+      console.log('[CHECKOUT] Paystack order created successfully:', {
+        id: paystackOrder.id,
+        orderNumber: paystackOrder.orderNumber
+      })
+      
       // Create Paystack transaction with split payments
       const transactionMetadata: Record<string, string | boolean> = {
         userId: session.user.id,
+        orderId: paystackOrder.id,
         platformFee: totalPlatformFee.toFixed(2), // Calculated from tiered rates
         orderItems: JSON.stringify(orderItems),
         originalAmountUSD: totalAmount.toString(),
@@ -445,10 +488,10 @@ export async function POST(request: NextRequest) {
       
       const transactionData: Record<string, unknown> = {
         email: session.user.email || 'customer@example.com',
-        amount: amountInNGN * 100, // Paystack expects kobo (NGN * 100)
+        amount: Math.round(amountInNGN * 100), // Paystack expects kobo (NGN * 100)
         currency: 'NGN',
-        reference: `fashion_${Date.now()}_${session.user.id}`,
-        callback_url: `${process.env.NEXTAUTH_URL}/checkout/success`,
+        reference: paymentReference,
+        callback_url: `${process.env.NEXTAUTH_URL}/checkout/success?reference=${paymentReference}`,
         metadata: transactionMetadata
       }
       
@@ -487,6 +530,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
+        orderId: paystackOrder.id,
         reference: transaction.data.reference,
         url: transaction.data.authorization_url,
         paymentMethod: 'paystack',
@@ -522,10 +566,10 @@ export async function POST(request: NextRequest) {
       // Add shipping address for POD orders
       if (hasPodItems && shippingAddress) {
         orderData.shippingName = shippingAddress.fullName
-        orderData.shippingAddress = shippingAddress.address
+        orderData.shippingAddress1 = shippingAddress.address
         orderData.shippingCity = shippingAddress.city
         orderData.shippingState = shippingAddress.state
-        orderData.shippingPostalCode = shippingAddress.postalCode
+        orderData.shippingZip = shippingAddress.postalCode
         orderData.shippingCountry = shippingAddress.country
         orderData.shippingPhone = shippingAddress.phone
       }
@@ -586,7 +630,121 @@ export async function POST(request: NextRequest) {
       } catch (flwError) {
         // Rollback order if Flutterwave fails
         await prisma.order.delete({ where: { id: order.id } })
-        throw flwError
+        
+        // Log Flutterwave error details
+        console.error('[CHECKOUT] Flutterwave error:', flwError);
+        
+        // Check if this is a network/IP block issue (403, Cloudflare, connection error)
+        const errorMsg = flwError instanceof Error ? flwError.message : String(flwError);
+        const isNetworkIssue = errorMsg.includes('403') || 
+                              errorMsg.includes('Forbidden') || 
+                              errorMsg.includes('Cloudflare') ||
+                              errorMsg.includes('blocked') ||
+                              errorMsg.includes('Request failed');
+        
+        if (isNetworkIssue && paystackConfigured) {
+          // For network issues, automatically retry with Paystack
+          console.log('[CHECKOUT] Flutterwave network error (likely IP whitelist issue), auto-retrying with Paystack');
+          
+          const paymentReference = `fashion_${Date.now()}_${session.user.id}`
+          
+          // Convert USD to NGN for Paystack
+          const amountInNGN = await convertUSDToNGN(totalAmount)
+          
+          // Get unique designers from order items and check their subaccounts
+          const designerIds = [...new Set(orderItems.map(item => item.designerId))]
+          type Subaccount = { subaccount: string; share: number; commissionRate: number; designerTotal: number }
+          const subaccounts: Subaccount[] = []
+          
+          for (const designerId of designerIds) {
+            // Get seller account and user info for tiered commission
+            const [sellerAccount, seller] = await Promise.all([
+              prisma.sellerAccount.findUnique({
+                where: { userId: designerId }
+              }),
+              prisma.user.findUnique({
+                where: { id: designerId },
+                select: { totalEarnings: true, designerTier: true }
+              })
+            ])
+
+            if (sellerAccount?.subaccountCode) {
+              const designerTotal = orderItems
+                .filter(item => item.designerId === designerId)
+                .reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+              const commissionRate = getCommissionRate(seller?.totalEarnings || 0)
+              const platformFee = designerTotal * commissionRate
+              const designerEarnings = designerTotal - platformFee
+
+              subaccounts.push({
+                subaccount: sellerAccount.subaccountCode,
+                share: Math.round(designerEarnings * 100),
+                commissionRate: commissionRate,
+                designerTotal: designerTotal
+              })
+            }
+          }
+
+          // Create new order for Paystack
+          console.log('[CHECKOUT] Creating Paystack order with reference:', paymentReference)
+          const paystackOrder = await prisma.order.create({
+            data: {
+              orderNumber: paymentReference,
+              customerId: session.user.id,
+              status: 'PENDING',
+              totalAmount: totalAmount,
+              platformFee: totalAmount * 0.10,
+              paymentMethod: 'PAYSTACK',
+              orderType: hasPodItems ? 'POD' : 'DIGITAL',
+              items: {
+                create: orderItems.map(item => ({
+                  designId: item.designId,
+                  quantity: item.quantity,
+                  price: item.price,
+                  purchaseType: item.purchaseType || 'REGULAR'
+                }))
+              },
+              ...(hasPodItems && shippingAddress ? {
+                shippingName: shippingAddress.fullName,
+                shippingAddress1: shippingAddress.address,
+                shippingCity: shippingAddress.city,
+                shippingState: shippingAddress.state,
+                shippingZip: shippingAddress.postalCode,
+                shippingCountry: shippingAddress.country,
+                shippingPhone: shippingAddress.phone,
+              } : {})
+            }
+          })
+
+          console.log('[CHECKOUT] Paystack order created successfully:', {
+            id: paystackOrder.id,
+            orderNumber: paystackOrder.orderNumber,
+            customerId: paystackOrder.customerId,
+            totalAmount: paystackOrder.totalAmount
+          })
+
+          const paystackResult = await paystack.transaction.initialize({
+            email: session.user.email || 'customer@example.com',
+            amount: Math.round(amountInNGN * 100),
+            reference: paymentReference,
+            metadata: {
+              orderId: paystackOrder.id,
+              userId: session.user.id,
+              subaccounts: subaccounts,
+              orderType: hasPodItems ? 'POD' : 'DIGITAL'
+            }
+          })
+
+          return NextResponse.json({
+            orderId: paystackOrder.id,
+            reference: paystackResult.data.reference,
+            url: paystackResult.data.authorization_url,
+            paymentMethod: 'paystack'
+          })
+        }
+        
+        throw flwError;
       }
     }
 

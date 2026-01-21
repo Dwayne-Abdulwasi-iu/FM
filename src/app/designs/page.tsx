@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Star, Eye, Crown } from 'lucide-react'
 import Image from 'next/image'
+import toast from 'react-hot-toast'
 import { generateDesignPlaceholder } from '@/lib/placeholders'
 import { DesignerBadgeCompact } from '@/components/DesignerBadge'
 import { useCurrency } from '@/components/CurrencyProvider'
@@ -109,12 +110,12 @@ export default function DesignsPage() {
 
       if (response.ok) {
         // Show success message and trigger cart refresh
-        alert(`"${designTitle}" added to cart successfully!`)
+        toast.success(`"${designTitle}" added to cart successfully!`)
         // Trigger a custom event to refresh cart count in navbar
         window.dispatchEvent(new CustomEvent('cartUpdated'))
       } else {
         const error = await response.json()
-        alert(`Failed to add to cart: ${error.message}`)
+        toast.error(`Failed to add to cart: ${error.message}`)
       }
     } catch (error) {
       console.error('Add to cart error:', error)

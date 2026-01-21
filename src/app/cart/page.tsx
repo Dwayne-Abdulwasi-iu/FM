@@ -305,10 +305,11 @@ export default function CartPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShoppingBag className="h-6 w-6" />
-              Shopping Cart ({cartItems.length})
+          <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <ShoppingBag className="h-5 sm:h-6 w-5 sm:w-6" />
+              <span>Shopping Cart</span>
+              <span className="text-black">({cartItems.length})</span>
             </h1>
           </div>
 
@@ -343,8 +344,8 @@ export default function CartPage() {
               </Link>
             </div>
           ) : (
-            <div className="p-6">
-              <div className="space-y-4 mb-8">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 {/* POD Items Notice */}
                 {hasPODItems && (
                   <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
@@ -361,13 +362,13 @@ export default function CartPage() {
                 {cartItems.map((item) => (
                   <div 
                     key={item.id} 
-                    className={`flex items-center space-x-4 p-4 border rounded-lg ${
+                    className={`flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 border rounded-lg ${
                       item.purchaseType === 'POD' 
                         ? 'border-orange-200 bg-orange-50/30' 
                         : 'border-gray-200'
                     }`}
                   >
-                    <div className="w-20 h-20 flex-shrink-0 relative">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 relative">
                       <Image
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
@@ -426,7 +427,7 @@ export default function CartPage() {
                             <Minus className="h-4 w-4" />
                           </button>
                           
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <span className="w-8 text-center font-medium text-black">{item.quantity}</span>
                           
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
@@ -461,19 +462,19 @@ export default function CartPage() {
               </div>
 
               {/* Order Summary */}
-              <div className="border-t border-gray-200 pt-6">
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+              <div className="border-t border-gray-200 pt-4 sm:pt-6 mt-4 sm:mt-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Order Summary</h3>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1 sm:space-y-2">
                     {/* Show breakdown by type */}
                     {hasDigitalItems && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Download className="h-4 w-4" />
-                          Digital Items
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-black flex items-center gap-1">
+                          <Download className="h-3 sm:h-4 w-3 sm:w-4" />
+                          <span>Digital Items</span>
                         </span>
-                        <span className="font-medium">
+                        <span className="font-medium text-black">
                           {formatPrice(
                             cartItems
                               .filter(item => item.purchaseType !== 'POD')
@@ -484,12 +485,12 @@ export default function CartPage() {
                     )}
                     
                     {hasPODItems && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Package className="h-4 w-4" />
-                          Physical Products
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-black flex items-center gap-1">
+                          <Package className="h-3 sm:h-4 w-3 sm:w-4" />
+                          <span>Physical Products</span>
                         </span>
-                        <span className="font-medium">
+                        <span className="font-medium text-black">
                           {formatPrice(
                             cartItems
                               .filter(item => item.purchaseType === 'POD')
@@ -500,24 +501,24 @@ export default function CartPage() {
                     )}
                     
                     {hasPODItems && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Truck className="h-4 w-4" />
-                          Shipping
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-black flex items-center gap-1">
+                          <Truck className="h-3 sm:h-4 w-3 sm:w-4" />
+                          <span>Shipping</span>
                         </span>
-                        <span className="text-gray-500 italic">Calculated at checkout</span>
+                        <span className="text-gray-700 italic">Calculated at checkout</span>
                       </div>
                     )}
                     
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Items Total</span>
-                      <span className="font-medium">{formatPrice(total)}</span>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-black">Items Total</span>
+                      <span className="font-medium text-black">{formatPrice(total)}</span>
                     </div>
                     
                     <div className="border-t border-gray-300 pt-2 mt-2">
-                      <div className="flex justify-between">
-                        <span className="text-lg font-semibold text-gray-900">You Pay</span>
-                        <span className="text-lg font-semibold text-gray-900">
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="font-semibold text-black">You Pay</span>
+                        <span className="font-semibold text-black">
                           {formatPrice(total)}
                           {hasPODItems && <span className="text-sm font-normal text-gray-500"> + shipping</span>}
                         </span>
@@ -534,74 +535,80 @@ export default function CartPage() {
                   </div>
                   
                   {/* Payment Method Selection */}
-                  <div className="mt-6 border-t border-gray-200 pt-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">Payment Method</h3>
+                  <div className="mt-4 sm:mt-6 border-t border-gray-200 pt-4 sm:pt-6">
+                    <h3 className="text-sm sm:text-base font-semibold text-black mb-3 sm:mb-4">Payment Method</h3>
                     <div className="space-y-2">
-                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                      <label className="flex items-start sm:items-center p-2 sm:p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="paystack"
                           checked={paymentMethod === 'paystack'}
                           onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
-                          className="mr-3 text-indigo-600"
+                          className="mr-2 sm:mr-3 mt-1 sm:mt-0 text-indigo-600"
                         />
-                        <div className="flex items-center flex-1">
-                          <span className="text-2xl mr-2">🏦</span>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Paystack</span>
-                            <p className="text-xs text-gray-500">Cards, Bank Transfer, USSD (Nigeria, Ghana, SA)</p>
+                        <div className="flex items-center flex-1 min-w-0">
+                          <span className="text-lg sm:text-2xl mr-2 flex-shrink-0">🏦</span>
+                          <div className="min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-gray-700 block">Paystack</span>
+                            <p className="text-xs text-gray-500">Cards, Bank Transfer, USSD</p>
                           </div>
                         </div>
                       </label>
                       
-                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                      
+                      {/* TODO: Flutterwave - Cloudflare blocking issue, re-enable when fixed */}
+                      {/* 
+                      <label className="flex items-start sm:items-center p-2 sm:p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="flutterwave"
                           checked={paymentMethod === 'flutterwave'}
                           onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
-                          className="mr-3 text-indigo-600"
+                          className="mr-2 sm:mr-3 mt-1 sm:mt-0 text-indigo-600"
                         />
-                        <div className="flex items-center flex-1">
-                          <span className="text-2xl mr-2">🌍</span>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Flutterwave</span>
-                            <p className="text-xs text-gray-500">Cards, Mobile Money (11 African countries)</p>
+                        <div className="flex items-center flex-1 min-w-0">
+                          <span className="text-lg sm:text-2xl mr-2 flex-shrink-0">🌍</span>
+                          <div className="min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-gray-700 block">Flutterwave</span>
+                            <p className="text-xs text-gray-500">Cards, Mobile Money</p>
                           </div>
                         </div>
                       </label>
+                      */}
                       
-                      <label className="flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                      <label className="flex items-start sm:items-center p-2 sm:p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="stripe"
                           checked={paymentMethod === 'stripe'}
                           onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
-                          className="mr-3 text-indigo-600"
+                          className="mr-2 sm:mr-3 mt-1 sm:mt-0 text-indigo-600"
                         />
-                        <div className="flex items-center flex-1">
-                          <span className="text-2xl mr-2">💳</span>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Stripe</span>
-                            <p className="text-xs text-gray-500">International Cards (Visa, Mastercard)</p>
+                        <div className="flex items-center flex-1 min-w-0">
+                          <span className="text-lg sm:text-2xl mr-2 flex-shrink-0">💳</span>
+                          <div className="min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-gray-700 block">Stripe</span>
+                            <p className="text-xs text-gray-500">International Cards</p>
                           </div>
                         </div>
                       </label>
                     </div>
                     
-                    {/* Flutterwave Country Selection */}
+                    
+                    {/* TODO: Flutterwave Country Selection - re-enable with Flutterwave option */}
+                    {/* 
                     {paymentMethod === 'flutterwave' && (
-                      <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="mt-3 sm:mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Select Your Country
                         </label>
                         <select
                           value={countryCode}
                           onChange={(e) => setCountryCode(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
                           aria-label="Select your country for Flutterwave payment"
                         >
                           <option value="NG">🇳🇬 Nigeria (NGN)</option>
@@ -617,6 +624,7 @@ export default function CartPage() {
                         </select>
                       </div>
                     )}
+                    */}
                   </div>
                   
                   {/* Shipping Address Form (for POD orders) */}
@@ -711,7 +719,7 @@ export default function CartPage() {
                   <button
                     onClick={handleCheckout}
                     disabled={checkingOut}
-                    className="w-full mt-6 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full mt-4 sm:mt-6 bg-indigo-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
                   >
                     {checkingOut ? (
                       <>

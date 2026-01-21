@@ -34,7 +34,7 @@ async function setupPrintfulWebhook(): Promise<{ success: boolean; secret?: stri
 
     if (existingResponse.ok) {
       const existingData = await existingResponse.json();
-      const existingWebhooks = existingData.result?.types || [];
+      const _existingWebhooks = existingData.result?.types || [];
       const existingUrl = existingData.result?.url;
       
       if (existingUrl) {

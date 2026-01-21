@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "react-hot-toast";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/components/CurrencyProvider";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
@@ -21,6 +22,7 @@ export function Providers({ children }: ProvidersProps) {
         <CurrencyProvider>
           {children}
           <OnboardingTour />
+          <Toaster position="top-right" />
         </CurrencyProvider>
       </LanguageProvider>
     </SessionProvider>

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import toast from 'react-hot-toast'
 import {
   Package,
   Download,
@@ -15,13 +16,13 @@ import {
   ChevronRight,
   Loader2,
   ShoppingBag,
-  Eye,
   ExternalLink,
   Clock,
   CheckCircle,
   XCircle,
   Truck,
 } from 'lucide-react'
+import { downloadFilesAsZip } from '@/lib/downloadUtils'
 
 interface OrderItem {
   id: string
@@ -40,6 +41,13 @@ interface OrderItem {
       id: string
       name: string | null
     }
+    mediaFiles?: Array<{
+      id: string
+      fileUrl: string
+      fileName: string
+      fileType: string
+      mimeType: string
+    }>
   }
 }
 
@@ -82,6 +90,42 @@ export default function OrdersPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'DIGITAL' | 'POD'>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(null)
+
+  const handleDownloadAllFiles = async (order: Order) => {
+    setDownloadingOrderId(order.id)
+    
+    try {
+      const files: Array<{ url: string; name: string; folder?: string }> = []
+      
+      // Collect all files from all items in the order, organized by design
+      order.items.forEach((item) => {
+        if (item.design.mediaFiles && item.design.mediaFiles.length > 0) {
+          item.design.mediaFiles.forEach((media) => {
+            files.push({
+              url: media.fileUrl,
+              name: media.fileName || `${item.design.title}-${media.id}`,
+              folder: item.design.title // Create subfolder for each design
+            })
+          })
+        }
+      })
+
+      if (files.length === 0) {
+        toast.error('No files available for download')
+        setDownloadingOrderId(null)
+        return
+      }
+
+      await downloadFilesAsZip(files, `Order-${order.orderNumber}`)
+      toast.success(`Downloaded ${files.length} file(s) from ${order.items.length} design(s)`)
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download files. Please try again.')
+    } finally {
+      setDownloadingOrderId(null)
+    }
+  }
 
   useEffect(() => {
     if (authStatus === 'loading') return
@@ -149,15 +193,15 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShoppingBag className="w-6 h-6" />
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
               My Orders
             </h1>
-            <p className="text-gray-600 mt-1">View and manage your digital purchases</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">View and manage your digital purchases</p>
           </div>
           <Link
             href="/boutique/orders"
@@ -170,8 +214,8 @@ export default function OrdersPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="flex flex-col gap-2 sm:gap-4">
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -180,7 +224,7 @@ export default function OrdersPage() {
                 placeholder="Search orders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                className="w-full pl-8 pr-3 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
               />
             </div>
 
@@ -233,19 +277,19 @@ export default function OrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4">
             {filteredOrders.map((order) => {
               const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING
               const StatusIcon = statusConfig.icon
 
               return (
-                <div key={order.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div key={order.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                   {/* Order Header */}
-                  <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-4">
+                  <div className="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <div>
-                        <p className="font-medium text-gray-900">Order #{order.orderNumber}</p>
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">Order #{order.orderNumber}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 sm:mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {formatDate(order.createdAt)}
@@ -271,11 +315,11 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Items */}
-                  <div className="px-6 py-4">
-                    <div className="space-y-3">
+                  <div className="px-3 sm:px-6 py-2 sm:py-4">
+                    <div className="space-y-2">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 relative flex-shrink-0">
+                        <div key={item.id} className="flex items-center gap-2 sm:gap-4">
+                          <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg overflow-hidden bg-gray-100 relative flex-shrink-0">
                             <Image
                               src={item.design.thumbnailUrl || item.design.imageUrl}
                               alt={item.design.title}
@@ -286,11 +330,11 @@ export default function OrdersPage() {
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/designs/${item.design.id}`}
-                              className="font-medium text-gray-900 hover:text-indigo-600 truncate block"
+                              className="text-xs sm:text-sm font-medium text-gray-900 hover:text-indigo-600 truncate block"
                             >
                               {item.design.title}
                             </Link>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs text-gray-500">
                               by {item.design.designer.name || 'Unknown Designer'}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
@@ -318,11 +362,11 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Actions */}
-                  <div className="px-6 py-3 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+                  <div className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 flex flex-wrap items-center justify-between gap-2">
                     {/* POD Tracking */}
                     {order.orderType === 'POD' && order.trackingNumber && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Truck className="w-4 h-4" />
+                      <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <Truck className="w-3 h-3" />
                         <span>Tracking: {order.trackingNumber}</span>
                         {order.trackingUrl && (
                           <a
@@ -338,22 +382,25 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 ml-auto">
-                      <Link
-                        href={`/orders/${order.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </Link>
+                    <div className="flex items-center gap-1 sm:gap-2 ml-auto">
                       {order.orderType === 'DIGITAL' && (order.status === 'PAID' || order.status === 'COMPLETED') && (
-                        <Link
-                          href="/profile#purchases"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                        <button
+                          onClick={() => handleDownloadAllFiles(order)}
+                          disabled={downloadingOrderId === order.id}
+                          className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
-                          <Download className="w-4 h-4" />
-                          Downloads
-                        </Link>
+                          {downloadingOrderId === order.id ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              Downloads
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
                   </div>

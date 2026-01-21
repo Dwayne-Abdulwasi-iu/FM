@@ -18,7 +18,7 @@ export async function GET() {
     const orders = await prisma.order.findMany({
       where: {
         customerId: session.user.id,
-        status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] }
+        status: { in: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] }
       },
       include: {
         items: {
@@ -30,6 +30,19 @@ export async function GET() {
                 imageUrl: true,
                 thumbnailUrl: true,
                 category: true,
+                mediaFiles: {
+                  select: {
+                    id: true,
+                    fileUrl: true,
+                    fileName: true,
+                    fileType: true,
+                    mimeType: true,
+                    sortOrder: true
+                  },
+                  orderBy: {
+                    sortOrder: 'asc'
+                  }
+                },
                 designer: {
                   select: {
                     id: true,

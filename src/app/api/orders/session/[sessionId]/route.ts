@@ -21,6 +21,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
 
     // Check if this is a Paystack reference (starts with 'fashion_')
     if (sessionId.startsWith('fashion_')) {
+      console.log('[GET /api/orders/session] Looking for Paystack order:', { sessionId, customerId: session.user.id })
       // Find Paystack order by orderNumber
       const order = await prisma.order.findFirst({
         where: {
@@ -31,7 +32,23 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
           items: {
             include: {
               design: {
-                include: {
+                select: {
+                  id: true,
+                  title: true,
+                  imageUrl: true,
+                  mediaFiles: {
+                    select: {
+                      id: true,
+                      fileUrl: true,
+                      fileName: true,
+                      fileType: true,
+                      mimeType: true,
+                      sortOrder: true
+                    },
+                    orderBy: {
+                      sortOrder: 'asc'
+                    }
+                  },
                   designer: {
                     select: {
                       id: true,
@@ -45,7 +62,14 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
         }
       })
 
+      console.log('[GET /api/orders/session] Query result:', order ? 'FOUND' : 'NOT FOUND')
       if (!order) {
+        console.log('[GET /api/orders/session] Order not found - checking if it exists at all')
+        const allOrders = await prisma.order.findMany({
+          where: { orderNumber: sessionId },
+          select: { id: true, orderNumber: true, customerId: true }
+        })
+        console.log('[GET /api/orders/session] All orders with this number:', allOrders)
         return NextResponse.json(
           { message: 'Order not found' },
           { status: 404 }
@@ -76,7 +100,23 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ses
         items: {
           include: {
             design: {
-              include: {
+              select: {
+                id: true,
+                title: true,
+                imageUrl: true,
+                mediaFiles: {
+                  select: {
+                    id: true,
+                    fileUrl: true,
+                    fileName: true,
+                    fileType: true,
+                    mimeType: true,
+                    sortOrder: true
+                  },
+                  orderBy: {
+                    sortOrder: 'asc'
+                  }
+                },
                 designer: {
                   select: {
                     id: true,

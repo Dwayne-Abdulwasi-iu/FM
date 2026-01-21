@@ -12,6 +12,17 @@ export async function GET(
   context: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const params = await context.params
+    const orderId = params.orderId
+    
+    // Guard against undefined or invalid orderId
+    if (!orderId || orderId === 'undefined') {
+      return NextResponse.json(
+        { message: 'Invalid order ID' },
+        { status: 400 }
+      )
+    }
+    
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
@@ -21,8 +32,6 @@ export async function GET(
       )
     }
 
-    const params = await context.params
-    const orderId = params.orderId
     const userId = session.user.id
     const isAdmin = session.user.role === 'ADMIN'
 
@@ -50,6 +59,20 @@ export async function GET(
                 price: true,
                 ownershipPrice: true,
                 category: true,
+                mediaFiles: {
+                  select: {
+                    id: true,
+                    fileUrl: true,
+                    fileName: true,
+                    fileType: true,
+                    mimeType: true,
+                    accessType: true,
+                    sortOrder: true
+                  },
+                  orderBy: {
+                    sortOrder: 'asc'
+                  }
+                },
                 designer: {
                   select: {
                     id: true,

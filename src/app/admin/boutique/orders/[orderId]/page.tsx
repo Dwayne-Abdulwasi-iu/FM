@@ -6,9 +6,9 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
-  Package, ChevronLeft, Truck, CheckCircle, XCircle, Clock, 
-  User, MapPin, Phone, Mail, CreditCard, Copy, ExternalLink,
-  Building, Banknote, Send, AlertCircle
+  Package, ChevronLeft, Truck, AlertCircle,
+  User, MapPin, Phone, Mail, Copy, ExternalLink,
+  Banknote, Send
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
