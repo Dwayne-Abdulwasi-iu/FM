@@ -293,10 +293,10 @@ export default function OrdersPage() {
                 <div key={order.id} className="bg-white rounded shadow-sm overflow-hidden">
                   {/* Order Header */}
                   <div className="px-3 sm:px-4 py-2 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
                       <div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-900">Order #{order.orderNumber}</p>
-                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900 break-words">Order #{order.orderNumber}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
                           <span className="flex items-center gap-0.5">
                             <Calendar className="w-2.5 h-2.5" />
                             {formatDate(order.createdAt)}
