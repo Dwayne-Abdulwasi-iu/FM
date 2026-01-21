@@ -362,35 +362,35 @@ export default function CartPage() {
                 {cartItems.map((item) => (
                   <div 
                     key={item.id} 
-                    className={`flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 border rounded-lg ${
+                    className={`flex items-start gap-2 p-2 sm:p-3 border rounded ${
                       item.purchaseType === 'POD' 
-                        ? 'border-orange-200 bg-orange-50/30' 
+                        ? 'border-orange-200 bg-orange-50/20' 
                         : 'border-gray-200'
                     }`}
                   >
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 relative">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 relative">
                       <Image
                         src={item.design.thumbnailUrl || item.design.imageUrl}
                         alt={item.design.title}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover rounded-lg"
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover rounded"
                       />
                       {item.purchaseType === 'POD' && (
-                        <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-1">
-                          <Package className="h-3 w-3" />
+                        <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5">
+                          <Package className="h-2.5 w-2.5" />
                         </div>
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <Link href={`/designs/${item.design.id}`}>
-                        <h3 className="font-semibold text-gray-900 hover:text-indigo-600 truncate">
+                        <h3 className="font-semibold text-xs sm:text-sm text-gray-900 hover:text-indigo-600 truncate">
                           {item.design.title}
                         </h3>
                       </Link>
                       {item.purchaseType === 'POD' && item.podProductName && (
-                        <p className="text-sm text-orange-700 font-medium">
+                        <p className="text-[10px] sm:text-xs text-orange-700 font-medium truncate">
                           {item.podProductName}
                           {item.podProvider && (
                             <span className="text-orange-500 ml-1">
@@ -399,62 +399,62 @@ export default function CartPage() {
                           )}
                         </p>
                       )}
-                      <p className="text-sm text-gray-600">
+                      <p className="text-[10px] sm:text-xs text-gray-600 truncate">
                         by {item.design.designer.name || 'Anonymous'}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1 mt-0.5">
                         {getItemTypeBadge(item)}
                       </div>
-                      <p className="font-semibold text-gray-900 mt-1">
+                      <p className="font-semibold text-xs sm:text-sm text-gray-900 mt-0.5">
                         {formatPrice(getItemPrice(item))}
                         {hasTestPrice(item) && (
-                          <span className="ml-2 text-sm text-gray-400 line-through font-normal">
+                          <span className="ml-1 text-[9px] text-gray-400 line-through font-normal">
                             {formatPrice(item.design.price)}
                           </span>
                         )}
                       </p>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {item.purchaseType !== 'OWNERSHIP' && (
                         <>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             disabled={updating === item.id}
-                            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            className="p-0.5 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                             aria-label="Decrease quantity"
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-3 w-3" />
                           </button>
                           
-                          <span className="w-8 text-center font-medium text-black">{item.quantity}</span>
+                          <span className="w-6 text-center text-xs font-medium text-black">{item.quantity}</span>
                           
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             disabled={updating === item.id}
-                            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            className="p-0.5 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                             aria-label="Increase quantity"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3 w-3" />
                           </button>
                         </>
                       )}
                       {item.purchaseType === 'OWNERSHIP' && (
-                        <span className="text-sm text-gray-500">Qty: 1</span>
+                        <span className="text-[10px] text-gray-500">Qty: 1</span>
                       )}
                     </div>
                     
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-semibold text-xs sm:text-sm text-gray-900">
                         {formatPrice(getItemPrice(item) * item.quantity)}
                       </p>
                       <button
                         onClick={() => removeFromCart(item.id)}
                         disabled={updating === item.id}
-                        className="mt-2 text-red-600 hover:text-red-800 disabled:opacity-50"
+                        className="mt-1 text-red-600 hover:text-red-800 disabled:opacity-50"
                         aria-label="Remove from cart"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
@@ -462,19 +462,19 @@ export default function CartPage() {
               </div>
 
               {/* Order Summary */}
-              <div className="border-t border-gray-200 pt-4 sm:pt-6 mt-4 sm:mt-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                  <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Order Summary</h3>
+              <div className="border-t border-gray-200 pt-3 sm:pt-4 mt-3 sm:mt-4">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4">
+                  <h3 className="text-sm sm:text-base font-semibold text-black mb-2 sm:mb-3">Order Summary</h3>
                   
-                  <div className="space-y-1 sm:space-y-2">
+                  <div className="space-y-1">
                     {/* Show breakdown by type */}
                     {hasDigitalItems && (
-                      <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-black flex items-center gap-1">
-                          <Download className="h-3 sm:h-4 w-3 sm:w-4" />
+                      <div className="flex justify-between text-[11px] sm:text-xs">
+                        <span className="text-gray-700 flex items-center gap-1">
+                          <Download className="h-3 w-3" />
                           <span>Digital Items</span>
                         </span>
-                        <span className="font-medium text-black">
+                        <span className="font-medium text-gray-900">
                           {formatPrice(
                             cartItems
                               .filter(item => item.purchaseType !== 'POD')
@@ -485,12 +485,12 @@ export default function CartPage() {
                     )}
                     
                     {hasPODItems && (
-                      <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-black flex items-center gap-1">
-                          <Package className="h-3 sm:h-4 w-3 sm:w-4" />
+                      <div className="flex justify-between text-[11px] sm:text-xs">
+                        <span className="text-gray-700 flex items-center gap-1">
+                          <Package className="h-3 w-3" />
                           <span>Physical Products</span>
                         </span>
-                        <span className="font-medium text-black">
+                        <span className="font-medium text-gray-900">
                           {formatPrice(
                             cartItems
                               .filter(item => item.purchaseType === 'POD')
@@ -501,29 +501,29 @@ export default function CartPage() {
                     )}
                     
                     {hasPODItems && (
-                      <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-black flex items-center gap-1">
-                          <Truck className="h-3 sm:h-4 w-3 sm:w-4" />
+                      <div className="flex justify-between text-[11px] sm:text-xs">
+                        <span className="text-gray-700 flex items-center gap-1">
+                          <Truck className="h-3 w-3" />
                           <span>Shipping</span>
                         </span>
-                        <span className="text-gray-700 italic">Calculated at checkout</span>
+                        <span className="text-gray-600 italic text-[10px] sm:text-[11px]">Calculated at checkout</span>
                       </div>
                     )}
                     
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-black">Items Total</span>
-                      <span className="font-medium text-black">{formatPrice(total)}</span>
+                    <div className="flex justify-between text-[11px] sm:text-xs">
+                      <span className="text-gray-700">Items Total</span>
+                      <span className="font-medium text-gray-900">{formatPrice(total)}</span>
                     </div>
                     
-                    <div className="border-t border-gray-300 pt-2 mt-2">
-                      <div className="flex justify-between text-sm sm:text-base">
-                        <span className="font-semibold text-black">You Pay</span>
-                        <span className="font-semibold text-black">
+                    <div className="border-t border-gray-200 pt-1.5 mt-1.5">
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="font-semibold text-gray-900">You Pay</span>
+                        <span className="font-semibold text-gray-900">
                           {formatPrice(total)}
-                          {hasPODItems && <span className="text-sm font-normal text-gray-500"> + shipping</span>}
+                          {hasPODItems && <span className="text-[10px] font-normal text-gray-500"> + shipping</span>}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 space-y-1">
+                      <div className="text-[10px] sm:text-xs text-gray-500 mt-1 space-y-0.5">
                         <p>• No additional fees charged to you</p>
                         <p>• Platform takes 7-10% commission from sellers (first $100 free!)</p>
                         <p>• Higher volume sellers pay lower rates</p>

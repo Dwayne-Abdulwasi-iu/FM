@@ -169,11 +169,18 @@ export default function OrdersPage() {
   })
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString)
+    const dateStr = date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     })
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    })
+    return `${dateStr} at ${timeStr}`
   }
 
   const formatCurrency = (amount: number) => {
@@ -277,49 +284,49 @@ export default function OrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-2 sm:space-y-4">
+          <div className="space-y-2">
             {filteredOrders.map((order) => {
               const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING
               const StatusIcon = statusConfig.icon
 
               return (
-                <div key={order.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div key={order.id} className="bg-white rounded shadow-sm overflow-hidden">
                   {/* Order Header */}
-                  <div className="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                    <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="px-3 sm:px-4 py-2 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-2">
                       <div>
                         <p className="text-xs sm:text-sm font-medium text-gray-900">Order #{order.orderNumber}</p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 sm:mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
+                          <span className="flex items-center gap-0.5">
+                            <Calendar className="w-2.5 h-2.5" />
                             {formatDate(order.createdAt)}
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                             order.orderType === 'POD' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {order.orderType === 'POD' ? 'Print-on-Demand' : 'Digital'}
+                            {order.orderType === 'POD' ? 'POD' : 'Digital'}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
-                        <StatusIcon className="w-3 h-3" />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.color}`}>
+                        <StatusIcon className="w-2.5 h-2.5" />
                         {statusConfig.label}
                       </span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="font-semibold text-xs sm:text-sm text-gray-900">
                         {formatCurrency(order.totalAmount)}
                       </span>
                     </div>
                   </div>
 
                   {/* Order Items */}
-                  <div className="px-3 sm:px-6 py-2 sm:py-4">
-                    <div className="space-y-2">
+                  <div className="px-3 sm:px-4 py-2">
+                    <div className="space-y-1.5">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-2 sm:gap-4">
-                          <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg overflow-hidden bg-gray-100 relative flex-shrink-0">
+                        <div key={item.id} className="flex items-center gap-2">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden bg-gray-100 relative flex-shrink-0">
                             <Image
                               src={item.design.thumbnailUrl || item.design.imageUrl}
                               alt={item.design.title}
@@ -330,15 +337,15 @@ export default function OrdersPage() {
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/designs/${item.design.id}`}
-                              className="text-xs sm:text-sm font-medium text-gray-900 hover:text-indigo-600 truncate block"
+                              className="text-xs font-medium text-gray-900 hover:text-indigo-600 truncate block"
                             >
                               {item.design.title}
                             </Link>
-                            <p className="text-xs text-gray-500">
-                              by {item.design.designer.name || 'Unknown Designer'}
+                            <p className="text-[10px] text-gray-500 truncate">
+                              by {item.design.designer.name || 'Unknown'}
                             </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-xs px-2 py-0.5 rounded ${
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                                 item.purchaseType === 'OWNERSHIP'
                                   ? 'bg-amber-100 text-amber-800'
                                   : item.purchaseType === 'POD'
@@ -352,9 +359,9 @@ export default function OrdersPage() {
                               )}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">{formatCurrency(item.price)}</p>
-                            <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-semibold text-xs text-gray-900">{formatCurrency(item.price)}</p>
+                            <p className="text-[10px] text-gray-500">Qty: {item.quantity}</p>
                           </div>
                         </div>
                       ))}
@@ -362,11 +369,11 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Actions */}
-                  <div className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 flex flex-wrap items-center justify-between gap-2">
+                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-50 flex flex-wrap items-center justify-between gap-1.5">
                     {/* POD Tracking */}
                     {order.orderType === 'POD' && order.trackingNumber && (
-                      <div className="flex items-center gap-1 text-xs text-gray-600">
-                        <Truck className="w-3 h-3" />
+                      <div className="flex items-center gap-0.5 text-[10px] sm:text-xs text-gray-600">
+                        <Truck className="w-2.5 h-2.5" />
                         <span>Tracking: {order.trackingNumber}</span>
                         {order.trackingUrl && (
                           <a
@@ -376,18 +383,18 @@ export default function OrdersPage() {
                             className="text-indigo-600 hover:text-indigo-800"
                             aria-label="Track shipment"
                           >
-                            <ExternalLink className="w-3 h-3" />
+                            <ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         )}
                       </div>
                     )}
 
-                    <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                    <div className="flex items-center gap-1 ml-auto">
                       {order.orderType === 'DIGITAL' && (order.status === 'PAID' || order.status === 'COMPLETED') && (
                         <button
                           onClick={() => handleDownloadAllFiles(order)}
                           disabled={downloadingOrderId === order.id}
-                          className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] sm:text-xs text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                           {downloadingOrderId === order.id ? (
                             <>

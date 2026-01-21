@@ -7,6 +7,7 @@ import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, 
 import Image from 'next/image'
 import Link from 'next/link'
 import { DesignerProfileBadge } from '@/components/DesignerBadge'
+import JSZip from 'jszip'
 
 interface UserProfile {
   id: string
@@ -84,6 +85,14 @@ interface OrderItem {
     imageUrl: string
     thumbnailUrl?: string | null
     category: string
+    mediaFiles: Array<{
+      id: string
+      fileUrl: string
+      fileName: string
+      fileType: string
+      mimeType?: string
+      sortOrder?: number
+    }>
     designer: {
       id: string
       name: string | null
@@ -250,6 +259,19 @@ export default function ProfilePage() {
     })
   }
 
+  const formatDateWithTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }) + ' at ' + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
   const handleEditDesign = (designId: string) => {
     // For now, redirect to upload page with edit mode
     // In a full implementation, you'd create an edit page
@@ -312,16 +334,62 @@ export default function ProfilePage() {
           window.URL.revokeObjectURL(url)
           document.body.removeChild(a)
         }
-        setSuccessMessage('Design downloaded successfully')
-        setTimeout(() => setSuccessMessage(null), 3000)
       } else {
-        setErrorMessage('Failed to download design')
-        setTimeout(() => setErrorMessage(null), 3000)
+        console.error('Download failed:', response.statusText)
+        setErrorMessage('Download failed')
       }
     } catch (error) {
       console.error('Download error:', error)
-      setErrorMessage('An error occurred while downloading the design')
-      setTimeout(() => setErrorMessage(null), 3000)
+      setErrorMessage('Download error')
+    }
+  }
+
+  const handleDownloadOrderDesign = async (designTitle: string, mediaFiles: any[]) => {
+    try {
+      if (!mediaFiles || mediaFiles.length === 0) {
+        setErrorMessage('No files available for download')
+        return
+      }
+
+      // Create a ZIP file
+      const zip = new JSZip()
+      const designFolder = zip.folder(designTitle) || zip
+
+      // Download and add each file to ZIP
+      for (const file of mediaFiles) {
+        if (!file.fileUrl) {
+          console.warn('No fileUrl for file:', file)
+          continue
+        }
+        
+        try {
+          const response = await fetch(file.fileUrl)
+          if (response.ok) {
+            const blob = await response.blob()
+            const fileName = file.fileName || `file-${file.id}`
+            designFolder.file(fileName, blob)
+          }
+        } catch (fileError) {
+          console.error('Error downloading file:', fileError)
+        }
+      }
+
+      // Generate and download the ZIP
+      const zipBlob = await designFolder.generateAsync({ type: 'blob' })
+      const url = window.URL.createObjectURL(zipBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${designTitle}.zip`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      setSuccessMessage('Design downloaded successfully')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (error) {
+      console.error('Download error:', error)
+      setErrorMessage('Download failed')
     }
   }
 
@@ -789,12 +857,12 @@ export default function ProfilePage() {
 
             {activeTab === 'purchases' && (
               <div>
-                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Purchased Designs</h2>
+                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Downloads</h2>
                 
-                {purchasedDesigns.length === 0 ? (
+                {purchasedDesigns.length === 0 && orders.filter(o => o.orderType === 'DIGITAL').length === 0 ? (
                   <div className="text-center py-6 sm:py-8">
                     <Download className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mx-auto mb-2 sm:mb-3" />
-                    <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No purchases yet</p>
+                    <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No downloads yet</p>
                     <Link 
                       href="/designs"
                       className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs"
@@ -803,55 +871,124 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
-                    {purchasedDesigns.map((purchase) => (
-                      <div key={purchase.purchaseId} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                        {/* Design Image */}
-                        <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
-                          <Image
-                            src={purchase.design.imageUrl}
-                            alt={purchase.design.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover"
-                          />
-                          <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
-                            {purchase.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
-                          </div>
-                        </div>
+                  <div className="space-y-4">
+                    {/* Digital Orders */}
+                    {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-semibold text-indigo-700 mb-2">Recent Orders</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                          {orders.filter(o => o.orderType === 'DIGITAL').map(order =>
+                            order.items.map(item => (
+                              <div key={item.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                {/* Design Image */}
+                                <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
+                                  <Image
+                                    src={item.design.imageUrl}
+                                    alt={item.design.title}
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                    className="object-cover"
+                                  />
+                                  <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
+                                    {item.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
+                                  </div>
+                                </div>
 
-                        {/* Design Info */}
-                        <div className="p-2 sm:p-3">
-                          <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{purchase.design.title}</h3>
-                          <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{purchase.design.category}</p>
-                          
-                          {/* Designer Info */}
-                          <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
-                            <p>By <span className="font-medium truncate">{purchase.design.designer.name || 'Unknown'}</span></p>
-                          </div>
+                                {/* Design Info */}
+                                <div className="p-2 sm:p-3">
+                                  <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{item.design.title}</h3>
+                                  <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{item.design.category}</p>
+                                  
+                                  {/* Designer Info */}
+                                  <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
+                                    <p>By <span className="font-medium truncate">{item.design.designer.name || 'Unknown'}</span></p>
+                                  </div>
 
-                          {/* Purchase Details */}
-                          <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
-                            <p className="text-gray-600">
-                              <span className="font-medium">{formatDate(purchase.purchaseDate)}</span>
-                            </p>
-                            <p className="text-gray-600 mt-0.5">
-                              <span className="font-medium text-indigo-600">{formatPrice(purchase.purchasePrice)}</span>
-                            </p>
-                          </div>
+                                  {/* Purchase Details */}
+                                  <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
+                                    <p className="text-gray-600">
+                                      <span className="font-medium">{formatDateWithTime(order.createdAt)}</span>
+                                    </p>
+                                    <p className="text-gray-600 mt-0.5">
+                                      <span className="font-medium text-indigo-600">${item.price.toFixed(2)}</span>
+                                    </p>
+                                  </div>
 
-                          {/* Download Button */}
-                          <button
-                            onClick={() => handleDownloadPurchasedDesign(purchase.purchaseId, purchase.design.id, purchase.design.title)}
-                            className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
-                            disabled={!purchase?.design?.id}
-                          >
-                            <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
-                            Download
-                          </button>
+                                  {/* Download Button */}
+                                  <button
+                                    onClick={() => handleDownloadOrderDesign(item.design.title, item.design.mediaFiles)}
+                                    className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
+                                    disabled={!item?.design?.mediaFiles?.length}
+                                  >
+                                    <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
+                                    Download
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Individual Purchases */}
+                    {purchasedDesigns.length > 0 && (
+                      <div>
+                        {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
+                          <h3 className="text-xs sm:text-sm font-semibold text-indigo-700 mb-2 mt-4">Individual Purchases</h3>
+                        )}
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                          {purchasedDesigns.map((purchase) => (
+                            <div key={purchase.purchaseId} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                              {/* Design Image */}
+                              <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
+                                <Image
+                                  src={purchase.design.imageUrl}
+                                  alt={purchase.design.title}
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                  className="object-cover"
+                                />
+                                <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
+                                  {purchase.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
+                                </div>
+                              </div>
+
+                              {/* Design Info */}
+                              <div className="p-2 sm:p-3">
+                                <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{purchase.design.title}</h3>
+                                <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{purchase.design.category}</p>
+                                
+                                {/* Designer Info */}
+                                <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
+                                  <p>By <span className="font-medium truncate">{purchase.design.designer.name || 'Unknown'}</span></p>
+                                </div>
+
+                                {/* Purchase Details */}
+                                <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
+                                  <p className="text-gray-600">
+                                    <span className="font-medium">{formatDate(purchase.purchaseDate)}</span>
+                                  </p>
+                                  <p className="text-gray-600 mt-0.5">
+                                    <span className="font-medium text-indigo-600">{formatPrice(purchase.purchasePrice)}</span>
+                                  </p>
+                                </div>
+
+                                {/* Download Button */}
+                                <button
+                                  onClick={() => handleDownloadPurchasedDesign(purchase.purchaseId, purchase.design.id, purchase.design.title)}
+                                  className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
+                                  disabled={!purchase?.design?.id}
+                                >
+                                  <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
+                                  Download
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -887,7 +1024,7 @@ export default function ProfilePage() {
                               <div className="flex items-start justify-between mb-2">
                                 <div>
                                   <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDateWithTime(order.createdAt)}</p>
                                 </div>
                                 <div className="text-right">
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
@@ -973,7 +1110,7 @@ export default function ProfilePage() {
                               <div className="flex items-start justify-between mb-2">
                                 <div>
                                   <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDateWithTime(order.createdAt)}</p>
                                 </div>
                                 <div className="text-right">
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
