@@ -27,6 +27,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useCurrency } from '@/components/CurrencyProvider'
+import { TrialStatusCard } from '@/components/seller/TrialStatusCard'
 
 interface AnalyticsData {
   summary: {
@@ -143,6 +144,11 @@ export default function SellerDashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('30')
+  const [trialInfo, setTrialInfo] = useState<{
+    isActive: boolean
+    expiresAt: Date | null
+    activatedAt: Date | null
+  } | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -151,8 +157,25 @@ export default function SellerDashboardPage() {
       return
     }
     fetchAnalytics()
+    fetchTrialInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, period])
+
+  const fetchTrialInfo = async () => {
+    try {
+      const response = await fetch('/api/subscriptions/pro-trial/status')
+      if (response.ok) {
+        const data = await response.json()
+        setTrialInfo({
+          isActive: data.isTrialActive,
+          expiresAt: data.trialExpiresAt ? new Date(data.trialExpiresAt) : null,
+          activatedAt: data.trialActivatedAt ? new Date(data.trialActivatedAt) : null,
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch trial info:', error)
+    }
+  }
 
   const fetchAnalytics = async () => {
     try {
@@ -235,6 +258,17 @@ export default function SellerDashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Trial Status Card */}
+        {trialInfo && (
+          <div className="mb-4 sm:mb-6">
+            <TrialStatusCard 
+              isActive={trialInfo.isActive}
+              expiresAt={trialInfo.expiresAt}
+              activatedAt={trialInfo.activatedAt}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-8">
