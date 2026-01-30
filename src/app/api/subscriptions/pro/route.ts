@@ -104,6 +104,10 @@ export async function POST(req: NextRequest) {
         name: true,
         totalEarnings: true,
         preferredCurrency: true,
+        proTrialActivated: true,
+        proTrialExpiresAt: true,
+        proSubscriptionActive: true,
+        proSubscriptionExpiresAt: true,
         sellerAccount: { select: { id: true } }
       }
     })
@@ -114,6 +118,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ 
         error: 'You must have a seller account to upgrade to Pro' 
       }, { status: 403 })
+    }
+
+    // Check if user already has an active paid subscription
+    if (seller.proSubscriptionActive) {
+      return NextResponse.json({ 
+        error: 'You already have an active Pro subscription',
+        expiresAt: seller.proSubscriptionExpiresAt
+      }, { status: 400 })
+    }
+
+    // Check if user has an active trial - they should complete it first or wait for it to expire
+    const now = new Date()
+    const hasActiveTrial = seller.proTrialActivated && 
+                          seller.proTrialExpiresAt && 
+                          seller.proTrialExpiresAt > now
+    if (hasActiveTrial) {
+      return NextResponse.json({ 
+        error: 'You currently have an active Pro trial. Complete your trial period before upgrading to a paid subscription.',
+        trialExpiresAt: seller.proTrialExpiresAt
+      }, { status: 400 })
     }
 
     // Check if seller is in STARTER tier (earnings < $100)
