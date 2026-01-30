@@ -228,7 +228,7 @@ export default function UpgradePage() {
   const handleTrialActivationInit = async () => {
     setTrialActivation(prev => ({ ...prev, loading: true }))
     try {
-      const response = await fetch('/api/subscriptions/pro-trial/activate', {
+      const response = await fetch('/api/subscriptions/pro-trial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: 'init' }),
@@ -263,7 +263,7 @@ export default function UpgradePage() {
 
     setTrialActivation(prev => ({ ...prev, loading: true }))
     try {
-      const response = await fetch('/api/subscriptions/pro-trial/activate', {
+      const response = await fetch('/api/subscriptions/pro-trial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
