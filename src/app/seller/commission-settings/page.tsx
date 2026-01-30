@@ -369,6 +369,28 @@ export default function CommissionSettingsPage() {
             </div>
           )}
 
+          {/* Payment Milestones */}
+          {settings.acceptsCommissions && (
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  💳 Payment Milestone Template
+                </h2>
+                <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">IMPORTANT</span>
+              </div>
+              <p className="text-sm text-gray-700 mb-4">
+                Choose how your commission payments are divided across milestones. Funds are released to you as each milestone is approved by the buyer.
+              </p>
+              <Link
+                href="/seller/commission-settings/milestones"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                🎯 Configure Payment Milestones
+                <span className="text-xs">→</span>
+              </Link>
+            </div>
+          )}
+
           {/* Terms */}
           {settings.acceptsCommissions && (
             <div>

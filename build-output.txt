@@ -1,0 +1,38 @@
+
+> fashion-marketplace@0.1.0 build
+> next build
+
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Dwayne\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\package-lock.json
+
+Γû▓ Next.js 16.1.4 (Turbopack)
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  ┬╖ serverActions
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 50s
+  Running TypeScript ...
+Failed to compile.
+
+.next/types/validator.ts:1620:31
+Type error: Type 'typeof import("C:/Users/Dwayne/OneDrive/Desktop/fashion-marketplace/src/app/api/boutique/seller/products/[productId]/rejection-details/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/boutique/seller/products/[productId]/rejection-details">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { productId: string; }; }) => Promise<NextResponse<{ success: boolean; message: string; }> | NextResponse<{ success: boolean; shipment: { ...; } | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ productId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ productId: string; }>; }' is not assignable to type '{ params: { productId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'productId' is missing in type 'Promise<{ productId: string; }>' but required in type '{ productId: string; }'.
+
+  1618 |   type __IsExpected<Specific extends RouteHandlerConfig<"/api/boutique/seller/products/[productId]/rejection-details">> = Specific
+  1619 |   const handler = {} as typeof import("../../src/app/api/boutique/seller/products/[productId]/rejection-details/route.js")
+> 1620 |   type __Check = __IsExpected<typeof handler>
+       |                               ^
+  1621 |   // @ts-ignore
+  1622 |   type __Unused = __Check
+  1623 | }
+Next.js build worker exited with code: 1 and signal: null

@@ -7,7 +7,11 @@ import { Footer } from "@/components/layout/footer";
 import { PWARegister } from "@/components/pwa-register";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

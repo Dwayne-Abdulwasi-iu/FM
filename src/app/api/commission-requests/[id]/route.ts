@@ -39,6 +39,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             displayName: true,
             email: true,
             image: true,
+            isVerified: true,
+            milestoneTemplate: true,
+            totalEarnings: true,
+            designerTier: true,
           },
         },
       },
@@ -75,8 +79,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ request: responseData });
   } catch (error) {
     console.error("Get commission request error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to get commission request" },
+      { error: "Failed to get commission request. Please try again later." },
       { status: 500 }
     );
   }
@@ -171,8 +185,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("Update commission request error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to update commission request" },
+      { error: "Failed to update commission request. Please try again later." },
       { status: 500 }
     );
   }
@@ -221,8 +253,18 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete commission request error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to delete commission request" },
+      { error: "Failed to delete commission request. Please try again later." },
       { status: 500 }
     );
   }

@@ -7,10 +7,11 @@
  * Example: node verify-payment.js fashion_1767301825588_cmhg4iddx0000hej8nvdfzx4g
  */
 
-require('dotenv').config({ path: '.env.local' });
+import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+import axios from 'axios';
 
-const { PrismaClient } = require('@prisma/client');
-const axios = require('axios');
+dotenv.config({ path: '.env.local' });
 
 const prisma = new PrismaClient();
 

@@ -91,6 +91,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(null)
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
 
   const handleDownloadAllFiles = async (order: Order) => {
     setDownloadingOrderId(order.id)
@@ -292,41 +293,47 @@ export default function OrdersPage() {
               return (
                 <div key={order.id} className="bg-white rounded shadow-sm overflow-hidden">
                   {/* Order Header */}
-                  <div className="px-3 sm:px-4 py-2 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 break-words">Order #{order.orderNumber}</p>
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
-                          <span className="flex items-center gap-0.5">
-                            <Calendar className="w-2.5 h-2.5" />
-                            {formatDate(order.createdAt)}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            order.orderType === 'POD' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {order.orderType === 'POD' ? 'POD' : 'Digital'}
-                          </span>
-                        </div>
+                  <button
+                    onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                    className="w-full px-2.5 sm:px-4 py-2 sm:py-3 border-b border-gray-100 flex items-center gap-2 sm:gap-3 justify-between hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[10px] sm:text-sm font-medium text-gray-900 break-words">Order #{order.orderNumber}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs text-gray-600 mt-0.5">
+                        <span className="flex items-center gap-0.5">
+                          <Calendar className="w-2.5 h-2.5" />
+                          {formatDate(order.createdAt)}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-medium ${
+                          order.orderType === 'POD' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {order.orderType === 'POD' ? 'POD' : 'Digital'}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.color}`}>
-                        <StatusIcon className="w-2.5 h-2.5" />
-                        {statusConfig.label}
-                      </span>
-                      <span className="font-semibold text-xs sm:text-sm text-gray-900">
-                        {formatCurrency(order.totalAmount)}
-                      </span>
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] sm:text-xs font-medium ${statusConfig.color}`}>
+                          <StatusIcon className="w-2.5 h-2.5" />
+                          <span className="hidden sm:inline">{statusConfig.label}</span>
+                        </span>
+                        <span className="font-semibold text-[10px] sm:text-sm text-gray-900">
+                          {formatCurrency(order.totalAmount)}
+                        </span>
+                      </div>
+                      <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-90' : ''}`} />
                     </div>
-                  </div>
+                  </button>
 
-                  {/* Order Items */}
-                  <div className="px-3 sm:px-4 py-2">
-                    <div className="space-y-1.5">
+                  {/* Order Items - Show only when expanded */}
+                  {expandedOrderId === order.id && (
+                  <div className="px-2.5 sm:px-4 py-2 sm:py-3 bg-gray-50">
+                    <div className="space-y-2 sm:space-y-3">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-2">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden bg-gray-100 relative flex-shrink-0">
+                        <div key={item.id} className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded overflow-hidden bg-gray-100 relative flex-shrink-0">
+
                             <Image
                               src={item.design.thumbnailUrl || item.design.imageUrl}
                               alt={item.design.title}
@@ -337,15 +344,15 @@ export default function OrdersPage() {
                           <div className="flex-1 min-w-0">
                             <Link
                               href={`/designs/${item.design.id}`}
-                              className="text-xs font-medium text-gray-900 hover:text-indigo-600 truncate block"
+                              className="text-[10px] sm:text-xs font-medium text-gray-900 hover:text-indigo-600 truncate block"
                             >
                               {item.design.title}
                             </Link>
-                            <p className="text-[10px] text-gray-500 truncate">
+                            <p className="text-[9px] sm:text-[10px] text-gray-500 truncate">
                               by {item.design.designer.name || 'Unknown'}
                             </p>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-medium ${
                                 item.purchaseType === 'OWNERSHIP'
                                   ? 'bg-amber-100 text-amber-800'
                                   : item.purchaseType === 'POD'
@@ -355,24 +362,26 @@ export default function OrdersPage() {
                                 {item.purchaseType === 'OWNERSHIP' ? 'Ownership' : item.purchaseType === 'POD' ? 'POD' : 'License'}
                               </span>
                               {item.podProductName && (
-                                <span className="text-xs text-gray-500">{item.podProductName}</span>
+                                <span className="text-[9px] sm:text-[10px] text-gray-500">{item.podProductName}</span>
                               )}
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-semibold text-xs text-gray-900">{formatCurrency(item.price)}</p>
-                            <p className="text-[10px] text-gray-500">Qty: {item.quantity}</p>
+                            <p className="font-semibold text-[10px] sm:text-xs text-gray-900">{formatCurrency(item.price)}</p>
+                            <p className="text-[9px] sm:text-[10px] text-gray-500">Qty: {item.quantity}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
+                  )}
 
-                  {/* Order Actions */}
-                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-50 flex flex-wrap items-center justify-between gap-1.5">
+                  {/* Order Actions - Only show when expanded */}
+                  {expandedOrderId === order.id && (
+                  <div className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     {/* POD Tracking */}
                     {order.orderType === 'POD' && order.trackingNumber && (
-                      <div className="flex items-center gap-0.5 text-[10px] sm:text-xs text-gray-600">
+                      <div className="flex items-center gap-0.5 text-[9px] sm:text-xs text-gray-600">
                         <Truck className="w-2.5 h-2.5" />
                         <span>Tracking: {order.trackingNumber}</span>
                         {order.trackingUrl && (
@@ -389,28 +398,29 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-1 ml-auto">
+                    <div className="flex items-center gap-1 sm:gap-2 ml-auto">
                       {order.orderType === 'DIGITAL' && (order.status === 'PAID' || order.status === 'COMPLETED') && (
                         <button
                           onClick={() => handleDownloadAllFiles(order)}
                           disabled={downloadingOrderId === order.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] sm:text-xs text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-xs text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                         >
                           {downloadingOrderId === order.id ? (
                             <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Downloading...
+                              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                              <span className="hidden sm:inline">Downloading...</span>
                             </>
                           ) : (
                             <>
-                              <Download className="w-4 h-4" />
-                              Downloads
+                              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline">Download</span>
                             </>
                           )}
                         </button>
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
               )
             })}

@@ -22,10 +22,19 @@ export async function GET(request: NextRequest) {
     const payoutStatus = searchParams.get("payoutStatus");
     const designerId = searchParams.get("designerId");
     const role = searchParams.get("role"); // 'requester' or 'designer'
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100); // Cap at 100
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1")); // Ensure at least 1
+    const limit = Math.max(1, Math.min(parseInt(searchParams.get("limit") || "20"), 100)); // Min 1, max 100
 
     const isAdmin = session.user.role === "ADMIN";
+
+    // Validate status parameter if provided
+    const validStatuses = ["PENDING", "FORWARDED", "QUOTED", "PAID", "IN_PROGRESS", "DELIVERED", "REVISION", "COMPLETED", "CANCELLED", "DISPUTED"];
+    if (status && !validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status parameter" },
+        { status: 400 }
+      );
+    }
 
     // Build where clause
     const where: Record<string, unknown> = {};
@@ -113,8 +122,18 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Get commission requests error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to get commission requests" },
+      { error: "Failed to get commission requests. Please try again later." },
       { status: 500 }
     );
   }
@@ -329,8 +348,26 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Create commission request error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to create commission request" },
+      { error: "Failed to create commission request. Please try again later." },
       { status: 500 }
     );
   }

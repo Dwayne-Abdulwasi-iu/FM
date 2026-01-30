@@ -340,7 +340,7 @@ function CommissionRequestContent() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-6 sm:w-8 h-6 sm:h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -348,23 +348,23 @@ function CommissionRequestContent() {
   if (success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h1>
-          <p className="text-gray-600 mb-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 max-w-md text-center">
+          <CheckCircle className="w-12 sm:w-16 h-12 sm:h-16 text-green-500 mx-auto mb-3 sm:mb-4" />
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h1>
+          <p className="text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6">
             Your commission request has been sent to our admin team. We&apos;ll review it and
             forward it to the designer. You&apos;ll receive an email update soon.
           </p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-2 sm:gap-3 justify-center">
             <Link
               href="/commissions"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm font-medium"
             >
               View My Requests
             </Link>
             <Link
               href="/designers"
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-xs sm:text-sm font-medium"
             >
               Browse Designers
             </Link>
@@ -375,73 +375,73 @@ function CommissionRequestContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Commission Request</h1>
-          <p className="text-gray-600 mt-2">
+        <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Commission Request</h1>
+          <p className="text-xs sm:text-sm text-gray-700 mt-1 sm:mt-2">
             Request a custom design from your favorite designer
           </p>
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-4 sm:mb-6 lg:mb-8">
           <div className="flex items-center">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+              className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm ${
                 step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}
             >
               1
             </div>
-            <span className="ml-2 text-sm font-medium text-gray-900">Select Designer</span>
+            <span className="ml-1 sm:ml-2 text-[10px] sm:text-sm font-medium text-gray-900">Select Designer</span>
           </div>
-          <div className="w-16 h-1 mx-4 bg-gray-200">
+          <div className="w-8 sm:w-16 h-1 mx-2 sm:mx-4 bg-gray-200">
             <div
               className={`h-full transition-all ${step >= 2 ? 'bg-indigo-600 w-full' : 'w-0'}`}
             />
           </div>
           <div className="flex items-center">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+              className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm ${
                 step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}
             >
               2
             </div>
-            <span className="ml-2 text-sm font-medium text-gray-900">Request Details</span>
+            <span className="ml-1 sm:ml-2 text-[10px] sm:text-sm font-medium text-gray-900">Request Details</span>
           </div>
         </div>
 
         {/* Step 1: Select Designer */}
         {step === 1 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose a Designer</h2>
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Choose a Designer</h2>
 
             {/* Search */}
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative mb-3 sm:mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search designers by name..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
             {/* Designers List */}
             {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+              <div className="flex justify-center py-6 sm:py-8">
+                <Loader2 className="w-6 sm:w-8 h-6 sm:h-8 animate-spin text-indigo-600" />
               </div>
             ) : designers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-gray-500">
                 No designers found. Try a different search.
               </div>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2 max-h-96 overflow-y-auto">
                 {designers.map((designer) => (
                   <button
                     key={designer.id}
@@ -449,9 +449,9 @@ function CommissionRequestContent() {
                       setSelectedDesigner(designer);
                       setStep(2);
                     }}
-                    className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 md:p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors text-left"
                   >
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
                       {designer.image ? (
                         <Image
                           src={designer.image}
@@ -461,24 +461,24 @@ function CommissionRequestContent() {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
-                          <User className="w-6 h-6 text-white" />
+                          <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
                           {designer.displayName || designer.name}
                         </span>
                         {designer.isVerified && (
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
+                          <CheckCircle className="w-3 sm:w-4 h-3 sm:h-4 text-blue-500 flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-[10px] sm:text-xs text-gray-500">
                         {designer._count.designs} designs
                       </p>
                     </div>
-                    <ExternalLink className="w-5 h-5 text-gray-400" />
+                    <ExternalLink className="w-4 sm:w-5 h-4 sm:h-5 text-gray-400 flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -488,10 +488,10 @@ function CommissionRequestContent() {
 
         {/* Step 2: Request Details */}
         {step === 2 && selectedDesigner && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6">
             {/* Selected Designer */}
-            <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-lg mb-6">
-              <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 md:p-4 bg-indigo-50 rounded-lg mb-4 sm:mb-6">
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0">
                 {selectedDesigner.image ? (
                   <Image
                     src={selectedDesigner.image}
@@ -501,29 +501,29 @@ function CommissionRequestContent() {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
-                    <User className="w-7 h-7 text-white" />
+                    <User className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-indigo-600 font-medium">Requesting commission from</p>
-                <p className="font-semibold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] sm:text-xs text-indigo-600 font-medium">Requesting commission from</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-900">
                   {selectedDesigner.displayName || selectedDesigner.name}
                 </p>
                 {/* Designer's commission settings */}
                 {(selectedDesigner.commissionMinBudget || selectedDesigner.commissionMaxBudget || selectedDesigner.commissionTurnaround) && (
-                  <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                  <div className="mt-1.5 sm:mt-2 flex flex-wrap gap-1.5 sm:gap-3 text-[9px] sm:text-xs">
                     {(selectedDesigner.commissionMinBudget || selectedDesigner.commissionMaxBudget) && (
-                      <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-0.5 sm:gap-1 text-indigo-700 bg-indigo-100 px-1.5 sm:px-2 py-0.5 sm:py-0.5 rounded">
                         💰 {selectedDesigner.commissionMinBudget && selectedDesigner.commissionMaxBudget
-                          ? `$${selectedDesigner.commissionMinBudget} - $${selectedDesigner.commissionMaxBudget}`
+                          ? `$${selectedDesigner.commissionMinBudget}-$${selectedDesigner.commissionMaxBudget}`
                           : selectedDesigner.commissionMinBudget
                             ? `Min $${selectedDesigner.commissionMinBudget}`
                             : `Max $${selectedDesigner.commissionMaxBudget}`}
                       </span>
                     )}
                     {selectedDesigner.commissionTurnaround && (
-                      <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-0.5 sm:gap-1 text-indigo-700 bg-indigo-100 px-1.5 sm:px-2 py-0.5 sm:py-0.5 rounded">
                         ⏱️ {selectedDesigner.commissionTurnaround}
                       </span>
                     )}
@@ -533,7 +533,7 @@ function CommissionRequestContent() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="text-sm text-indigo-600 hover:underline"
+                className="text-[10px] sm:text-xs text-indigo-600 hover:underline flex-shrink-0"
               >
                 Change
               </button>
@@ -541,9 +541,9 @@ function CommissionRequestContent() {
 
             {/* Reference Design Preview */}
             {referenceDesign && (
-              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+              <div className="p-3 sm:p-4 bg-purple-50 border border-purple-200 rounded-lg mb-4 sm:mb-6">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex-shrink-0">
                     {referenceDesign.imageUrl ? (
                       <Image
                         src={referenceDesign.imageUrl}
@@ -553,54 +553,53 @@ function CommissionRequestContent() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-white" />
+                        <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-purple-600 font-medium">Commission based on</p>
-                    <p className="font-semibold text-gray-900 truncate">{referenceDesign.title}</p>
+                    <p className="text-[10px] sm:text-xs text-purple-600 font-medium">Commission based on</p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{referenceDesign.title}</p>
                     <Link
                       href={`/designs/${referenceDesign.id}`}
                       target="_blank"
-                      className="text-sm text-purple-600 hover:underline inline-flex items-center gap-1 mt-1"
+                      className="text-[9px] sm:text-xs text-purple-600 hover:underline inline-flex items-center gap-0.5 mt-0.5 sm:mt-1"
                     >
-                      View original design <ExternalLink className="w-3 h-3" />
+                      View original <ExternalLink className="w-2.5 sm:w-3 h-2.5 sm:h-3" />
                     </Link>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       setReferenceDesign(null);
-                      // Only clear title if it's still the auto-generated one
                       if (referenceDesign && title === `Custom commission based on: ${referenceDesign.title}`) {
                         setTitle('');
                       }
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                     title="Remove reference"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 sm:w-5 h-4 sm:h-5" />
                   </button>
                 </div>
-                <p className="mt-3 text-sm text-purple-700">
+                <p className="mt-2 sm:mt-3 text-[10px] sm:text-xs text-purple-700">
                   The designer will see this design as the inspiration for your custom commission request.
                 </p>
               </div>
             )}
 
             {error && (
-              <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg mb-6">
-                <AlertCircle className="w-5 h-5" />
+              <div className="flex items-center gap-2 p-2.5 sm:p-3 md:p-4 bg-red-50 text-red-700 rounded-lg mb-4 sm:mb-6 text-xs sm:text-sm">
+                <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Form Fields */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Project Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -608,36 +607,36 @@ function CommissionRequestContent() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Custom Evening Gown Design"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   required
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe your project in detail. Include style preferences, colors, materials, inspiration, etc."
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                  rows={4}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                   required
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label htmlFor="commission-category" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="commission-category" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Category
                 </label>
                 <select
                   id="commission-category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="">Select a category</option>
                   <option value="Fashion Illustration">Fashion Illustration</option>
@@ -652,12 +651,12 @@ function CommissionRequestContent() {
               </div>
 
               {/* Budget & Deadline */}
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Budget Range
                     {selectedDesigner.commissionMinBudget && (
-                      <span className="text-indigo-600 ml-1">
+                      <span className="text-indigo-600 ml-1 text-[10px] sm:text-xs">
                         (Min: ${selectedDesigner.commissionMinBudget})
                       </span>
                     )}
@@ -669,19 +668,19 @@ function CommissionRequestContent() {
                     placeholder={selectedDesigner.commissionMinBudget 
                       ? `e.g., $${selectedDesigner.commissionMinBudget}-$${(selectedDesigner.commissionMaxBudget || selectedDesigner.commissionMinBudget * 3)}`
                       : "e.g., $100-$300"}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   {selectedDesigner.commissionMinBudget && (
-                    <p className="mt-1 text-xs text-amber-600">
+                    <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-xs text-amber-600">
                       ⚠️ This designer&apos;s minimum budget is ${selectedDesigner.commissionMinBudget}
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Preferred Deadline
                     {selectedDesigner.commissionTurnaround && (
-                      <span className="text-indigo-600 ml-1">
+                      <span className="text-indigo-600 ml-1 text-[10px] sm:text-xs">
                         (Est: {selectedDesigner.commissionTurnaround})
                       </span>
                     )}
@@ -693,23 +692,23 @@ function CommissionRequestContent() {
                     placeholder={selectedDesigner.commissionTurnaround 
                       ? `Designer's estimated turnaround: ${selectedDesigner.commissionTurnaround}`
                       : "e.g., 2 weeks, By March 15"}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               {/* Physical vs Digital Commission */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                <label className="flex items-center gap-2 sm:gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isPhysical}
                     onChange={(e) => setIsPhysical(e.target.checked)}
-                    className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
-                  <div>
+                  <div className="text-xs sm:text-sm">
                     <span className="font-medium text-gray-900">Physical Item Commission</span>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-gray-600">
                       Check this if you&apos;re requesting a physical item (clothing, accessories, etc.) that needs to be delivered to you
                     </p>
                   </div>
@@ -718,21 +717,21 @@ function CommissionRequestContent() {
 
               {/* Delivery Address (only for physical commissions) */}
               {isPhysical && (
-                <div className="border border-indigo-200 rounded-lg p-4 bg-indigo-50">
-                  <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="border border-indigo-200 rounded-lg p-3 sm:p-4 bg-indigo-50">
+                  <h3 className="font-medium text-xs sm:text-sm text-gray-900 mb-2 sm:mb-4 flex items-center gap-2">
+                    <svg className="w-4 sm:w-5 h-4 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Delivery Address
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-[10px] sm:text-xs text-gray-600 mb-2 sm:mb-4">
                     The completed item will be collected by our team from the designer and delivered to this address.
                   </p>
                   
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-2 gap-2.5 sm:gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         Full Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -740,11 +739,11 @@ function CommissionRequestContent() {
                         value={deliveryAddress.name}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, name: e.target.value})}
                         placeholder="Recipient name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         Phone Number <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -752,13 +751,13 @@ function CommissionRequestContent() {
                         value={deliveryAddress.phone}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, phone: e.target.value})}
                         placeholder="+1 234 567 8900"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="mt-2.5 sm:mt-4">
+                    <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                       Street Address <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -766,13 +765,13 @@ function CommissionRequestContent() {
                       value={deliveryAddress.address}
                       onChange={(e) => setDeliveryAddress({...deliveryAddress, address: e.target.value})}
                       placeholder="123 Main Street, Apt 4B"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                      className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                     />
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <div className="grid md:grid-cols-2 gap-2.5 sm:gap-3 mt-2.5 sm:mt-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         City <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -780,11 +779,11 @@ function CommissionRequestContent() {
                         value={deliveryAddress.city}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
                         placeholder="City"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         State/Province <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -792,14 +791,14 @@ function CommissionRequestContent() {
                         value={deliveryAddress.state}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, state: e.target.value})}
                         placeholder="State"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <div className="grid md:grid-cols-2 gap-2.5 sm:gap-3 mt-2.5 sm:mt-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         Country <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -807,11 +806,11 @@ function CommissionRequestContent() {
                         value={deliveryAddress.country}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, country: e.target.value})}
                         placeholder="Country"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                         Postal Code
                       </label>
                       <input
@@ -819,7 +818,7 @@ function CommissionRequestContent() {
                         value={deliveryAddress.postalCode}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, postalCode: e.target.value})}
                         placeholder="12345"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+                        className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs text-gray-900 bg-white"
                       />
                     </div>
                   </div>
@@ -828,16 +827,16 @@ function CommissionRequestContent() {
 
               {/* Attachments */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Reference Files
                 </label>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-[10px] sm:text-xs text-gray-600 mb-2 sm:mb-3">
                   Upload images, videos, documents, or any reference files to help the designer
                   understand your vision.
                 </p>
 
                 {/* Upload Area */}
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 cursor-pointer transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-24 sm:h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 cursor-pointer transition-colors">
                   <input
                     type="file"
                     multiple
@@ -846,14 +845,14 @@ function CommissionRequestContent() {
                     accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip"
                   />
                   {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                    <Loader2 className="w-6 sm:w-8 h-6 sm:h-8 animate-spin text-indigo-600" />
                   ) : (
                     <>
-                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">
+                      <Upload className="w-6 sm:w-8 h-6 sm:h-8 text-gray-400 mb-1 sm:mb-2" />
+                      <span className="text-[10px] sm:text-sm text-gray-600 text-center px-2">
                         Click to upload or drag and drop
                       </span>
-                      <span className="text-xs text-gray-400 mt-1">
+                      <span className="text-[8px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">
                         Images, videos, PDFs, documents up to 50MB
                       </span>
                     </>
@@ -862,18 +861,18 @@ function CommissionRequestContent() {
 
                 {/* Uploaded Files */}
                 {attachments.length > 0 && (
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-2.5 sm:mt-4 space-y-1.5 sm:space-y-2">
                     {attachments.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg"
                       >
-                        <div className="text-gray-500">{getFileIcon(file.type)}</div>
+                        <div className="text-gray-500 text-xs sm:text-base">{getFileIcon(file.type)}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-[10px] sm:text-sm font-medium text-gray-900 truncate">
                             {file.name}
                           </p>
-                          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          <p className="text-[8px] sm:text-xs text-gray-500">{formatFileSize(file.size)}</p>
                         </div>
                         <button
                           type="button"
@@ -881,7 +880,7 @@ function CommissionRequestContent() {
                           className="p-1 text-gray-400 hover:text-red-500"
                           aria-label={`Remove attachment ${file.name}`}
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 sm:w-5 h-4 sm:h-5" />
                         </button>
                       </div>
                     ))}
@@ -891,31 +890,35 @@ function CommissionRequestContent() {
             </div>
 
             {/* Submit Button */}
-            <div className="mt-8 flex gap-3">
+            <div className="mt-6 sm:mt-8 flex gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+                className="px-3 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 font-medium hover:bg-gray-50"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={submitting || !title || !description}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-3 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting...
+                    <Loader2 className="w-4 sm:w-5 h-4 sm:h-5 animate-spin" />
+                    <span className="hidden sm:inline">Submitting...</span>
+                    <span className="sm:hidden">Submit...</span>
                   </>
                 ) : (
-                  'Submit Commission Request'
+                  <>
+                    <span className="hidden sm:inline">Submit Commission Request</span>
+                    <span className="sm:hidden">Submit</span>
+                  </>
                 )}
               </button>
             </div>
 
-            <p className="mt-4 text-sm text-gray-500 text-center">
+            <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs text-gray-500 text-center">
               Your request will be reviewed by our team and forwarded to the designer.
             </p>
           </form>
@@ -930,8 +933,8 @@ export default function CommissionRequestPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
+          <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3 sm:mb-4"></div>
+          <p className="text-xs sm:text-sm text-gray-500">Loading...</p>
         </div>
       </div>
     }>

@@ -3,7 +3,7 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, Settings } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, Settings, ChevronRight, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { DesignerProfileBadge } from '@/components/DesignerBadge'
@@ -137,6 +137,7 @@ export default function ProfilePage() {
   const [designs, setDesigns] = useState<Design[]>([])
   const [purchasedDesigns, setPurchasedDesigns] = useState<PurchasedDesign[]>([])
   const [orders, setOrders] = useState<UserOrder[]>([])
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [deleteConfirm, setDeleteConfirm] = useState<{designId: string; title: string} | null>(null)
@@ -441,7 +442,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
+          <h1 className="text-2xl font-bold text-black mb-4">Profile Not Found</h1>
           <Link href="/" className="text-indigo-600 hover:text-indigo-800">
             Go Home
           </Link>
@@ -455,7 +456,7 @@ export default function ProfilePage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded flex items-center justify-between">
             <div className="flex items-center">
               <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
               <span className="text-green-800 font-medium">{successMessage}</span>
@@ -472,7 +473,7 @@ export default function ProfilePage() {
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded flex items-center justify-between">
             <div className="flex items-center">
               <X className="h-5 w-5 text-red-600 mr-3" />
               <span className="text-red-800 font-medium">{errorMessage}</span>
@@ -487,16 +488,16 @@ export default function ProfilePage() {
           </div>
         )}
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-3 mb-3">
+        <div className="bg-white rounded shadow-sm p-3 mb-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{profile.displayName || profile.name || 'Anonymous User'}</h1>
+                <h1 className="text-sm sm:text-xl font-bold text-black truncate">{profile.displayName || profile.name || 'Anonymous User'}</h1>
                 {profile.displayName && profile.name && (
-                  <p className="text-[10px] sm:text-xs text-gray-500 truncate">{profile.name}</p>
+                  <p className="text-[9px] sm:text-xs text-gray-500 truncate">{profile.name}</p>
                 )}
                 <div className="flex items-center text-gray-600 text-[11px] sm:text-xs mt-0.5">
                   <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" />
@@ -529,29 +530,29 @@ export default function ProfilePage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-3">
-            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+            <div className="bg-white rounded shadow-sm p-2 sm:p-3">
               <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Designs</p>
-                  <p className="text-base sm:text-xl font-bold text-gray-900">{stats.totalDesigns}</p>
+                  <p className="text-[9px] sm:text-xs font-medium text-gray-600">Designs</p>
+                  <p className="text-base sm:text-xl font-bold text-black">{stats.totalDesigns}</p>
                 </div>
                 <Upload className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600 mt-1 sm:mt-0" />
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+            <div className="bg-white rounded shadow-sm p-2 sm:p-3">
               <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Sales</p>
-                  <p className="text-base sm:text-xl font-bold text-gray-900">{stats?.totalSales ?? 0}</p>
+                  <p className="text-[9px] sm:text-xs font-medium text-gray-600">Sales</p>
+                  <p className="text-base sm:text-xl font-bold text-black">{stats?.totalSales ?? 0}</p>
                 </div>
                 <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 mt-1 sm:mt-0" />
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3">
+            <div className="bg-white rounded shadow-sm p-2 sm:p-3">
               <div className="flex flex-col items-center sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-xs font-medium text-gray-600">Earnings</p>
-                  <p className="text-base sm:text-xl font-bold text-gray-900">{formatPrice(stats?.totalEarnings ?? 0)}</p>
+                  <p className="text-[9px] sm:text-xs font-medium text-gray-600">Earnings</p>
+                  <p className="text-base sm:text-xl font-bold text-black">{formatPrice(stats?.totalEarnings ?? 0)}</p>
                   <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5">After platform fee</p>
                 </div>
                 <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 mt-1 sm:mt-0 hidden sm:block" />
@@ -561,7 +562,7 @@ export default function ProfilePage() {
         )}
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-white rounded shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex overflow-x-auto scrollbar-hide px-1.5 sm:px-4 -mb-px">
               {(
@@ -577,7 +578,7 @@ export default function ProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-2 sm:py-3 px-1.5 sm:px-2.5 border-b-2 font-medium text-[10px] sm:text-xs whitespace-nowrap flex-shrink-0 ${
+                  className={`flex items-center py-2 sm:py-3 px-1.5 sm:px-2.5 border-b-2 font-medium text-[9px] sm:text-xs whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border-indigo-500 text-indigo-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -593,13 +594,13 @@ export default function ProfilePage() {
 
           <div className="p-2.5 sm:p-4">
             {activeTab === 'overview' && (
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900">Account Overview</h3>
+                  <h3 className="text-xs sm:text-sm font-semibold text-black">Account Overview</h3>
                   {!isEditingProfile && (
                     <button
                       onClick={() => setIsEditingProfile(true)}
-                      className="text-indigo-600 hover:text-indigo-700 text-[10px] sm:text-xs font-medium"
+                      className="text-indigo-600 hover:text-indigo-700 text-[9px] sm:text-xs font-medium"
                     >
                       Edit Profile
                     </button>
@@ -609,7 +610,7 @@ export default function ProfilePage() {
                 {isEditingProfile ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
                           Full Name
                         </label>
@@ -617,11 +618,11 @@ export default function ProfilePage() {
                           type="text"
                           value={profileForm.name}
                           onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-[11px] sm:text-xs text-black bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="Your full name"
                         />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
                           Display Name / Nickname
                         </label>
@@ -629,12 +630,12 @@ export default function ProfilePage() {
                           type="text"
                           value={profileForm.displayName}
                           onChange={(e) => setProfileForm({ ...profileForm, displayName: e.target.value })}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-[11px] sm:text-xs text-black bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="Nickname shown in forum & community"
                         />
                         <p className="mt-0.5 text-[10px] text-gray-500">This name will be shown in the forum and community sections instead of your full name.</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
                           Location
                         </label>
@@ -642,11 +643,11 @@ export default function ProfilePage() {
                           type="text"
                           value={profileForm.location}
                           onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-[11px] sm:text-xs text-black bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="City, Country"
                         />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
                           Website
                         </label>
@@ -654,12 +655,12 @@ export default function ProfilePage() {
                           type="url"
                           value={profileForm.website}
                           onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-[11px] sm:text-xs text-black bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="https://yourwebsite.com"
                         />
                       </div>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
                         Bio
                       </label>
@@ -667,7 +668,7 @@ export default function ProfilePage() {
                         value={profileForm.bio}
                         onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
                         rows={3}
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-[11px] sm:text-xs text-black bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Tell us about yourself..."
                       />
                     </div>
@@ -675,7 +676,7 @@ export default function ProfilePage() {
                       <button
                         onClick={handleSaveProfile}
                         disabled={profileSaving}
-                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-[10px] sm:text-xs disabled:opacity-50"
+                        className="bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 text-[9px] sm:text-xs disabled:opacity-50"
                       >
                         {profileSaving ? 'Saving...' : 'Save Changes'}
                       </button>
@@ -690,7 +691,7 @@ export default function ProfilePage() {
                             location: profile?.location || ''
                           })
                         }}
-                        className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 text-[10px] sm:text-xs"
+                        className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-200 text-[9px] sm:text-xs"
                       >
                         Cancel
                       </button>
@@ -698,9 +699,9 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Profile Information</h4>
-                      <div className="space-y-1 text-[11px] sm:text-xs text-gray-900">
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-black mb-1.5 text-xs sm:text-sm">Profile Information</h4>
+                      <div className="space-y-1 text-[11px] sm:text-xs text-black">
                         <p><span className="font-medium">Name:</span> {profile.name || 'Not set'}</p>
                         <p><span className="font-medium">Display Name:</span> {profile.displayName || <span className="text-gray-400 italic">Not set</span>}</p>
                         <p><span className="font-medium">Email:</span> {profile.email}</p>
@@ -711,28 +712,314 @@ export default function ProfilePage() {
                         {profile.bio && <p><span className="font-medium">Bio:</span> {profile.bio}</p>}
                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-1.5 text-xs sm:text-sm">Quick Actions</h4>
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-black mb-1.5 text-xs sm:text-sm">Quick Actions</h4>
                       <div className="flex gap-1.5 sm:flex-col sm:space-y-1.5">
                         <Link
                           href="/upload"
-                          className="flex-1 bg-indigo-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-center text-[10px] sm:text-xs"
+                          className="flex-1 bg-indigo-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded hover:bg-indigo-700 text-center text-[9px] sm:text-xs"
                         >
                           Upload
                         </Link>
                         <Link
                           href="/orders"
-                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs"
+                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded hover:bg-gray-200 text-center text-[9px] sm:text-xs"
                         >
                           Orders
                         </Link>
                         <Link
                           href="/profile/settings"
-                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 text-center text-[10px] sm:text-xs flex items-center justify-center gap-1"
+                          className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded hover:bg-gray-200 text-center text-[9px] sm:text-xs flex items-center justify-center gap-1"
                         >
                           <Settings className="w-3 h-3" />
                           Settings
                         </Link>
+                      </div>
+
+                      {/* Buyer Quick Links Section */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h3 className="text-[9px] sm:text-xs font-semibold text-black mb-2 sm:mb-3">Buyer Tools</h3>
+                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                          <Link
+                            href="/orders"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition"
+                          >
+                            <Package className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">My Orders</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/buyer/boutique-orders"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">👜</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Boutique Orders</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/wishlist"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-pink-50 border border-pink-200 rounded hover:bg-pink-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">❤️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Wishlist</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/cart"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-orange-50 border border-orange-200 rounded hover:bg-orange-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🛒</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Cart</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/notifications"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🔔</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Notifications</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/commissions"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🎨</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Commissions</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-commissions"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-cyan-50 border border-cyan-200 rounded hover:bg-cyan-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">✏️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">My Work</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/designs"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🎭</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Browse Designs</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/trending"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🔥</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Trending</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/contests"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-yellow-50 border border-yellow-200 rounded hover:bg-yellow-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🏆</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Contests</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/forum"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-teal-50 border border-teal-200 rounded hover:bg-teal-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">💬</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Community</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/resources"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">📚</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Resources</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/help"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">❓</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Help & FAQs</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/boutique/orders"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-rose-50 border border-rose-200 rounded hover:bg-rose-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">📦</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Orders</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/boutique/favorites"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-fuchsia-50 border border-fuchsia-200 rounded hover:bg-fuchsia-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">⭐</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Favorites</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/boutique"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-violet-50 border border-violet-200 rounded hover:bg-violet-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🛍️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Shop Physical</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/designers"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-sky-50 border border-sky-200 rounded hover:bg-sky-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">👥</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Find Designers</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/categories"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-lime-50 border border-lime-200 rounded hover:bg-lime-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🏷️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Categories</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/search/advanced"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-slate-50 border border-slate-200 rounded hover:bg-slate-100 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🔍</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Advanced Search</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/updates"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-orange-100 border border-orange-300 rounded hover:bg-orange-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">📰</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Feed & Updates</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/contact"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-red-100 border border-red-300 rounded hover:bg-red-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">✉️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Contact Us</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/customer-care"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-blue-100 border border-blue-300 rounded hover:bg-blue-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">💬</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Support Chat</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/buyer-protection"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-indigo-100 border border-indigo-300 rounded hover:bg-indigo-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🛡️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Buyer Protection</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/commission-request"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-100 border border-green-300 rounded hover:bg-green-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">✍️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Request Commission</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/designers"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-purple-100 border border-purple-300 rounded hover:bg-purple-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">👨‍🎨</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Explore Designers</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/boutique/cart"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-orange-200 border border-orange-400 rounded hover:bg-orange-300 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🛒</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Cart</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/boutique/checkout"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-blue-200 border border-blue-400 rounded hover:bg-blue-300 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">💳</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Checkout</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/profile/edit"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-pink-200 border border-pink-400 rounded hover:bg-pink-300 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">✏️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Edit Profile</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/profile/settings"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-gray-200 border border-gray-400 rounded hover:bg-gray-300 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">⚙️</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Settings</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/terms"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-yellow-100 border border-yellow-300 rounded hover:bg-yellow-200 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">📜</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Terms & Conditions</p>
+                            </div>
+                          </Link>
+                          <Link
+                            href="/privacy"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-200 border border-green-400 rounded hover:bg-green-300 transition"
+                          >
+                            <span className="text-sm sm:text-lg flex-shrink-0">🔒</span>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Privacy Policy</p>
+                            </div>
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -741,12 +1028,12 @@ export default function ProfilePage() {
             )}
 
             {activeTab === 'designs' && (
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900">My Designs</h3>
+                  <h3 className="text-xs sm:text-sm font-semibold text-black">My Designs</h3>
                   <Link
                     href="/upload"
-                    className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-indigo-700 text-[10px] sm:text-xs whitespace-nowrap"
+                    className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-indigo-700 text-[9px] sm:text-xs whitespace-nowrap"
                   >
                     Upload New Design
                   </Link>
@@ -755,11 +1042,11 @@ export default function ProfilePage() {
                 {designs.length === 0 ? (
                   <div className="text-center py-6 sm:py-8">
                     <Upload className="w-8 sm:w-10 text-gray-400 mx-auto mb-2" />
-                    <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-1">No designs yet</h4>
-                    <p className="text-[10px] sm:text-xs text-gray-600 mb-2 sm:mb-3">Start by uploading your first design to the marketplace</p>
+                    <h4 className="text-xs sm:text-sm font-medium line-clamp-1 text-black mb-1">No designs yet</h4>
+                    <p className="text-[9px] sm:text-xs text-gray-600 mb-2 sm:mb-3">Start by uploading your first design to the marketplace</p>
                     <Link
                       href="/upload"
-                      className="inline-block bg-indigo-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-700 text-xs sm:text-sm"
+                      className="inline-block bg-indigo-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded hover:bg-indigo-700 text-xs sm:text-sm"
                     >
                       Upload First Design
                     </Link>
@@ -767,7 +1054,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                     {designs.map((design) => (
-                        <div key={design.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        <div key={design.id} className="border border-gray-200 rounded overflow-hidden hover:shadow-md transition-shadow">
                           <div className="aspect-square bg-gray-100">
                             <Image
                               src={design.imageUrl}
@@ -778,7 +1065,7 @@ export default function ProfilePage() {
                             />
                           </div>
                         <div className="p-3 sm:p-4">
-                          <h4 className="font-medium text-gray-900 mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{design.title}</h4>
+                          <h4 className="font-medium text-black mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{design.title}</h4>
                           <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">{design.category}</p>
                           <div className="flex items-center justify-between text-xs sm:text-sm">
                             <span className="font-bold text-indigo-600">{formatPrice(design.price)}</span>
@@ -787,7 +1074,7 @@ export default function ProfilePage() {
                           <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600">
                             Revenue: {formatPrice(design.totalRevenue || 0)}
                           </div>
-                          <div className="mt-2 flex gap-1 sm:gap-2">
+                          <div className="mt-2 flex gap-2 sm:gap-3">
                             <Link
                               href={`/designs/${design.id}`}
                               className="flex-1 bg-gray-100 text-gray-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-gray-200"
@@ -816,33 +1103,33 @@ export default function ProfilePage() {
             )}
 
             {activeTab === 'earnings' && (
-              <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Earnings Overview</h3>
+              <div className="min-w-0">
+                <h3 className="text-xs sm:text-sm font-semibold text-black mb-2 sm:mb-3">Earnings Overview</h3>
                 {stats && (
-                  <div className="bg-gray-50 rounded-lg p-2.5 sm:p-4 mb-2.5 sm:mb-3">
+                  <div className="bg-gray-50 rounded p-2.5 sm:p-4 mb-2.5 sm:mb-3">
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
                       <div className="text-center">
-                        <p className="text-[9px] sm:text-xs text-gray-600">Revenue</p>
-                        <p className="text-sm sm:text-lg font-bold text-gray-900">{formatPrice(stats?.totalRevenue ?? 0)}</p>
+                        <p className="text-[8px] sm:text-[10px] text-gray-600">Revenue</p>
+                        <p className="text-sm sm:text-lg font-bold text-black">{formatPrice(stats?.totalRevenue ?? 0)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[9px] sm:text-xs text-gray-600">Commission</p>
+                        <p className="text-[8px] sm:text-[10px] text-gray-600">Commission</p>
                         <p className="text-sm sm:text-lg font-bold text-red-600">-{formatPrice(stats.platformCommission)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[9px] sm:text-xs text-gray-600">Earnings</p>
+                        <p className="text-[8px] sm:text-[10px] text-gray-600">Earnings</p>
                         <p className="text-sm sm:text-lg font-bold text-green-600">{formatPrice(stats?.totalEarnings ?? 0)}</p>
                       </div>
                     </div>
                   </div>
                 )}
                 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 mb-2 sm:mb-2.5">
+                <div className="bg-blue-50 border border-blue-200 rounded p-2 sm:p-3 mb-2 sm:mb-2.5">
                   <h4 className="font-semibold text-blue-900 mb-1 text-xs sm:text-sm">View Payment Transfers</h4>
-                  <p className="text-[10px] sm:text-xs text-blue-800 mb-2">Check the status of all your seller payments, including successful transfers, pending payments, and retry history.</p>
+                  <p className="text-[9px] sm:text-xs text-blue-800 mb-2">Check the status of all your seller payments, including successful transfers, pending payments, and retry history.</p>
                   <Link 
                     href="/seller/transfers"
-                    className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs sm:text-sm"
+                    className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs sm:text-sm"
                   >
                     <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     View My Transfers & Payments
@@ -850,14 +1137,14 @@ export default function ProfilePage() {
                 </div>
                 
                 <div className="text-center py-2 sm:py-3 text-gray-500">
-                  <p className="text-[9px] sm:text-xs">More detailed earnings breakdown available in transfer dashboard</p>
+                  <p className="text-[8px] sm:text-[10px]">More detailed earnings breakdown available in transfer dashboard</p>
                 </div>
               </div>
             )}
 
             {activeTab === 'purchases' && (
-              <div>
-                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Downloads</h2>
+              <div className="min-w-0">
+                <h2 className="text-xs sm:text-lg font-bold text-black mb-2 sm:mb-3">My Downloads</h2>
                 
                 {purchasedDesigns.length === 0 && orders.filter(o => o.orderType === 'DIGITAL').length === 0 ? (
                   <div className="text-center py-6 sm:py-8">
@@ -865,7 +1152,7 @@ export default function ProfilePage() {
                     <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No downloads yet</p>
                     <Link 
                       href="/designs"
-                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs"
+                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs"
                     >
                       Browse Designs
                     </Link>
@@ -874,12 +1161,12 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     {/* Digital Orders */}
                     {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="text-xs sm:text-sm font-semibold text-indigo-700 mb-2">Recent Orders</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                           {orders.filter(o => o.orderType === 'DIGITAL').map(order =>
                             order.items.map(item => (
-                              <div key={item.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                              <div key={item.id} className="bg-white rounded shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                 {/* Design Image */}
                                 <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
                                   <Image
@@ -889,23 +1176,23 @@ export default function ProfilePage() {
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     className="object-cover"
                                   />
-                                  <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
+                                  <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-medium">
                                     {item.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
                                   </div>
                                 </div>
 
                                 {/* Design Info */}
                                 <div className="p-2 sm:p-3">
-                                  <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{item.design.title}</h3>
-                                  <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{item.design.category}</p>
+                                  <h3 className="font-semibold text-black mb-0.5 line-clamp-1 text-xs sm:text-sm">{item.design.title}</h3>
+                                  <p className="text-[9px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{item.design.category}</p>
                                   
                                   {/* Designer Info */}
-                                  <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
+                                  <div className="text-[9px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
                                     <p>By <span className="font-medium truncate">{item.design.designer.name || 'Unknown'}</span></p>
                                   </div>
 
                                   {/* Purchase Details */}
-                                  <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
+                                  <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[9px] sm:text-xs">
                                     <p className="text-gray-600">
                                       <span className="font-medium">{formatDateWithTime(order.createdAt)}</span>
                                     </p>
@@ -917,7 +1204,7 @@ export default function ProfilePage() {
                                   {/* Download Button */}
                                   <button
                                     onClick={() => handleDownloadOrderDesign(item.design.title, item.design.mediaFiles)}
-                                    className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
+                                    className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[9px] sm:text-xs"
                                     disabled={!item?.design?.mediaFiles?.length}
                                   >
                                     <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
@@ -933,13 +1220,13 @@ export default function ProfilePage() {
 
                     {/* Individual Purchases */}
                     {purchasedDesigns.length > 0 && (
-                      <div>
+                      <div className="min-w-0">
                         {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
                           <h3 className="text-xs sm:text-sm font-semibold text-indigo-700 mb-2 mt-4">Individual Purchases</h3>
                         )}
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                           {purchasedDesigns.map((purchase) => (
-                            <div key={purchase.purchaseId} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                            <div key={purchase.purchaseId} className="bg-white rounded shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                               {/* Design Image */}
                               <div className="relative h-28 sm:h-40 bg-gray-200 overflow-hidden">
                                 <Image
@@ -949,23 +1236,23 @@ export default function ProfilePage() {
                                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                   className="object-cover"
                                 />
-                                <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-medium">
+                                <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-medium">
                                   {purchase.purchaseType === 'OWNERSHIP' ? 'Own' : 'Lic'}
                                 </div>
                               </div>
 
                               {/* Design Info */}
                               <div className="p-2 sm:p-3">
-                                <h3 className="font-semibold text-gray-900 mb-0.5 line-clamp-1 text-xs sm:text-sm">{purchase.design.title}</h3>
-                                <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{purchase.design.category}</p>
+                                <h3 className="font-semibold text-black mb-0.5 line-clamp-1 text-xs sm:text-sm">{purchase.design.title}</h3>
+                                <p className="text-[9px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">{purchase.design.category}</p>
                                 
                                 {/* Designer Info */}
-                                <div className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
+                                <div className="text-[9px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2">
                                   <p>By <span className="font-medium truncate">{purchase.design.designer.name || 'Unknown'}</span></p>
                                 </div>
 
                                 {/* Purchase Details */}
-                                <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[10px] sm:text-xs">
+                                <div className="bg-gray-50 rounded p-1.5 sm:p-2 mb-2 sm:mb-2.5 text-[9px] sm:text-xs">
                                   <p className="text-gray-600">
                                     <span className="font-medium">{formatDate(purchase.purchaseDate)}</span>
                                   </p>
@@ -977,7 +1264,7 @@ export default function ProfilePage() {
                                 {/* Download Button */}
                                 <button
                                   onClick={() => handleDownloadPurchasedDesign(purchase.purchaseId, purchase.design.id, purchase.design.title)}
-                                  className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs"
+                                  className="w-full flex items-center justify-center px-2 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[9px] sm:text-xs"
                                   disabled={!purchase?.design?.id}
                                 >
                                   <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
@@ -995,8 +1282,8 @@ export default function ProfilePage() {
             )}
 
             {activeTab === 'orders' && (
-              <div>
-                <h2 className="text-xs sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">My Orders</h2>
+              <div className="min-w-0">
+                <h2 className="text-xs sm:text-lg font-bold text-black mb-2 sm:mb-3">My Orders</h2>
                 
                 {orders.length === 0 ? (
                   <div className="text-center py-6 sm:py-8">
@@ -1004,7 +1291,7 @@ export default function ProfilePage() {
                     <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm">No orders yet</p>
                     <Link 
                       href="/designs"
-                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs"
+                      className="inline-flex items-center px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs"
                     >
                       Browse Designs
                     </Link>
@@ -1020,77 +1307,98 @@ export default function ProfilePage() {
                         </h3>
                         <div className="space-y-2">
                           {orders.filter(o => o.orderType === 'POD').map(order => (
-                            <div key={order.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDateWithTime(order.createdAt)}</p>
+                            <div key={order.id} className="bg-white border border-gray-200 rounded overflow-hidden shadow-sm">
+                              {/* Order Header - Clickable */}
+                              <button
+                                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                                className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className="font-semibold text-[9px] sm:text-xs text-black">Order</p>
+                                  <p className="text-[9px] sm:text-[10px] text-gray-500 truncate">#{order.orderNumber}</p>
+                                  <p className="text-[8px] sm:text-[9px] text-gray-400">{formatDateWithTime(order.createdAt)}</p>
                                 </div>
-                                <div className="text-right">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
-                                    order.podStatus === 'delivered' ? 'bg-green-100 text-green-800' :
-                                    order.podStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                    order.podStatus === 'in_production' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {order.podStatus === 'delivered' ? '✓ Delivered' :
-                                     order.podStatus === 'shipped' ? '🚚 Shipped' :
-                                     order.podStatus === 'in_production' ? '🏭 In Production' :
-                                     '⏳ Processing'}
-                                  </span>
-                                  <p className="text-xs font-semibold text-orange-700 mt-1">
-                                    {formatPrice(order.totalAmount)}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Order Items */}
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                {order.items.map(item => (
-                                  <div key={item.id} className="flex items-center gap-2 bg-white rounded p-1.5 border border-orange-100">
-                                    <div className="w-10 h-10 relative flex-shrink-0">
-                                      <Image
-                                        src={item.design.thumbnailUrl || item.design.imageUrl}
-                                        alt={item.design.title}
-                                        fill
-                                        className="object-cover rounded"
-                                      />
-                                    </div>
-                                    <div className="text-[10px] sm:text-xs">
-                                      <p className="font-medium text-gray-900 line-clamp-1">{item.design.title}</p>
-                                      {item.podProductName && (
-                                        <p className="text-orange-600">{item.podProductName}</p>
-                                      )}
-                                      <p className="text-gray-500">Qty: {item.quantity}</p>
-                                    </div>
+                                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                                  <div className="text-right">
+                                    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-medium ${
+                                      order.podStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                      order.podStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                      order.podStatus === 'in_production' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {order.podStatus === 'delivered' ? '✓ Delivered' :
+                                       order.podStatus === 'shipped' ? '🚚 Shipped' :
+                                       order.podStatus === 'in_production' ? '🏭 Production' :
+                                       '⏳ Processing'}
+                                    </span>
+                                    <p className="text-[9px] sm:text-xs font-semibold text-orange-700 mt-0.5">
+                                      {formatPrice(order.totalAmount)}
+                                    </p>
                                   </div>
-                                ))}
-                              </div>
+                                  <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-90' : ''}`} />
+                                </div>
+                              </button>
                               
-                              {/* Shipping & Tracking */}
-                              <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs">
-                                {order.trackingNumber && (
-                                  <a
-                                    href={order.trackingUrl || '#'}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                                  >
-                                    <ExternalLink className="w-3 h-3" />
-                                    Track Package
-                                  </a>
-                                )}
-                                {order.shipping && (
-                                  <span className="text-gray-500">
-                                    Ships to: {order.shipping.city}, {order.shipping.country}
-                                  </span>
-                                )}
-                                {order.podProvider && (
-                                  <span className="text-gray-400">
-                                    via {order.podProvider}
-                                  </span>
-                                )}
-                              </div>
+                              {/* Order Items - Show when expanded */}
+                              {expandedOrderId === order.id && (
+                                <div className="px-2.5 sm:px-3 py-2 sm:py-3 bg-orange-50 border-t border-orange-100">
+                                  <p className="text-[8px] sm:text-[10px] text-gray-500 mb-2">Click an item to view details:</p>
+                                  <div className="space-y-2">
+                                    {order.items.map(item => (
+                                      <Link 
+                                        key={item.id} 
+                                        href={`/designs/${item.design.id}`}
+                                        className="flex items-start gap-2 sm:gap-3 bg-white rounded p-2 border border-orange-100 hover:border-orange-300 hover:shadow-sm transition-all"
+                                      >
+                                        <div className="w-12 h-12 sm:w-16 sm:h-16 relative flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                                          <Image
+                                            src={item.design.thumbnailUrl || item.design.imageUrl}
+                                            alt={item.design.title}
+                                            fill
+                                            className="object-cover"
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-[9px] sm:text-xs text-black line-clamp-1 group-hover:text-indigo-600">{item.design.title}</p>
+                                          {item.podProductName && (
+                                            <p className="text-[9px] sm:text-[10px] text-orange-600">{item.podProductName}</p>
+                                          )}
+                                          <p className="text-[8px] sm:text-[9px] text-gray-500">Qty: {item.quantity}</p>
+                                        </div>
+                                        <div className="text-right flex-shrink-0 flex items-center gap-1">
+                                          <p className="font-semibold text-[9px] sm:text-xs text-black">{formatPrice(item.price)}</p>
+                                          <ChevronRight className="w-3 h-3 text-gray-400" />
+                                        </div>
+                                      </Link>
+                                    ))}
+                                  </div>
+                                  
+                                  {/* Shipping & Tracking */}
+                                  <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-orange-100 text-[8px] sm:text-[10px]">
+                                    {order.trackingNumber && (
+                                      <a
+                                        href={order.trackingUrl || '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                                      >
+                                        <ExternalLink className="w-3 h-3" />
+                                        Track Package
+                                      </a>
+                                    )}
+                                    {order.shipping && (
+                                      <span className="text-gray-500">
+                                        Ships to: {order.shipping.city}, {order.shipping.country}
+                                      </span>
+                                    )}
+                                    {order.podProvider && (
+                                      <span className="text-gray-400">
+                                        via {order.podProvider}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1099,53 +1407,86 @@ export default function ProfilePage() {
                     
                     {/* Digital Orders Section */}
                     {orders.filter(o => o.orderType === 'DIGITAL').length > 0 && (
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="text-xs sm:text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
                           <Download className="w-3.5 h-3.5" />
                           Digital Downloads
                         </h3>
                         <div className="space-y-2">
                           {orders.filter(o => o.orderType === 'DIGITAL').map(order => (
-                            <div key={order.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <p className="font-semibold text-xs sm:text-sm text-gray-900">Order #{order.orderNumber}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500">{formatDateWithTime(order.createdAt)}</p>
+                            <div key={order.id} className="bg-white border border-gray-200 rounded overflow-hidden shadow-sm">
+                              {/* Order Header - Clickable */}
+                              <button
+                                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                                className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className="font-semibold text-[9px] sm:text-xs text-black">Order</p>
+                                  <p className="text-[9px] sm:text-[10px] text-gray-500 truncate">#{order.orderNumber}</p>
+                                  <p className="text-[8px] sm:text-[9px] text-gray-400">{formatDateWithTime(order.createdAt)}</p>
                                 </div>
-                                <div className="text-right">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
-                                    order.status === 'COMPLETED' || order.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {order.status === 'COMPLETED' || order.status === 'PAID' ? '✓ Complete' : order.status}
-                                  </span>
-                                  <p className="text-xs font-semibold text-blue-700 mt-1">
-                                    {formatPrice(order.totalAmount)}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Order Items */}
-                              <div className="flex flex-wrap gap-2">
-                                {order.items.map(item => (
-                                  <div key={item.id} className="flex items-center gap-2 bg-white rounded p-1.5 border border-blue-100">
-                                    <div className="w-10 h-10 relative flex-shrink-0">
-                                      <Image
-                                        src={item.design.thumbnailUrl || item.design.imageUrl}
-                                        alt={item.design.title}
-                                        fill
-                                        className="object-cover rounded"
-                                      />
-                                    </div>
-                                    <div className="text-[10px] sm:text-xs">
-                                      <p className="font-medium text-gray-900 line-clamp-1">{item.design.title}</p>
-                                      <p className="text-blue-600">
-                                        {item.purchaseType === 'OWNERSHIP' ? 'Full Ownership' : 'Standard License'}
-                                      </p>
-                                    </div>
+                                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                                  <div className="text-right">
+                                    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[10px] font-medium ${
+                                      order.status === 'COMPLETED' || order.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {order.status === 'COMPLETED' || order.status === 'PAID' ? (
+                                        <>
+                                          <CheckCircle className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+                                          Complete
+                                        </>
+                                      ) : order.status}
+                                    </span>
+                                    <p className="text-[9px] sm:text-xs font-semibold text-black mt-0.5">
+                                      {formatPrice(order.totalAmount)}
+                                    </p>
                                   </div>
-                                ))}
-                              </div>
+                                  <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-90' : ''}`} />
+                                </div>
+                              </button>
+                              
+                              {/* Order Items - Show when expanded */}
+                              {expandedOrderId === order.id && (
+                                <div className="px-2.5 sm:px-3 py-2 sm:py-3 bg-gray-50 border-t border-gray-100">
+                                  <p className="text-[8px] sm:text-[10px] text-gray-500 mb-2">Click an item to view details:</p>
+                                  <div className="space-y-2">
+                                    {order.items.map(item => (
+                                      <Link 
+                                        key={item.id} 
+                                        href={`/designs/${item.design.id}`}
+                                        className="flex items-start gap-2 sm:gap-3 bg-white rounded p-2 border border-gray-100 hover:border-indigo-300 hover:shadow-sm transition-all"
+                                      >
+                                        <div className="w-12 h-12 sm:w-16 sm:h-16 relative flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                                          <Image
+                                            src={item.design.thumbnailUrl || item.design.imageUrl}
+                                            alt={item.design.title}
+                                            fill
+                                            className="object-cover"
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-[9px] sm:text-xs text-black line-clamp-2">
+                                            {item.design.title}
+                                          </p>
+                                          <p className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">
+                                            by {item.design.designer?.name || 'Designer'}
+                                          </p>
+                                          <span className={`inline-block mt-1 text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                                            item.purchaseType === 'OWNERSHIP' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700'
+                                          }`}>
+                                            {item.purchaseType === 'OWNERSHIP' ? 'Full Ownership' : 'Standard License'}
+                                          </span>
+                                        </div>
+                                        <div className="text-right flex-shrink-0 flex items-center gap-1">
+                                          <p className="font-semibold text-[9px] sm:text-xs text-black">{formatPrice(item.price)}</p>
+                                          <ChevronRight className="w-3 h-3 text-gray-400" />
+                                        </div>
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1166,21 +1507,21 @@ export default function ProfilePage() {
       {/* Delete Confirmation Dialog */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Design</h3>
+          <div className="bg-white rounded p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-black mb-4">Delete Design</h3>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete "{deleteConfirm?.title ?? ''}"? This action cannot be undone.
             </p>
             <div className="flex space-x-4">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Delete
               </button>
@@ -1373,11 +1714,11 @@ function SellerAccountTab() {
   return (
     <div className="p-2.5 sm:p-4">
       <div className="flex items-center justify-between mb-3 gap-2">
-        <h3 className="text-xs sm:text-sm font-semibold text-gray-900\">Bank Account for Earnings</h3>
+        <h3 className="text-xs sm:text-sm font-semibold text-black\">Bank Account for Earnings</h3>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-indigo-700 text-xs sm:text-sm whitespace-nowrap"
+            className="bg-indigo-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-indigo-700 text-xs sm:text-sm whitespace-nowrap"
           >
             {sellerAccount ? 'Update' : 'Add Account'}
           </button>
@@ -1385,10 +1726,10 @@ function SellerAccountTab() {
       </div>
 
       {sellerAccount && !showForm ? (
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+        <div className="bg-gray-50 rounded p-3 sm:p-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-gray-900 text-xs sm:text-sm">Current Account</h4>
-            <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-xs ${
+            <h4 className="font-medium text-black text-xs sm:text-sm">Current Account</h4>
+            <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] ${
               sellerAccount.isVerified 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-yellow-100 text-yellow-800'
@@ -1396,31 +1737,31 @@ function SellerAccountTab() {
               {sellerAccount.isVerified ? 'Verified' : 'Pending'}
             </span>
           </div>
-          <div className="space-y-1 text-[10px] sm:text-xs">
+          <div className="space-y-1 text-[9px] sm:text-xs">
             <p><span className="font-medium\">Account Name:</span> <span className="truncate inline-block max-w-xs">{sellerAccount.accountName}</span></p>
             <p><span className="font-medium\">Account Number:</span> {sellerAccount.accountNumber}</p>
             <p><span className="font-medium\">Bank:</span> <span className="truncate inline-block max-w-xs\">{sellerAccount.bankName}</span></p>
             <p><span className="font-medium\">Status:</span> {sellerAccount.isActive ? 'Active' : 'Inactive'}</p>
           </div>
-          <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-blue-50 rounded-lg\">
-            <p className="text-[9px] sm:text-xs text-blue-800 leading-tight">
+          <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-blue-50 rounded\">
+            <p className="text-[8px] sm:text-[10px] text-blue-800 leading-tight">
               <strong>How it works:</strong> When customers make purchases, your earnings (after platform commission of 7-10%) will be automatically transferred to this account. New sellers enjoy their first $100 commission-free!
             </p>
           </div>
           
           {!sellerAccount.isVerified && (
-            <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg\">
+            <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-yellow-50 border border-yellow-200 rounded\">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
-                <div>
-                  <p className="text-[10px] sm:text-xs text-yellow-800 font-medium\">Account Not Verified</p>
-                  <p className="text-[9px] sm:text-xs text-yellow-700 mt-0.5\">
+                <div className="min-w-0">
+                  <p className="text-[9px] sm:text-xs text-yellow-800 font-medium\">Account Not Verified</p>
+                  <p className="text-[8px] sm:text-[10px] text-yellow-700 mt-0.5\">
                     Your account needs to be verified to receive payments automatically.
                   </p>
                 </div>
                 <button
                   onClick={handleVerifyAccount}
                   disabled={verifying}
-                  className="bg-yellow-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-xs whitespace-nowrap\"
+                  className="bg-yellow-600 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-[9px] sm:text-xs whitespace-nowrap\"
                 >
                   {verifying ? (
                     <>
@@ -1437,14 +1778,14 @@ function SellerAccountTab() {
         </div>
       ) : showForm ? (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Bank
             </label>
             <select
               value={formData.bankCode}
               onChange={(e) => handleBankChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white"
               aria-label="Select Bank"
               required
             >
@@ -1457,7 +1798,7 @@ function SellerAccountTab() {
             </select>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Account Number
             </label>
@@ -1465,14 +1806,14 @@ function SellerAccountTab() {
               type="text"
               value={formData.accountNumber}
               onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white placeholder-gray-500"
               placeholder="1234567890"
               maxLength={10}
               required
             />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Account Name
             </label>
@@ -1480,7 +1821,7 @@ function SellerAccountTab() {
               type="text"
               value={formData.accountName}
               onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 bg-white placeholder-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-black bg-white placeholder-gray-500"
               placeholder="John Doe"
               required
             />
@@ -1490,14 +1831,14 @@ function SellerAccountTab() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Account'}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
             >
               Cancel
             </button>
@@ -1506,7 +1847,7 @@ function SellerAccountTab() {
       ) : (
         <div className="text-center py-12">
           <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h4 className="text-lg font-medium text-gray-900 mb-2">No Bank Account Added</h4>
+          <h4 className="text-lg font-medium text-black mb-2">No Bank Account Added</h4>
           <p className="text-gray-600 mb-4">Add your bank account to receive earnings from sales</p>
         </div>
       )}

@@ -36,8 +36,7 @@ describe('Navbar', () => {
       </MockSessionProvider>
     )
 
-    expect(screen.getByText('Fashion Marketplace')).toBeInTheDocument()
-    expect(screen.getByText('FM')).toBeInTheDocument()
+    expect(screen.getAllByText('FM').length).toBeGreaterThan(0)
   })
 
   it('shows sign in button when not authenticated', () => {

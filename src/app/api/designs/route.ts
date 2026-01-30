@@ -28,9 +28,10 @@ export async function POST(request: NextRequest) {
       ? tagsString.split(",").map(t => t.trim()).filter(t => t.length > 0)
       : [];
 
-    if (!file || !title || isNaN(price) || price <= 0 || !category) {
+    const MAX_PRICE = 1000000;
+    if (!file || !title || isNaN(price) || price <= 0 || price > MAX_PRICE || !category) {
       return NextResponse.json(
-        { error: "Missing required fields or invalid price" },
+        { error: `Missing required fields or invalid price (must be between $0.01 and $${MAX_PRICE})` },
         { status: 400 }
       );
     }
@@ -82,8 +83,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ design }, { status: 201 });
   } catch (error) {
     console.error("Upload error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to upload design. Please try again later." },
       { status: 500 }
     );
   }
@@ -191,8 +207,16 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Get designs error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to get designs. Please try again later." },
       { status: 500 }
     );
   }

@@ -233,6 +233,17 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Failed to fetch analytics:', error)
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
+    return NextResponse.json(
+      { message: 'Internal server error. Please try again later.' },
+      { status: 500 }
+    )
   }
 }

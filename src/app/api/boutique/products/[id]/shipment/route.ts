@@ -49,6 +49,23 @@ export async function POST(
       );
     }
 
+    // Check if seller has set return address (required for rejected products to be returned)
+    const seller = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { boutique_returnAddress: true },
+    });
+
+    if (!seller?.boutique_returnAddress) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Please add your return address in Settings before shipping. This is required so we can return rejected products to you.',
+          code: 'MISSING_RETURN_ADDRESS',
+        },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const {
       trackingNumber,
@@ -56,6 +73,8 @@ export async function POST(
       shippingCost,
       shippingPaidMethod, // PREPAID or DEDUCT_FROM_SALE
       sellerAddress,
+      warehouseAddress,
+      itemsExpected,
     } = body;
 
     // Validate required fields
@@ -73,8 +92,7 @@ export async function POST(
       );
     }
 
-    // Get warehouse address from settings
-    const settings = await prisma.boutiqueSettings.findFirst();
+    console.log('Creating shipment with warehouseAddress:', warehouseAddress);
     
     // Create shipment record
     const shipment = await prisma.sellerToAdminShipment.create({
@@ -87,9 +105,10 @@ export async function POST(
         shippingPaidMethod: shippingPaidMethod || 'DEDUCT_FROM_SALE',
         shippingPaidAt: shippingPaidMethod === 'PREPAID' ? new Date() : null,
         sellerAddress,
-        warehouseAddress: settings?.warehouseAddress || null,
+        warehouseAddress: warehouseAddress ? JSON.parse(JSON.stringify(warehouseAddress)) : null,
         status: 'SHIPPED',
         shippedAt: new Date(),
+        itemsExpected: itemsExpected || 1,
         expectedDeliveryDate: new Date(Date.now() + BOUTIQUE_DEFAULTS.shipmentDeadlineDays * 24 * 60 * 60 * 1000),
       },
     });

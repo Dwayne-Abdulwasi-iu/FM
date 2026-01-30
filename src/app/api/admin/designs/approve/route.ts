@@ -7,6 +7,7 @@ type DesignUpdatePayload = {
   approvalStatus: string
   isActive?: boolean
   rejectionReason?: string | null
+  publishedAt?: Date
 }
 
 export async function POST(request: NextRequest) {
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
     const updateData: DesignUpdatePayload = {
       approvalStatus: action === 'approve' ? 'APPROVED' : 'REJECTED',
       isActive: action === 'approve' ? true : false,
-      rejectionReason: action === 'reject' ? 'Rejected by admin' : undefined
+      rejectionReason: action === 'reject' ? 'Rejected by admin' : undefined,
+      ...(action === 'approve' && { publishedAt: new Date() }) // Set publishedAt when approved
     }
 
     const design = await prisma.design.update({

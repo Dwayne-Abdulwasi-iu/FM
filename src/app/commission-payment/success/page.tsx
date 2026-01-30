@@ -83,12 +83,14 @@ function CommissionPaymentSuccessContent() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Issue</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-y-3">
-            <Link
-              href={`/commission-payment/${requestId}`}
-              className="block w-full py-2 px-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
-            >
-              Try Again
-            </Link>
+            {requestId && (
+              <Link
+                href={`/commission-payment/${requestId}`}
+                className="block w-full py-2 px-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
+              >
+                Try Again
+              </Link>
+            )}
             <Link
               href="/commissions"
               className="block w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"

@@ -229,3 +229,24 @@ async function syncFavorites() {
     console.error('Sync favorites failed:', error);
   }
 }
+
+// Message handler for client communication
+self.addEventListener('message', (event) => {
+  // Handle messages from clients (pages)
+  if (event.data && typeof event.data === 'object') {
+    const { type } = event.data;
+    
+    if (type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+    
+    if (type === 'CLEAR_CACHE') {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          caches.delete(name);
+        });
+      });
+    }
+  }
+});
+

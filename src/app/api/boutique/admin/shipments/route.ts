@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const hasDiscrepancy = searchParams.get('hasDiscrepancy');
+    const search = searchParams.get('search')?.toLowerCase().trim();
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -34,6 +35,17 @@ export async function GET(request: NextRequest) {
     
     if (hasDiscrepancy === 'true') {
       where.hasDiscrepancy = true;
+    }
+
+    // Build search filter for shipment ID, tracking number, seller name, and product ID
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { trackingNumber: { contains: search, mode: 'insensitive' } },
+        { seller: { name: { contains: search, mode: 'insensitive' } } },
+        { seller: { email: { contains: search, mode: 'insensitive' } } },
+        { productIds: { hasSome: [search] } }, // Search by product ID
+      ];
     }
 
     const [shipments, total] = await Promise.all([

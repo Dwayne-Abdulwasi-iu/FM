@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { checkAndPromoteDesigners } from '@/lib/seller-promotion'
-import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail } from '@/lib/email'
+import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail, sendEmail } from '@/lib/email'
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers'
-import { checkAndUpdateSellerTier } from '@/lib/tier-management'
+import { checkAndUpdateSellerTier, activateProSubscription } from '@/lib/tier-management'
 import { fulfillPODOrder } from '@/lib/pod-service'
 import { queueFailedNotification } from '@/lib/notification-queue'
+import { createOwnershipContract } from '@/lib/ownership-documents'
+import { validateDesignOwnershipState } from '@/lib/ownership-validation'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -36,6 +38,8 @@ type StripeCheckoutSession = {
     designerId?: string
     requesterId?: string
     designerEarnings?: string
+    quotedCommissionRate?: string
+    quotedDesignerTier?: string
   } | null
   amount_total?: number | null
   payment_intent?: string | null
@@ -49,11 +53,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
     const signature = request.headers.get('stripe-signature')!
+    const stripe = getStripe()
 
     let event
 
     try {
-      const stripe = getStripe()
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
       console.error('Webhook signature verification failed:', err)
@@ -89,16 +93,49 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object)
         break
+      case 'charge.refunded':
+        await handleChargeRefunded(event.data.object)
+        break
+      case 'customer.subscription.created':
+        await handleSubscriptionCreated(event.data.object, stripe)
+        break
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object)
+        break
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object)
+        break
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(event.data.object)
+        break
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    void error
     console.error('Webhook error:', error)
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { message: 'Invalid JSON in webhook body' },
+        { status: 400 }
+      )
+    }
+
+    // Handle database errors (transient) 
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable' },
+        { status: 503 }
+      )
+    }
+
+    // Generic server error (still return 200-ish for webhook, but log for debugging)
+    // Webhooks should generally return 200 to prevent retries, but we return 500 for internal errors
     return NextResponse.json(
-      { message: 'Webhook error' },
+      { message: 'Webhook processing error' },
       { status: 500 }
     )
   }
@@ -258,7 +295,7 @@ async function handleCheckoutCompleted(session: unknown) {
       }
 
       // Create purchase record for access control
-      await prisma.purchase.create({
+      const purchase = await prisma.purchase.create({
         data: {
           userId: userId,
           designId: item.designId,
@@ -268,6 +305,99 @@ async function handleCheckoutCompleted(session: unknown) {
           accessGranted: true
         }
       })
+
+      // For OWNERSHIP purchases, create the ownership contract (with idempotency check)
+      if (item.purchaseType === 'OWNERSHIP') {
+        try {
+          // Check if contract already exists (idempotency)
+          const existingContract = await prisma.ownershipContract.findUnique({
+            where: { purchaseId: purchase.id }
+          })
+
+          if (existingContract) {
+            console.log(`[Ownership] Contract already exists for purchase ${purchase.id}, skipping creation`)
+          } else {
+            // Get the approved ownership document for this design
+            const ownershipDoc = await prisma.ownershipDocument.findFirst({
+              where: {
+                designId: item.designId,
+                status: 'APPROVED'
+              },
+              select: {
+                id: true,
+                sellerFullName: true,
+                sellerSignature: true
+              }
+            })
+
+            if (ownershipDoc) {
+              // Get buyer info
+              const buyer = await prisma.user.findUnique({
+                where: { id: userId },
+                select: {
+                  name: true,
+                  displayName: true
+                }
+              })
+
+              // Create the ownership contract
+              await createOwnershipContract(
+                purchase.id,
+                userId,
+                sellerId,
+                buyer?.name || 'Buyer',
+                buyer?.displayName || undefined,
+                buyer?.name || 'Buyer',
+                item.designId,
+                item.designTitle || 'Design',
+                ownershipDoc.id,
+                ownershipDoc.sellerFullName,
+                ownershipDoc.sellerSignature
+              )
+
+              // FLAW FIX #14: Validate ownership state after contract creation
+              try {
+                const validation = await validateDesignOwnershipState(item.designId)
+                if (!validation.isValid) {
+                  console.error(
+                    `[Ownership] CRITICAL: State validation failed for design ${item.designId}: ${validation.error}`,
+                    { validation }
+                  )
+                  // Alert admin but don't block the transaction
+                  try {
+                    await sendEmail({
+                      to: process.env.ADMIN_EMAIL || 'admin@example.com',
+                      subject: 'CRITICAL: Design Ownership State Inconsistency',
+                      html: `
+                        <h2>Design Ownership State Validation Failed</h2>
+                        <p>Design ID: ${item.designId}</p>
+                        <p>Validation Error: ${validation.error}</p>
+                        <p>Active Contracts: ${validation.activeContracts}</p>
+                        <p>Design isOwned: ${validation.actualOwned}</p>
+                        <p>Please investigate immediately and run repair script if needed.</p>
+                      `
+                    })
+                  } catch (emailErr) {
+                    console.error('Failed to send state validation alert email', emailErr)
+                  }
+                }
+              } catch (validationErr) {
+                console.error(
+                  `[Ownership] Error validating design state after contract creation:`,
+                  validationErr
+                )
+              }
+
+              console.log(`[Ownership] Contract created for purchase ${purchase.id}`)
+            } else {
+              console.warn(`[Ownership] No approved document found for design ${item.designId}`)
+            }
+          }
+        } catch (contractError) {
+          console.error(`[Ownership] Failed to create ownership contract:`, contractError)
+          // Don't fail the payment - ownership contract creation is async
+        }
+      }
       
       // Store previous earnings before updating (for tier change detection)
       const previousEarnings = totalEarnings
@@ -463,14 +593,14 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
       return
     }
 
-    const { commissionRequestId, designerId: _designerId, requesterId: _requesterId, platformFee, designerEarnings } = metadata
+    const { commissionRequestId, platformFee, designerEarnings, quotedCommissionRate, quotedDesignerTier } = metadata
     
     if (!commissionRequestId) {
       console.error('Commission payment missing commissionRequestId')
       return
     }
 
-    // Determine payment intent ID for tracking
+    // Determine payment intent ID - use as unique key for idempotency
     let paymentIntentId: string | undefined = undefined
     if (session.payment_intent) {
       if (typeof session.payment_intent === 'string') {
@@ -480,9 +610,19 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
       }
     }
 
-    // Update commission request to PAID status
-    const updatedRequest = await prisma.commissionRequest.update({
-      where: { id: commissionRequestId },
+    if (!paymentIntentId) {
+      console.error('Commission payment missing payment intent ID')
+      return
+    }
+
+    // CRITICAL: Use payment intent ID as unique constraint to prevent duplicate payments
+    // This ensures only ONE webhook can succeed for a given payment
+    const updateResult = await prisma.commissionRequest.updateMany({
+      where: {
+        id: commissionRequestId,
+        isPaid: false, // Only update if not already paid
+        stripePaymentIntentId: null, // Only update if payment intent not yet recorded
+      },
       data: {
         status: 'PAID',
         isPaid: true,
@@ -491,7 +631,21 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
         designerEarnings: parseFloat(designerEarnings || '0'),
         paymentMethod: 'STRIPE',
         paymentReference: paymentIntentId,
+        stripePaymentIntentId: paymentIntentId, // Lock this payment intent
       },
+    })
+
+    if (updateResult.count === 0) {
+      // Payment was already processed or invalid state
+      console.log(`Commission ${commissionRequestId} already processed or invalid state, skipping`)
+      return
+    }
+
+    console.log(`Commission ${commissionRequestId} marked as PAID via Stripe (intent: ${paymentIntentId})`)
+
+    // Fetch updated request for email notification
+    const updatedRequest = await prisma.commissionRequest.findUnique({
+      where: { id: commissionRequestId },
       include: {
         requester: {
           select: { name: true, displayName: true },
@@ -502,10 +656,8 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
       },
     })
 
-    console.log(`Commission ${commissionRequestId} marked as PAID via Stripe`)
-
     // Send email notification to designer
-    if (updatedRequest.designer?.email) {
+    if (updatedRequest?.designer?.email) {
       const requesterName = updatedRequest.requester?.displayName || 
                            updatedRequest.requester?.name || 
                            'Client'
@@ -528,5 +680,282 @@ async function handleCommissionPaymentCompleted(session: StripeCheckoutSession) 
 
   } catch (error) {
     console.error('Error handling commission payment completion:', error)
+  }
+}
+
+/**
+ * Handle Stripe refunds for commission payments
+ * When a buyer requests a refund, we need to update the commission request status
+ */
+async function handleChargeRefunded(charge: unknown) {
+  try {
+    const c = charge as { id?: string; payment_intent?: string | { id?: string } }
+    if (!c?.id) {
+      console.error('Refund event missing charge ID')
+      return
+    }
+
+    // Extract payment intent ID
+    let paymentIntentId: string | undefined
+    if (c.payment_intent) {
+      if (typeof c.payment_intent === 'string') {
+        paymentIntentId = c.payment_intent
+      } else if (typeof c.payment_intent === 'object' && 'id' in (c.payment_intent as { id?: string })) {
+        paymentIntentId = (c.payment_intent as { id?: string }).id
+      }
+    }
+
+    if (!paymentIntentId) {
+      console.error('Refund event missing payment intent ID')
+      return
+    }
+
+    // Find the commission request by payment intent
+    const commissionRequest = await prisma.commissionRequest.findFirst({
+      where: {
+        stripePaymentIntentId: paymentIntentId,
+      },
+      include: {
+        requester: { select: { email: true, name: true, displayName: true } },
+        designer: { select: { email: true, name: true, displayName: true } },
+      },
+    })
+
+    if (!commissionRequest) {
+      console.warn(`Refund for unknown payment intent: ${paymentIntentId}`)
+      return
+    }
+
+    // Update commission request to REFUNDED status
+    const updatedRequest = await prisma.commissionRequest.update({
+      where: { id: commissionRequest.id },
+      data: {
+        status: 'REFUNDED',
+        isPaid: false, // Mark as no longer paid
+        platformFee: 0,
+        designerEarnings: 0,
+      },
+    })
+
+    console.log(`Commission ${commissionRequest.id} marked as REFUNDED via Stripe (charge: ${c.id})`)
+
+    // Notify designer about refund
+    if (commissionRequest.designer?.email) {
+      try {
+        await sendPaymentReceivedToDesigner({
+          designerEmail: commissionRequest.designer.email,
+          designerName: commissionRequest.designer.displayName || commissionRequest.designer.name || 'Designer',
+          requesterName: commissionRequest.requester?.displayName || commissionRequest.requester?.name || 'Client',
+          title: commissionRequest.title,
+          amount: 0,
+          designerEarnings: 0,
+          commissionId: commissionRequest.id,
+        })
+        console.log(`Refund notification sent to designer ${commissionRequest.designer.email}`)
+      } catch (emailError) {
+        console.error('Failed to send refund notification:', emailError)
+      }
+    }
+
+    // Notify requester (buyer)
+    if (commissionRequest.requester?.email) {
+      console.log(`Refund processed for requester ${commissionRequest.requester.email}`)
+    }
+  } catch (error) {
+    console.error('Error handling charge refunded:', error)
+  }
+}
+
+/**
+ * Handle Pro subscription creation
+ */
+async function handleSubscriptionCreated(subscription: unknown, stripe: ReturnType<typeof getStripe>) {
+  try {
+    const sub = subscription as {
+      id?: string
+      customer?: string
+      metadata?: { userId?: string; billingPeriod?: string }
+      current_period_end?: number
+    }
+
+    if (!sub.id || !sub.customer) {
+      console.log('[Pro Subscription] Missing subscription or customer ID')
+      return
+    }
+
+    const userId = sub.metadata?.userId
+    if (!userId) {
+      console.log('[Pro Subscription] Missing userId in metadata')
+      return
+    }
+
+    const billingPeriod = sub.metadata?.billingPeriod === 'YEARLY' ? 'YEARLY' : 'MONTHLY'
+    const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    // Check if already activated (idempotency)
+    const existing = await prisma.proSubscription.findUnique({
+      where: { userId }
+    }).catch(() => null)
+    
+    if (existing?.status === 'ACTIVE') {
+      console.log(`[Pro Subscription] Already activated for user ${userId}, skipping`)
+      return
+    }
+
+    // Activate Pro subscription
+    const result = await activateProSubscription(
+      userId,
+      billingPeriod,
+      0, // Amount will be set by webhook
+      sub.id
+    )
+
+    if (result.success) {
+      console.log(`[Pro Subscription] Activated for user ${userId} via Stripe: ${sub.id}`)
+      
+      // Retrieve customer email for logging
+      try {
+        const customer = await stripe.customers.retrieve(sub.customer as string)
+        if ('email' in customer && customer.email) {
+          console.log(`[Pro Subscription] Customer email: ${customer.email}`)
+          
+          // Send confirmation email
+          const seller = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, displayName: true, name: true }
+          })
+          
+          if (seller?.email) {
+            try {
+              const sellerName = seller.displayName || seller.name || 'Seller'
+              const expiresDate = new Date(expiresAt).toLocaleDateString()
+              await sendEmail({
+                to: seller.email,
+                subject: 'Pro Subscription Activated',
+                html: `
+                  <h2>Welcome to Pro Subscription!</h2>
+                  <p>Hi ${sellerName},</p>
+                  <p>Your Pro subscription has been successfully activated!</p>
+                  <p><strong>Plan:</strong> ${billingPeriod === 'YEARLY' ? 'Yearly' : 'Monthly'}</p>
+                  <p><strong>Expires:</strong> ${expiresDate}</p>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                    <li>+1 tier boost above your natural tier</li>
+                    <li>6 featured listings (vs 5 standard)</li>
+                    <li>1% lower commission on all sales</li>
+                  </ul>
+                  <p>Thank you for upgrading!</p>
+                `
+              })
+              console.log(`Pro subscription confirmation sent to ${seller.email}`)
+            } catch (emailError) {
+              console.error('Failed to send Stripe subscription confirmation email:', emailError)
+            }
+          }
+        }
+      } catch (customerError) {
+        console.error('[Pro Subscription] Error retrieving customer:', customerError)
+      }
+    } else {
+      console.error(`[Pro Subscription] Failed to activate: ${result.message}`)
+    }
+  } catch (error) {
+    console.error('[Pro Subscription] Error handling subscription created:', error)
+  }
+}
+
+/**
+ * Handle Pro subscription updates (e.g., billing period changed)
+ */
+async function handleSubscriptionUpdated(subscription: unknown) {
+  try {
+    const sub = subscription as {
+      id?: string
+      customer?: string
+      metadata?: { userId?: string }
+      current_period_end?: number
+      status?: string
+    }
+
+    if (!sub.id) return
+
+    const userId = sub.metadata?.userId
+    if (!userId) return
+
+    // Update expiration if period end changed
+    if (sub.current_period_end) {
+      await prisma.proSubscription.update({
+        where: { userId },
+        data: {
+          expiresAt: new Date(sub.current_period_end * 1000),
+          status: sub.status === 'active' ? 'ACTIVE' : sub.status === 'canceled' ? 'CANCELLED' : 'EXPIRED'
+        }
+      })
+      console.log(`[Pro Subscription] Updated for user ${userId}`)
+    }
+  } catch (error) {
+    console.error('[Pro Subscription] Error handling subscription updated:', error)
+  }
+}
+
+/**
+ * Handle Pro subscription cancellation
+ */
+async function handleSubscriptionDeleted(subscription: unknown) {
+  try {
+    const sub = subscription as {
+      metadata?: { userId?: string }
+    }
+
+    const userId = sub.metadata?.userId
+    if (!userId) return
+
+    // Mark subscription as cancelled
+    await prisma.proSubscription.update({
+      where: { userId },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date()
+      }
+    })
+
+    // Deactivate Pro subscription in user
+    await prisma.user.update({
+      where: { id: userId },
+      data: { proSubscriptionActive: false }
+    })
+
+    console.log(`[Pro Subscription] Cancelled for user ${userId}`)
+  } catch (error) {
+    console.error('[Pro Subscription] Error handling subscription deleted:', error)
+  }
+}
+
+/**
+ * Handle recurring invoice payment success (monthly/yearly renewals)
+ */
+async function handleInvoicePaymentSucceeded(invoice: unknown) {
+  try {
+    const inv = invoice as {
+      subscription?: string
+      metadata?: { userId?: string; type?: string }
+    }
+
+    if (inv.metadata?.type !== 'pro_subscription') return
+
+    const userId = inv.metadata?.userId
+    if (!userId) return
+
+    // Mark renewal in subscription record
+    const sub = await prisma.proSubscription.findUnique({
+      where: { userId }
+    })
+
+    if (sub) {
+      console.log(`[Pro Subscription] Renewal payment received for user ${userId}`)
+      // Subscription is already active, just log the renewal
+    }
+  } catch (error) {
+    console.error('[Pro Subscription] Error handling invoice payment:', error)
   }
 }

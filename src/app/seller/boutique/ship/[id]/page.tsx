@@ -45,11 +45,12 @@ interface Shipment {
 }
 
 interface WarehouseAddress {
+  id: string;
   name: string;
   address: string;
   city: string;
   state: string;
-  phone: string;
+  phone: string[];
   notes: string;
 }
 
@@ -63,15 +64,30 @@ const COURIERS = [
   { id: 'other', name: 'Other', website: '' },
 ];
 
-// This would come from admin settings in production
-const WAREHOUSE_ADDRESS: WarehouseAddress = {
-  name: 'Fashion Boutique Warehouse',
-  address: '15 Victoria Island Plaza',
-  city: 'Lagos',
-  state: 'Lagos State',
-  phone: '+234 800 FASHION',
-  notes: 'Please include your Product ID on the package label',
-};
+// Warehouse locations
+const WAREHOUSE_LOCATIONS: WarehouseAddress[] = [
+  {
+    id: 'lagos',
+    name: 'Fashion Boutique Warehouse - Lagos',
+    address: '15 Victoria Island Plaza',
+    city: 'Lagos',
+    state: 'Lagos State',
+    phone: ['+234 810 4912270', '0911 275 2160'],
+    notes: 'Please include your Product ID on the package label',
+  },
+  {
+    id: 'benin',
+    name: 'Fashion Boutique Warehouse - Benin City',
+    address: 'Sapele Road, Amagba, Limit Road',
+    city: 'Benin City',
+    state: 'Edo State',
+    phone: ['+234 810 4912270', '0911 275 2160'],
+    notes: 'Please include your Product ID on the package label',
+  },
+];
+
+// Default warehouse
+const DEFAULT_WAREHOUSE = WAREHOUSE_LOCATIONS[0];
 
 export default function ShipProductPage() {
   const { status: authStatus } = useSession();
@@ -86,6 +102,7 @@ export default function ShipProductPage() {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseAddress>(DEFAULT_WAREHOUSE);
 
   // Form state
   const [courier, setCourier] = useState('');
@@ -103,11 +120,20 @@ export default function ShipProductPage() {
     if (productId) {
       fetchProductAndShipment();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchProductAndShipment = async () => {
     try {
       setLoading(true);
+      
+      // First check if seller has return address
+      const settingsRes = await fetch('/api/seller/boutique/settings');
+      const settingsData = await settingsRes.json();
+      
+      if (!settingsData.returnAddress) {
+        setError('⚠️ Please add your return address in Settings before shipping. This is required so we can return rejected products to you.');
+      }
       
       // Fetch product
       const productRes = await fetch(`/api/boutique/products/${productId}`);
@@ -138,7 +164,7 @@ export default function ShipProductPage() {
   };
 
   const copyAddress = () => {
-    const fullAddress = `${WAREHOUSE_ADDRESS.name}\n${WAREHOUSE_ADDRESS.address}\n${WAREHOUSE_ADDRESS.city}, ${WAREHOUSE_ADDRESS.state}\nPhone: ${WAREHOUSE_ADDRESS.phone}\nRef: Product #${productId}`;
+    const fullAddress = `${selectedWarehouse.name}\n${selectedWarehouse.address}\n${selectedWarehouse.city}, ${selectedWarehouse.state}\nPhone: ${selectedWarehouse.phone.join(', ')}\nRef: Product #${productId}`;
     navigator.clipboard.writeText(fullAddress);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
@@ -168,9 +194,25 @@ export default function ShipProductPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          courier,
           trackingNumber,
+          carrier: courier,
           estimatedArrival: estimatedArrival || null,
+          shippingPaidMethod: 'PREPAID',
+          itemsExpected: totalQuantity,
+          sellerAddress: {
+            street: 'Seller Address',
+            city: 'Lagos',
+            state: 'Lagos',
+            country: 'Nigeria',
+            postalCode: '',
+          },
+          warehouseAddress: {
+            street: selectedWarehouse.address,
+            city: selectedWarehouse.city,
+            state: selectedWarehouse.state,
+            country: 'Nigeria',
+            postalCode: '',
+          },
         }),
       });
 
@@ -182,7 +224,13 @@ export default function ShipProductPage() {
           router.push('/seller/boutique');
         }, 2000);
       } else {
-        setError(data.message || 'Failed to record shipment');
+        // Check if the error is about missing return address
+        if (data.code === 'MISSING_RETURN_ADDRESS') {
+          setError('You need to add a return address in your Settings before shipping. This is required so we can return rejected products to you.');
+          // Don't navigate away - let user go to settings
+        } else {
+          setError(data.message || 'Failed to record shipment');
+        }
       }
     } catch (err) {
       console.error('Error recording shipment:', err);
@@ -221,6 +269,46 @@ export default function ShipProductPage() {
   // Check if product is in valid state for shipping
   const canShip = product.status === 'CONTENT_APPROVED' || product.status === 'SHIPPED_TO_ADMIN';
 
+  // Products that have already completed the shipping process
+  const alreadyProcessed = ['RECEIVED_BY_ADMIN', 'VERIFICATION_PASSED', 'LIVE', 'SOLD'].includes(product.status);
+
+  if (alreadyProcessed) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-xl p-6 text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900">Product Already at Warehouse</h2>
+            <p className="text-gray-600 mt-2">
+              This product has already been shipped and received at our warehouse.
+              {product.status === 'LIVE' && ' It is now live and available for purchase!'}
+              {product.status === 'SOLD' && ' It has been sold!'}
+              {product.status === 'VERIFICATION_PASSED' && ' It passed verification and will be live soon.'}
+              {product.status === 'RECEIVED_BY_ADMIN' && ' It is currently being verified.'}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Current status: <span className="font-medium text-green-600">{product.status.replace(/_/g, ' ')}</span>
+            </p>
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                onClick={() => router.push('/seller/boutique')}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              >
+                Back to Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/seller/boutique/shipments')}
+                className="px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50"
+              >
+                View Shipments
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!canShip) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -229,8 +317,15 @@ export default function ShipProductPage() {
             <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900">Cannot Ship Product</h2>
             <p className="text-gray-600 mt-2">
-              This product must be approved for content before shipping.
-              Current status: <span className="font-medium">{product.status}</span>
+              {product.status === 'DRAFT' && 'Please submit this product for review before shipping.'}
+              {product.status === 'PENDING_CONTENT_REVIEW' && 'This product is still under review. Please wait for approval.'}
+              {product.status === 'REJECTED' && 'This product was rejected. Please fix the issues and resubmit.'}
+              {product.status === 'CANCELLED' && 'This product has been cancelled.'}
+              {!['DRAFT', 'PENDING_CONTENT_REVIEW', 'REJECTED', 'CANCELLED'].includes(product.status) && 
+                'This product must be approved for content before shipping.'}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Current status: <span className="font-medium">{product.status.replace(/_/g, ' ')}</span>
             </p>
             <button
               onClick={() => router.push('/seller/boutique')}
@@ -350,11 +445,36 @@ export default function ShipProductPage() {
             </button>
           </div>
           
+          {/* Warehouse Selection */}
+          {WAREHOUSE_LOCATIONS.length > 1 && (
+            <div className="mb-3 sm:mb-4">
+              <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-2">
+                Select Warehouse Location
+              </label>
+              <div className="grid grid-cols-1 gap-2">
+                {WAREHOUSE_LOCATIONS.map(warehouse => (
+                  <button
+                    key={warehouse.id}
+                    onClick={() => setSelectedWarehouse(warehouse)}
+                    className={`p-3 text-left rounded-lg border-2 transition-all ${
+                      selectedWarehouse.id === warehouse.id
+                        ? 'border-purple-600 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <p className="font-medium text-xs sm:text-sm text-gray-900">{warehouse.name}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-600">{warehouse.address}, {warehouse.city}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-            <p className="font-semibold text-gray-900 text-sm sm:text-base">{WAREHOUSE_ADDRESS.name}</p>
-            <p className="text-gray-700 text-xs sm:text-sm">{WAREHOUSE_ADDRESS.address}</p>
-            <p className="text-gray-700 text-xs sm:text-sm">{WAREHOUSE_ADDRESS.city}, {WAREHOUSE_ADDRESS.state}</p>
-            <p className="text-gray-700 text-xs sm:text-sm">Phone: {WAREHOUSE_ADDRESS.phone}</p>
+            <p className="font-semibold text-gray-900 text-sm sm:text-base">{selectedWarehouse.name}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">{selectedWarehouse.address}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">{selectedWarehouse.city}, {selectedWarehouse.state}</p>
+            <p className="text-gray-700 text-xs sm:text-sm">Phone: {selectedWarehouse.phone.join(', ')}</p>
             <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200">
               <p className="text-[10px] sm:text-sm text-purple-700 flex items-center gap-1.5 sm:gap-2">
                 <Info className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -377,8 +497,17 @@ export default function ShipProductPage() {
             </h2>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 text-red-700 text-xs sm:text-sm">
-                {error}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                <p className="text-red-700 text-xs sm:text-sm">{error}</p>
+                {error.includes('return address') && (
+                  <button
+                    type="button"
+                    onClick={() => router.push('/seller/boutique/settings')}
+                    className="mt-2 inline-block px-3 py-1 bg-red-600 text-white text-xs sm:text-sm rounded hover:bg-red-700"
+                  >
+                    Go to Settings →
+                  </button>
+                )}
               </div>
             )}
 
@@ -397,12 +526,12 @@ export default function ShipProductPage() {
                 <select
                   value={courier}
                   onChange={(e) => setCourier(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-black"
                   aria-label="Select courier"
                 >
                   <option value="">Select courier</option>
                   {COURIERS.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id} className="text-black">{c.name}</option>
                   ))}
                 </select>
                 {courier && COURIERS.find(c => c.id === courier)?.website && (
@@ -426,7 +555,7 @@ export default function ShipProductPage() {
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="e.g., GIG123456789"
-                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-black"
                 />
                 <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                   Get this from your courier
@@ -443,7 +572,7 @@ export default function ShipProductPage() {
                   value={estimatedArrival}
                   onChange={(e) => setEstimatedArrival(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-black"
                 />
               </div>
 

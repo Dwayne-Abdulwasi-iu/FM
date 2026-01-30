@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Request ID required" }, { status: 400 });
     }
 
+    if (!paymentMethod || !['stripe', 'paystack'].includes(paymentMethod)) {
+      return NextResponse.json({ error: "Valid payment method required" }, { status: 400 });
+    }
+
     // Database-backed rate limit check - max 5 payment attempts per commission per hour
     const rateLimitKey = paymentRateLimitKey(session.user.id, requestId);
     const rateLimitResult = await checkRateLimit(
@@ -102,14 +106,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid quote amount" }, { status: 400 });
     }
 
-    // Get designer's tiered commission rate
-    const designer = await prisma.user.findUnique({
-      where: { id: commissionRequest.designerId },
-      select: { totalEarnings: true, designerTier: true }
-    });
-    const totalEarnings = designer?.totalEarnings ?? 0;
-    const isProSubscriber = designer?.designerTier === 'VIP_DESIGNER' || designer?.designerTier === 'VVIP_DESIGNER';
-    const commissionRate = getCommissionRate(totalEarnings, isProSubscriber);
+    // Prevent unreasonably large quotes (max $1,000,000 USD)
+    const MAX_QUOTE = 1000000;
+    if (quote > MAX_QUOTE) {
+      return NextResponse.json(
+        { error: `Quote amount cannot exceed $${MAX_QUOTE.toLocaleString()}` },
+        { status: 400 }
+      );
+    }
+
+    // Check quote expiration (quotes valid for 30 days)
+    if (commissionRequest.quoteExpiresAt && new Date() > commissionRequest.quoteExpiresAt) {
+      return NextResponse.json(
+        { error: "This quote has expired. Please request a new quote from the designer." },
+        { status: 400 }
+      );
+    }
+
+    // Use locked commission rate from quote time, or calculate fresh if not locked
+    let commissionRate = commissionRequest.quotedCommissionRate;
+    let lockedDesignerTier = commissionRequest.quotedDesignerTier;
+    
+    if (!commissionRate) {
+      // First time payment attempt - lock in the rate
+      const designer = await prisma.user.findUnique({
+        where: { id: commissionRequest.designerId },
+        select: { totalEarnings: true, designerTier: true }
+      });
+      const totalEarnings = designer?.totalEarnings ?? 0;
+      const isProSubscriber = designer?.designerTier === 'VIP_DESIGNER' || designer?.designerTier === 'VVIP_DESIGNER';
+      commissionRate = getCommissionRate(totalEarnings, isProSubscriber);
+      lockedDesignerTier = designer?.designerTier || 'DESIGNER';
+      
+      // Lock in the rate and set 30-day expiration
+      const quoteExpiresAt = new Date();
+      quoteExpiresAt.setDate(quoteExpiresAt.getDate() + 30);
+      
+      await prisma.commissionRequest.update({
+        where: { id: requestId },
+        data: {
+          quotedCommissionRate: commissionRate,
+          quotedDesignerTier: lockedDesignerTier,
+          quoteExpiresAt,
+          quoteLockedAt: new Date(),
+        },
+      });
+    }
     
     const platformFee = quote * commissionRate;
     const designerEarnings = quote - platformFee;
@@ -118,8 +160,8 @@ export async function POST(request: NextRequest) {
     if (paymentMethod === "stripe") {
       if (!isStripeConfigured()) {
         return NextResponse.json(
-          { error: "Stripe is not configured" },
-          { status: 500 }
+          { error: "Stripe is not currently available. Please use another payment method." },
+          { status: 503 }
         );
       }
 
@@ -152,16 +194,18 @@ export async function POST(request: NextRequest) {
           requesterId: commissionRequest.requesterId,
           platformFee: platformFee.toString(),
           designerEarnings: designerEarnings.toString(),
+          quotedCommissionRate: commissionRate.toString(),
+          quotedDesignerTier: lockedDesignerTier,
         },
         customer_email: commissionRequest.requester.email,
       });
 
-      // Store the intended payment method before redirect
+      // Store the checkout session - don't store payment intent yet
       await prisma.commissionRequest.update({
         where: { id: requestId },
         data: {
           paymentMethod: "stripe",
-          paymentReference: checkoutSession.id, // Store session ID for tracking
+          paymentReference: checkoutSession.id,
         },
       });
 
@@ -172,8 +216,8 @@ export async function POST(request: NextRequest) {
     } else if (paymentMethod === "paystack") {
       if (!isPaystackConfigured()) {
         return NextResponse.json(
-          { error: "Paystack is not configured" },
-          { status: 500 }
+          { error: "Paystack is not currently available. Please use another payment method." },
+          { status: 503 }
         );
       }
 
@@ -250,8 +294,26 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Commission payment error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Handle network/payment provider errors
+    if (error instanceof TypeError || (error instanceof Error && error.message.includes("fetch"))) {
+      return NextResponse.json(
+        { error: "Payment service temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to initiate payment" },
+      { error: "Failed to initiate payment. Please try again later." },
       { status: 500 }
     );
   }

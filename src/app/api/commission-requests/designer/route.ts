@@ -16,6 +16,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
+    // Validate status if provided
+    const validStatuses = [
+      "PENDING",
+      "FORWARDED",
+      "APPROVED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "REVISION_REQUESTED",
+      "PAYMENT_PENDING",
+      "PAID",
+    ];
+
+    if (status && !validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status filter" },
+        { status: 400 }
+      );
+    }
+
     // Build where clause - only show requests for this designer that have been forwarded
     const where: Record<string, unknown> = {
       designerId: session.user.id,
@@ -60,8 +80,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ requests: sanitizedRequests });
   } catch (error) {
     console.error("Get designer commission requests error:", error);
+    
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to get commission requests" },
+      { error: "Failed to get commission requests. Please try again later." },
       { status: 500 }
     );
   }

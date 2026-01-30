@@ -80,8 +80,16 @@ export async function POST(
     });
   } catch (error) {
     console.error("Follow user error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to follow user. Please try again later." },
       { status: 500 }
     );
   }
@@ -127,8 +135,16 @@ export async function DELETE(
     });
   } catch (error) {
     console.error("Unfollow user error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to unfollow user. Please try again later." },
       { status: 500 }
     );
   }
@@ -145,9 +161,20 @@ export async function GET(
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "followers";
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const pageParam = parseInt(searchParams.get("page") || "1");
+    const limitParam = parseInt(searchParams.get("limit") || "20");
 
+    // Validate type parameter
+    if (type !== "followers" && type !== "following") {
+      return NextResponse.json(
+        { error: "Invalid type. Use 'followers' or 'following'" },
+        { status: 400 }
+      )
+    }
+
+    // Validate pagination
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
+    const limit = Number.isNaN(limitParam) || limitParam < 1 ? 20 : Math.min(limitParam, 100)
     const skip = (page - 1) * limit;
 
     if (type === "followers") {
@@ -219,8 +246,16 @@ export async function GET(
     }
   } catch (error) {
     console.error("Get followers/following error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to get followers/following. Please try again later." },
       { status: 500 }
     );
   }

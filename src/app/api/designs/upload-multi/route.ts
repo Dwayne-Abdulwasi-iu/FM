@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
       const duration = fileType === 'VIDEO' ? await getVideoDuration(buffer, file.type) : null
 
       mediaFiles.push({
-        fileName: file.name,
+        fileName: typeof md.displayName === 'string' && md.displayName.trim() ? md.displayName : file.name,
         fileUrl,
         fileType,
         mimeType: file.type,
@@ -266,8 +266,9 @@ export async function POST(request: NextRequest) {
 
     // If no image was uploaded, use a placeholder for the primary image
     if (!primaryImageUrl) {
-      primaryImageUrl = '/uploads/placeholder-design-1.jpg'
-      thumbnailUrl = '/uploads/placeholder-design-1.jpg'
+      // Use a placeholder image from a CDN instead of local file
+      primaryImageUrl = 'https://via.placeholder.com/500x500?text=No+Image'
+      thumbnailUrl = 'https://via.placeholder.com/300x300?text=No+Image'
     }
 
     // Create design record in database with media files

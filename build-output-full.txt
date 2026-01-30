@@ -1,0 +1,38 @@
+
+> fashion-marketplace@0.1.0 build
+> next build
+
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Dwayne\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\package-lock.json
+
+Γû▓ Next.js 16.1.4 (Turbopack)
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  ┬╖ serverActions
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 30.8s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/244) ...
+  Generating static pages using 11 workers (61/244) 
+  Generating static pages using 11 workers (122/244) 
+  Generating static pages using 11 workers (183/244) 
+Γ¿» useSearchParams() should be wrapped in a suspense boundary at page "/seller/boutique/returns". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at Q (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\.next\server\chunks\ssr\40726_next_6fda324c._.js:2:2111)
+    at o (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\.next\server\chunks\ssr\40726_next_6fda324c._.js:4:5285)
+    at l (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\.next\server\chunks\ssr\OneDrive_Desktop_fashion-marketplace_ff1acada._.js:1:1705)
+    at an (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:84360)
+    at ai (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86179)
+    at al (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:107953)
+    at as (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:105368)
+    at aa (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:84712)
+    at ai (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:86228)
+    at ai (C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:2:104708)
+Error occurred prerendering page "/seller/boutique/returns". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /seller/boutique/returns/page: /seller/boutique/returns, exiting the build.
+Γ¿» Next.js build worker exited with code: 1 and signal: null

@@ -25,8 +25,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
+    const statuses = searchParams.getAll('status');
     const fulfillmentMethod = searchParams.get('fulfillmentMethod');
+    const search = searchParams.get('search') || '';
+    const minPrice = parseFloat(searchParams.get('minPrice') || '0');
+    const maxPrice = parseFloat(searchParams.get('maxPrice') || '999999999');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -34,12 +37,33 @@ export async function GET(request: NextRequest) {
       sellerId: session.user.id,
     };
 
-    if (status) {
-      where.status = status;
+    if (statuses.length > 0) {
+      where.status = {
+        in: statuses,
+      };
     }
 
     if (fulfillmentMethod) {
       where.fulfillmentMethod = fulfillmentMethod;
+    }
+
+    // Add search filter
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { buyer: { name: { contains: search, mode: 'insensitive' } } },
+        { buyer: { email: { contains: search, mode: 'insensitive' } } },
+        { product: { title: { contains: search, mode: 'insensitive' } } },
+        { items: { some: { product: { title: { contains: search, mode: 'insensitive' } } } } },
+      ];
+    }
+
+    // Add price filter
+    if (minPrice > 0 || maxPrice < 999999999) {
+      where.total = {
+        gte: minPrice,
+        lte: maxPrice,
+      };
     }
 
     const [orders, total] = await Promise.all([
@@ -73,7 +97,13 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Get counts for different statuses
-    const [pendingConfirmation, awaitingShipment, shipped, completed] = await Promise.all([
+    const [pendingPayment, paymentFailed, pendingConfirmation, awaitingShipment, shipped, completed] = await Promise.all([
+      prisma.boutiqueOrder.count({
+        where: { sellerId: session.user.id, status: 'PENDING_PAYMENT' },
+      }),
+      prisma.boutiqueOrder.count({
+        where: { sellerId: session.user.id, status: 'PAYMENT_FAILED' },
+      }),
       prisma.boutiqueOrder.count({
         where: { sellerId: session.user.id, status: 'AWAITING_SELLER_CONFIRMATION' },
       }),
@@ -99,6 +129,8 @@ export async function GET(request: NextRequest) {
           : null,
       })),
       counts: {
+        pendingPayment,
+        paymentFailed,
         pendingConfirmation,
         awaitingShipment,
         shipped,

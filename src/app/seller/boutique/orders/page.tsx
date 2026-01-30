@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -54,6 +54,8 @@ interface Order {
 }
 
 interface Counts {
+  pendingPayment: number;
+  paymentFailed: number;
   pendingConfirmation: number;
   awaitingShipment: number;
   shipped: number;
@@ -62,6 +64,8 @@ interface Counts {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
+  PENDING_PAYMENT: { label: 'Awaiting Payment', color: 'text-gray-700', bgColor: 'bg-gray-50', icon: Clock },
+  PAYMENT_FAILED: { label: 'Payment Failed', color: 'text-red-700', bgColor: 'bg-red-50', icon: XCircle },
   PAID: { label: 'New Order', color: 'text-blue-700', bgColor: 'bg-blue-50', icon: Package },
   AWAITING_SELLER_CONFIRMATION: { label: 'Awaiting Confirmation', color: 'text-yellow-700', bgColor: 'bg-yellow-50', icon: Clock },
   PROCESSING: { label: 'Processing', color: 'text-purple-700', bgColor: 'bg-purple-50', icon: Package },
@@ -73,6 +77,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 
 const TABS = [
   { key: 'all', label: 'All Orders' },
+  { key: 'awaiting-payment', label: 'Awaiting Payment' },
   { key: 'pending', label: 'Needs Action' },
   { key: 'processing', label: 'To Ship' },
   { key: 'shipped', label: 'Shipped' },
@@ -92,6 +97,10 @@ export default function SellerOrdersPage() {
   const [showShipModal, setShowShipModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [carrier, setCarrier] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (authStatus === 'unauthenticated') {
@@ -101,16 +110,50 @@ export default function SellerOrdersPage() {
 
   useEffect(() => {
     if (session?.user) {
-      fetchOrders();
+      fetchOrders(true); // Initial load - show loading state
     }
   }, [session, activeTab]);
 
-  const fetchOrders = async () => {
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      if (session?.user) {
+        fetchOrders();
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, minPrice, maxPrice, session?.user]);
+
+  const handleSearch = () => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    if (session?.user) {
+      fetchOrders();
+    }
+  };
+
+  const fetchOrders = async (isInitialLoad = false) => {
     try {
-      setLoading(true);
+      // Only show loading state for initial page load, not for search/filter updates
+      if (isInitialLoad) {
+        setLoading(true);
+      }
       let statusParam = '';
       
       switch (activeTab) {
+        case 'awaiting-payment':
+          statusParam = '&status=PENDING_PAYMENT&status=PAYMENT_FAILED';
+          break;
         case 'pending':
           statusParam = '&status=PAID&status=AWAITING_SELLER_CONFIRMATION';
           break;
@@ -125,7 +168,29 @@ export default function SellerOrdersPage() {
           break;
       }
 
-      const response = await fetch(`/api/boutique/seller/orders?${statusParam}`);
+      const params = new URLSearchParams();
+      
+      if (statusParam) {
+        const statusParts = statusParam.split('&').filter(p => p.startsWith('status='));
+        statusParts.forEach(part => {
+          const status = part.replace('status=', '');
+          params.append('status', status);
+        });
+      }
+
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      if (minPrice) {
+        params.append('minPrice', minPrice);
+      }
+
+      if (maxPrice) {
+        params.append('maxPrice', maxPrice);
+      }
+
+      const response = await fetch(`/api/boutique/seller/orders?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
@@ -135,7 +200,10 @@ export default function SellerOrdersPage() {
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
-      setLoading(false);
+      // Only hide loading if it was an initial load
+      if (isInitialLoad) {
+        setLoading(false);
+      }
     }
   };
 
@@ -182,6 +250,7 @@ export default function SellerOrdersPage() {
   const getTabCount = (key: string): number => {
     if (!counts) return 0;
     switch (key) {
+      case 'awaiting-payment': return counts.pendingPayment + counts.paymentFailed;
       case 'pending': return counts.pendingConfirmation;
       case 'processing': return counts.awaitingShipment;
       case 'shipped': return counts.shipped;
@@ -251,6 +320,62 @@ export default function SellerOrdersPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* Search and Filters */}
+        <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="space-y-3 sm:space-y-4">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Order ID, Buyer name, or Product name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2 pl-9 sm:pl-10 border border-gray-200 rounded-lg text-xs sm:text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <svg className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              {/* Price Range Filter */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                <div>
+                  <label className="text-[10px] sm:text-xs text-gray-600 font-medium block mb-1">Min Price (₦)</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="w-full px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] sm:text-xs text-gray-600 font-medium block mb-1">Max Price (₦)</label>
+                  <input
+                    type="number"
+                    placeholder="∞"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className="w-full px-2 sm:px-3 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setMinPrice('');
+                      setMaxPrice('');
+                    }}
+                    className="w-full px-2 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-[10px] sm:text-xs font-medium transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+        </div>
+
         {/* Orders List */}
         {orders.length === 0 ? (
           <div className="bg-white rounded-xl p-8 sm:p-12 text-center">
@@ -351,11 +476,10 @@ export default function SellerOrdersPage() {
 
                   {/* Shipping Address */}
                   <div className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 border-t">
-                    <p className="text-[10px] sm:text-sm font-medium text-gray-700">Ship to:</p>
-                    <p className="text-[10px] sm:text-sm text-gray-600">
+                    <p className="text-[9px] sm:text-sm font-medium text-gray-700">Ship to:</p>
+                    <p className="text-[9px] sm:text-sm text-gray-600">
                       {order.shippingAddress?.name} • {order.shippingAddress?.street}, {order.shippingAddress?.city}, {order.shippingAddress?.state}
                     </p>
-                    <p className="text-[10px] sm:text-sm text-gray-600">📞 {order.shippingAddress?.phone}</p>
                   </div>
 
                   {/* Tracking Info (if shipped) */}

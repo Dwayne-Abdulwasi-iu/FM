@@ -211,34 +211,34 @@ export default function MyCommissionRequestsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Commission Requests</h1>
-            <p className="text-gray-600 mt-1">Track and manage your custom commission requests</p>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 lg:mb-8">
+          <div className="mb-3 sm:mb-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">My Commission Requests</h1>
+            <p className="text-xs sm:text-sm text-gray-700 mt-0.5 sm:mt-1">Track and manage your custom commission requests</p>
           </div>
           <Link
             href="/commission-request"
-            className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-pink-600 text-white text-xs sm:text-sm rounded-lg hover:bg-pink-700 transition inline-block"
           >
             + New Request
           </Link>
         </div>
 
         {requests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-white rounded-lg shadow p-6 sm:p-8 md:p-12 text-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <svg className="w-6 sm:w-8 h-6 sm:h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No commission requests yet</h2>
-            <p className="text-gray-600 mb-6">Start by requesting a custom design from one of our talented designers</p>
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">No commission requests yet</h2>
+            <p className="text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6">Start by requesting a custom design from one of our talented designers</p>
             <Link
               href="/designers"
-              className="inline-block px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
+              className="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-pink-600 text-white text-xs sm:text-sm rounded-lg hover:bg-pink-700 transition"
             >
               Browse Designers
             </Link>
@@ -248,44 +248,44 @@ export default function MyCommissionRequestsPage() {
             {/* Needs Action - Delivered requests */}
             {groupedRequests.needsAction.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse"></span>
+                <h2 className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-4 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-cyan-500 rounded-full animate-pulse"></span>
                   Ready for Review ({groupedRequests.needsAction.length})
                 </h2>
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                   {groupedRequests.needsAction.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white rounded-lg shadow-md border-2 border-cyan-200 p-6"
+                      className="bg-white rounded-lg shadow-md border-2 border-cyan-200 p-3 sm:p-4 md:p-6"
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{request.title}</h3>
-                            {getStatusBadge(request.status)}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2.5 sm:mb-4 gap-2 sm:gap-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                            <h3 className="font-semibold text-xs sm:text-sm md:text-base text-gray-900 truncate">{request.title}</h3>
+                            <div className="text-[10px] sm:text-xs">{getStatusBadge(request.status)}</div>
                             <UnreadBadge count={commissionsUnread.get(request.id) || 0} />
                           </div>
-                          <p className="text-sm text-gray-600">Designer: {request.designerName}</p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-700">Designer: {request.designerName}</p>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">
+                        <p className="text-base sm:text-lg font-bold text-gray-900">
                           ${request.designerQuote?.toLocaleString()}
                         </p>
                       </div>
                       
                       {/* Deliverables preview */}
                       {request.deliverables && request.deliverables.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">
+                        <div className="bg-gray-50 rounded-lg p-2 sm:p-4 mb-2.5 sm:mb-4">
+                          <p className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             {request.deliverables.length} Deliverable(s) Ready:
                           </p>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             {request.deliverables.map((file, idx) => (
                               <a
                                 key={idx}
                                 href={typeof file === 'string' ? file : file.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3 py-1 bg-white border border-gray-200 rounded text-sm text-gray-700 hover:bg-gray-100"
+                                className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white border border-gray-200 rounded text-[9px] sm:text-xs md:text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 📎 {typeof file === 'string' ? `File ${idx + 1}` : file.name}
                               </a>
@@ -295,10 +295,10 @@ export default function MyCommissionRequestsPage() {
                       )}
                       
                       {/* Action buttons */}
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => performAction(request.id, 'approve')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                          className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-xs sm:text-sm"
                         >
                           ✓ Approve & Complete
                         </button>
@@ -310,7 +310,7 @@ export default function MyCommissionRequestsPage() {
                             setShowRevisionModal(true);
                           }}
                           disabled={request.revisionCount >= request.maxRevisions}
-                          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                         >
                           Request Revision ({request.revisionCount}/{request.maxRevisions})
                         </button>
@@ -321,7 +321,7 @@ export default function MyCommissionRequestsPage() {
                             setError('');
                             setShowDisputeModal(true);
                           }}
-                          className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium"
+                          className="px-2.5 sm:px-4 py-1.5 sm:py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium text-xs sm:text-sm"
                         >
                           File Dispute
                         </button>
@@ -335,82 +335,82 @@ export default function MyCommissionRequestsPage() {
             {/* Physical Deliveries in Progress */}
             {groupedRequests.physicalDelivery.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="text-xl">📦</span>
+                <h2 className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-4 flex items-center gap-2">
+                  <span className="text-lg sm:text-xl">📦</span>
                   Physical Deliveries ({groupedRequests.physicalDelivery.length})
                 </h2>
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                   {groupedRequests.physicalDelivery.map((request) => {
                     const statusConfig = DELIVERY_STATUS_LABELS[request.deliveryStatus || ''] || { label: request.deliveryStatus, color: 'bg-gray-100 text-gray-800', icon: '📦' };
                     return (
                       <div
                         key={request.id}
-                        className="bg-white rounded-lg shadow-md border-2 border-purple-200 p-6"
+                        className="bg-white rounded-lg shadow-md border-2 border-purple-200 p-3 sm:p-4 md:p-6"
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-gray-900">{request.title}</h3>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusConfig.color}`}>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2.5 sm:mb-4 gap-2 sm:gap-0">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                              <h3 className="font-semibold text-xs sm:text-sm md:text-base text-gray-900 truncate">{request.title}</h3>
+                              <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-medium ${statusConfig.color}`}>
                                 {statusConfig.icon} {statusConfig.label}
                               </span>
                               <UnreadBadge count={commissionsUnread.get(request.id) || 0} />
                             </div>
-                            <p className="text-sm text-gray-600">Designer: {request.designerName}</p>
+                            <p className="text-[10px] sm:text-xs md:text-sm text-gray-700">Designer: {request.designerName}</p>
                           </div>
-                          <p className="text-lg font-bold text-gray-900">
+                          <p className="text-base sm:text-lg font-bold text-gray-900">
                             ${request.designerQuote?.toLocaleString()}
                           </p>
                         </div>
 
                         {/* Delivery Timeline */}
-                        <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-3">Delivery Progress</p>
-                          <div className="flex items-center gap-2">
+                        <div className="bg-gray-50 rounded-lg p-2.5 sm:p-4 mb-2.5 sm:mb-4 overflow-x-auto">
+                          <p className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Delivery Progress</p>
+                          <div className="flex items-center gap-1">
                             {/* Step 1: Ready */}
                             <div className={`flex-1 flex flex-col items-center ${request.readyForCollectionAt ? 'text-green-600' : 'text-gray-400'}`}>
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${request.readyForCollectionAt ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${request.readyForCollectionAt ? 'bg-green-100' : 'bg-gray-100'}`}>
                                 {request.readyForCollectionAt ? '✓' : '1'}
                               </div>
-                              <span className="text-xs mt-1">Ready</span>
+                              <span className="text-[8px] sm:text-xs mt-0.5">Ready</span>
                             </div>
-                            <div className={`flex-1 h-1 ${request.collectedAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
+                            <div className={`flex-1 h-0.5 sm:h-1 ${request.collectedAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
                             {/* Step 2: Collected */}
                             <div className={`flex-1 flex flex-col items-center ${request.collectedAt ? 'text-green-600' : 'text-gray-400'}`}>
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${request.collectedAt ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${request.collectedAt ? 'bg-green-100' : 'bg-gray-100'}`}>
                                 {request.collectedAt ? '✓' : '2'}
                               </div>
-                              <span className="text-xs mt-1">Collected</span>
+                              <span className="text-[8px] sm:text-xs mt-0.5">Collected</span>
                             </div>
-                            <div className={`flex-1 h-1 ${request.shippedAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
+                            <div className={`flex-1 h-0.5 sm:h-1 ${request.shippedAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
                             {/* Step 3: Shipped */}
                             <div className={`flex-1 flex flex-col items-center ${request.shippedAt ? 'text-green-600' : 'text-gray-400'}`}>
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${request.shippedAt ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${request.shippedAt ? 'bg-green-100' : 'bg-gray-100'}`}>
                                 {request.shippedAt ? '✓' : '3'}
                               </div>
-                              <span className="text-xs mt-1">Shipped</span>
+                              <span className="text-[8px] sm:text-xs mt-0.5">Shipped</span>
                             </div>
-                            <div className={`flex-1 h-1 ${request.actualDeliveredAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
+                            <div className={`flex-1 h-0.5 sm:h-1 ${request.actualDeliveredAt ? 'bg-green-400' : 'bg-gray-200'}`}></div>
                             {/* Step 4: Delivered */}
                             <div className={`flex-1 flex flex-col items-center ${request.actualDeliveredAt ? 'text-green-600' : 'text-gray-400'}`}>
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${request.actualDeliveredAt ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${request.actualDeliveredAt ? 'bg-green-100' : 'bg-gray-100'}`}>
                                 {request.actualDeliveredAt ? '✓' : '4'}
                               </div>
-                              <span className="text-xs mt-1">Delivered</span>
+                              <span className="text-[8px] sm:text-xs mt-0.5">Delivered</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Tracking Info */}
                         {request.trackingNumber && (
-                          <div className="bg-purple-50 rounded-lg p-4 mb-4 border border-purple-200">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-purple-600 font-medium">🚚 Tracking</span>
+                          <div className="bg-purple-50 rounded-lg p-2.5 sm:p-4 mb-2.5 sm:mb-4 border border-purple-200">
+                            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                              <span className="text-purple-600 font-medium text-xs sm:text-sm">🚚 Tracking</span>
                             </div>
-                            <p className="font-mono text-sm">{request.trackingNumber}</p>
-                            <p className="text-xs text-gray-600">via {request.courierName}</p>
+                            <p className="font-mono text-xs sm:text-sm text-gray-900">{request.trackingNumber}</p>
+                            <p className="text-[9px] sm:text-xs text-gray-600">via {request.courierName}</p>
                             {request.estimatedDeliveryDate && (
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-[9px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">
                                 Estimated delivery: {new Date(request.estimatedDeliveryDate).toLocaleDateString()}
                               </p>
                             )}
@@ -419,17 +419,17 @@ export default function MyCommissionRequestsPage() {
 
                         {/* Delivery Address */}
                         {request.deliveryAddress && (
-                          <div className="text-sm text-gray-600 mb-4">
+                          <div className="text-[10px] sm:text-xs md:text-sm text-gray-700 mb-2.5 sm:mb-4">
                             <span className="font-medium">📍 Delivering to:</span> {request.deliveryAddress.name}, {request.deliveryAddress.city}
                           </div>
                         )}
 
                         {/* Confirm Delivery Button */}
                         {request.deliveryStatus === 'DELIVERED' && !request.deliveryConfirmedAt && (
-                          <div className="flex gap-3">
+                          <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => performAction(request.id, 'confirm_delivery')}
-                              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                              className="flex-1 min-w-max px-2.5 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-xs sm:text-sm"
                             >
                               ✓ Confirm I Received the Item
                             </button>
@@ -440,7 +440,7 @@ export default function MyCommissionRequestsPage() {
                                 setError('');
                                 setShowDisputeModal(true);
                               }}
-                              className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium"
+                              className="px-2.5 sm:px-4 py-1.5 sm:py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium text-xs sm:text-sm"
                             >
                               Report Issue
                             </button>
@@ -456,49 +456,49 @@ export default function MyCommissionRequestsPage() {
             {/* Active Requests */}
             {groupedRequests.active.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Active Requests ({groupedRequests.active.length})</h2>
-                <div className="grid gap-4">
+                <h2 className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-4">Active Requests ({groupedRequests.active.length})</h2>
+                <div className="grid gap-3 sm:gap-4">
                   {groupedRequests.active.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white rounded-lg shadow p-6 hover:shadow-md transition cursor-pointer"
+                      className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 hover:shadow-md transition cursor-pointer"
                       onClick={() => setSelectedRequest(request)}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{request.title}</h3>
-                            {getStatusBadge(request.status)}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                            <h3 className="font-semibold text-xs sm:text-sm md:text-base text-gray-900 truncate">{request.title}</h3>
+                            <div className="text-[10px] sm:text-xs">{getStatusBadge(request.status)}</div>
                             <UnreadBadge count={commissionsUnread.get(request.id) || 0} />
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">Designer: {request.designerName}</p>
-                          <p className="text-sm text-gray-500 line-clamp-2">{request.description}</p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-700 mb-1">Designer: {request.designerName}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600 line-clamp-2">{request.description}</p>
                         </div>
-                        <div className="text-right ml-4">
+                        <div className="text-right ml-0 sm:ml-4">
                           {request.status === 'QUOTED' && request.designerQuote && (
-                            <div className="mb-2">
-                              <p className="text-lg font-bold text-green-600">
+                            <div className="mb-1 sm:mb-2">
+                              <p className="text-base sm:text-lg font-bold text-green-600">
                                 ${request.designerQuote.toLocaleString()}
                               </p>
-                              <p className="text-xs text-gray-500">Designer Quote</p>
+                              <p className="text-[9px] sm:text-xs text-gray-500">Designer Quote</p>
                             </div>
                           )}
                           {request.budget && request.status !== 'QUOTED' && (
-                            <p className="text-sm text-gray-600">Budget: {request.budget}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-700">Budget: {request.budget}</p>
                           )}
                         </div>
                       </div>
                       
                       {/* Action buttons based on status */}
-                      <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <p className="text-xs text-gray-400">
+                      <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1.5 sm:gap-3">
+                        <p className="text-[9px] sm:text-xs text-gray-400">
                           Submitted {new Date(request.createdAt).toLocaleDateString()}
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 sm:gap-2">
                           {request.status === 'QUOTED' && !request.isPaid && (
                             <Link
                               href={`/commission-payment/${request.id}`}
-                              className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
+                              className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-[10px] sm:text-xs md:text-sm rounded-lg hover:bg-green-700 transition"
                               onClick={(e) => e.stopPropagation()}
                             >
                               Pay ${request.designerQuote?.toLocaleString()}
@@ -513,13 +513,13 @@ export default function MyCommissionRequestsPage() {
                                 setError('');
                                 setShowCancelModal(true);
                               }}
-                              className="px-3 py-2 text-sm text-gray-500 hover:text-red-600"
+                              className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-gray-500 hover:text-red-600"
                             >
                               Cancel
                             </button>
                           )}
                           {request.status === 'IN_PROGRESS' && request.designerDeadline && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-[10px] sm:text-xs text-gray-700">
                               Expected: {request.designerDeadline}
                             </p>
                           )}
@@ -534,30 +534,30 @@ export default function MyCommissionRequestsPage() {
             {/* Completed Requests */}
             {groupedRequests.completed.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Completed ({groupedRequests.completed.length})</h2>
-                <div className="grid gap-4">
+                <h2 className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-4">Completed ({groupedRequests.completed.length})</h2>
+                <div className="grid gap-3 sm:gap-4">
                   {groupedRequests.completed.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white rounded-lg shadow p-6 hover:shadow-md transition"
+                      className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 hover:shadow-md transition"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{request.title}</h3>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                            <h3 className="font-semibold text-xs sm:text-sm md:text-base text-gray-900 truncate">{request.title}</h3>
                             {getStatusBadge(request.status)}
                             {request.clientRating && (
-                              <span className="text-yellow-500">
+                              <span className="text-yellow-500 text-xs sm:text-sm">
                                 {'★'.repeat(request.clientRating)}{'☆'.repeat(5 - request.clientRating)}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">Designer: {request.designerName}</p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-700">Designer: {request.designerName}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">${request.designerQuote?.toLocaleString()}</p>
+                        <div className="text-right ml-0 sm:ml-4">
+                          <p className="font-semibold text-xs sm:text-sm md:text-base text-gray-900">${request.designerQuote?.toLocaleString()}</p>
                           {request.completedAt && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-[9px] sm:text-xs text-gray-500">
                               Completed {new Date(request.completedAt).toLocaleDateString()}
                             </p>
                           )}
@@ -566,15 +566,15 @@ export default function MyCommissionRequestsPage() {
                       
                       {/* Deliverables */}
                       {request.deliverables && request.deliverables.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <div className="flex flex-wrap gap-2">
+                        <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-4 border-t border-gray-100">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             {request.deliverables.map((file, idx) => (
                               <a
                                 key={idx}
                                 href={typeof file === 'string' ? file : file.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3 py-1 bg-pink-50 text-pink-600 rounded text-sm hover:bg-pink-100"
+                                className="px-2 sm:px-3 py-0.5 sm:py-1 bg-pink-50 text-pink-600 rounded text-[10px] sm:text-xs md:text-sm hover:bg-pink-100"
                               >
                                 📎 Download {idx + 1}
                               </a>
@@ -585,7 +585,7 @@ export default function MyCommissionRequestsPage() {
                       
                       {/* Review button if not reviewed */}
                       {!request.clientRating && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-4 border-t border-gray-100">
                           <button
                             onClick={() => {
                               setSelectedRequest(request);
@@ -594,7 +594,7 @@ export default function MyCommissionRequestsPage() {
                               setError('');
                               setShowReviewModal(true);
                             }}
-                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 text-sm font-medium"
+                            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 text-[10px] sm:text-xs md:text-sm font-medium"
                           >
                             ⭐ Leave a Review
                           </button>
@@ -603,8 +603,8 @@ export default function MyCommissionRequestsPage() {
                       
                       {/* Show review if exists */}
                       {request.clientReview && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-sm text-gray-600 italic">&quot;{request.clientReview}&quot;</p>
+                        <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-4 border-t border-gray-100">
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 italic">&quot;{request.clientReview}&quot;</p>
                         </div>
                       )}
                     </div>
@@ -616,22 +616,22 @@ export default function MyCommissionRequestsPage() {
             {/* Cancelled/Rejected Requests */}
             {groupedRequests.cancelled.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Cancelled/Rejected ({groupedRequests.cancelled.length})</h2>
-                <div className="grid gap-4">
+                <h2 className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-4">Cancelled/Rejected ({groupedRequests.cancelled.length})</h2>
+                <div className="grid gap-3 sm:gap-4">
                   {groupedRequests.cancelled.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white rounded-lg shadow p-4 opacity-75"
+                      className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 opacity-75"
                     >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-medium text-gray-700">{request.title}</h3>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                            <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-700 truncate">{request.title}</h3>
                             {getStatusBadge(request.status)}
                           </div>
-                          <p className="text-sm text-gray-500">Designer: {request.designerName}</p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-600">Designer: {request.designerName}</p>
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-500">
                           {new Date(request.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -645,54 +645,54 @@ export default function MyCommissionRequestsPage() {
 
         {/* Detail Modal */}
         {selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedRequest.title}</h2>
-                    <p className="text-gray-600">To: {selectedRequest.designerName}</p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedRequest(null)}
-                    className="text-gray-400 hover:text-gray-600"
-                    title="Close details"
-                    aria-label="Close details"
-                  >
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 md:p-6 flex justify-between items-start">
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">{selectedRequest.title}</h2>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 sm:mt-1 truncate">To: {selectedRequest.designerName}</p>
                 </div>
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2"
+                  title="Close details"
+                  aria-label="Close details"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-                <div className="mb-4">
+              <div className="p-3 sm:p-4 md:p-6">
+                <div className="mb-3 sm:mb-4">
                   {getStatusBadge(selectedRequest.status)}
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Description</h3>
-                    <p className="text-gray-600 whitespace-pre-wrap">{selectedRequest.description}</p>
+                    <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-1 sm:mb-2">Description</h3>
+                    <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 whitespace-pre-wrap">{selectedRequest.description}</p>
                   </div>
 
                   {selectedRequest.budget && (
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Your Budget</h3>
-                      <p className="text-gray-600">${selectedRequest.budget.toLocaleString()}</p>
+                      <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-1 sm:mb-2">Your Budget</h3>
+                      <p className="text-[10px] sm:text-xs md:text-sm text-gray-600">${selectedRequest.budget.toLocaleString()}</p>
                     </div>
                   )}
 
                   {selectedRequest.attachments && selectedRequest.attachments.length > 0 && (
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-2">Your Attachments</h3>
-                      <div className="flex flex-wrap gap-2">
+                      <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-1.5 sm:mb-2">Your Attachments</h3>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {selectedRequest.attachments.map((attachment, idx) => (
                           <a
                             key={idx}
                             href={attachment.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-pink-600 hover:text-pink-700 text-sm underline"
+                            className="text-pink-600 hover:text-pink-700 text-[9px] sm:text-xs md:text-sm underline break-all"
                           >
                             {attachment.name || `Attachment ${idx + 1}`}
                           </a>
@@ -703,22 +703,22 @@ export default function MyCommissionRequestsPage() {
 
                   {/* Designer Response Section */}
                   {selectedRequest.status !== 'PENDING' && selectedRequest.status !== 'FORWARDED' && (
-                    <div className="border-t pt-4">
-                      <h3 className="font-medium text-gray-900 mb-2">Designer Response</h3>
+                    <div className="border-t pt-3 sm:pt-4">
+                      <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-1.5 sm:mb-2">Designer Response</h3>
                       
                       {selectedRequest.designerQuote && (
-                        <div className="bg-green-50 rounded-lg p-4 mb-3">
-                          <p className="text-sm text-gray-600">Quoted Price</p>
-                          <p className="text-2xl font-bold text-green-600">
+                        <div className="bg-green-50 rounded-lg p-2.5 sm:p-3 md:p-4 mb-2 sm:mb-3">
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-600">Quoted Price</p>
+                          <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">
                             ${selectedRequest.designerQuote.toLocaleString()}
                           </p>
                         </div>
                       )}
 
                       {selectedRequest.designerDeadline && (
-                        <div className="mb-3">
-                          <p className="text-sm text-gray-600">Estimated Delivery</p>
-                          <p className="font-medium text-gray-900">
+                        <div className="mb-2 sm:mb-3">
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-600">Estimated Delivery</p>
+                          <p className="font-medium text-[10px] sm:text-xs md:text-sm text-gray-900">
                             {new Date(selectedRequest.designerDeadline).toLocaleDateString()}
                           </p>
                         </div>
@@ -726,8 +726,8 @@ export default function MyCommissionRequestsPage() {
 
                       {selectedRequest.designerResponse && (
                         <div>
-                          <p className="text-sm text-gray-600">Message from Designer</p>
-                          <p className="text-gray-900 mt-1">{selectedRequest.designerResponse}</p>
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-600">Message from Designer</p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-900 mt-1">{selectedRequest.designerResponse}</p>
                         </div>
                       )}
                     </div>
@@ -735,16 +735,16 @@ export default function MyCommissionRequestsPage() {
 
                   {/* Deliverables */}
                   {selectedRequest.deliverables && selectedRequest.deliverables.length > 0 && (
-                    <div className="border-t pt-4">
-                      <h3 className="font-medium text-gray-900 mb-2">Deliverables</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="border-t pt-3 sm:pt-4">
+                      <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-1.5 sm:mb-2">Deliverables</h3>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {selectedRequest.deliverables.map((file, idx) => (
                           <a
                             key={idx}
                             href={file.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-2 bg-pink-50 text-pink-600 rounded-lg text-sm hover:bg-pink-100"
+                            className="px-2 sm:px-3 py-1 sm:py-2 bg-pink-50 text-pink-600 rounded-lg text-[9px] sm:text-xs md:text-sm hover:bg-pink-100 break-all"
                           >
                             {file.name || `Download ${idx + 1}`}
                           </a>
@@ -755,11 +755,11 @@ export default function MyCommissionRequestsPage() {
 
                   {/* Payment Status */}
                   {selectedRequest.isPaid && (
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <p className="text-green-800 font-medium">
+                    <div className="bg-green-50 rounded-lg p-2.5 sm:p-3 md:p-4">
+                      <p className="text-green-800 font-medium text-[10px] sm:text-xs md:text-sm">
                         ✓ Payment Confirmed
                         {selectedRequest.paidAt && (
-                          <span className="font-normal text-sm ml-2">
+                          <span className="font-normal text-[9px] sm:text-xs ml-1 sm:ml-2">
                             on {new Date(selectedRequest.paidAt).toLocaleDateString()}
                           </span>
                         )}
@@ -769,14 +769,14 @@ export default function MyCommissionRequestsPage() {
 
                   {/* Progress Updates */}
                   {selectedRequest.progressUpdates && selectedRequest.progressUpdates.length > 0 && (
-                    <div className="border-t pt-4">
+                    <div className="border-t pt-3 sm:pt-4">
                       <ProgressTimeline progressUpdates={selectedRequest.progressUpdates} />
                     </div>
                   )}
 
                   {/* Messages Section - Show for active commissions */}
                   {['FORWARDED', 'QUOTED', 'PAID', 'IN_PROGRESS', 'DELIVERED', 'REVISION', 'DISPUTED'].includes(selectedRequest.status) && (
-                    <div className="border-t pt-4">
+                    <div className="border-t pt-3 sm:pt-4">
                       <CommissionMessages 
                         commissionId={selectedRequest.id} 
                         commissionStatus={selectedRequest.status}
@@ -786,18 +786,18 @@ export default function MyCommissionRequestsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-6 pt-4 border-t flex justify-end gap-3">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t flex justify-end gap-2 sm:gap-3">
                   {selectedRequest.status === 'QUOTED' && !selectedRequest.isPaid && (
                     <Link
                       href={`/commission-payment/${selectedRequest.id}`}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                      className="px-2.5 sm:px-4 md:px-6 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs sm:text-sm md:text-base"
                     >
                       Pay ${selectedRequest.designerQuote?.toLocaleString()}
                     </Link>
                   )}
                   <button
                     onClick={() => setSelectedRequest(null)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    className="px-2.5 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-xs sm:text-sm md:text-base"
                   >
                     Close
                   </button>
@@ -809,19 +809,19 @@ export default function MyCommissionRequestsPage() {
 
         {/* Revision Request Modal */}
         {showRevisionModal && selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Request Revision</h2>
-              <p className="text-sm text-gray-600 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-3 sm:p-4 md:p-6">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Request Revision</h2>
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-3 sm:mb-4">
                 Revision {selectedRequest.revisionCount + 1} of {selectedRequest.maxRevisions}
               </p>
               
               {error && (
-                <div className="p-3 bg-red-50 text-red-700 rounded-lg mb-4 text-sm">{error}</div>
+                <div className="p-2.5 sm:p-3 bg-red-50 text-red-700 rounded-lg mb-3 sm:mb-4 text-[10px] sm:text-xs md:text-sm">{error}</div>
               )}
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   What changes do you need? <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -829,14 +829,14 @@ export default function MyCommissionRequestsPage() {
                   onChange={(e) => setRevisionNotes(e.target.value)}
                   placeholder="Please describe the specific changes you'd like..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-[10px] sm:text-xs md:text-sm text-gray-900 focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowRevisionModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-[10px] sm:text-xs md:text-sm"
                   disabled={submitting}
                 >
                   Cancel
@@ -844,7 +844,7 @@ export default function MyCommissionRequestsPage() {
                 <button
                   onClick={() => performAction(selectedRequest.id, 'revision', { notes: revisionNotes })}
                   disabled={submitting || revisionNotes.length < 10}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 text-[10px] sm:text-xs md:text-sm"
                 >
                   {submitting ? 'Submitting...' : 'Request Revision'}
                 </button>
@@ -855,19 +855,19 @@ export default function MyCommissionRequestsPage() {
 
         {/* Dispute Modal */}
         {showDisputeModal && selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">File a Dispute</h2>
-              <p className="text-sm text-gray-600 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-3 sm:p-4 md:p-6">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-1 sm:mb-2">File a Dispute</h2>
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-3 sm:mb-4">
                 Disputes are reviewed by our admin team. Please provide details.
               </p>
               
               {error && (
-                <div className="p-3 bg-red-50 text-red-700 rounded-lg mb-4 text-sm">{error}</div>
+                <div className="p-2.5 sm:p-3 bg-red-50 text-red-700 rounded-lg mb-3 sm:mb-4 text-[10px] sm:text-xs md:text-sm">{error}</div>
               )}
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Reason for dispute <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -875,14 +875,14 @@ export default function MyCommissionRequestsPage() {
                   onChange={(e) => setDisputeReason(e.target.value)}
                   placeholder="Please explain the issue in detail..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-red-500"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-[10px] sm:text-xs md:text-sm text-gray-900 focus:ring-2 focus:ring-red-500"
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowDisputeModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-[10px] sm:text-xs md:text-sm"
                   disabled={submitting}
                 >
                   Cancel
@@ -890,7 +890,7 @@ export default function MyCommissionRequestsPage() {
                 <button
                   onClick={() => performAction(selectedRequest.id, 'dispute', { reason: disputeReason })}
                   disabled={submitting || disputeReason.length < 20}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-[10px] sm:text-xs md:text-sm"
                 >
                   {submitting ? 'Submitting...' : 'File Dispute'}
                 </button>
@@ -901,19 +901,19 @@ export default function MyCommissionRequestsPage() {
 
         {/* Cancel Modal */}
         {showCancelModal && selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Cancel Request</h2>
-              <p className="text-sm text-gray-600 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-3 sm:p-4 md:p-6">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Cancel Request</h2>
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-3 sm:mb-4">
                 Are you sure you want to cancel this commission request?
               </p>
               
               {error && (
-                <div className="p-3 bg-red-50 text-red-700 rounded-lg mb-4 text-sm">{error}</div>
+                <div className="p-2.5 sm:p-3 bg-red-50 text-red-700 rounded-lg mb-3 sm:mb-4 text-[10px] sm:text-xs md:text-sm">{error}</div>
               )}
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Reason (optional)
                 </label>
                 <textarea
@@ -921,14 +921,14 @@ export default function MyCommissionRequestsPage() {
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Why are you cancelling?"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-gray-500"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-[10px] sm:text-xs md:text-sm text-gray-900 focus:ring-2 focus:ring-gray-500"
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowCancelModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-[10px] sm:text-xs md:text-sm"
                   disabled={submitting}
                 >
                   Keep Request
@@ -936,7 +936,7 @@ export default function MyCommissionRequestsPage() {
                 <button
                   onClick={() => performAction(selectedRequest.id, 'cancel', { reason: cancelReason })}
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 text-[10px] sm:text-xs md:text-sm"
                 >
                   {submitting ? 'Cancelling...' : 'Cancel Request'}
                 </button>
@@ -947,27 +947,27 @@ export default function MyCommissionRequestsPage() {
 
         {/* Review Modal */}
         {showReviewModal && selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Leave a Review</h2>
-              <p className="text-sm text-gray-600 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-3 sm:p-4 md:p-6">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Leave a Review</h2>
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mb-3 sm:mb-4">
                 How was your experience with {selectedRequest.designerName}?
               </p>
               
               {error && (
-                <div className="p-3 bg-red-50 text-red-700 rounded-lg mb-4 text-sm">{error}</div>
+                <div className="p-2.5 sm:p-3 bg-red-50 text-red-700 rounded-lg mb-3 sm:mb-4 text-[10px] sm:text-xs md:text-sm">{error}</div>
               )}
               
               {/* Star Rating */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                <div className="flex gap-2">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Rating</label>
+                <div className="flex gap-1.5 sm:gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
-                      className={`text-3xl transition ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                      className={`text-xl sm:text-2xl md:text-3xl transition ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
                     >
                       ★
                     </button>
@@ -975,8 +975,8 @@ export default function MyCommissionRequestsPage() {
                 </div>
               </div>
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Your review (optional)
                 </label>
                 <textarea
@@ -984,14 +984,14 @@ export default function MyCommissionRequestsPage() {
                   onChange={(e) => setReview(e.target.value)}
                   placeholder="Share your experience..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-[10px] sm:text-xs md:text-sm text-gray-900 focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => setShowReviewModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-[10px] sm:text-xs md:text-sm"
                   disabled={submitting}
                 >
                   Cancel
@@ -999,7 +999,7 @@ export default function MyCommissionRequestsPage() {
                 <button
                   onClick={() => performAction(selectedRequest.id, 'review', { rating, review })}
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 text-[10px] sm:text-xs md:text-sm"
                 >
                   {submitting ? 'Submitting...' : 'Submit Review'}
                 </button>

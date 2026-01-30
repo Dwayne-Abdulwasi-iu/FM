@@ -42,7 +42,8 @@ interface Shipment {
   hasDiscrepancy: boolean
   receiptPhotos: string[]
   seller: Seller
-  product: Product
+  products?: Product[]
+  product?: Product
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
@@ -149,6 +150,28 @@ export default function AdminShipmentsPage() {
     }
   }
 
+  const confirmReceiptWithDiscrepancy = async (shipmentId: string) => {
+    try {
+      const res = await fetch(`/api/boutique/admin/shipments/${shipmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'confirmReceiptWithDiscrepancy',
+        }),
+      })
+
+      if (res.ok) {
+        toast.success('Shipment received with noted discrepancy!')
+        fetchShipments()
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Failed to confirm receipt')
+      }
+    } catch (_error) {
+      toast.error('Failed to confirm receipt')
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
@@ -165,8 +188,12 @@ export default function AdminShipmentsPage() {
     })
   }
 
-  // Count by status
-  const pendingCount = shipments.filter(s => s.status === 'IN_TRANSIT' || s.status === 'DELIVERED').length
+  // Count by status - include discrepancy shipments that still need confirmation
+  const pendingCount = shipments.filter(s => 
+    s.status === 'IN_TRANSIT' || 
+    s.status === 'DELIVERED' || 
+    (s.status === 'DISCREPANCY' && s.hasDiscrepancy)
+  ).length
 
   if (status === 'loading' || loading) {
     return (
@@ -177,19 +204,19 @@ export default function AdminShipmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div className="min-h-screen bg-gray-50 py-3 sm:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-4 sm:mb-8">
-          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-3 sm:mb-4 text-xs sm:text-sm">
+        <div className="mb-3 sm:mb-8">
+          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-2 sm:mb-4 text-[10px] sm:text-sm">
             <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             Back to Admin
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+            <Truck className="w-5 h-5 sm:w-8 sm:h-8 text-purple-600" />
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Incoming Shipments</h1>
-              <p className="text-xs sm:text-base text-gray-600">
+              <h1 className="text-lg sm:text-3xl font-bold text-black">Incoming Shipments</h1>
+              <p className="text-[10px] sm:text-base text-black">
                 {pendingCount} awaiting receipt
               </p>
             </div>
@@ -197,29 +224,29 @@ export default function AdminShipmentsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="flex flex-col md:flex-row gap-2 sm:gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-2.5 sm:p-4 mb-3 sm:mb-6">
+          <div className="flex flex-col gap-2 sm:gap-3">
             <form onSubmit={handleSearch} className="flex-1">
               <div className="relative">
-                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search shipments..."
-                  className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500 text-sm"
+                  placeholder="Search by Shipment ID, Tracking #, Seller, or Product ID..."
+                  className="w-full pl-7 sm:pl-10 pr-2.5 sm:pr-4 py-1.5 sm:py-2 border rounded-lg text-black bg-white focus:ring-2 focus:ring-purple-500 text-[11px] sm:text-sm placeholder-gray-500"
                 />
               </div>
             </form>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Filter className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value)
                   setPage(1)
                 }}
-                className="border rounded-lg px-2 sm:px-3 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 text-xs sm:text-sm"
+                className="border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-black bg-white focus:ring-2 focus:ring-purple-500 text-[11px] sm:text-sm"
                 aria-label="Filter by shipment status"
               >
                 <option value="">All</option>
@@ -235,109 +262,126 @@ export default function AdminShipmentsPage() {
 
         {/* Shipments List */}
         {shipments.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm p-8 sm:p-12 text-center">
-            <Truck className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No shipments found</h3>
-            <p className="text-xs sm:text-base text-gray-500">
+          <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-12 text-center">
+            <Truck className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-2 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-black mb-1 sm:mb-2">No shipments found</h3>
+            <p className="text-[11px] sm:text-base text-black">
               {statusFilter || searchQuery
                 ? 'Try adjusting your filters'
                 : 'Shipments will appear here'}
             </p>
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-4">
             {shipments.map((shipment) => {
               const statusConfig = STATUS_CONFIG[shipment.status] || STATUS_CONFIG.PENDING
               const StatusIcon = statusConfig.icon
-              const needsAction = shipment.status === 'DELIVERED' || shipment.status === 'IN_TRANSIT'
+              const needsAction = shipment.status === 'DELIVERED' || shipment.status === 'IN_TRANSIT' || (shipment.status === 'DISCREPANCY' && shipment.hasDiscrepancy)
+              const product = shipment.products?.[0] || shipment.product
+              
+              if (!product) return null
               
               return (
                 <div
                   key={shipment.id}
-                  className={`bg-white rounded-xl shadow-sm overflow-hidden ${needsAction ? 'ring-2 ring-purple-200' : ''}`}
+                  className={`bg-white rounded-lg shadow-sm overflow-hidden ${needsAction ? 'ring-2 ring-purple-200' : ''}`}
                 >
-                  <div className="p-3 sm:p-4 md:p-6">
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="p-1.5 sm:p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4">
                       {/* Product Image */}
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <Image
-                          src={shipment.product.thumbnailUrl || '/images/placeholder.png'}
-                          alt={shipment.product.title}
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
+                        {product.thumbnailUrl && product.thumbnailUrl.trim() ? (
+                          <img
+                            src={product.thumbnailUrl}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Package className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
+                        )}
                       </div>
 
                       {/* Shipment Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
+                        <div className="flex items-start justify-between gap-1 mb-0.5 sm:mb-2">
                           <div>
-                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {shipment.product.title}
+                            <h3 className="font-semibold text-black text-[10px] sm:text-base leading-tight">
+                              {product.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              {formatCurrency(shipment.product.basePrice)}
+                            <p className="text-[9px] sm:text-sm text-black mt-0">
+                              {formatCurrency(product.basePrice)}
                             </p>
                           </div>
-                          <span className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                          <span className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color} flex-shrink-0`}>
                             <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             <span className="hidden xs:inline">{statusConfig.label}</span>
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-[10px] sm:text-sm">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-3 text-[8px] sm:text-sm">
                           <div>
-                            <p className="text-gray-500">Seller</p>
-                            <p className="font-medium text-gray-900 flex items-center gap-0.5 sm:gap-1 truncate">
-                              <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                              <span className="truncate">{shipment.seller.name}</span>
+                            <p className="text-black font-semibold text-[7px] sm:text-xs">Seller</p>
+                            <p className="text-black flex items-center gap-0.5 truncate mt-0 text-[7.5px] sm:text-xs">
+                              <User className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate text-[7.5px] sm:text-xs">{shipment.seller.name}</span>
                             </p>
                           </div>
                           <div>
-                            <p className="text-gray-500">Courier</p>
-                            <p className="font-medium text-gray-900">{shipment.courier}</p>
+                            <p className="text-black font-semibold text-[7px] sm:text-xs">Courier</p>
+                            <p className="text-black text-[7.5px] sm:text-xs mt-0">{shipment.courier}</p>
                           </div>
-                          <div className="hidden sm:block">
-                            <p className="text-gray-500">Tracking</p>
-                            <p className="font-mono text-gray-900 text-[10px] sm:text-sm">{shipment.trackingNumber}</p>
+                          <div>
+                            <p className="text-black font-semibold text-[7px] sm:text-xs">Tracking</p>
+                            <p className="font-mono text-black text-[7px] sm:text-xs mt-0">{shipment.trackingNumber}</p>
                           </div>
-                          <div className="hidden md:block">
-                            <p className="text-gray-500">ETA</p>
-                            <p className="font-medium text-gray-900 flex items-center gap-1">
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                              {shipment.estimatedArrival ? formatDate(shipment.estimatedArrival) : 'N/A'}
+                          <div>
+                            <p className="text-black font-semibold text-[7px] sm:text-xs">ETA</p>
+                            <p className="text-black flex items-center gap-0.5 mt-0 text-[7.5px] sm:text-xs">
+                              <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              {shipment.shippedAt ? formatDate(new Date(new Date(shipment.shippedAt).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()) : 'N/A'}
                             </p>
                           </div>
                         </div>
 
                         {/* Discrepancy Info */}
                         {shipment.hasDiscrepancy && (
-                          <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-orange-50 rounded-lg">
-                            <p className="text-[10px] sm:text-sm text-orange-800">
-                              <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 inline mr-0.5 sm:mr-1" />
+                          <div className="mt-0.5 sm:mt-2 p-0.5 sm:p-3 bg-orange-50 rounded-lg">
+                            <p className="text-[7.5px] sm:text-sm text-black font-medium">
+                              <AlertTriangle className="w-3 h-3 inline mr-0.5" />
                               Discrepancy: {shipment.itemsMissing} missing, {shipment.itemsDamaged} damaged
                             </p>
                           </div>
                         )}
 
                         {/* Actions */}
-                        <div className="mt-3 sm:mt-4 flex gap-1.5 sm:gap-2">
-                          {(shipment.status === 'IN_TRANSIT' || shipment.status === 'DELIVERED') && (
+                        <div className="mt-1 sm:mt-3 flex gap-1 sm:gap-2 flex-wrap">
+                          {(shipment.status === 'IN_TRANSIT' || shipment.status === 'DELIVERED') && !shipment.hasDiscrepancy && (
                             <button
                               onClick={() => openReceiveModal(shipment)}
-                              className="flex items-center gap-1 sm:gap-2 bg-purple-600 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium hover:bg-purple-700 transition"
+                              className="flex items-center gap-1 sm:gap-2 bg-purple-600 text-white px-2 sm:px-4 py-0.5 sm:py-1.5 rounded-lg text-[8px] sm:text-sm font-medium hover:bg-purple-700 transition"
                             >
-                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Confirm Receipt
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Confirm</span>
+                            </button>
+                          )}
+                          {shipment.hasDiscrepancy && shipment.status !== 'RECEIVED' && (
+                            <button
+                              onClick={() => confirmReceiptWithDiscrepancy(shipment.id)}
+                              className="flex items-center gap-1 sm:gap-2 bg-green-600 text-white px-2 sm:px-4 py-0.5 sm:py-1.5 rounded-lg text-[8px] sm:text-sm font-medium hover:bg-green-700 transition"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Confirm (with discrepancy)</span>
                             </button>
                           )}
                           <Link
                             href={`/admin/boutique/shipments/${shipment.id}`}
-                            className="flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                            className="flex items-center gap-1 sm:gap-2 border border-gray-200 px-2 sm:px-4 py-0.5 sm:py-1.5 rounded-lg text-[8px] sm:text-sm font-medium text-black hover:bg-gray-50 transition"
                           >
-                            <Eye className="w-4 h-4" />
-                            View Details
+                            <Eye className="w-3 h-3" />
+                            <span>Details</span>
                           </Link>
                         </div>
                       </div>
@@ -380,7 +424,7 @@ export default function AdminShipmentsPage() {
             <div className="p-4 sm:p-6 border-b">
               <h2 className="text-base sm:text-xl font-bold text-gray-900">Confirm Receipt</h2>
               <p className="text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1 truncate">
-                {selectedShipment.product.title}
+                {selectedShipment.product?.title || 'Product'}
               </p>
             </div>
             

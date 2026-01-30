@@ -69,6 +69,8 @@ interface Design {
   category: string
   isActive: boolean
   createdAt: string
+  updatedAt: string
+  publishedAt: string | null
   totalSales: number
   totalRevenue: number
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -76,8 +78,10 @@ interface Design {
   buyingTypes: string
   ownershipPrice: number | null
   designer: {
+    id: string
     name: string | null
     email: string
+    displayName: string | null
   }
 }
 
@@ -122,6 +126,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [orderSearchTerm, setOrderSearchTerm] = useState('')
+  const [designSearchTerm, setDesignSearchTerm] = useState('')
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified'>('all')
   const [designFilter, setDesignFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
@@ -623,6 +629,48 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </Link>
+                    <button
+                      onClick={() => setActiveTab('designs')}
+                      className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-yellow-200 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Design Approvals</p>
+                          <p className="text-xs text-gray-500">Review &amp; approve pending designs</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('orders')}
+                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Order Management</p>
+                          <p className="text-xs text-gray-500">View &amp; manage all orders</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('earnings')}
+                      className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Earnings Dashboard</p>
+                          <p className="text-xs text-gray-500">Platform commission &amp; volume</p>
+                        </div>
+                      </div>
+                    </button>
                     <Link
                       href="/admin/commission-requests"
                       className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
@@ -750,20 +798,6 @@ export default function AdminDashboard() {
                       </div>
                     </Link>
                     <Link
-                      href="/admin/boutique/coupons"
-                      className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🎟️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Boutique Coupons</p>
-                          <p className="text-xs text-gray-500">Create &amp; manage discount codes</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
                       href="/admin/boutique/orders"
                       className="p-4 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
                     >
@@ -788,6 +822,118 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Disputes</p>
                           <p className="text-xs text-gray-500">Handle order disputes &amp; issues</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/ownership"
+                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Ownership Documents</p>
+                          <p className="text-xs text-gray-500">Review &amp; approve ownership transfers</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/payments-reconciliation"
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">💰</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Payments Reconciliation</p>
+                          <p className="text-xs text-gray-500">Reconcile payments &amp; transactions</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/returns"
+                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">↩️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Product Returns</p>
+                          <p className="text-xs text-gray-500">Process &amp; approve returns</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/rejected-returns"
+                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">❌</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Rejected Returns</p>
+                          <p className="text-xs text-gray-500">Manage rejected return claims</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/rejected"
+                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🚫</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Rejected Products</p>
+                          <p className="text-xs text-gray-500">Review rejected boutique products</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/repost-approvals"
+                      className="p-4 bg-lime-50 border border-lime-200 rounded-lg hover:bg-lime-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-lime-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">✅</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Repost Approvals</p>
+                          <p className="text-xs text-gray-500">Approve product reposts</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/content-violations"
+                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">⚔️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Content Violations</p>
+                          <p className="text-xs text-gray-500">Review &amp; action violations</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/seller-badges"
+                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🏆</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Seller Badges</p>
+                          <p className="text-xs text-gray-500">Manage seller badges &amp; ratings</p>
                         </div>
                       </div>
                     </Link>
@@ -940,9 +1086,9 @@ export default function AdminDashboard() {
 
             {activeTab === 'designs' && (
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-900">Design Management</h3>
-                  <div className="flex gap-1.5 sm:gap-2">
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900">Design Management</h3>
                     <select
                       value={designFilter}
                       onChange={(e) => setDesignFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
@@ -955,9 +1101,25 @@ export default function AdminDashboard() {
                       <option value="rejected">Rejected</option>
                     </select>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by design title or designer name..."
+                      value={designSearchTerm}
+                      onChange={(e) => setDesignSearchTerm(e.target.value)}
+                      className="flex-1 px-3 py-2 text-xs sm:text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                  {filteredDesigns.map((design) => (
+                  {filteredDesigns
+                    .filter(design =>
+                      design.title.toLowerCase().includes(designSearchTerm.toLowerCase()) ||
+                      (design.designer.name || '').toLowerCase().includes(designSearchTerm.toLowerCase()) ||
+                      (design.designer.displayName || '').toLowerCase().includes(designSearchTerm.toLowerCase())
+                    )
+                    .map((design) => (
                     <div key={design.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                       <div className="aspect-square relative">
                         <Image
@@ -998,7 +1160,10 @@ export default function AdminDashboard() {
                       </div>
                       <div className="p-2 sm:p-3">
                         <h4 className="font-semibold text-xs sm:text-sm text-gray-900 truncate">{design.title}</h4>
-                        <p className="text-[10px] sm:text-xs text-gray-600 mb-1 truncate">by {design.designer.name || design.designer.email}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-600 mb-1 truncate">by {design.designer.displayName ? `@${design.designer.displayName}` : design.designer.name || design.designer.email}</p>
+                        {design.designer.name && design.designer.displayName && (
+                          <p className="text-[9px] sm:text-[10px] text-gray-500 mb-1 truncate">{design.designer.name}</p>
+                        )}
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm sm:text-base font-bold text-indigo-600">${design.price.toFixed(2)}</span>
                           <span className="text-[10px] sm:text-xs text-gray-500">{design.totalSales}</span>
@@ -1012,6 +1177,29 @@ export default function AdminDashboard() {
                         )}
                         <div className="text-[8px] sm:text-xs text-gray-500 mb-2">
                           {design.buyingTypes}
+                        </div>
+
+                        {/* Dates Section */}
+                        <div className="bg-gray-50 rounded p-1.5 mb-2 text-[7px] sm:text-[8px] space-y-0.5">
+                          <div>
+                            <span className="font-medium text-gray-700">Posted: </span>
+                            <span className="text-gray-600">{new Date(design.createdAt).toLocaleDateString()} {new Date(design.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          {design.publishedAt && (
+                            <div>
+                              <span className="font-medium text-green-700">Published: </span>
+                              <span className="text-green-600">{new Date(design.publishedAt).toLocaleDateString()} {new Date(design.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          )}
+                          {new Date(design.updatedAt).getTime() !== new Date(design.createdAt).getTime() && (
+                            <div>
+                              <span className="font-medium text-blue-700">Updated: </span>
+                              <span className="text-blue-600">{new Date(design.updatedAt).toLocaleDateString()} {new Date(design.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          )}
+                          {design.approvalStatus === 'PENDING' && (
+                            <div className="text-yellow-600 italic">Awaiting approval</div>
+                          )}
                         </div>
                         
                         {/* Approval Actions */}
@@ -1066,7 +1254,19 @@ export default function AdminDashboard() {
 
             {activeTab === 'orders' && (
               <div>
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Order Management</h3>
+                <div className="mb-3 sm:mb-4">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">Order Management</h3>
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by order ID or customer email..."
+                      value={orderSearchTerm}
+                      onChange={(e) => setOrderSearchTerm(e.target.value)}
+                      className="flex-1 px-3 py-2 text-xs sm:text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -1076,11 +1276,16 @@ export default function AdminDashboard() {
                         <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[7px] sm:text-[9px] font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                         <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[7px] sm:text-[9px] font-medium text-gray-500 uppercase tracking-wider">Fee</th>
                         <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[7px] sm:text-[9px] font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[7px] sm:text-[9px] font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[7px] sm:text-[9px] font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {orders.map((order) => (
+                      {orders
+                        .filter(order => 
+                          order.orderNumber.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                          order.customer.email.toLowerCase().includes(orderSearchTerm.toLowerCase())
+                        )
+                        .map((order) => (
                         <tr key={order.id}>
                           <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-[8px] sm:text-xs font-medium text-gray-900">
                             #{order.orderNumber}
@@ -1105,7 +1310,7 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-[7px] sm:text-[8px] text-gray-500">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>
                         </tr>
                       ))}

@@ -189,6 +189,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate cart items before processing
+    const MAX_QUANTITY_PER_ITEM = 999;
+    const MAX_ITEMS_IN_CART = 100;
+
+    if (cartItems.length > MAX_ITEMS_IN_CART) {
+      return NextResponse.json(
+        { message: `Cart exceeds maximum items (${MAX_ITEMS_IN_CART})` },
+        { status: 400 }
+      )
+    }
+
+    for (const item of cartItems) {
+      if (!item.designId || typeof item.designId !== 'string') {
+        return NextResponse.json(
+          { message: 'Invalid design ID in cart' },
+          { status: 400 }
+        )
+      }
+
+      if (!item.quantity || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+        return NextResponse.json(
+          { message: `Invalid quantity for design (must be between 1 and ${MAX_QUANTITY_PER_ITEM})` },
+          { status: 400 }
+        )
+      }
+    }
+
   // Verify cart items and calculate total
   let totalAmount = 0
   const lineItems: unknown[] = []
@@ -345,6 +372,15 @@ export async function POST(request: NextRequest) {
       }
       
       orderItems.push(orderItem)
+    }
+
+    // Validate total amount doesn't exceed reasonable limit
+    const MAX_CART_TOTAL = 1000000; // $1M maximum per checkout
+    if (totalAmount <= 0 || totalAmount > MAX_CART_TOTAL) {
+      return NextResponse.json(
+        { message: `Invalid cart total: $${totalAmount.toFixed(2)} (must be between $0.01 and $${MAX_CART_TOTAL})` },
+        { status: 400 }
+      )
     }
 
     // Check if any items are POD orders

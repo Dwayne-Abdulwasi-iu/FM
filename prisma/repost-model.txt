@@ -1,0 +1,44 @@
+// Add this model to schema.prisma at the end (before closing /)
+
+model BoutiqueRepostRequest {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  sellerId    String
+  seller      User     @relation("BoutiqueReposts", fields: [sellerId], references: [id])
+  
+  // Request details
+  reason      String   // Why seller is reposting (from dropdown)
+  notes       String?  // Additional seller notes
+  
+  // Stock tracking
+  originalStock Int    // Stock before repost
+  requestedStock Int   // Stock if approved
+  approvedStock Int?   // Stock actually approved (may differ if variant sold out)
+  
+  // Status
+  status      String   @default("PENDING") 
+  // PENDING - Awaiting admin review
+  // APPROVED - Stock locked in, product back to LIVE
+  // REJECTED - Rejected, stock returned to seller
+  
+  // Admin review
+  adminNotes  String?
+  reviewedAt  DateTime?
+  reviewedBy  String?  // Admin user ID
+  
+  // Timeline
+  daysInWarehouse Int?  // How many days was product in warehouse
+  expiryCountdown Int?  // Days until expiration
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([productId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("boutique_repost_requests")
+}

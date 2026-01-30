@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getCommissionRate } from '@/lib/commission-tiers';
 
 interface Design {
   id: string;
@@ -43,6 +44,8 @@ export default function PODSetupWizard() {
   const [saving, setSaving] = useState(false);
   const [provider, setProvider] = useState('printful');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [userEarnings, setUserEarnings] = useState(0);
+  const [isProSubscriber, setIsProSubscriber] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -50,27 +53,36 @@ export default function PODSetupWizard() {
     }
   }, [status, router]);
 
-  // Fetch seller's designs (only Digital Designs are eligible for POD)
+  // Fetch seller's designs and earnings (only Digital Designs are eligible for POD)
   useEffect(() => {
-    async function fetchDesigns() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/seller/designs');
-        if (res.ok) {
-          const data = await res.json();
+        // Fetch designs
+        const designsRes = await fetch('/api/seller/designs');
+        if (designsRes.ok) {
+          const data = await designsRes.json();
           // Filter to only include Digital Designs - only this category supports POD
           const digitalDesigns = (data.designs || []).filter(
             (d: Design) => d.category === 'Digital Designs'
           );
           setDesigns(digitalDesigns);
         }
+        
+        // Fetch user earnings
+        const profileRes = await fetch('/api/profile');
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setUserEarnings(profileData.totalEarnings || 0);
+          setIsProSubscriber(profileData.designerTier === 'VIP_DESIGNER' || profileData.designerTier === 'VVIP_DESIGNER');
+        }
       } catch (error) {
-        console.error('Failed to fetch designs:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     }
     if (session?.user) {
-      fetchDesigns();
+      fetchData();
     }
   }, [session]);
 
@@ -171,7 +183,8 @@ export default function PODSetupWizard() {
 
   const calculateEarnings = (basePrice: number) => {
     const sellingPrice = basePrice * (1 + markup / 100);
-    const platformFee = sellingPrice * 0.10; // Simplified - actual uses tier
+    const feeRate = getCommissionRate(userEarnings, isProSubscriber);
+    const platformFee = sellingPrice * feeRate;
     return (sellingPrice - basePrice - platformFee).toFixed(2);
   };
 

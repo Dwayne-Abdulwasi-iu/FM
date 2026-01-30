@@ -31,8 +31,16 @@ export async function GET() {
     return NextResponse.json({ orders })
   } catch (error) {
     console.error('Error fetching orders:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch orders' },
+      { error: 'Failed to fetch orders. Please try again later.' },
       { status: 500 }
     )
   }

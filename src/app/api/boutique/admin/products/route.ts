@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'PENDING_CONTENT_REVIEW';
+    const fulfillmentMethod = searchParams.get('fulfillmentMethod');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -34,6 +35,19 @@ export async function GET(request: NextRequest) {
       where.status = { not: 'DRAFT' };
     } else {
       where.status = status;
+    }
+    
+    // Add fulfillment filter if specified
+    if (fulfillmentMethod && fulfillmentMethod !== 'ALL') {
+      where.fulfillmentMethod = fulfillmentMethod;
+    }
+
+    // For status counts, count all statuses but respect fulfillment filter
+    const whereForStatusCounts: Record<string, unknown> = {
+      status: { not: 'DRAFT' },
+    };
+    if (fulfillmentMethod && fulfillmentMethod !== 'ALL') {
+      whereForStatusCounts.fulfillmentMethod = fulfillmentMethod;
     }
 
     const [products, total, statusCounts] = await Promise.all([
@@ -56,20 +70,55 @@ export async function GET(request: NextRequest) {
       prisma.boutiqueProduct.count({ where }),
       prisma.boutiqueProduct.groupBy({
         by: ['status'],
-        where: { status: { not: 'DRAFT' } },
+        where: whereForStatusCounts,
         _count: true,
       }),
     ]);
 
-    // Format status counts
-    const counts: Record<string, number> = {};
+    // Format status counts - convert to camelCase keys
+    const counts: Record<string, number> = {
+      pendingContentReview: 0,
+      contentApproved: 0,
+      shippedToAdmin: 0,
+      receivedByAdmin: 0,
+      verificationPassed: 0,
+      live: 0,
+      rejected: 0,
+      cancelled: 0,
+      sellerDirectPending: 0,
+      sellerDirectLive: 0,
+    };
+    
     statusCounts.forEach(sc => {
-      counts[sc.status] = sc._count;
+      if (sc.status === 'PENDING_CONTENT_REVIEW') counts.pendingContentReview = sc._count;
+      else if (sc.status === 'CONTENT_APPROVED') counts.contentApproved = sc._count;
+      else if (sc.status === 'SHIPPED_TO_ADMIN') counts.shippedToAdmin = sc._count;
+      else if (sc.status === 'RECEIVED_BY_ADMIN') counts.receivedByAdmin = sc._count;
+      else if (sc.status === 'VERIFICATION_PASSED') counts.verificationPassed = sc._count;
+      else if (sc.status === 'LIVE') counts.live = sc._count;
+      else if (sc.status === 'REJECTED') counts.rejected = sc._count;
+      else if (sc.status === 'CANCELLED') counts.cancelled = sc._count;
     });
+
+    // Fetch shipment details for products that have shipmentId
+    const productsWithShipment = await Promise.all(
+      products.map(async (product: any) => {
+        let shipment = null;
+        if ((product as any).shipmentId) {
+          shipment = await prisma.sellerToAdminShipment.findUnique({
+            where: { id: (product as any).shipmentId },
+          });
+        }
+        return {
+          ...product,
+          shipment,
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      products,
+      products: productsWithShipment,
       statusCounts: counts,
       pagination: {
         page,
@@ -100,7 +149,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { productId, action, reason, notes, qualityScore, warehouseLocation } = body;
+    const { productId, action, reason, notes, qualityScore, warehouseLocation, verification } = body;
 
     if (!productId || !action) {
       return NextResponse.json(
@@ -203,11 +252,46 @@ export async function PATCH(request: NextRequest) {
             { status: 400 }
           );
         }
+        
+        // Process verification data if provided
+        if (verification) {
+          // Update shipment with verification details
+          if (product.shipmentId) {
+            await prisma.sellerToAdminShipment.update({
+              where: { id: product.shipmentId },
+              data: {
+                itemsReceived: verification.totalReceived,
+                itemsMissing: verification.totalMissing,
+                itemsDamaged: verification.totalDamaged,
+                hasDiscrepancy: verification.hasDiscrepancy,
+                disputeStatus: verification.hasDiscrepancy ? 'OPENED' : 'NONE',
+                disputeOpenedAt: verification.hasDiscrepancy ? new Date() : null,
+                disputeNotes: verification.notes,
+                receiptVerifiedAt: new Date(),
+                receivedBy: session.user.id,
+                adminNotes: verification.notes,
+              },
+            });
+          }
+          
+          // Update variant quantities based on passed items
+          if (verification.variantVerifications) {
+            for (const vv of verification.variantVerifications) {
+              await prisma.boutiqueProductVariant.update({
+                where: { id: vv.variantId },
+                data: {
+                  quantity: vv.passed, // Only passed items are available for sale
+                },
+              });
+            }
+          }
+        }
+        
         updateData = {
           status: PRODUCT_STATUS.VERIFICATION_PASSED,
           physicalVerifiedAt: new Date(),
           physicalVerifiedBy: session.user.id,
-          physicalNotes: notes,
+          physicalNotes: verification?.notes || notes,
           qualityScore: qualityScore || 5,
           warehouseLocation: warehouseLocation,
         };
@@ -221,37 +305,56 @@ export async function PATCH(request: NextRequest) {
             bin: warehouseLocation?.split('-')[2] || 'A1',
             status: 'IN_STOCK',
             conditionOnReceipt: product.condition,
-            conditionNotes: notes,
+            conditionNotes: verification?.notes || notes,
             storageStartDate: new Date(),
             storageFreeUntil: new Date(Date.now() + BOUTIQUE_DEFAULTS.freeStorageDays * 24 * 60 * 60 * 1000),
             monthlyStorageFee: (product.basePrice * BOUTIQUE_DEFAULTS.storageFeePct) / 100,
           },
         });
         
-        message = 'Physical verification passed. Product ready to go live.';
+        message = verification?.hasDiscrepancy 
+          ? `Verification complete with discrepancies. ${verification.totalPassed} of ${verification.totalExpected} items passed.`
+          : 'Physical verification passed. Product ready to go live.';
         break;
 
       case 'reject_physical':
-        // Physical product doesn't match listing
+        // Physical product doesn't match listing or has significant discrepancies
         if (product.status !== PRODUCT_STATUS.RECEIVED_BY_ADMIN) {
           return NextResponse.json(
             { success: false, message: 'Product not in received status' },
             { status: 400 }
           );
         }
-        if (!reason) {
-          return NextResponse.json(
-            { success: false, message: 'Rejection reason required' },
-            { status: 400 }
-          );
+        
+        // Process verification data if provided
+        if (verification) {
+          // Update shipment with rejection/discrepancy details
+          if (product.shipmentId) {
+            await prisma.sellerToAdminShipment.update({
+              where: { id: product.shipmentId },
+              data: {
+                itemsReceived: verification.totalReceived,
+                itemsMissing: verification.totalMissing,
+                itemsDamaged: verification.totalDamaged,
+                hasDiscrepancy: true,
+                disputeStatus: 'OPENED',
+                disputeOpenedAt: new Date(),
+                disputeNotes: verification.notes || reason,
+                receiptVerifiedAt: new Date(),
+                receivedBy: session.user.id,
+                adminNotes: `Rejected: ${reason || verification.notes}`,
+              },
+            });
+          }
         }
+        
         updateData = {
           status: PRODUCT_STATUS.REJECTED,
-          rejectionReason: reason,
+          rejectionReason: reason || verification?.notes || 'Verification failed',
           rejectionDate: new Date(),
           physicalVerifiedAt: new Date(),
           physicalVerifiedBy: session.user.id,
-          physicalNotes: notes,
+          physicalNotes: verification?.notes || reason,
         };
         message = 'Physical verification failed. Product will be returned to seller.';
         // TODO: Initiate return to seller process

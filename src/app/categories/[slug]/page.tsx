@@ -181,16 +181,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         numberOfItems={totalDesigns}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm">
-          <ol className="flex items-center gap-2">
+        <nav className="mb-3 sm:mb-4 text-[10px] sm:text-xs">
+          <ol className="flex items-center gap-1 sm:gap-2">
             <li>
-              <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>
+              <Link href="/" className="text-gray-700 hover:text-gray-900">Home</Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link href="/categories" className="text-gray-500 hover:text-gray-700">Categories</Link>
+              <Link href="/categories" className="text-gray-700 hover:text-gray-900">Categories</Link>
             </li>
             <li className="text-gray-400">/</li>
             <li className="text-gray-900 font-medium">{seo.h1}</li>
@@ -198,12 +198,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         </nav>
 
         {/* Category Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{seo.h1}</h1>
-          <p className="text-lg text-gray-600 max-w-3xl">{seo.intro}</p>
-          <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1.5 sm:mb-3">{seo.h1}</h1>
+          <p className="text-xs sm:text-sm text-gray-900 max-w-3xl leading-relaxed">{seo.intro}</p>
+          <div className="mt-2 sm:mt-3 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-gray-800 font-medium">
             <span className="flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {totalDesigns} designs available
             </span>
           </div>
@@ -211,12 +211,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
         {/* Designs Grid */}
         {designs.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
             {designs.map((design) => (
               <Link
                 key={design.id}
                 href={`/designs/${design.id}`}
-                className="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="group bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Image */}
                 <div className="aspect-square relative overflow-hidden bg-gray-100">
@@ -228,28 +228,28 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                   {design.totalSales > 0 && (
-                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                    <div className="absolute top-1.5 left-1.5 bg-green-500 text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium">
                       {design.totalSales} sold
                     </div>
                   )}
                 </div>
 
                 {/* Info */}
-                <div className="p-3">
-                  <h3 className="font-medium text-gray-900 text-sm line-clamp-1 group-hover:text-indigo-600">
+                <div className="p-1.5 sm:p-2">
+                  <h3 className="font-medium text-gray-900 text-[10px] sm:text-xs line-clamp-1 group-hover:text-indigo-600">
                     {design.title}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[9px] sm:text-[10px] text-gray-800 mt-0.5">
                     by {design.designer?.displayName || design.designer?.name || 'Designer'}
                     {design.designer?.isVerified && ' ✓'}
                   </p>
                   
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="font-bold text-gray-900">${design.price}</span>
+                  <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                    <span className="font-bold text-gray-900 text-xs sm:text-sm">${design.price}</span>
                     {design._count && design._count.reviews > 0 && (
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                        <span className="text-gray-400">({design._count.reviews})</span>
+                      <div className="flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-xs">
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-yellow-400" />
+                        <span className="text-gray-800">({design._count.reviews})</span>
                       </div>
                     )}
                   </div>
@@ -258,13 +258,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No designs yet</h2>
-            <p className="text-gray-500 mb-6">Be the first to upload a design in this category!</p>
+          <div className="text-center py-12 sm:py-16">
+            <ShoppingCart className="h-12 sm:h-16 w-12 sm:w-16 mx-auto text-gray-300 mb-3 sm:mb-4" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No designs yet</h2>
+            <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6">Be the first to upload a design in this category!</p>
             <Link
               href="/upload"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
             >
               Upload Your Design
             </Link>
@@ -284,20 +284,20 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* SEO Content Section */}
-        <section className="mt-16 prose prose-gray max-w-none">
-          <h2>About {seo.h1}</h2>
-          <p>
+        <section className="mt-12 sm:mt-16 prose prose-gray max-w-none">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-4">About {seo.h1}</h2>
+          <p className="text-sm sm:text-base text-gray-800 mb-3 sm:mb-4">
             Fashion Marketplace offers a curated collection of {seo.h1.toLowerCase()} from talented designers 
             around the world. Whether you&apos;re a fashion student, professional designer, or fashion enthusiast, 
             you&apos;ll find unique and inspiring designs to fuel your creativity.
           </p>
-          <p>
+          <p className="text-sm sm:text-base text-gray-800 mb-3 sm:mb-4">
             Our {seo.h1.toLowerCase()} collection features work from verified designers who bring years of 
             experience in African and international fashion. Each design is carefully reviewed to ensure 
             quality and originality.
           </p>
-          <h3>Why Choose Our {seo.h1}?</h3>
-          <ul>
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">Why Choose Our {seo.h1}?</h3>
+          <ul className="text-sm sm:text-base text-gray-800">
             <li>Verified designers with proven track records</li>
             <li>Instant digital downloads after purchase</li>
             <li>Secure payment via Stripe and Paystack</li>

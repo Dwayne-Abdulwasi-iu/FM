@@ -59,6 +59,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (password.length > 256) {
+      return NextResponse.json(
+        { error: "Password must be no more than 256 characters" },
+        { status: 400 }
+      );
+    }
+
     // Validate and normalize phone number
     const phoneValidation = validatePhoneNumber(phone)
     if (!phoneValidation.valid) {
@@ -144,8 +151,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Registration failed. Please try again later.' },
       { status: 500 }
     );
   }

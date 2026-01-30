@@ -474,6 +474,18 @@ function BoutiqueShopContent() {
                         {product.availableSizes.length > 4 && '...'}
                       </p>
                     )}
+
+                    {/* Add to Cart Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/boutique/${product.slug}`;
+                      }}
+                      className="w-full mt-2 sm:mt-3 py-1.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-[11px] sm:text-sm flex items-center justify-center gap-1 sm:gap-2"
+                    >
+                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Add to Cart
+                    </button>
                   </div>
                 </Link>
               ))}

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock, Package, Palette, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import SignaturePad from '@/components/SignaturePad'
 
 interface MediaFile {
   id: string
@@ -13,6 +14,7 @@ interface MediaFile {
   preview: string | null
   accessType: 'FREE' | 'PREMIUM'
   fileType: 'IMAGE' | 'VIDEO'
+  displayName: string | null
 }
 
 interface FeatureStatus {
@@ -23,6 +25,7 @@ interface FeatureStatus {
 export default function EnhancedUploadPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const titleInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -30,7 +33,7 @@ export default function EnhancedUploadPage() {
   const [bankAccountNeedsVerification, setBankAccountNeedsVerification] = useState(false)
   const [featureStatus, setFeatureStatus] = useState<FeatureStatus>({ acceptsCommissions: false, acceptsPOD: false })
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([
-    { id: '1', file: null, preview: null, accessType: 'PREMIUM', fileType: 'IMAGE' }
+    { id: '1', file: null, preview: null, accessType: 'PREMIUM', fileType: 'IMAGE', displayName: null }
   ])
   const [formData, setFormData] = useState({
     title: '',
@@ -42,6 +45,14 @@ export default function EnhancedUploadPage() {
     buyingTypes: 'REGULAR',
     currency: 'USD'
   })
+  const [ownershipData, setOwnershipData] = useState({
+    sellerFullName: '',
+    sellerUsername: '',
+    sellerSignature: '',
+    previewFile: null as File | null,
+    previewDescription: ''
+  })
+  const [ownershipDocumentCreated, setOwnershipDocumentCreated] = useState(false)
 
   const categories = [
     'Fashion Illustrations',
@@ -114,7 +125,8 @@ export default function EnhancedUploadPage() {
       file: null,
       preview: null,
       accessType: 'PREMIUM',
-      fileType: 'IMAGE'
+      fileType: 'IMAGE',
+      displayName: null
     }])
   }
 
@@ -131,7 +143,7 @@ export default function EnhancedUploadPage() {
     reader.onload = (e) => {
       setMediaFiles(mediaFiles.map(media => 
         media.id === id 
-          ? { ...media, file, preview: e.target?.result as string, fileType }
+          ? { ...media, file, preview: e.target?.result as string, fileType, displayName: file.name }
           : media
       ))
     }
@@ -152,12 +164,40 @@ export default function EnhancedUploadPage() {
       return
     }
 
+    // Validate title is not empty
+    if (!formData.title.trim()) {
+      setErrorMessage('Please enter a design title')
+      setSuccessMessage(null)
+      titleInputRef.current?.focus()
+      titleInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
     // Validate at least one file is uploaded
     const filesWithContent = mediaFiles.filter(media => media.file)
     if (filesWithContent.length === 0) {
       setErrorMessage('Please upload at least one media file')
       setSuccessMessage(null)
       return
+    }
+
+    // Validate ownership fields if ownership is selected
+    if (formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') {
+      if (!ownershipData.sellerFullName.trim()) {
+        setErrorMessage('Please enter your full legal name for ownership transfer')
+        setSuccessMessage(null)
+        return
+      }
+      if (!ownershipData.sellerSignature.trim()) {
+        setErrorMessage('Please provide your signature for the ownership agreement')
+        setSuccessMessage(null)
+        return
+      }
+      if (!ownershipData.previewFile) {
+        setErrorMessage('Preview file is required for ownership sales. Upload an image or video for the 7-day escrow period.')
+        setSuccessMessage(null)
+        return
+      }
     }
 
     setIsUploading(true)
@@ -180,7 +220,8 @@ export default function EnhancedUploadPage() {
           uploadFormData.append(`fileMetadata`, JSON.stringify({
             accessType: media.accessType,
             fileType: media.fileType,
-            sortOrder: index
+            sortOrder: index,
+            displayName: media.displayName || media.file.name
           }))
         }
       })
@@ -192,6 +233,52 @@ export default function EnhancedUploadPage() {
 
       if (response.ok) {
         const result = await response.json()
+        
+        // Submit ownership document if ownership is selected
+        if (formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') {
+          try {
+            const ownershipRes = await fetch('/api/ownership-documents', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                designId: result.id,
+                sellerFullName: ownershipData.sellerFullName,
+                sellerUsername: ownershipData.sellerUsername,
+                sellerSignature: ownershipData.sellerSignature
+              })
+            })
+            if (ownershipRes.ok) {
+              setOwnershipDocumentCreated(true)
+              
+              // Upload preview file if provided
+              if (ownershipData.previewFile) {
+                try {
+                  const ownershipData_result = await ownershipRes.json()
+                  const documentId = ownershipData_result.document?.id || ownershipData_result.id
+                  
+                  if (documentId) {
+                    const previewFormData = new FormData()
+                    previewFormData.append('file', ownershipData.previewFile)
+                    previewFormData.append('documentId', documentId)
+                    previewFormData.append('description', ownershipData.previewDescription || '')
+                    
+                    await fetch('/api/ownership-documents/preview', {
+                      method: 'POST',
+                      body: previewFormData
+                    })
+                  }
+                } catch (error) {
+                  console.error('Preview file upload error:', error)
+                  // Don't fail if preview upload fails
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Ownership document submission error:', error)
+            // Don't fail the upload if ownership document fails
+          }
+        }
+        
         setSuccessMessage('Design uploaded successfully! It will be visible once approved.')
         setErrorMessage(null)
         // Redirect after showing success message
@@ -430,6 +517,13 @@ export default function EnhancedUploadPage() {
                   </button>
                 </div>
 
+                {/* Seller Recommendation Message */}
+                <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs sm:text-sm text-blue-800">
+                    <span className="font-semibold">Recommended:</span> Upload at least 2 pictures of design product in free view
+                  </p>
+                </div>
+
                 <div className="space-y-3 sm:space-y-4">
                   {mediaFiles.map((media, index) => (
                     <div key={media.id} className="border border-gray-200 rounded-lg p-2.5 sm:p-4">
@@ -460,11 +554,9 @@ export default function EnhancedUploadPage() {
                                 controls
                               />
                             ) : (
-                              <Image 
+                              <img 
                                 src={media.preview || ''} 
                                 alt="Preview" 
-                                width={128}
-                                height={128}
                                 className="max-h-32 mx-auto rounded"
                               />
                             )}
@@ -504,35 +596,55 @@ export default function EnhancedUploadPage() {
                       </div>
 
                       {/* Access Type Selection */}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs sm:text-sm text-gray-600">Access Type:</span>
-                        <div className="flex space-x-1.5 sm:space-x-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <span className="text-xs sm:text-sm text-gray-600 flex-shrink-0">Access Type:</span>
+                        <div className="flex space-x-1.5 sm:space-x-2 flex-wrap">
                           <button
                             type="button"
                             onClick={() => updateMediaAccessType(media.id, 'FREE')}
-                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded ${
+                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded whitespace-nowrap ${
                               media.accessType === 'FREE'
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-gray-100 text-gray-600 hover:bg-green-50'
                             }`}
                           >
-                            <Eye className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
+                            <Eye className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1 flex-shrink-0" />
                             Free View
                           </button>
                           <button
                             type="button"
                             onClick={() => updateMediaAccessType(media.id, 'PREMIUM')}
-                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded ${
+                            className={`inline-flex items-center px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded whitespace-nowrap ${
                               media.accessType === 'PREMIUM'
                                 ? 'bg-purple-100 text-purple-800'
                                 : 'bg-gray-100 text-gray-600 hover:bg-purple-50'
                             }`}
                           >
-                            <Lock className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
+                            <Lock className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1 flex-shrink-0" />
                             Premium
                           </button>
                         </div>
                       </div>
+
+                      {/* Filename Input - Outside upload container */}
+                      {media.file && (
+                        <div className="mt-2 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                            Filename
+                          </label>
+                          <input
+                            type="text"
+                            value={media.displayName || ''}
+                            onChange={(e) => setMediaFiles(mediaFiles.map(m =>
+                              m.id === media.id
+                                ? { ...m, displayName: e.target.value }
+                                : m
+                            ))}
+                            className="w-full text-xs sm:text-sm border border-gray-300 rounded px-2.5 py-1.5 bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Enter filename"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -543,13 +655,23 @@ export default function EnhancedUploadPage() {
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     <Type className="inline h-3 sm:h-4 w-3 sm:w-4 mr-1" />
-                    Title
+                    Title <span className="text-red-500">*</span>
                   </label>
                   <input
+                    ref={titleInputRef}
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                    onChange={(e) => {
+                      setFormData({...formData, title: e.target.value})
+                      if (e.target.value.trim() && errorMessage?.includes('title')) {
+                        setErrorMessage(null)
+                      }
+                    }}
+                    className={`w-full border rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:border-indigo-500 text-black transition-colors ${
+                      errorMessage && !formData.title.trim() 
+                        ? 'border-red-500 ring-2 ring-red-200 focus:ring-red-500' 
+                        : 'border-gray-300 focus:ring-indigo-500'
+                    }`}
                     placeholder="Enter design title"
                     required
                   />
@@ -637,6 +759,115 @@ export default function EnhancedUploadPage() {
                     <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                       Higher price for exclusive ownership and branding rights
                     </p>
+                  </div>
+                )}
+
+                {(formData.buyingTypes === 'OWNERSHIP' || formData.buyingTypes === 'BOTH') && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-blue-600" />
+                      Ownership Transfer Agreement
+                    </h3>
+                    <p className="text-xs sm:text-sm text-blue-800">
+                      By selecting ownership, you're agreeing to transfer exclusive rights to the design buyer. A legally binding contract will be created and both parties will receive a copy.
+                    </p>
+
+                    <div className="bg-white border border-blue-300 rounded p-3 max-h-40 overflow-y-auto text-xs sm:text-sm text-gray-700">
+                      <p className="font-semibold mb-2">Contract Preview:</p>
+                      <p className="mb-2">This Design Ownership Transfer Agreement grants exclusive ownership of the design to the buyer. The designer retains no rights to use, modify, or distribute the design after the transfer is complete.</p>
+                      <p className="text-[11px] text-gray-600">Full legal contract will be displayed to buyer before purchase completion.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={ownershipData.sellerFullName}
+                          onChange={(e) => setOwnershipData({...ownershipData, sellerFullName: e.target.value})}
+                          className="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="Your full legal name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                          Username (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={ownershipData.sellerUsername}
+                          onChange={(e) => setOwnershipData({...ownershipData, sellerUsername: e.target.value})}
+                          className="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="Your platform username (optional)"
+                        />
+                      </div>
+
+                      <div>
+                        <SignaturePad 
+                          onSignatureChange={(sig) => setOwnershipData({...ownershipData, sellerSignature: sig})}
+                          label="Your Signature"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 border-t border-blue-300 pt-3 mt-3">
+                      <h4 className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Preview File for Escrow <span className="text-red-500">*</span>
+                      </h4>
+                      <p className="text-xs text-blue-800">
+                        Upload an image or video (max 2 min) that buyers will view during the 7-day escrow period before ownership transfer finalizes.
+                      </p>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-blue-900 mb-1">
+                          Preview File (Image or Video) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              if (file.type.startsWith('video/') && file.size > 100 * 1024 * 1024) {
+                                setErrorMessage('Video must be less than 100MB')
+                              } else if (file.type.startsWith('image/') && file.size > 50 * 1024 * 1024) {
+                                setErrorMessage('Image must be less than 50MB')
+                              } else {
+                                setOwnershipData({...ownershipData, previewFile: file})
+                                setErrorMessage(null)
+                              }
+                            }
+                          }}
+                          className="w-full border border-blue-300 rounded px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-blue-500"
+                        />
+                        {ownershipData.previewFile && (
+                          <p className="text-xs text-blue-700 mt-1">
+                            Selected: {ownershipData.previewFile.name}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-blue-900 mb-1">
+                          Preview Description (Optional)
+                        </label>
+                        <textarea
+                          value={ownershipData.previewDescription}
+                          onChange={(e) => setOwnershipData({...ownershipData, previewDescription: e.target.value})}
+                          placeholder="Describe what buyers will see in this preview"
+                          className="w-full border border-blue-300 rounded px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 text-black resize-none"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-100 border border-blue-300 rounded p-2.5 text-xs sm:text-sm text-blue-900">
+                      ✓ By providing your details above, you agree to the Ownership Transfer Agreement and accept that the buyer will have exclusive rights to this design.
+                    </div>
                   </div>
                 )}
 

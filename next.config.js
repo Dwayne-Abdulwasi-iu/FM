@@ -27,6 +27,8 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    // Disable optimization for images - let Cloudinary handle it
+    unoptimized: process.env.NODE_ENV === 'production' ? false : true,
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   experimental: {

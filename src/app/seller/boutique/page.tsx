@@ -19,6 +19,8 @@ import {
   Filter,
   Search,
   ShoppingBag,
+  Settings,
+  RotateCcw,
 } from 'lucide-react';
 
 interface BoutiqueProduct {
@@ -137,29 +139,74 @@ export default function SellerBoutiquePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold">Fashion Boutique</h1>
-              <p className="text-purple-200 mt-0.5 sm:mt-1 text-xs sm:text-base">Sell physical fashion products with admin verification</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold truncate">Fashion Boutique</h1>
+              <p className="text-purple-200 text-xs sm:text-sm line-clamp-1">Admin verified physical products</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/seller/boutique/orders"
-                className="flex items-center gap-1.5 bg-white/20 backdrop-blur text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/30 transition"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Orders</span>
-              </Link>
-              <Link
-                href="/seller/boutique/upload"
-                className="flex items-center gap-1 sm:gap-2 bg-white text-purple-600 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-purple-50 transition-colors"
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline">Add Product</span>
-                <span className="xs:hidden">Add</span>
-              </Link>
-            </div>
+            <Link
+              href="/seller/boutique/upload"
+              className="flex items-center gap-1 sm:gap-2 bg-white text-purple-600 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-purple-50 transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Add Product</span>
+              <span className="sm:hidden">Add</span>
+            </Link>
+          </div>
+          
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:pb-0 sm:gap-2">
+            <Link
+              href="/seller/boutique/warehouse-expiration"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+              title="Manage warehouse inventory cycles"
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Warehouse</span>
+            </Link>
+            <Link
+              href="/seller/boutique/earnings"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Earnings</span>
+            </Link>
+            <Link
+              href="/seller/boutique/orders"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Orders</span>
+            </Link>
+            <Link
+              href="/seller/boutique/shipments"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Shipments</span>
+            </Link>
+            <Link
+              href="/seller/boutique/returns"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Returns</span>
+            </Link>
+            <Link
+              href="/seller/boutique/rejected"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Rejected</span>
+            </Link>
+            <Link
+              href="/seller/boutique/settings"
+              className="flex items-center gap-1 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Settings</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -322,13 +369,21 @@ export default function SellerBoutiquePage() {
                       )}
                       {product.status === 'LIVE' && (
                         <Link
-                          href={`/boutique/product/${product.id}`}
+                          href={`/boutique/${product.id}`}
                           className="px-2 sm:px-4 py-1 sm:py-2 bg-green-600 text-white rounded-lg text-[10px] sm:text-sm font-medium hover:bg-green-700"
                         >
                           View
                         </Link>
                       )}
                       {product.status === 'REJECTED' && (
+                        <Link
+                          href={`/seller/boutique/rejected`}
+                          className="px-2 sm:px-4 py-1 sm:py-2 bg-red-600 text-white rounded-lg text-[10px] sm:text-sm font-medium hover:bg-red-700"
+                        >
+                          Details
+                        </Link>
+                      )}
+                      {product.status === 'CANCELLED' && (
                         <Link
                           href={`/seller/boutique/upload?edit=${product.id}`}
                           className="px-2 sm:px-4 py-1 sm:py-2 bg-orange-600 text-white rounded-lg text-[10px] sm:text-sm font-medium hover:bg-orange-700"

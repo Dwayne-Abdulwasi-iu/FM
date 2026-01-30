@@ -166,54 +166,54 @@ export default function AdminReturnsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div className="min-h-screen bg-gray-50 py-2 sm:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-4 sm:mb-8">
-          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-3 text-sm">
-            <ChevronLeft className="w-4 h-4" />
+        <div className="mb-2 sm:mb-8">
+          <Link href="/admin/boutique" className="text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-2 sm:mb-3 text-[10px] sm:text-sm">
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             Back to Boutique Admin
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Return Requests</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage buyer return requests</p>
+              <h1 className="text-lg sm:text-3xl font-bold text-black">Return Requests</h1>
+              <p className="text-[9px] sm:text-sm text-black mt-0.5 sm:mt-1">Manage buyer return requests</p>
             </div>
             <button
               onClick={() => fetchReturns()}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg"
               aria-label="Refresh returns list"
             >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
             </button>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 mb-2 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <form onSubmit={(e) => { e.preventDefault(); fetchReturns(); }} className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by return number or order..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-purple-500"
+                  placeholder="Search by return or order..."
+                  className="w-full pl-7 sm:pl-10 pr-2.5 sm:pr-4 py-1.5 sm:py-2 border rounded-lg text-black bg-white focus:ring-2 focus:ring-purple-500 text-[11px] sm:text-sm"
                 />
               </div>
             </form>
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Filter className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500"
+                className="border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-black bg-white focus:ring-2 focus:ring-purple-500 text-[11px] sm:text-sm"
                 aria-label="Filter by return status"
               >
                 {RETURN_STATUSES.map(s => (
-                  <option key={s.value} value={s.value} className="text-gray-900">{s.label}</option>
+                  <option key={s.value} value={s.value} className="text-black">{s.label}</option>
                 ))}
               </select>
             </div>
@@ -223,10 +223,10 @@ export default function AdminReturnsPage() {
         {/* Returns List */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {returns.length === 0 ? (
-            <div className="p-12 text-center">
-              <RotateCcw className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No return requests</h3>
-              <p className="text-gray-500">
+            <div className="p-6 sm:p-12 text-center">
+              <RotateCcw className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-2 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-black mb-1 sm:mb-2">No return requests</h3>
+              <p className="text-[9px] sm:text-sm text-black">
                 {statusFilter ? 'Try adjusting your filters' : 'Return requests will appear here'}
               </p>
             </div>
@@ -236,10 +236,10 @@ export default function AdminReturnsPage() {
                 const statusInfo = getStatusBadge(ret.status)
                 const StatusIcon = statusInfo.icon
                 return (
-                  <div key={ret.id} className="p-4 hover:bg-gray-50">
-                    <div className="flex items-start gap-4">
+                  <div key={ret.id} className="p-2 sm:p-4 hover:bg-gray-50">
+                    <div className="flex items-start gap-2 sm:gap-4">
                       {/* Product Image */}
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                      <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                         {ret.orderItem.product.thumbnailUrl ? (
                           <Image
                             src={ret.orderItem.product.thumbnailUrl}
@@ -250,66 +250,66 @@ export default function AdminReturnsPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-8 h-8 text-gray-300" />
+                            <Package className="w-5 h-5 sm:w-8 sm:h-8 text-gray-300" />
                           </div>
                         )}
                       </div>
 
                       {/* Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center justify-between gap-2 mb-0.5 sm:mb-1">
                           <div>
-                            <p className="font-medium text-gray-900">{ret.returnNumber}</p>
-                            <p className="text-sm text-gray-500">Order: {ret.order.orderNumber}</p>
+                            <p className="font-semibold text-black text-[10px] sm:text-base">{ret.returnNumber}</p>
+                            <p className="text-[8px] sm:text-sm text-black">Order: {ret.order.orderNumber}</p>
                           </div>
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bg}`}>
-                            <StatusIcon className="w-3 h-3" />
-                            {ret.status.replace(/_/g, ' ')}
+                          <span className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[7px] sm:text-xs font-medium ${statusInfo.bg}`}>
+                            <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            <span className="hidden xs:inline">{ret.status.replace(/_/g, ' ')}</span>
                           </span>
                         </div>
-                        <p className="text-sm text-gray-900 mt-1">{ret.orderItem.product.title}</p>
-                        <p className="text-sm text-gray-500">
-                          Buyer: {ret.user.name || ret.user.email} • Qty: {ret.orderItem.quantity}
+                        <p className="text-[9px] sm:text-sm text-black font-medium line-clamp-1">{ret.orderItem.product.title}</p>
+                        <p className="text-[8px] sm:text-sm text-black">
+                          {ret.user.name || ret.user.email} • Qty: {ret.orderItem.quantity}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          Reason: <span className="text-gray-700">{ret.reason.replace(/_/g, ' ')}</span>
+                        <p className="text-[8px] sm:text-sm text-black">
+                          Reason: <span className="font-medium">{ret.reason.replace(/_/g, ' ')}</span>
                         </p>
                         {ret.description && (
-                          <p className="text-sm text-gray-500 mt-1">&ldquo;{ret.description}&rdquo;</p>
+                          <p className="text-[8px] sm:text-sm text-black mt-0.5">&ldquo;{ret.description}&rdquo;</p>
                         )}
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-sm font-medium text-purple-600">
+                        <div className="flex items-center justify-between mt-1 sm:mt-2">
+                          <p className="text-[8px] sm:text-sm font-semibold text-purple-600">
                             Refund: {formatCurrency(ret.refundAmount)}
                           </p>
-                          <p className="text-xs text-gray-500">{formatDate(ret.createdAt)}</p>
+                          <p className="text-[7px] sm:text-xs text-black">{formatDate(ret.createdAt)}</p>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1 sm:gap-2">
                         <button
                           onClick={() => setSelectedReturn(ret)}
-                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg"
+                          className="p-1 sm:p-2 text-black hover:text-purple-600 hover:bg-purple-50 rounded-lg"
                           aria-label="View return details"
                         >
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                         {ret.status === 'PENDING' && (
                           <>
                             <button
                               onClick={() => handleAction(ret.id, 'approve')}
                               disabled={processing}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                              className="p-1 sm:p-2 text-green-600 hover:bg-green-50 rounded-lg"
                               title="Approve"
                             >
-                              <CheckCircle className="w-5 h-5" />
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                             <button
                               onClick={() => setSelectedReturn(ret)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              className="p-1 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
                               title="Reject"
                             >
-                              <XCircle className="w-5 h-5" />
+                              <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                           </>
                         )}

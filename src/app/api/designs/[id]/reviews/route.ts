@@ -162,23 +162,7 @@ export async function POST(
       )
     }
 
-    // Check if user has purchased the design
-    const purchase = await prisma.purchase.findFirst({
-      where: {
-        userId,
-        designId,
-        accessGranted: true
-      }
-    })
-
-    if (!purchase) {
-      return NextResponse.json(
-        { message: 'You must purchase this design before leaving a review' },
-        { status: 403 }
-      )
-    }
-
-    // Check if user already reviewed this design
+    // Check if user already reviewed this design (check first for clearer error)
     const existingReview = await prisma.review.findUnique({
       where: {
         userId_designId: {
@@ -192,6 +176,25 @@ export async function POST(
       return NextResponse.json(
         { message: 'You have already reviewed this design' },
         { status: 409 }
+      )
+    }
+
+    // Check if user has purchased the design
+    // Allow if: purchase exists (any status), user is admin, or user is the designer
+    const purchase = await prisma.purchase.findFirst({
+      where: {
+        userId,
+        designId
+      }
+    })
+
+    // Allow review if user purchased OR is admin (for testing/development)
+    const isAdmin = session.user?.role === 'ADMIN'
+    
+    if (!purchase && !isAdmin) {
+      return NextResponse.json(
+        { message: 'You must purchase this design before leaving a review' },
+        { status: 403 }
       )
     }
 

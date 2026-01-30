@@ -79,8 +79,16 @@ export async function GET() {
     return NextResponse.json({ stats })
   } catch (error) {
     console.error('Error fetching admin stats:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch stats' },
+      { error: 'Failed to fetch stats. Please try again later.' },
       { status: 500 }
     )
   }

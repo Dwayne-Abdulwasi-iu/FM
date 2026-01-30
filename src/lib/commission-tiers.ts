@@ -55,6 +55,8 @@ export function getCommissionTier(totalEarnings: number): CommissionTierKey {
 
 /**
  * Get commission rate for a seller
+ * @param totalEarnings - User's total earnings in USD
+ * @param isProSubscriber - Has paid Pro subscription OR active trial
  */
 export function getCommissionRate(totalEarnings: number, isProSubscriber: boolean = false): number {
   const tier = getCommissionTier(totalEarnings)
@@ -66,6 +68,7 @@ export function getCommissionRate(totalEarnings: number, isProSubscriber: boolea
   }
   
   // Apply Pro subscriber discount (minimum 6%)
+  // This applies to BOTH paid subscribers AND active trial users
   if (isProSubscriber) {
     return Math.max(baseRate - PRO_SUBSCRIBER_DISCOUNT, MINIMUM_COMMISSION_RATE)
   }

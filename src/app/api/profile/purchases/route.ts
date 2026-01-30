@@ -79,8 +79,16 @@ export async function GET() {
 
   } catch (error) {
     console.error('Get purchases error:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Failed to get purchases. Please try again later.' },
       { status: 500 }
     )
   }

@@ -176,6 +176,27 @@ export default function SellerDesignsPage() {
           </Link>
         </div>
 
+        {/* Status Information Banner */}
+        {designs.some(d => d.status === 'PENDING') && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="text-blue-600 mt-0.5">ℹ️</div>
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">Design Status Information</h3>
+                <p className="text-sm text-blue-800">
+                  <strong>⏳ Pending:</strong> Your design is awaiting admin review and will not be visible to buyers yet. This usually takes 1-2 business days.
+                </p>
+                <p className="text-sm text-blue-800 mt-1">
+                  <strong>✓ Live:</strong> Your design has been approved and is now visible on the marketplace for buyers to purchase.
+                </p>
+                <p className="text-sm text-blue-800 mt-1">
+                  <strong>✕ Rejected:</strong> Your design was not approved. Check your email for details on why and what changes are needed.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-4">
@@ -327,11 +348,25 @@ export default function SellerDesignsPage() {
 
                 {/* Content */}
                 <div className="p-4">
-                  <Link href={`/designs/${design.id}`}>
-                    <h3 className="font-semibold text-gray-900 truncate hover:text-indigo-600 transition-colors">
-                      {design.title}
-                    </h3>
-                  </Link>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <Link href={`/designs/${design.id}`} className="flex-1">
+                      <h3 className="font-semibold text-gray-900 truncate hover:text-indigo-600 transition-colors">
+                        {design.title}
+                      </h3>
+                    </Link>
+                    {/* Status Badge */}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${
+                      design.status === 'LIVE' 
+                        ? 'bg-green-100 text-green-800' 
+                        : design.status === 'PENDING'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : design.status === 'REJECTED'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {design.status === 'LIVE' ? '✓ Live' : design.status === 'PENDING' ? '⏳ Pending' : design.status === 'REJECTED' ? '✕ Rejected' : design.status}
+                    </span>
+                  </div>
                   <p className="text-lg font-bold text-indigo-600 mt-1">
                     {formatCurrency(design.price)}
                   </p>

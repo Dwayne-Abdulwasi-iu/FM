@@ -51,7 +51,7 @@ export default function DesignersPage() {
 
   const filteredDesigners = designers.filter((designer) => {
     const name = designer.displayName || designer.name;
-    return name.toLowerCase().includes(searchQuery.toLowerCase());
+    return name ? name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
   });
 
   return (

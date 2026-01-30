@@ -1374,3 +1374,461 @@ export async function sendAdminPODAlert(data: AdminPODAlertData): Promise<boolea
   });
 }
 
+// ============================================
+// Warehouse Storage Notification Templates
+// ============================================
+
+interface WarehouseMonth5NotificationData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  daysInWarehouse: number;
+  currentStock: number;
+  cycleEndDay: number;
+  repostsRemaining: number;
+}
+
+/**
+ * Send Month 5 notification to seller (Day 120+)
+ * Alerts seller that their product is entering the final month of the 180-day cycle
+ */
+export async function sendMonth5WarehouseNotification(
+  data: WarehouseMonth5NotificationData
+): Promise<boolean> {
+  const productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
+  const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `⏰ Action Needed: ${data.productTitle} Entering Month 5 of Storage`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #F59E0B; margin-top: 0;">⏰ Action Required: Storage Month 5 Alert</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Your product <strong>"${data.productTitle}"</strong> has been in our warehouse for <strong>${data.daysInWarehouse} days</strong>. 
+            You're now entering the final month (Month 5) of your 180-day storage cycle.
+          </p>
+          
+          <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #92400E; font-weight: bold;">⚠️ What This Means:</p>
+            <ul style="color: #92400E; margin: 10px 0 0 0; padding-left: 20px;">
+              <li>In <strong>${data.cycleEndDay - data.daysInWarehouse} days</strong>, we'll automatically deduct 1 unit of inventory</li>
+              <li>You can <strong>repost your product</strong> to reset the 180-day countdown</li>
+              <li>Reposting costs 1 unit (we keep it to cover return shipping)</li>
+              <li>You have <strong>${data.repostsRemaining}/3 reposts available today</strong></li>
+            </ul>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Your Current Status:</strong><br>
+            • Days in Warehouse: <strong>${data.daysInWarehouse}/${data.cycleEndDay}</strong><br>
+            • Current Stock: <strong>${data.currentStock} units</strong><br>
+            • Status: <strong style="color: #F59E0B;">Month 5 (Final 60 Days)</strong>
+          </p>
+          
+          <div style="margin: 30px 0;">
+            <p style="text-align: center;">
+              <a href="${warehouseUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">
+                View Warehouse Dashboard
+              </a>
+            </p>
+          </div>
+          
+          <h3 style="color: #333; font-size: 15px; margin-top: 20px;">What You Can Do:</h3>
+          <ol style="color: #555; font-size: 14px; line-height: 1.8;">
+            <li><strong>Repost Your Product</strong> - Keep it selling with 1 unit deducted</li>
+            <li><strong>Reduce Price</strong> - Make it more appealing to buyers</li>
+            <li><strong>Let It Deduct</strong> - Allow automatic deduction at Day 180</li>
+            <li><strong>Monitor Sales</strong> - Check if inventory is moving</li>
+          </ol>
+          
+          <p style="color: #999; font-size: 13px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            Questions? Visit your <a href="${warehouseUrl}" style="color: #4F46E5; text-decoration: none;">warehouse dashboard</a> for more details.
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 15px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface WarehouseFinalWarningData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  daysInWarehouse: number;
+  daysUntilDeduction: number;
+  currentStock: number;
+}
+
+/**
+ * Send final warning before stock deduction (Day 173+)
+ * Last chance to take action before automatic -1 unit deduction
+ */
+export async function sendWarehouseFinalWarning(
+  data: WarehouseFinalWarningData
+): Promise<boolean> {
+  const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `🚨 URGENT: ${data.productTitle} - ${data.daysUntilDeduction} Days Until Stock Deduction`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 4px solid #DC2626;">
+          <h2 style="color: #DC2626; margin-top: 0;">🚨 URGENT: Final Warning - Action Required</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6; font-weight: bold;">
+            Your product <strong>"${data.productTitle}"</strong> will have <strong style="color: #DC2626;">1 unit automatically deducted</strong> in <strong>${data.daysUntilDeduction} day(s)</strong>.
+          </p>
+          
+          <div style="background-color: #FEE2E2; border-left: 4px solid #DC2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #7F1D1D; font-weight: bold;">This is your last chance to:</p>
+            <ul style="color: #7F1D1D; margin: 10px 0 0 0; padding-left: 20px;">
+              <li><strong>Repost your product</strong> to reset the 180-day countdown</li>
+              <li>Cancel the automatic deduction</li>
+              <li>Keep your product LIVE in our marketplace</li>
+            </ul>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Current Status:</strong><br>
+            • Days in Warehouse: <strong>${data.daysInWarehouse}</strong><br>
+            • Current Stock: <strong>${data.currentStock} units</strong><br>
+            • Days Until Deduction: <strong style="color: #DC2626;">${data.daysUntilDeduction}</strong>
+          </p>
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${warehouseUrl}" style="display: inline-block; padding: 16px 32px; background-color: #DC2626; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              Repost Now - Don't Lose Stock!
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            If you don't repost or take action before Day 180, we'll automatically deduct 1 unit to offset return shipping costs. 
+            Your product will remain LIVE, but with reduced inventory.
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface WarehouseDeductionConfirmationData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  daysInWarehouse: number;
+  stockDeducted: number;
+  remainingStock: number;
+}
+
+/**
+ * Confirm stock deduction after automatic processing
+ * Notifies seller that 1 unit has been deducted per the contract
+ */
+export async function sendWarehouseDeductionConfirmation(
+  data: WarehouseDeductionConfirmationData
+): Promise<boolean> {
+  const productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
+  const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `Stock Deduction Processed: ${data.productTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #4B5563; margin-top: 0;">Stock Deduction Processed</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Your product <strong>"${data.productTitle}"</strong> has reached the 180-day storage milestone. 
+            As per our warehouse agreement, we've automatically deducted <strong>${data.stockDeducted} unit</strong> to offset return shipping costs.
+          </p>
+          
+          <div style="background-color: #E0F2FE; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #0C4A6E; font-weight: bold;">What Happened:</p>
+            <ul style="color: #0C4A6E; margin: 10px 0 0 0; padding-left: 20px;">
+              <li>Automatic deduction completed at Day 180 of storage cycle</li>
+              <li>1 unit deducted per variant</li>
+              <li>Your product remains LIVE and available for sale</li>
+              <li>The 180-day countdown has reset for the next cycle</li>
+            </ul>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Transaction Details:</strong><br>
+            • Product: <strong>${data.productTitle}</strong><br>
+            • Days in Warehouse: <strong>${data.daysInWarehouse}</strong><br>
+            • Units Deducted: <strong>${data.stockDeducted}</strong><br>
+            • Remaining Stock: <strong>${data.remainingStock}</strong><br>
+            • Status: <strong style="color: #059669;">LIVE (Cycle Reset)</strong>
+          </p>
+          
+          ${data.remainingStock <= 1 ? `
+            <div style="background-color: #DBEAFE; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0; color: #0C4A6E; font-weight: bold;">⚠️ Low Stock Alert:</p>
+              <p style="color: #0C4A6E; margin: 8px 0 0 0;">
+                You have only <strong>${data.remainingStock} unit(s)</strong> remaining. Consider pricing adjustments or marketing to boost sales.
+              </p>
+            </div>
+          ` : ''}
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${warehouseUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+              View Warehouse Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            <strong>What's Next?</strong><br>
+            Your product now enters a new 180-day storage cycle. You can repost again in Day 120-179 of this new cycle to prevent further deductions.
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface WarehouseProductDelistedData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  daysInWarehouse: number;
+  reason: 'out_of_stock' | 'seller_request';
+}
+
+/**
+ * Notify seller when product is delisted from warehouse
+ */
+export async function sendWarehouseProductDelistedNotification(
+  data: WarehouseProductDelistedData
+): Promise<boolean> {
+  const dashboardUrl = `${BASE_URL}/seller/boutique`;
+
+  const reasonText = data.reason === 'out_of_stock'
+    ? 'All inventory has been depleted after multiple 180-day cycles and automatic deductions.'
+    : 'You requested the product to be removed from the warehouse.';
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `Product Delisted: ${data.productTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #4B5563; margin-top: 0;">Product Delisted from Warehouse</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Your product <strong>"${data.productTitle}"</strong> has been delisted from our warehouse inventory system.
+          </p>
+          
+          <div style="background-color: #F3E8FF; border-left: 4px solid #9333EA; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #581C87; font-weight: bold;">Reason for Delisting:</p>
+            <p style="color: #581C87; margin: 8px 0 0 0;">${reasonText}</p>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Product Details:</strong><br>
+            • Product: <strong>${data.productTitle}</strong><br>
+            • Days Stored: <strong>${data.daysInWarehouse}</strong><br>
+            • Status: <strong style="color: #DC2626;">DELISTED</strong>
+          </p>
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+              Back to Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            You can reupload this product or create new listings whenever you're ready. 
+            Thank you for using ${APP_NAME}!
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface WarehouseRepostApprovedData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  originalStock: number;
+  newStock: number;
+  stockDeducted: number;
+  daysReset: boolean;
+}
+
+/**
+ * Notify seller when repost request is approved
+ */
+export async function sendRepostApprovedNotification(
+  data: WarehouseRepostApprovedData
+): Promise<boolean> {
+  const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `✅ Repost Approved: ${data.productTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 4px solid #059669;">
+          <h2 style="color: #059669; margin-top: 0;">✅ Repost Request Approved!</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Great news! Your repost request for <strong>"${data.productTitle}"</strong> has been approved by our admin team.
+          </p>
+          
+          <div style="background-color: #DBEAFE; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #0C4A6E; font-weight: bold;">✨ What Happened:</p>
+            <ul style="color: #0C4A6E; margin: 10px 0 0 0; padding-left: 20px;">
+              <li>Your product remains <strong>LIVE</strong> in the marketplace</li>
+              <li><strong>${data.stockDeducted} unit(s)</strong> have been deducted (warehouse offset)</li>
+              <li>The 180-day countdown has been <strong>reset</strong></li>
+              <li>You can repost again in Month 5 of the next cycle</li>
+            </ul>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Stock Update:</strong><br>
+            • Previous Stock: <strong>${data.originalStock} units</strong><br>
+            • New Stock: <strong style="color: #059669;">${data.newStock} units</strong><br>
+            • Deducted: <strong>${data.stockDeducted} unit(s)</strong>
+          </p>
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${warehouseUrl}" style="display: inline-block; padding: 14px 28px; background-color: #059669; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+              View Warehouse Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            <strong>Next Steps:</strong><br>
+            Your product now enters a new 180-day storage cycle. You'll receive a notification at Day 120 if you want to repost again.
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface WarehouseRepostRejectedData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  adminNotes?: string;
+}
+
+/**
+ * Notify seller when repost request is rejected
+ */
+export async function sendRepostRejectedNotification(
+  data: WarehouseRepostRejectedData
+): Promise<boolean> {
+  const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
+  const dashboardUrl = `${BASE_URL}/seller/boutique`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `Repost Request Declined: ${data.productTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #4B5563; margin-top: 0;">Repost Request Update</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Your repost request for <strong>"${data.productTitle}"</strong> has been reviewed and declined at this time.
+          </p>
+          
+          <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #92400E; font-weight: bold;">What This Means:</p>
+            <ul style="color: #92400E; margin: 10px 0 0 0; padding-left: 20px;">
+              <li>Your product stock has been <strong>unlocked</strong> to its original level</li>
+              <li>You can submit a new repost request anytime</li>
+              <li>Your product remains in the warehouse</li>
+            </ul>
+          </div>
+          
+          ${data.adminNotes ? `
+            <div style="background-color: #E0F2FE; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0; color: #0C4A6E; font-weight: bold;">Admin Notes:</p>
+              <p style="color: #0C4A6E; margin: 8px 0 0 0;">${data.adminNotes}</p>
+            </div>
+          ` : ''}
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${warehouseUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">
+              Try Again
+            </a>
+            <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 28px; background-color: #6B7280; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+              Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            You can always resubmit your repost request during Month 5 (Days 120-179) of your storage cycle. 
+            If you have questions, please contact support.
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { canAccessDesignDuringEscrow } from '@/lib/ownership-escrow'
 
 /**
  * GET /api/downloads
@@ -79,12 +80,64 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id
-    const { designId, downloadType } = await request.json()
+    const { designId, downloadType, ownershipDocId } = await request.json()
 
     if (!designId || typeof designId !== 'string') {
       return NextResponse.json(
         { message: 'Design ID is required' },
         { status: 400 }
+      )
+    }
+
+    // FLAW FIX #9: Allow sellers to view their own preview file
+    // Check if this is a seller viewing their own preview
+    if (ownershipDocId) {
+      const ownershipDoc = await prisma.ownershipDocument.findUnique({
+        where: { id: ownershipDocId },
+        select: {
+          id: true,
+          sellerId: true,
+          previewFileUrl: true,
+          previewFileType: true,
+          previewFileName: true,
+          previewDescription: true,
+          status: true
+        }
+      })
+
+      if (!ownershipDoc) {
+        return NextResponse.json(
+          { message: 'Ownership document not found' },
+          { status: 404 }
+        )
+      }
+
+      // Only seller can view their own preview
+      if (ownershipDoc.sellerId !== userId) {
+        return NextResponse.json(
+          { message: 'Unauthorized - not your document' },
+          { status: 403 }
+        )
+      }
+
+      if (!ownershipDoc.previewFileUrl) {
+        return NextResponse.json(
+          { message: 'Preview file not yet uploaded' },
+          { status: 404 }
+        )
+      }
+
+      // Return the preview file URL for seller to download/view
+      return NextResponse.json(
+        {
+          message: 'Preview file retrieved',
+          previewFileUrl: ownershipDoc.previewFileUrl,
+          previewFileType: ownershipDoc.previewFileType,
+          previewFileName: ownershipDoc.previewFileName,
+          previewDescription: ownershipDoc.previewDescription,
+          documentStatus: ownershipDoc.status
+        },
+        { status: 200 }
       )
     }
 
@@ -111,6 +164,78 @@ export async function POST(request: NextRequest) {
         { message: 'You must purchase this design to download the original' },
         { status: 403 }
       )
+    }
+
+    // For OWNERSHIP purchases, handle escrow preview logic
+    if (purchase?.purchaseType === 'OWNERSHIP') {
+      const userRole = (session.user.role === 'ADMIN' ? 'ADMIN' : 'USER') as 'USER' | 'ADMIN'
+      const escrowCheck = await canAccessDesignDuringEscrow(
+        userId,
+        designId,
+        userRole
+      )
+
+      // Check if still in escrow period
+      if (escrowCheck.escrowStatus?.isInEscrow) {
+        // During escrow: serve PREVIEW file only, not full files
+        const ownershipDoc = await prisma.ownershipDocument.findFirst({
+          where: {
+            designId,
+            status: 'APPROVED'
+          },
+          select: {
+            id: true,
+            previewFileUrl: true,
+            previewFileType: true,
+            previewFileName: true,
+            previewDescription: true
+          }
+        })
+
+        if (!ownershipDoc?.previewFileUrl) {
+          return NextResponse.json(
+            { 
+              message: 'Preview file not yet available. Seller is preparing the preview for you to inspect.',
+              escrowStatus: escrowCheck.escrowStatus
+            },
+            { status: 402 } // Payment required (in sense of waiting for preview)
+          )
+        }
+
+        // Redirect to preview file (read-only, no download)
+        return NextResponse.json(
+          {
+            message: 'Preview available during inspection period',
+            previewUrl: ownershipDoc.previewFileUrl,
+            previewType: ownershipDoc.previewFileType,
+            previewDescription: ownershipDoc.previewDescription,
+            escrowStatus: escrowCheck.escrowStatus,
+            note: `This is a preview file. Full design files will be available after the ${escrowCheck.escrowStatus.daysRemaining}-day inspection period expires.`
+          },
+          { status: 200 }
+        )
+      }
+
+      // After escrow expires: allow full file download
+      if (!escrowCheck.hasAccess) {
+        return NextResponse.json(
+          { message: escrowCheck.reason },
+          { status: 403 }
+        )
+      }
+
+      // Verify the user is the exclusive owner
+      const design = await prisma.design.findUnique({
+        where: { id: designId },
+        select: { ownedBy: true, isOwned: true }
+      })
+      
+      if (!design || !design.isOwned || design.ownedBy !== userId) {
+        return NextResponse.json(
+          { message: 'You do not own this design' },
+          { status: 403 }
+        )
+      }
     }
 
     // Get design info
@@ -179,8 +304,23 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Track download error:', error)
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { message: 'Invalid request format' },
+        { status: 400 }
+      )
+    }
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Failed to process download' },
+      { message: 'Failed to process download. Please try again later.' },
       { status: 500 }
     )
   }

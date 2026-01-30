@@ -1,4 +1,4 @@
-const http = require('http');
+import http from 'http';
 
 const data = JSON.stringify({
   reference: 'fashion_1769016549910_cmhg4iddx0000hej8nvdfzx4g',

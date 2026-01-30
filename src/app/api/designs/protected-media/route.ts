@@ -63,11 +63,13 @@ export async function GET(request: NextRequest) {
 
     // Check if user has purchased
     let hasPurchased = false
+    let purchaseType: string | null = null
     if (userId) {
       const purchase = await prisma.purchase.findFirst({
         where: { userId, designId }
       })
       hasPurchased = !!purchase
+      purchaseType = purchase?.purchaseType || null
     }
 
     const isDesigner = design.designerId === userId
@@ -113,8 +115,16 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Protected media access error:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Failed to access media' },
+      { message: 'Failed to access media. Please try again later.' },
       { status: 500 }
     )
   }

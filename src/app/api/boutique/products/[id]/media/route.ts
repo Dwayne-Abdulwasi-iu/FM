@@ -145,6 +145,16 @@ export async function POST(
       },
     });
 
+    // Update product's thumbnailUrl if this is the first image or marked as primary
+    if ((isImage && currentImages === 0) || isPrimary) {
+      await prisma.boutiqueProduct.update({
+        where: { id },
+        data: {
+          thumbnailUrl: uploadResult.secure_url,
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Media uploaded successfully',

@@ -34,14 +34,21 @@ export async function GET(request: NextRequest) {
     const [products, total, statusCounts] = await Promise.all([
       prisma.boutiqueProduct.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          basePrice: true,
+          brand: true,
+          material: true,
+          condition: true,
+          status: true,
+          createdAt: true,
           category: {
             select: { id: true, name: true, slug: true },
           },
           media: {
-            where: { type: 'IMAGE' },
             orderBy: { sortOrder: 'asc' },
-            take: 1,
           },
           variants: {
             select: { id: true, size: true, color: true, quantity: true },

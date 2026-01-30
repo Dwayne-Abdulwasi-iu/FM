@@ -9,7 +9,12 @@ import { getCommissionRate } from "@/lib/commission-tiers";
 
 /**
  * POST /api/commission-requests/confirm-payment - Confirm payment for a commission
- * This is called after successful payment redirect
+ * 
+ * DEPRECATED: Stripe payments should use webhook confirmation only.
+ * This endpoint is kept ONLY for Paystack manual verification as fallback.
+ * 
+ * For Stripe: Payment is marked as PAID via webhook automatically.
+ * Do NOT use this endpoint for Stripe payments - it bypasses safety checks.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +28,10 @@ export async function POST(request: NextRequest) {
 
     if (!requestId) {
       return NextResponse.json({ error: "Request ID required" }, { status: 400 });
+    }
+
+    if (!reference) {
+      return NextResponse.json({ error: "Payment reference required" }, { status: 400 });
     }
 
     // Find the commission request
@@ -71,8 +80,19 @@ export async function POST(request: NextRequest) {
     let paymentVerified = false;
     let paymentReference = reference || "";
 
-    // If Paystack reference is provided, verify with Paystack
-    if (reference && reference.startsWith("comm_")) {
+    // STRIPE: REJECT - Use webhook confirmation only
+    if (!reference || !reference.startsWith("comm_")) {
+      return NextResponse.json(
+        { 
+          error: "Stripe payments are confirmed via webhook automatically. Do not use this endpoint for Stripe.",
+          note: "If payment succeeded but not confirmed, please contact support."
+        },
+        { status: 400 }
+      );
+    }
+
+    // PAYSTACK ONLY: Verify reference with Paystack
+    if (reference.startsWith("comm_")) {
       try {
         const verificationResult = await verifyTransaction(reference);
         if (verificationResult.status && verificationResult.data?.status === "success") {
@@ -81,36 +101,6 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         console.error("Paystack verification error:", err);
-      }
-    } else {
-      // For Stripe, payment should be verified via webhook
-      // Here we'll trust the redirect but the webhook should have already updated the status
-      // Check if webhook already updated
-      const refreshed = await prisma.commissionRequest.findUnique({
-        where: { id: requestId },
-      });
-      
-      if (refreshed?.isPaid) {
-        return NextResponse.json({
-          message: "Payment confirmed via webhook",
-          commissionRequest: refreshed,
-        });
-      }
-      
-      // SECURITY: Only allow dev mode bypass if explicitly enabled AND not in production
-      // This prevents accidental bypass if NODE_ENV is misconfigured
-      const isProduction = process.env.VERCEL_ENV === 'production' || 
-                          process.env.NODE_ENV === 'production' ||
-                          process.env.RAILWAY_ENVIRONMENT === 'production' ||
-                          process.env.RENDER === 'true';
-      const allowDevBypass = !isProduction && 
-                             process.env.NODE_ENV === "development" && 
-                             process.env.ALLOW_DEV_PAYMENT_BYPASS === "true";
-      
-      if (allowDevBypass) {
-        console.warn("[SECURITY] DEV MODE: Bypassing payment verification for commission:", requestId);
-        paymentVerified = true;
-        paymentReference = `dev_${Date.now()}`;
       }
     }
 
@@ -121,14 +111,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate earnings using designer's tiered rate
-    const designer = await prisma.user.findUnique({
-      where: { id: commissionRequest.designerId },
-      select: { totalEarnings: true, designerTier: true }
-    });
-    const totalEarnings = designer?.totalEarnings ?? 0;
-    const isProSubscriber = designer?.designerTier === 'VIP_DESIGNER' || designer?.designerTier === 'VVIP_DESIGNER';
-    const commissionRate = getCommissionRate(totalEarnings, isProSubscriber);
+    // Calculate earnings using LOCKED commission rate from quote time
+    // This prevents rate changes from affecting the payment
+    let commissionRate = commissionRequest.quotedCommissionRate;
+    
+    if (!commissionRate) {
+      // If rate wasn't locked (old quotes), calculate but DO NOT update
+      const designer = await prisma.user.findUnique({
+        where: { id: commissionRequest.designerId },
+        select: { totalEarnings: true, designerTier: true }
+      });
+      const totalEarnings = designer?.totalEarnings ?? 0;
+      const isProSubscriber = designer?.designerTier === 'VIP_DESIGNER' || designer?.designerTier === 'VVIP_DESIGNER';
+      commissionRate = getCommissionRate(totalEarnings, isProSubscriber);
+    }
     
     const platformFee = quote * commissionRate;
     const designerEarnings = quote - platformFee;
@@ -216,8 +212,34 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Payment confirmation error:", error);
+    
+    // Handle Prisma database errors
+    if (error instanceof Error && error.message.includes("prisma")) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Handle Paystack/network errors
+    if (error instanceof Error && error.message.includes("verification temporarily")) {
+      return NextResponse.json(
+        { error: "Payment verification service temporarily unavailable. Please try again." },
+        { status: 503 }
+      );
+    }
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+    
+    // Default: server error
     return NextResponse.json(
-      { error: "Failed to confirm payment" },
+      { error: "Failed to confirm payment. Please try again later." },
       { status: 500 }
     );
   }

@@ -25,6 +25,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { paystack, isPaystackConfigured } from '@/lib/paystack';
+import { getPaymentProcessor, extractGeoLocation, type PaymentProcessor } from '@/lib/geo-detection';
 import { 
   FULFILLMENT_METHOD, 
   getCommissionRate,
@@ -88,7 +89,16 @@ export async function POST(request: NextRequest) {
     const { 
       shippingAddress, 
       paymentMethod = 'paystack',
+      buyerCountry: providedBuyerCountry,
     } = body;
+
+    // Extract buyer country from request headers if not provided
+    const headerObject = Object.fromEntries(request.headers);
+    const geoLocation = extractGeoLocation(headerObject);
+    const buyerCountry = providedBuyerCountry || geoLocation.countryCode || 'NG';
+
+    // Determine payment processor based on buyer geography
+    const paymentProcessor = getPaymentProcessor(buyerCountry);
 
     // Validate shipping address
     if (!shippingAddress || !shippingAddress.name || !shippingAddress.street || 
@@ -321,8 +331,8 @@ export async function POST(request: NextRequest) {
       where: { userId: session.user.id },
     });
 
-    // Initialize payment based on method
-    if (paymentMethod === 'paystack' && isPaystackConfigured()) {
+    // Initialize payment based on processor selection
+    if (paymentProcessor === 'PAYSTACK' && isPaystackConfigured()) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { email: true, name: true },
@@ -477,6 +487,10 @@ export async function POST(request: NextRequest) {
         subtotal: grandSubtotal,
         shipping: grandShipping,
         total: finalTotal,
+        buyer: {
+          country: buyerCountry,
+          paymentProcessor,
+        },
       });
     }
 
@@ -488,6 +502,10 @@ export async function POST(request: NextRequest) {
       subtotal: grandSubtotal,
       shipping: grandShipping,
       total: finalTotal,
+      buyer: {
+        country: buyerCountry,
+        paymentProcessor,
+      },
     });
 
   } catch (error) {

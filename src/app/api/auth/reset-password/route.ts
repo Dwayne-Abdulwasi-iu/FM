@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (password.length > 256) {
+      return NextResponse.json(
+        { message: 'Password must be no more than 256 characters' },
+        { status: 400 }
+      )
+    }
+
     // Rate limit: 5 attempts per 15 minutes per token
     const rateLimitKey = `reset-password:${token.substring(0, 16)}`
     const rateLimit = await checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)
@@ -93,8 +100,23 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Reset password error:', error)
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { message: 'Invalid request format' },
+        { status: 400 }
+      )
+    }
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'An error occurred. Please try again later.' },
+      { message: 'Password reset failed. Please try again later.' },
       { status: 500 }
     )
   }

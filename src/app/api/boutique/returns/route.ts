@@ -178,8 +178,10 @@ export async function POST(request: NextRequest) {
     }
 
     const deliveredAt = order.deliveredAt;
+    let daysSinceDelivery = 0;
+    
     if (deliveredAt) {
-      const daysSinceDelivery = Math.floor(
+      daysSinceDelivery = Math.floor(
         (Date.now() - new Date(deliveredAt).getTime()) / (1000 * 60 * 60 * 24)
       );
       if (daysSinceDelivery > 7) {
@@ -228,9 +230,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const returnDeadline = new Date(new Date(deliveredAt!).getTime() + 7 * 24 * 60 * 60 * 1000);
+    
     return NextResponse.json({
       success: true,
       message: "Return request submitted. We will review within 1-2 business days.",
+      details: {
+        returnDeadline: returnDeadline.toLocaleDateString(),
+        daysRemaining: 7 - daysSinceDelivery,
+        note: "Seller payout is held for 2 days to allow for return processing",
+      },
       returnRequest: {
         id: returnRequest.id,
         status: returnRequest.status,

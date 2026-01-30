@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Image from 'next/image';
 import {
   Package,
@@ -69,11 +70,21 @@ interface Product {
   condition: string;
   shipment?: {
     id: string;
-    courier: string;
+    carrier: string;
     trackingNumber: string;
     status: string;
     estimatedArrival: string;
   };
+}
+
+interface VariantVerification {
+  variantId: string;
+  size: string;
+  color: string;
+  expected: number;
+  received: number;
+  damaged: number;
+  passed: number;
 }
 
 interface StatusCounts {
@@ -133,6 +144,12 @@ export default function AdminBoutiquePage() {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionType, setActionType] = useState<'content' | 'physical'>('content');
+  const [selectedMedia, setSelectedMedia] = useState<ProductMedia | null>(null);
+  
+  // Verification modal state
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [variantVerifications, setVariantVerifications] = useState<VariantVerification[]>([]);
+  const [verificationNotes, setVerificationNotes] = useState('');
 
   // Determine which tabs to show based on fulfillment filter
   const activeTabs = fulfillmentFilter === 'SELLER_DIRECT' ? SELLER_DIRECT_TABS : ADMIN_STOCK_TABS;
@@ -164,7 +181,7 @@ export default function AdminBoutiquePage() {
 
       if (data.success) {
         setProducts(data.products);
-        setStatusCounts(data.counts);
+        setStatusCounts(data.statusCounts);
         setTotalPages(data.pagination.totalPages);
       }
     } catch (error) {
@@ -190,16 +207,18 @@ export default function AdminBoutiquePage() {
       const data = await response.json();
 
       if (data.success) {
+        // Show success message before closing
+        toast.success(data.message || 'Action completed');
         setSelectedProduct(null);
         setShowRejectModal(false);
         setRejectReason('');
         fetchProducts();
       } else {
-        alert(data.message || 'Action failed');
+        toast.error(data.message || 'Action failed');
       }
     } catch (error) {
       console.error('Action failed:', error);
-      alert('Action failed. Please try again.');
+      toast.error('Action failed. Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -212,11 +231,103 @@ export default function AdminBoutiquePage() {
 
   const submitRejection = () => {
     if (!rejectReason.trim()) {
-      alert('Please provide a reason for rejection');
+      toast.error('Please provide a reason for rejection');
       return;
     }
     const action = actionType === 'content' ? 'reject_content' : 'reject_physical';
     handleAction(selectedProduct!.id, action, rejectReason);
+  };
+
+  // Open verification modal and initialize variant verifications
+  const openVerificationModal = () => {
+    if (!selectedProduct) return;
+    
+    const initialVerifications: VariantVerification[] = selectedProduct.variants.map(v => ({
+      variantId: v.id,
+      size: v.size,
+      color: v.color,
+      expected: v.quantity,
+      received: v.quantity,
+      damaged: 0,
+      passed: v.quantity,
+    }));
+    
+    setVariantVerifications(initialVerifications);
+    setVerificationNotes('');
+    setShowVerificationModal(true);
+  };
+
+  // Update a specific variant's verification data
+  const updateVariantVerification = (variantId: string, field: 'received' | 'damaged' | 'passed', value: number) => {
+    setVariantVerifications(prev => prev.map(v => {
+      if (v.variantId !== variantId) return v;
+      
+      const updated = { ...v, [field]: Math.max(0, value) };
+      
+      // Auto-calculate passed if received or damaged changes
+      if (field === 'received' || field === 'damaged') {
+        updated.passed = Math.max(0, updated.received - updated.damaged);
+      }
+      // Ensure passed doesn't exceed received - damaged
+      if (field === 'passed') {
+        updated.passed = Math.min(value, updated.received - updated.damaged);
+      }
+      
+      return updated;
+    }));
+  };
+
+  // Submit verification with variant-level data
+  const submitVerification = async (allPassed: boolean) => {
+    if (!selectedProduct) return;
+    
+    setActionLoading(true);
+    try {
+      // Calculate totals
+      const totalExpected = variantVerifications.reduce((sum, v) => sum + v.expected, 0);
+      const totalReceived = variantVerifications.reduce((sum, v) => sum + v.received, 0);
+      const totalDamaged = variantVerifications.reduce((sum, v) => sum + v.damaged, 0);
+      const totalPassed = variantVerifications.reduce((sum, v) => sum + v.passed, 0);
+      const totalMissing = totalExpected - totalReceived;
+      
+      const hasDiscrepancy = totalMissing > 0 || totalDamaged > 0 || totalPassed < totalExpected;
+      
+      const response = await fetch(`/api/boutique/admin/products`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          action: allPassed ? 'verify_physical' : 'reject_physical',
+          reason: !allPassed ? verificationNotes : undefined,
+          verification: {
+            variantVerifications,
+            totalExpected,
+            totalReceived,
+            totalDamaged,
+            totalPassed,
+            totalMissing,
+            hasDiscrepancy,
+            notes: verificationNotes,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message || 'Verification completed');
+        setShowVerificationModal(false);
+        setSelectedProduct(null);
+        fetchProducts();
+      } else {
+        toast.error(data.message || 'Verification failed');
+      }
+    } catch (error) {
+      console.error('Verification failed:', error);
+      toast.error('Verification failed. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (authStatus === 'loading' || (authStatus === 'authenticated' && !session)) {
@@ -262,6 +373,14 @@ export default function AdminBoutiquePage() {
             {/* Quick Navigation Links */}
             <div className="flex flex-wrap gap-2">
               <Link
+                href="/admin/boutique/repost-approvals"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm font-medium transition"
+                title="Approve or reject seller repost requests"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Repost Queue
+              </Link>
+              <Link
                 href="/admin/boutique/orders"
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-medium transition"
               >
@@ -274,6 +393,13 @@ export default function AdminBoutiquePage() {
               >
                 <RotateCcw className="w-4 h-4" />
                 Returns
+              </Link>
+              <Link
+                href="/admin/boutique/rejected"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium transition"
+              >
+                <XCircle className="w-4 h-4" />
+                Rejected
               </Link>
               <Link
                 href="/admin/boutique/shipments"
@@ -420,9 +546,9 @@ export default function AdminBoutiquePage() {
                   >
                     {/* Thumbnail */}
                     <div className="aspect-[4/3] bg-gray-100 relative">
-                      {product.thumbnailUrl ? (
+                      {product.thumbnailUrl || (product.media && product.media[0]?.url) ? (
                         <Image
-                          src={product.thumbnailUrl}
+                          src={product.thumbnailUrl || product.media[0]?.url || ''}
                           alt={product.title}
                           fill
                           className="object-cover"
@@ -544,7 +670,11 @@ export default function AdminBoutiquePage() {
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
                   {selectedProduct.media.map((m, i) => (
-                    <div key={m.id} className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group">
+                    <button
+                      key={m.id}
+                      onClick={() => setSelectedMedia(m)}
+                      className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group hover:opacity-80 transition-opacity cursor-pointer"
+                    >
                       {m.type === 'IMAGE' ? (
                         <Image
                           src={m.url}
@@ -553,7 +683,7 @@ export default function AdminBoutiquePage() {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                        <div className="w-full h-full flex items-center justify-center bg-gray-900 group-hover:bg-gray-800 transition-colors">
                           <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                         </div>
                       )}
@@ -565,7 +695,7 @@ export default function AdminBoutiquePage() {
                       <div className="absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 bg-black/70 text-white text-[8px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded">
                         {m.type}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -574,7 +704,7 @@ export default function AdminBoutiquePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Product Details</h3>
-                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-black">
                     <p><strong>Title:</strong> {selectedProduct.title}</p>
                     <p><strong>Category:</strong> {selectedProduct.category.name}</p>
                     <p><strong>Price:</strong> ₦{selectedProduct.basePrice.toLocaleString()}</p>
@@ -584,14 +714,14 @@ export default function AdminBoutiquePage() {
                   </div>
                   
                   <div className="mt-3 sm:mt-4">
-                    <strong className="text-xs sm:text-sm">Description:</strong>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{selectedProduct.description}</p>
+                    <strong className="text-xs sm:text-sm text-black">Description:</strong>
+                    <p className="text-xs sm:text-sm text-black mt-1 whitespace-pre-wrap break-words leading-relaxed">{selectedProduct.description}</p>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Seller Info</h3>
-                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-black">
                     <p><strong>Name:</strong> {selectedProduct.seller.name}</p>
                     <p><strong>Email:</strong> {selectedProduct.seller.email}</p>
                   </div>
@@ -600,7 +730,7 @@ export default function AdminBoutiquePage() {
                   <h3 className="font-semibold text-gray-900 mt-3 sm:mt-4 mb-2 sm:mb-3 text-sm sm:text-base">Variants</h3>
                   <div className="space-y-1.5 sm:space-y-2">
                     {selectedProduct.variants.map((v, _i) => (
-                      <div key={v.id} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm p-1.5 sm:p-2 bg-gray-50 rounded">
+                      <div key={v.id} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm p-1.5 sm:p-2 bg-gray-50 rounded text-black">
                         {v.colorHex && (
                           <div
                             className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border"
@@ -621,14 +751,14 @@ export default function AdminBoutiquePage() {
                     <>
                       <h3 className="font-semibold text-gray-900 mt-3 sm:mt-4 mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
                         <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Shipment
+                        Shipment Details
                       </h3>
-                      <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm p-2 sm:p-3 bg-blue-50 rounded-lg">
-                        <p><strong>Courier:</strong> {selectedProduct.shipment.courier}</p>
-                        <p><strong>Tracking:</strong> {selectedProduct.shipment.trackingNumber}</p>
-                        <p><strong>Status:</strong> {selectedProduct.shipment.status}</p>
+                      <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm p-2 sm:p-3 bg-blue-50 rounded-lg text-black">
+                        <p><strong>Courier:</strong> {selectedProduct.shipment.carrier || 'N/A'}</p>
+                        <p><strong>Tracking Number:</strong> {selectedProduct.shipment.trackingNumber || 'N/A'}</p>
+                        <p><strong>Status:</strong> {selectedProduct.shipment.status || 'N/A'}</p>
                         {selectedProduct.shipment.estimatedArrival && (
-                          <p><strong>ETA:</strong> {new Date(selectedProduct.shipment.estimatedArrival).toLocaleDateString()}</p>
+                          <p><strong>Estimated Arrival:</strong> {new Date(selectedProduct.shipment.estimatedArrival).toLocaleDateString()}</p>
                         )}
                       </div>
                     </>
@@ -641,6 +771,7 @@ export default function AdminBoutiquePage() {
                 {selectedProduct.status === 'PENDING_CONTENT_REVIEW' && (
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                     <button
+                      type="button"
                       onClick={() => handleAction(selectedProduct.id, 'approve_content')}
                       disabled={actionLoading}
                       className="flex-1 py-2.5 sm:py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
@@ -649,6 +780,7 @@ export default function AdminBoutiquePage() {
                       Approve
                     </button>
                     <button
+                      type="button"
                       onClick={() => openRejectModal('content')}
                       disabled={actionLoading}
                       className="flex-1 py-2.5 sm:py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
@@ -661,6 +793,7 @@ export default function AdminBoutiquePage() {
 
                 {selectedProduct.status === 'SHIPPED_TO_ADMIN' && (
                   <button
+                    type="button"
                     onClick={() => handleAction(selectedProduct.id, 'mark_received')}
                     disabled={actionLoading}
                     className="w-full py-2.5 sm:py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
@@ -671,28 +804,20 @@ export default function AdminBoutiquePage() {
                 )}
 
                 {selectedProduct.status === 'RECEIVED_BY_ADMIN' && (
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-                    <button
-                      onClick={() => handleAction(selectedProduct.id, 'verify_physical')}
-                      disabled={actionLoading}
-                      className="flex-1 py-2.5 sm:py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
-                    >
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                      Pass Verification
-                    </button>
-                    <button
-                      onClick={() => openRejectModal('physical')}
-                      disabled={actionLoading}
-                      className="flex-1 py-2.5 sm:py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
-                    >
-                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                      Fail
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={openVerificationModal}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 sm:py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
+                  >
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Verify Items Received
+                  </button>
                 )}
 
                 {selectedProduct.status === 'VERIFICATION_PASSED' && (
                   <button
+                    type="button"
                     onClick={() => handleAction(selectedProduct.id, 'go_live')}
                     disabled={actionLoading}
                     className="w-full py-2.5 sm:py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
@@ -716,6 +841,72 @@ export default function AdminBoutiquePage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media Viewer Modal */}
+      {selectedMedia && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-2 sm:p-4"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <div
+            className="relative bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200">
+              <h3 className="text-sm sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+                {selectedMedia.type === 'IMAGE' ? (
+                  <>
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Image Viewer
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Video Player
+                  </>
+                )}
+              </h3>
+              <button
+                onClick={() => setSelectedMedia(null)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Close media viewer"
+                aria-label="Close media viewer"
+              >
+                <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-50">
+              {selectedMedia.type === 'IMAGE' ? (
+                <div className="relative w-full h-full min-h-[300px] sm:min-h-[500px]">
+                  <Image
+                    src={selectedMedia.url}
+                    alt="Full size"
+                    fill
+                    className="object-contain p-2 sm:p-4"
+                  />
+                </div>
+              ) : (
+                <video
+                  src={selectedMedia.url}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
+
+            {/* Footer with info */}
+            <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
+              <p className="text-xs sm:text-sm text-gray-600">
+                {selectedMedia.type === 'IMAGE' ? 'Click the X button or outside to close' : 'Use player controls to play/pause and adjust volume'}
+              </p>
             </div>
           </div>
         </div>
@@ -752,6 +943,160 @@ export default function AdminBoutiquePage() {
               >
                 {actionLoading ? 'Rejecting...' : 'Confirm'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {showVerificationModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-4 sm:p-6 my-4">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">
+              Verify Items Received
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4">
+              Update the quantity received for each variant. Items that didn&apos;t pass will be recorded as discrepancies.
+            </p>
+
+            {/* Variant Verification Table */}
+            <div className="space-y-3 mb-4 max-h-[50vh] overflow-y-auto">
+              {variantVerifications.map((v, index) => {
+                const hasIssue = v.received < v.expected || v.damaged > 0 || v.passed < v.expected;
+                return (
+                  <div 
+                    key={v.variantId} 
+                    className={`p-3 rounded-lg border ${hasIssue ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}
+                  >
+                    {/* Variant Info */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div 
+                        className="w-4 h-4 rounded-full border border-gray-300" 
+                        style={{ backgroundColor: selectedProduct.variants[index]?.colorHex || '#888' }}
+                      />
+                      <span className="font-medium text-gray-900 text-sm">
+                        {v.color} • {v.size}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        Expected: {v.expected}
+                      </span>
+                    </div>
+
+                    {/* Input Fields */}
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <label htmlFor={`received-${v.variantId}`} className="block text-gray-600 mb-1">Received</label>
+                        <input
+                          id={`received-${v.variantId}`}
+                          type="number"
+                          min="0"
+                          max={v.expected}
+                          value={v.received}
+                          onChange={(e) => updateVariantVerification(v.variantId, 'received', parseInt(e.target.value) || 0)}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-center text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={`damaged-${v.variantId}`} className="block text-gray-600 mb-1">Damaged</label>
+                        <input
+                          id={`damaged-${v.variantId}`}
+                          type="number"
+                          min="0"
+                          max={v.received}
+                          value={v.damaged}
+                          onChange={(e) => updateVariantVerification(v.variantId, 'damaged', parseInt(e.target.value) || 0)}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-center text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={`passed-${v.variantId}`} className="block text-gray-600 mb-1">Passed</label>
+                        <input
+                          id={`passed-${v.variantId}`}
+                          type="number"
+                          min="0"
+                          max={v.received - v.damaged}
+                          value={v.passed}
+                          onChange={(e) => updateVariantVerification(v.variantId, 'passed', parseInt(e.target.value) || 0)}
+                          className="w-full px-2 py-1.5 border border-green-300 bg-green-50 rounded text-sm text-center font-medium text-green-700"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Discrepancy Warning */}
+                    {hasIssue && (
+                      <div className="mt-2 text-xs text-orange-700 flex items-center gap-1">
+                        <XCircle className="w-3 h-3" />
+                        {v.expected - v.received > 0 && <span>{v.expected - v.received} missing. </span>}
+                        {v.damaged > 0 && <span>{v.damaged} damaged. </span>}
+                        {v.passed < v.received - v.damaged && <span>{v.received - v.damaged - v.passed} failed verification.</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-100 rounded-lg p-3 mb-4 text-sm">
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="text-gray-500 text-xs">Expected</p>
+                  <p className="font-bold text-gray-900">{variantVerifications.reduce((s, v) => s + v.expected, 0)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Received</p>
+                  <p className="font-bold text-blue-600">{variantVerifications.reduce((s, v) => s + v.received, 0)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Damaged</p>
+                  <p className="font-bold text-red-600">{variantVerifications.reduce((s, v) => s + v.damaged, 0)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Passed</p>
+                  <p className="font-bold text-green-600">{variantVerifications.reduce((s, v) => s + v.passed, 0)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+              <textarea
+                value={verificationNotes}
+                onChange={(e) => setVerificationNotes(e.target.value)}
+                rows={2}
+                placeholder="Add notes about discrepancies, condition, etc..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none text-sm text-gray-900"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowVerificationModal(false)}
+                className="flex-1 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
+              >
+                Cancel
+              </button>
+              {variantVerifications.reduce((s, v) => s + v.passed, 0) < variantVerifications.reduce((s, v) => s + v.expected, 0) ? (
+                <button
+                  onClick={() => submitVerification(false)}
+                  disabled={actionLoading}
+                  className="flex-1 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-1.5"
+                >
+                  <XCircle className="w-4 h-4" />
+                  {actionLoading ? 'Saving...' : 'Record Discrepancy'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => submitVerification(true)}
+                  disabled={actionLoading}
+                  className="flex-1 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {actionLoading ? 'Saving...' : 'Pass Verification'}
+                </button>
+              )}
             </div>
           </div>
         </div>

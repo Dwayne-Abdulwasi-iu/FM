@@ -91,7 +91,7 @@ function CheckoutSuccessContent() {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(amount).replace(/[\n\r\t\s]+/g, '')
   }
 
   if (loading) {

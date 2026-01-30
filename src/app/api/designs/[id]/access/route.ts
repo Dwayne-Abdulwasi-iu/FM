@@ -14,8 +14,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       )
     }
 
-  const paramsObj = await params
-  const designId = paramsObj.id
+    const paramsObj = await params
+    const designId = paramsObj.id
+
+    // Validate designId format
+    if (!designId || typeof designId !== 'string' || designId.trim().length === 0) {
+      return NextResponse.json(
+        { hasAccess: false, reason: 'Invalid design ID' },
+        { status: 400 }
+      )
+    }
 
     // Check if design exists
     const design = await prisma.design.findUnique({
@@ -97,8 +105,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   } catch (error) {
     console.error('Access check error:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { hasAccess: false, reason: 'Database temporarily unavailable' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { hasAccess: false, reason: 'Internal server error' },
+      { hasAccess: false, reason: 'Failed to verify access' },
       { status: 500 }
     )
   }

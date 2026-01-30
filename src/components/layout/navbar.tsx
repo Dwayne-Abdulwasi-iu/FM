@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard, Download, Package, Heart, Settings, Receipt } from "lucide-react";
+import { User, Search, Menu, Upload, Shield, Trophy, MessageSquare, Palette, ChevronDown, LayoutDashboard, Download, Package, Heart, Settings, Receipt, ShoppingBag } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";
@@ -17,7 +17,6 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -114,153 +113,237 @@ export function Navbar() {
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="w-full max-w-full mx-auto px-1 sm:px-2 lg:px-6">
+        <div className="flex justify-between items-center h-12 sm:h-14 lg:h-16 gap-0.5 lg:gap-1">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-indigo-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">FM</span>
+          <Link href="/" className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+            <div className="w-7 h-7 sm:w-8 lg:w-8 bg-indigo-700 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xs sm:text-sm lg:text-sm">FM</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">Fashion Marketplace</span>
+            <span className="font-bold text-xs sm:text-sm lg:text-base text-gray-900 hidden lg:inline">FM</span>
           </Link>
 
           {/* Search Bar */}
-          <div className="hidden md:flex flex-1 min-w-[200px] mx-4 lg:mx-8">
+          <div className="hidden sm:flex md:flex flex-1 min-w-[120px] mx-1 lg:mx-2">
             <form onSubmit={handleSearch} className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 lg:w-3.5 lg:h-3.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder={t('common.search') + '...'}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 placeholder-gray-500"
+                className="w-full pl-8 lg:pl-9 pr-2 lg:pr-3 py-1 lg:py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 placeholder-gray-500 text-xs lg:text-sm"
                 disabled={isSearching}
               />
               {isSearching && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin h-3 w-3 lg:h-3.5 lg:w-3.5 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
                 </div>
               )}
             </form>
           </div>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center gap-0 lg:gap-1 flex-nowrap justify-end flex-1">
             {/* Direct Designs Link */}
             <Link
               href="/designs"
-              className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-1.5"
+              className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-0.5 lg:gap-1 whitespace-nowrap px-0.5 py-1"
             >
-              <Download className="w-4 h-4" />
-              {t('nav.designs')}
+              <Download className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden lg:inline">{t('nav.designs')}</span>
             </Link>
             
             {/* Direct Boutique Link - Prominent */}
             <Link
               href="/boutique"
-              className="text-gray-800 hover:text-purple-700 font-medium flex items-center gap-1.5"
+              className="text-xs lg:text-sm text-gray-800 hover:text-purple-700 font-medium flex items-center gap-0.5 lg:gap-1 whitespace-nowrap px-0.5 py-1"
             >
-              <Package className="w-4 h-4" />
-              {t('nav.boutique') || 'Boutique'}
+              <Package className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden lg:inline">{t('nav.boutique') || 'Boutique'}</span>
             </Link>
-            {/* Community Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setCommunityDropdownOpen(true)}
-              onMouseLeave={() => setCommunityDropdownOpen(false)}
-            >
-              <button
-                onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
-                className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-1"
-              >
-                Community
-                <ChevronDown className={`w-4 h-4 transition-transform ${communityDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {communityDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                  <Link
-                    href="/contests"
-                    onClick={() => setCommunityDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                  >
-                    <Trophy className="w-4 h-4" />
-                    Contests
-                  </Link>
-                  <Link
-                    href="/forum"
-                    onClick={() => setCommunityDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Forum
-                  </Link>
-                  <Link
-                    href="/commissions"
-                    onClick={() => setCommunityDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                  >
-                    <Palette className="w-4 h-4" />
-                    Commissions
-                  </Link>
-                  <Link
-                    href="/designers"
-                    onClick={() => setCommunityDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                  >
-                    <User className="w-4 h-4" />
-                    Designers
-                  </Link>
-                </div>
-              )}
-            </div>
-            <Link href="/contact" className="text-gray-800 hover:text-indigo-700 font-medium">
+            <Link href="/contact" className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 font-medium whitespace-nowrap hidden lg:inline px-0.5 py-1">
               {t('nav.contact')}
             </Link>
+            
+            {/* Community & Help Dropdown */}
+            <div 
+              className="relative group"
+              onMouseEnter={() => {}}
+              onMouseLeave={() => {}}
+            >
+              <button className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-0.5 lg:gap-1 whitespace-nowrap px-0.5 py-1">
+                <MessageSquare className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                <span className="hidden lg:inline">Help</span>
+                <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              </button>
+              <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <Link
+                  href="/contests"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <Trophy className="w-4 h-4" />
+                  Contests
+                </Link>
+                <Link
+                  href="/forum"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Forum
+                </Link>
+                <Link
+                  href="/commissions"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <Palette className="w-4 h-4" />
+                  Commissions
+                </Link>
+                <Link
+                  href="/designers"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <User className="w-4 h-4" />
+                  Designers
+                </Link>
+                <div className="border-t border-gray-100 my-2"></div>
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Contact
+                </Link>
+              </div>
+            </div>
+            
             {session && (
               <>
-                <Link href="/seller/dashboard" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
-                  <LayoutDashboard className="w-4 h-4" />
-                  {t('nav.dashboard')}
-                </Link>
-                <Link href="/upload" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1 font-medium">
-                  <Upload className="w-4 h-4" />
-                  {t('nav.upload') || 'Upload'}
+                <Link href="/upload" className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 flex items-center gap-0.5 lg:gap-1 font-medium whitespace-nowrap px-0.5 py-1">
+                  <Upload className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                  <span className="hidden lg:inline">{t('nav.upload') || 'Upload'}</span>
                 </Link>
               </>
             )}
-            {session && <NotificationBell />}
-            {/* Digital Cart */}
-            <Link href="/cart" className="text-indigo-700 hover:text-indigo-800 relative" title="Digital Downloads Cart">
-              <Download className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-indigo-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            {/* Boutique Cart */}
-            <Link href="/boutique/cart" className="text-purple-700 hover:text-purple-800 relative" title="Physical Items Cart">
-              <Package className="w-5 h-5" />
-              {boutiqueCartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-purple-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {boutiqueCartCount}
-                </span>
-              )}
-            </Link>
-            {session ? (
-              <div className="flex items-center space-x-4">
-                {session.user?.role === 'ADMIN' && (
-                  <Link href="/admin" className="text-gray-800 hover:text-indigo-700 flex items-center gap-1" title="Admin Dashboard">
-                    <Shield className="w-4 h-4" />
+            
+            {/* Dashboard Dropdown for Sellers/Admins */}
+            {session && (
+              <div 
+                className="relative group"
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
+              >
+                <button className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-0.5 lg:gap-1 whitespace-nowrap px-0.5 py-1">
+                  <LayoutDashboard className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                  <span className="hidden lg:inline">Dashboard</span>
+                  <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                </button>
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <Link
+                    href="/seller/dashboard"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Seller Dashboard
                   </Link>
+                  {session.user?.role === 'ADMIN' && (
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                    >
+                      <Shield className="w-4 h-4" />
+                      Admin Dashboard
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+            {session && <NotificationBell />}
+            {/* User Links Dropdown */}
+            {session && (
+              <div 
+                className="relative group"
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
+              >
+                <button className="text-xs lg:text-sm text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-0.5 lg:gap-1 whitespace-nowrap px-0.5 py-1">
+                  <Heart className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                  <span className="hidden lg:inline">Saved</span>
+                  <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                </button>
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <Link 
+                    href="/wishlist"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Heart className="w-4 h-4 text-red-600" />
+                    Design Wishlist
+                  </Link>
+                  <Link 
+                    href="/boutique/favorites"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
+                  >
+                    <Heart className="w-4 h-4 text-pink-600" />
+                    Favorites
+                  </Link>
+                  <Link 
+                    href="/orders"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    <Receipt className="w-4 h-4" />
+                    My Orders
+                  </Link>
+                </div>
+              </div>
+            )}
+            
+            {/* Carts Dropdown */}
+            <div 
+              className="relative group"
+              onMouseEnter={() => {}}
+              onMouseLeave={() => {}}
+            >
+              <button className="text-gray-800 hover:text-indigo-700 font-medium flex items-center gap-0.5 lg:gap-1 text-xs lg:text-sm relative px-0.5 py-1">
+                <ShoppingBag className="w-4 h-4 lg:w-5 lg:h-5" />
+                {(cartCount > 0 || boutiqueCartCount > 0) && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] lg:text-xs rounded-full w-4 h-4 lg:w-5 lg:h-5 flex items-center justify-center font-bold">
+                    {cartCount + boutiqueCartCount}
+                  </span>
                 )}
+                <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              </button>
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <Link
+                  href="/cart"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  <Download className="w-4 h-4 text-indigo-600" />
+                  <div className="flex-1">
+                    <p className="font-medium">Design Downloads</p>
+                    <p className="text-xs text-gray-500">{cartCount} item{cartCount !== 1 ? 's' : ''}</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/boutique/cart"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                >
+                  <Package className="w-4 h-4 text-purple-600" />
+                  <div className="flex-1">
+                    <p className="font-medium">Physical Items</p>
+                    <p className="text-xs text-gray-500">{boutiqueCartCount} item{boutiqueCartCount !== 1 ? 's' : ''}</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+            {session ? (
+              <div className="flex items-center gap-1 lg:gap-2">
                 <Link href="/profile" className="text-gray-800 hover:text-indigo-700">
-                  <User className="w-5 h-5" />
+                  <User className="w-4 h-4 lg:w-5 lg:h-5" />
                 </Link>
                 <button 
                   onClick={() => signOut()}
-                  className="text-gray-800 hover:text-indigo-700 text-sm font-medium"
+                  className="text-xs lg:text-sm text-gray-800 hover:text-red-700 font-medium px-0.5 py-1"
                 >
                   {t('nav.signOut')}
                 </button>
@@ -268,7 +351,7 @@ export function Navbar() {
             ) : (
               <button 
                 onClick={() => signIn()}
-                className="bg-indigo-700 text-white px-4 py-2 rounded-lg hover:bg-indigo-800 font-medium"
+                className="bg-indigo-700 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-800 font-medium text-xs lg:text-sm"
               >
                 {t('nav.signIn')}
               </button>
@@ -420,6 +503,14 @@ export function Navbar() {
                       Admin Dashboard
                     </Link>
                   )}
+                  <Link 
+                    href="/wishlist" 
+                    className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-red-50 rounded-lg flex items-center gap-1.5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Heart className="w-3 h-3 text-red-600" />
+                    Design Wishlist
+                  </Link>
                   <Link 
                     href="/boutique/favorites" 
                     className="block px-3 py-1.5 text-xs text-gray-800 hover:bg-pink-50 rounded-lg flex items-center gap-1.5"

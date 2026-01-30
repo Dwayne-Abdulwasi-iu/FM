@@ -4,11 +4,13 @@ import { initiateSellerTransfer, createTransferNotification } from '@/lib/transf
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import { checkAndPromoteDesigners } from '@/lib/seller-promotion'
-import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail } from '@/lib/email'
+import { sendPaymentReceivedToDesigner, sendAdminPODAlert, sendSaleNotificationEmail, sendEmail } from '@/lib/email'
 import { getCommissionRate, getCommissionTier } from '@/lib/commission-tiers'
-import { checkAndUpdateSellerTier } from '@/lib/tier-management'
+import { checkAndUpdateSellerTier, activateProSubscription, cancelProSubscription } from '@/lib/tier-management'
 import { fulfillPODOrder } from '@/lib/pod-service'
 import { queueFailedNotification } from '@/lib/notification-queue'
+import { createOwnershipContract } from '@/lib/ownership-documents'
+import { validateDesignOwnershipState } from '@/lib/ownership-validation'
 
 // Minimal local types for Paystack webhook payloads
 type PaystackOrderItem = {
@@ -70,6 +72,55 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Handle failed payments (buyer backed out)
+    if (event.event === 'charge.failed' && event.data) {
+      console.log(`[Paystack Webhook] Payment failed for reference: ${reference}`);
+      
+      // Try to find and update the boutique order if it exists
+      if (reference) {
+        try {
+          const boutiqueOrder = await prisma.boutiqueOrder.findUnique({
+            where: { orderNumber: reference },
+          });
+          
+          if (boutiqueOrder && boutiqueOrder.status === 'PENDING_PAYMENT') {
+            // Mark order as payment failed
+            await prisma.boutiqueOrder.update({
+              where: { id: boutiqueOrder.id },
+              data: { 
+                status: 'PAYMENT_FAILED',
+                // Restore inventory since payment failed
+              },
+            });
+            
+            // Restore reserved inventory
+            await prisma.boutiqueOrderItem.findMany({
+              where: { orderId: boutiqueOrder.id },
+              include: { variant: true },
+            }).then(async (items) => {
+              for (const item of items) {
+                if (item.variant) {
+                  await prisma.boutiqueProductVariant.update({
+                    where: { id: item.variant.id },
+                    data: {
+                      reserved: { decrement: item.quantity },
+                      quantity: { increment: item.quantity },
+                    },
+                  });
+                }
+              }
+            });
+            
+            console.log(`[Paystack Webhook] Marked order ${boutiqueOrder.id} as PAYMENT_FAILED and restored inventory`);
+          }
+        } catch (err) {
+          console.error(`[Paystack Webhook] Error handling failed payment:`, err);
+        }
+      }
+      
+      return NextResponse.json({ received: true });
+    }
+
     if (event.event === 'charge.success' && event.data) {
       const { amount, currency } = data || {}
 
@@ -77,6 +128,12 @@ export async function POST(request: NextRequest) {
 
       // Defensive metadata extraction
       const metadata = data?.metadata as Record<string, unknown> | undefined
+
+      // Check if this is a Pro subscription payment
+      if (metadata?.type === 'pro_subscription') {
+        await handleProSubscriptionPayment(reference || '', metadata)
+        return NextResponse.json({ received: true })
+      }
 
       // Check if this is a commission payment
       if (metadata?.type === 'commission') {
@@ -262,7 +319,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create purchase record for access control
-        await prisma.purchase.create({
+        const purchase = await prisma.purchase.create({
           data: {
             userId: userId,
             designId: item.designId,
@@ -272,6 +329,99 @@ export async function POST(request: NextRequest) {
             accessGranted: true
           }
         })
+
+        // For OWNERSHIP purchases, create the ownership contract (with idempotency check)
+        if (item.purchaseType === 'OWNERSHIP') {
+          try {
+            // Check if contract already exists (idempotency)
+            const existingContract = await prisma.ownershipContract.findUnique({
+              where: { purchaseId: purchase.id }
+            })
+
+            if (existingContract) {
+              console.log(`[Ownership] Contract already exists for purchase ${purchase.id}, skipping creation`)
+            } else {
+              // Get the approved ownership document for this design
+              const ownershipDoc = await prisma.ownershipDocument.findFirst({
+                where: {
+                  designId: item.designId,
+                  status: 'APPROVED'
+                },
+                select: {
+                  id: true,
+                  sellerFullName: true,
+                  sellerSignature: true
+                }
+              })
+
+              if (ownershipDoc) {
+                // Get buyer info
+                const buyer = await prisma.user.findUnique({
+                  where: { id: userId },
+                  select: {
+                    name: true,
+                    displayName: true
+                  }
+                })
+
+                // Create the ownership contract
+                await createOwnershipContract(
+                  purchase.id,
+                  userId,
+                  item.design?.designerId ?? '',
+                  buyer?.name || 'Buyer',
+                  buyer?.displayName || undefined,
+                  buyer?.name || 'Buyer',
+                  item.designId,
+                  item.design?.title || 'Design',
+                  ownershipDoc.id,
+                  ownershipDoc.sellerFullName,
+                  ownershipDoc.sellerSignature
+                )
+
+                // FLAW FIX #14: Validate ownership state after contract creation
+                try {
+                  const validation = await validateDesignOwnershipState(item.designId)
+                  if (!validation.isValid) {
+                    console.error(
+                      `[Ownership] CRITICAL: State validation failed for design ${item.designId}: ${validation.error}`,
+                      { validation }
+                    )
+                    // Alert admin but don't block the transaction
+                    try {
+                      await sendEmail({
+                        to: process.env.ADMIN_EMAIL || 'admin@example.com',
+                        subject: 'CRITICAL: Design Ownership State Inconsistency',
+                        html: `
+                          <h2>Design Ownership State Validation Failed</h2>
+                          <p>Design ID: ${item.designId}</p>
+                          <p>Validation Error: ${validation.error}</p>
+                          <p>Active Contracts: ${validation.activeContracts}</p>
+                          <p>Design isOwned: ${validation.actualOwned}</p>
+                          <p>Please investigate immediately and run repair script if needed.</p>
+                        `
+                      })
+                    } catch (emailErr) {
+                      console.error('Failed to send state validation alert email', emailErr)
+                    }
+                  }
+                } catch (validationErr) {
+                  console.error(
+                    `[Ownership] Error validating design state after contract creation:`,
+                    validationErr
+                  )
+                }
+
+                console.log(`[Ownership] Contract created for purchase ${purchase.id}`)
+              } else {
+                console.warn(`[Ownership] No approved document found for design ${item.designId}`)
+              }
+            }
+          } catch (contractError) {
+            console.error(`[Ownership] Failed to create ownership contract:`, contractError)
+            // Don't fail the payment - ownership contract creation is async
+          }
+        }
 
         // Auto-transfer earnings to seller account using transfer service
         try {
@@ -499,10 +649,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
 
   } catch (error) {
-    void error
     console.error('Paystack webhook error:', error)
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { message: 'Invalid JSON in webhook body' },
+        { status: 400 }
+      )
+    }
+
+    // Handle database errors (transient)
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { message: 'Database temporarily unavailable' },
+        { status: 503 }
+      )
+    }
+
+    // Generic server error
     return NextResponse.json(
-      { message: 'Webhook error' },
+      { message: 'Webhook processing error' },
       { status: 500 }
     )
   }
@@ -524,9 +691,13 @@ async function handleCommissionPayment(reference: string, metadata: Record<strin
       return
     }
 
-    // Update commission request to PAID status
-    const updatedRequest = await prisma.commissionRequest.update({
-      where: { id: commissionRequestId },
+    // CRITICAL: Only update if not already paid (prevent double-payment)
+    const updateResult = await prisma.commissionRequest.updateMany({
+      where: {
+        id: commissionRequestId,
+        isPaid: false, // Only update if not already marked paid
+        status: 'QUOTED', // Only update if still in QUOTED status
+      },
       data: {
         status: 'PAID',
         isPaid: true,
@@ -536,6 +707,19 @@ async function handleCommissionPayment(reference: string, metadata: Record<strin
         paymentMethod: 'PAYSTACK',
         paymentReference: reference,
       },
+    })
+
+    if (updateResult.count === 0) {
+      // Payment was already processed
+      console.log(`Commission ${commissionRequestId} already processed via Paystack, skipping`)
+      return
+    }
+
+    console.log(`Commission ${commissionRequestId} marked as PAID via Paystack`)
+
+    // Fetch updated request for email notification
+    const updatedRequest = await prisma.commissionRequest.findUnique({
+      where: { id: commissionRequestId },
       include: {
         requester: {
           select: { name: true, displayName: true },
@@ -546,10 +730,8 @@ async function handleCommissionPayment(reference: string, metadata: Record<strin
       },
     })
 
-    console.log(`Commission ${commissionRequestId} marked as PAID via Paystack`)
-
     // Send email notification to designer
-    if (updatedRequest.designer?.email) {
+    if (updatedRequest?.designer?.email) {
       const requesterName = updatedRequest.requester?.displayName || 
                            updatedRequest.requester?.name || 
                            'Client'
@@ -572,5 +754,93 @@ async function handleCommissionPayment(reference: string, metadata: Record<strin
 
   } catch (error) {
     console.error('Error handling Paystack commission payment:', error)
+  }
+}
+
+/**
+ * Handle Pro subscription payment via Paystack
+ */
+async function handleProSubscriptionPayment(reference: string, metadata: Record<string, unknown>) {
+  try {
+    const userId = typeof metadata?.userId === 'string' ? metadata.userId : undefined
+    const billingPeriod = typeof metadata?.billingPeriod === 'string' ? metadata.billingPeriod : 'MONTHLY'
+    const amount = typeof metadata?.amount === 'number' ? metadata.amount : 0
+    const authCode = typeof metadata?.authCode === 'string' ? metadata.authCode : undefined
+    const paymentStatus = typeof metadata?.status === 'string' ? metadata.status : undefined
+
+    if (!userId) {
+      console.error('[Pro Subscription] Missing userId in Paystack payment')
+      return
+    }
+    
+    // Verify payment was successful
+    if (paymentStatus !== 'success') {
+      console.error(`[Pro Subscription] Payment not successful. Status: ${paymentStatus || 'unknown'}`)
+      return
+    }
+
+    // Check if already activated (idempotency)
+    const existing = await prisma.proSubscription.findUnique({
+      where: { userId }
+    }).catch(() => null)
+    
+    if (existing?.status === 'ACTIVE' && existing?.paystackAuthCode === authCode) {
+      console.log(`[Pro Subscription] Already activated for user ${userId}, skipping`)
+      return
+    }
+
+    // Activate Pro subscription
+    const result = await activateProSubscription(
+      userId,
+      billingPeriod as 'MONTHLY' | 'YEARLY',
+      amount,
+      undefined,
+      authCode
+    )
+
+    if (result.success) {
+      console.log(`[Pro Subscription] Activated for user ${userId} via Paystack: ${reference}`)
+
+      // Send email to seller about subscription activation
+      const seller = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, displayName: true, name: true }
+      })
+
+      if (seller?.email) {
+        try {
+          const sellerName = seller.displayName || seller.name || 'Seller'
+          const expiresAt = billingPeriod === 'YEARLY' 
+            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+          await sendEmail({
+            to: seller.email,
+            subject: `Pro Subscription Activated - ${billingPeriod === 'YEARLY' ? 'Yearly' : 'Monthly'} Plan`,
+            html: `
+              <h2>Welcome to Pro Subscription!</h2>
+              <p>Hi ${sellerName},</p>
+              <p>Your Pro subscription has been successfully activated!</p>
+              <p><strong>Plan:</strong> ${billingPeriod === 'YEARLY' ? 'Yearly' : 'Monthly'}</p>
+              <p><strong>Expires:</strong> ${expiresAt.toLocaleDateString()}</p>
+              <p><strong>Benefits:</strong></p>
+              <ul>
+                <li>Tier boost: +1 level above your natural tier</li>
+                <li>6 featured listings (instead of 5)</li>
+                <li>1% commission discount on all sales</li>
+              </ul>
+              <p>Thank you for upgrading!</p>
+            `
+          })
+          console.log(`Pro subscription confirmation sent to ${seller.email}`)
+        } catch (emailError) {
+          console.error('Failed to send subscription confirmation email:', emailError)
+        }
+      }
+    } else {
+      console.error(`[Pro Subscription] Failed to activate: ${result.message}`)
+    }
+  } catch (error) {
+    console.error('[Pro Subscription] Error handling Paystack subscription payment:', error)
   }
 }

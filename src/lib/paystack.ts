@@ -32,11 +32,16 @@ export async function initializeTransaction(data: any) {
 }
 
 export async function verifyTransaction(reference: string) {
-  const response = await axios.get(
-    `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
-    { headers: getAuthHeaders() }
-  );
-  return response.data;
+  try {
+    const response = await axios.get(
+      `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Paystack verification failed:', error);
+    throw new Error('Payment verification temporarily unavailable');
+  }
 }
 
 export async function listBanks(country = 'nigeria') {
@@ -81,7 +86,7 @@ export async function getUSDToNGNRate(): Promise<number> {
     const data = await response.json()
     const rate = data.rates?.NGN
     
-    if (!rate) throw new Error('NGN rate not found')
+    if (!rate || rate <= 0) throw new Error('Invalid NGN rate')
     
     // Cache the rate
     exchangeRateCache = { rate, timestamp: Date.now() }
@@ -99,7 +104,7 @@ export async function getUSDToNGNRate(): Promise<number> {
     const data = await response.json()
     const rate = data.rates?.NGN
     
-    if (!rate) throw new Error('NGN rate not found')
+    if (!rate || rate <= 0) throw new Error('Invalid NGN rate')
     
     // Cache the rate
     exchangeRateCache = { rate, timestamp: Date.now() }
@@ -117,7 +122,7 @@ export async function getUSDToNGNRate(): Promise<number> {
     const data = await response.json()
     const rate = data.usd?.ngn
     
-    if (!rate) throw new Error('NGN rate not found')
+    if (!rate || rate <= 0) throw new Error('Invalid NGN rate')
     
     // Cache the rate
     exchangeRateCache = { rate, timestamp: Date.now() }

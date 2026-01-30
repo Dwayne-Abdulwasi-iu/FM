@@ -37,8 +37,10 @@ export async function GET(request: NextRequest) {
         include: {
           designer: {
             select: {
+              id: true,
               name: true,
-              email: true
+              email: true,
+              displayName: true
             }
           }
         }
@@ -57,8 +59,16 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching designs:', error)
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: 'Database temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch designs' },
+      { error: 'Failed to fetch designs. Please try again later.' },
       { status: 500 }
     )
   }

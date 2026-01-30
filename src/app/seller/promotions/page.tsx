@@ -228,51 +228,51 @@ export default function SellerPromotionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 md:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
           <div>
             <Link
               href="/seller/dashboard"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2"
+              className="inline-flex items-center text-xs sm:text-sm text-gray-500 hover:text-gray-700 mb-1 sm:mb-2"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
+              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Promotions</h1>
-            <p className="text-gray-600 mt-1">Create and manage discounts for your designs</p>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Promotions</h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Create and manage discounts for your designs</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
             Create Promotion
           </button>
         </div>
 
         {/* Messages */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
-            <CheckCircle className="w-5 h-5" />
+          <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-xs sm:text-sm text-green-700">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             {success}
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-            <AlertCircle className="w-5 h-5" />
+          <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-xs sm:text-sm text-red-700">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             {error}
           </div>
         )}
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-5 md:mb-6">
           {(['all', 'active', 'expired'] as const).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 filter === status
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -285,30 +285,30 @@ export default function SellerPromotionsPage() {
 
         {/* Promotions List */}
         {promotions.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <Tag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Promotions Yet</h3>
-            <p className="text-gray-500 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 md:p-12 text-center">
+            <Tag className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-2 sm:mb-3 md:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No Promotions Yet</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4 md:mb-6">
               Create your first promotion to attract more buyers
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               Create Promotion
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {promotions.map((promotion) => (
               <div
                 key={promotion.id}
-                className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 sm:gap-3 md:gap-4 min-w-0">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       promotion.type === 'DISCOUNT'
                         ? 'bg-green-100'
                         : promotion.type === 'BUNDLE'
@@ -316,64 +316,65 @@ export default function SellerPromotionsPage() {
                         : 'bg-orange-100'
                     }`}>
                       {promotion.type === 'DISCOUNT' ? (
-                        <Percent className={`w-6 h-6 ${
+                        <Percent className={`w-5 h-5 sm:w-6 sm:h-6 ${
                           promotion.type === 'DISCOUNT' ? 'text-green-600' : ''
                         }`} />
                       ) : promotion.type === 'BUNDLE' ? (
-                        <Package className="w-6 h-6 text-purple-600" />
+                        <Package className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                       ) : (
-                        <Clock className="w-6 h-6 text-orange-600" />
+                        <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-gray-900">{promotion.name}</h3>
-                        {getStatusBadge(promotion)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-xs sm:text-sm md:text-base text-gray-900">{promotion.name}</h3>
+                        <div className="flex-shrink-0">{getStatusBadge(promotion)}</div>
                       </div>
                       {promotion.description && (
-                        <p className="text-sm text-gray-500 mt-1">{promotion.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 line-clamp-1">{promotion.description}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
+                      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600 flex-wrap">
+                        <span className="flex items-center gap-1 flex-shrink-0">
                           {promotion.discountType === 'PERCENTAGE' ? (
-                            <Percent className="w-4 h-4" />
+                            <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
                           ) : (
-                            <DollarSign className="w-4 h-4" />
+                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
                           )}
                           {promotion.discountType === 'PERCENTAGE'
                             ? `${promotion.discountValue}% off`
                             : `$${promotion.discountValue} off`}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
+                        <span className="flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">{formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}</span>
+                          <span className="sm:hidden text-xs">{new Date(promotion.startDate).toLocaleDateString('en-US', {month:'short', day:'numeric'})}</span>
                         </span>
                         {promotion.maxUsage && (
-                          <span>
+                          <span className="text-xs">
                             {promotion.usageCount}/{promotion.maxUsage} used
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={() => handleToggleActive(promotion.id, promotion.isActive)}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-1 sm:p-2 rounded-lg transition-colors ${
                         promotion.isActive
                           ? 'text-green-600 hover:bg-green-50'
                           : 'text-gray-400 hover:bg-gray-50'
                       }`}
                       title={promotion.isActive ? 'Deactivate' : 'Activate'}
                     >
-                      {promotion.isActive ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                      {promotion.isActive ? <Eye className="w-4 h-4 sm:w-5 sm:h-5" /> : <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </button>
                     <button
                       onClick={() => handleDeletePromotion(promotion.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
@@ -384,14 +385,14 @@ export default function SellerPromotionsPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Create Promotion</h2>
+              <div className="p-3 sm:p-4 md:p-6 border-b border-gray-200">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Create Promotion</h2>
               </div>
-              <form onSubmit={handleCreatePromotion} className="p-6 space-y-4">
+              <form onSubmit={handleCreatePromotion} className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
                 <div>
-                  <label htmlFor="promotionType" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="promotionType" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Promotion Type
                   </label>
                   <select
@@ -400,7 +401,7 @@ export default function SellerPromotionsPage() {
                     onChange={(e) =>
                       setNewPromotion({ ...newPromotion, type: e.target.value as 'DISCOUNT' | 'BUNDLE' | 'FLASH_SALE' })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="DISCOUNT">Discount</option>
                     <option value="BUNDLE">Bundle</option>
@@ -409,31 +410,31 @@ export default function SellerPromotionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name *</label>
                   <input
                     type="text"
                     value={newPromotion.name}
                     onChange={(e) => setNewPromotion({ ...newPromotion, name: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Summer Sale"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea
                     value={newPromotion.description}
                     onChange={(e) => setNewPromotion({ ...newPromotion, description: e.target.value })}
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Optional description"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <label htmlFor="discountType" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="discountType" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       Discount Type
                     </label>
                     <select
@@ -445,14 +446,14 @@ export default function SellerPromotionsPage() {
                           discountType: e.target.value as 'PERCENTAGE' | 'FIXED',
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="PERCENTAGE">Percentage</option>
                       <option value="FIXED">Fixed Amount</option>
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="discountValue" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="discountValue" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       {newPromotion.discountType === 'PERCENTAGE' ? 'Discount %' : 'Discount $'}
                     </label>
                     <input
@@ -465,38 +466,38 @@ export default function SellerPromotionsPage() {
                         setNewPromotion({ ...newPromotion, discountValue: parseInt(e.target.value) || 0 })
                       }
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
-                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <label htmlFor="startDate" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Start Date</label>
                     <input
                       id="startDate"
                       type="date"
                       value={newPromotion.startDate}
                       onChange={(e) => setNewPromotion({ ...newPromotion, startDate: e.target.value })}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                   <div>
-                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <label htmlFor="endDate" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">End Date</label>
                     <input
                       id="endDate"
                       type="date"
                       value={newPromotion.endDate}
                       onChange={(e) => setNewPromotion({ ...newPromotion, endDate: e.target.value })}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="maxUsage" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="maxUsage" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Max Usage (Optional)
                   </label>
                   <input
@@ -510,33 +511,35 @@ export default function SellerPromotionsPage() {
                         maxUsage: e.target.value ? parseInt(e.target.value) : null,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Unlimited"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {creating ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Creating...
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <span className="hidden sm:inline">Creating...</span>
+                        <span className="sm:hidden">...</span>
                       </>
                     ) : (
                       <>
-                        <Plus className="w-4 h-4" />
-                        Create Promotion
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Create Promotion</span>
+                        <span className="sm:hidden">Create</span>
                       </>
                     )}
                   </button>

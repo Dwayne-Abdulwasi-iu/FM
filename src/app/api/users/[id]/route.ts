@@ -108,8 +108,16 @@ export async function GET(
     });
   } catch (error) {
     console.error("Get user profile error:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to get user profile. Please try again later." },
       { status: 500 }
     );
   }
@@ -148,6 +156,42 @@ export async function PATCH(
       pushNotifications,
     } = body;
 
+    // Validate field lengths to prevent abuse
+    if (displayName && displayName.length > 100) {
+      return NextResponse.json(
+        { error: "Display name must be no more than 100 characters" },
+        { status: 400 }
+      )
+    }
+
+    if (bio && bio.length > 500) {
+      return NextResponse.json(
+        { error: "Bio must be no more than 500 characters" },
+        { status: 400 }
+      )
+    }
+
+    if (website && website.length > 255) {
+      return NextResponse.json(
+        { error: "Website URL must be no more than 255 characters" },
+        { status: 400 }
+      )
+    }
+
+    if (location && location.length > 100) {
+      return NextResponse.json(
+        { error: "Location must be no more than 100 characters" },
+        { status: 400 }
+      )
+    }
+
+    if (portfolioUrl && portfolioUrl.length > 255) {
+      return NextResponse.json(
+        { error: "Portfolio URL must be no more than 255 characters" },
+        { status: 400 }
+      )
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -181,8 +225,23 @@ export async function PATCH(
     return NextResponse.json({ user });
   } catch (error) {
     console.error("Update user profile error:", error);
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { error: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to update profile. Please try again later." },
       { status: 500 }
     );
   }

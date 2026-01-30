@@ -1,6 +1,9 @@
 node_modules
 .next
 fashion-marketplace
+dist
+build
+out
 **/*_old.*
 **/*.old.*
 .env

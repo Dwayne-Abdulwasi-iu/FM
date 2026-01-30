@@ -1,0 +1,41 @@
+
+> fashion-marketplace@0.1.0 type-check
+> tsc --noEmit
+
+src/app/api/admin/payment-reconciliation/route.ts(229,7): error TS2322: Type '{ processor: any; reportDate: Date; periodStart: Date; periodEnd: Date; expectedBalance: any; actualBalance: any; discrepancy: number; completedTxnCount: number; pendingTxnCount: number; failedTxnCount: number; totalProcessed: number; payoutCount: number; payoutTotal: number; }' is not assignable to type '(Without<PaymentReconciliationReportCreateInput, PaymentReconciliationReportUncheckedCreateInput> & PaymentReconciliationReportUncheckedCreateInput) | (Without<...> & PaymentReconciliationReportCreateInput)'.
+  Type '{ processor: any; reportDate: Date; periodStart: Date; periodEnd: Date; expectedBalance: any; actualBalance: any; discrepancy: number; completedTxnCount: number; pendingTxnCount: number; failedTxnCount: number; totalProcessed: number; payoutCount: number; payoutTotal: number; }' is not assignable to type 'Without<PaymentReconciliationReportUncheckedCreateInput, PaymentReconciliationReportCreateInput> & PaymentReconciliationReportCreateInput'.
+    Type '{ processor: any; reportDate: Date; periodStart: Date; periodEnd: Date; expectedBalance: any; actualBalance: any; discrepancy: number; completedTxnCount: number; pendingTxnCount: number; failedTxnCount: number; totalProcessed: number; payoutCount: number; payoutTotal: number; }' is missing the following properties from type 'PaymentReconciliationReportCreateInput': avgPayoutTime, failedPayouts
+src/app/seller/payouts/page.tsx(5,10): error TS2614: Module '"@/lib/prisma"' has no exported member 'prisma'. Did you mean to use 'import prisma from "@/lib/prisma"' instead?
+src/app/seller/payouts/page.tsx(9,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/app/seller/payouts/page.tsx(54,53): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(54,58): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(55,56): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(55,61): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(57,14): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(58,14): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(58,19): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(81,44): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(81,49): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(82,52): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(82,57): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/app/seller/payouts/page.tsx(217,58): error TS7006: Parameter 'earning' implicitly has an 'any' type.
+src/components/admin/payment-reconciliation-dashboard.tsx(4,115): error TS2307: Cannot find module 'recharts' or its corresponding type declarations.
+src/components/admin/payment-reconciliation-dashboard.tsx(17,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+src/components/admin/payment-reconciliation-dashboard.tsx(281,38): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/components/admin/payment-reconciliation-dashboard.tsx(303,40): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/components/seller/commission-breakdown.tsx(29,20): error TS2552: Cannot find name 'getCommissionTiers'. Did you mean 'getCommissionTier'?
+src/components/seller/commission-breakdown.tsx(30,20): error TS2304: Cannot find name 'getGMVToNextTier'.
+src/components/seller/commission-breakdown.tsx(60,33): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-breakdown.tsx(62,73): error TS2339: Property 'description' does not exist on type 'number'.
+src/components/seller/commission-breakdown.tsx(226,32): error TS7006: Parameter 'tier' implicitly has an 'any' type.
+src/components/seller/commission-breakdown.tsx(226,38): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/components/seller/commission-breakdown.tsx(227,56): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-breakdown.tsx(262,86): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-breakdown.tsx(296,37): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-calculator-widget.tsx(24,21): error TS2304: Cannot find name 'calculateOrderTotal'.
+src/components/seller/commission-calculator-widget.tsx(26,20): error TS2304: Cannot find name 'getGMVToNextTier'.
+src/components/seller/commission-calculator-widget.tsx(57,31): error TS2339: Property 'description' does not exist on type 'number'.
+src/components/seller/commission-calculator-widget.tsx(60,80): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-calculator-widget.tsx(128,44): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/commission-calculator-widget.tsx(165,51): error TS2339: Property 'percentage' does not exist on type 'number'.
+src/components/seller/payment-audit-trail.tsx(13,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.

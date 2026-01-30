@@ -96,6 +96,14 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching cart:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { success: false, message: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Failed to fetch cart" },
       { status: 500 }
@@ -120,6 +128,15 @@ export async function POST(request: NextRequest) {
     if (!productId || !variantId) {
       return NextResponse.json(
         { success: false, message: "Product and variant are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate quantity
+    const MAX_QUANTITY_PER_ITEM = 999;
+    if (!quantity || quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
+      return NextResponse.json(
+        { success: false, message: `Invalid quantity (must be between 1 and ${MAX_QUANTITY_PER_ITEM})` },
         { status: 400 }
       );
     }
@@ -183,6 +200,21 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error adding to cart:", error);
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { success: false, message: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Failed to add to cart" },
       { status: 500 }
@@ -253,6 +285,14 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error updating cart:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { success: false, message: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Failed to update cart" },
       { status: 500 }
@@ -302,6 +342,14 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error removing from cart:", error);
+
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json(
+        { success: false, message: "Database temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Failed to remove from cart" },
       { status: 500 }

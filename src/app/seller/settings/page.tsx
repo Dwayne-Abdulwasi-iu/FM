@@ -215,87 +215,88 @@ export default function SellerSettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-6 md:mb-8">
           <Link
             href="/seller/dashboard"
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-2"
+            className="inline-flex items-center text-xs sm:text-sm text-gray-500 hover:text-gray-700 mb-2"
           >
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
             Back to Dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Seller Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your payout settings and preferences</p>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Seller Settings</h1>
+          <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Manage your payout settings and preferences</p>
         </div>
 
         {/* Message */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
+            className={`mb-3 sm:mb-4 md:mb-6 p-2.5 sm:p-3 md:p-4 rounded-lg flex items-center gap-2 text-xs sm:text-sm ${
               message.type === 'success'
                 ? 'bg-green-50 border border-green-200 text-green-700'
                 : 'bg-red-50 border border-red-200 text-red-700'
             }`}
           >
             {message.type === 'success' ? (
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-5 h-5" />
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             )}
             {message.text}
           </div>
         )}
 
         {/* Bank Account Section */}
-        <div id="bank" className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-green-600" />
+        <div id="bank" className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Bank Account</h2>
-              <p className="text-sm text-gray-500">Your payout destination</p>
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Bank Account</h2>
+              <p className="text-xs sm:text-sm text-gray-500">Your payout destination</p>
             </div>
           </div>
 
           {settings.bankAccount ? (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Building className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-900">{settings.bankAccount.bankName}</span>
+            <div className="bg-gray-50 rounded-lg p-2.5 sm:p-3 md:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium text-xs sm:text-sm text-gray-900 truncate">{settings.bankAccount.bankName}</span>
                 </div>
                 {settings.bankAccount.isVerified && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Verified
+                  <span className="inline-flex items-center px-2 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-green-100 text-green-700 flex-shrink-0">
+                    <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                    <span className="hidden sm:inline">Verified</span>
+                    <span className="sm:hidden">OK</span>
                   </span>
                 )}
               </div>
-              <div className="space-y-1 text-sm text-gray-600">
+              <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-600">
                 <p>
                   <span className="text-gray-400">Account Name:</span> {settings.bankAccount.accountName}
                 </p>
                 <p>
-                  <span className="text-gray-400">Account Number:</span> ****
+                  <span className="text-gray-400">Account #:</span> ****
                   {settings.bankAccount.accountNumber.slice(-4)}
                 </p>
               </div>
               <button
                 onClick={() => setShowBankForm(true)}
-                className="mt-4 text-sm text-indigo-600 hover:text-indigo-800"
+                className="mt-2 sm:mt-3 text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 Update Bank Account
               </button>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-4">No bank account added yet</p>
+            <div className="text-center py-4 sm:py-6">
+              <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-2 sm:mb-3" />
+              <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">No bank account added yet</p>
               <button
                 onClick={() => setShowBankForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm rounded-lg hover:bg-indigo-700"
               >
                 Add Bank Account
               </button>
@@ -304,13 +305,13 @@ export default function SellerSettingsPage() {
 
           {/* Bank Form */}
           {showBankForm && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-4">
+            <div className="mt-3 sm:mt-4 md:mt-6 pt-3 sm:pt-4 md:pt-6 border-t border-gray-200">
+              <h3 className="font-medium text-xs sm:text-sm md:text-base text-gray-900 mb-2 sm:mb-3 md:mb-4">
                 {settings.bankAccount ? 'Update' : 'Add'} Bank Account
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
                 <div>
-                  <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 mb-1">Bank</label>
+                  <label htmlFor="bankCode" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Bank</label>
                   <select
                     id="bankCode"
                     value={bankForm.bankCode}
@@ -318,7 +319,7 @@ export default function SellerSettingsPage() {
                       setBankForm({ ...bankForm, bankCode: e.target.value, accountName: '' })
                       setVerified(false)
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="">Select a bank</option>
                     {banks.map((bank) => (
@@ -330,10 +331,10 @@ export default function SellerSettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Account Number
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 sm:gap-2">
                     <input
                       type="text"
                       value={bankForm.accountNumber}
@@ -342,57 +343,58 @@ export default function SellerSettingsPage() {
                         setVerified(false)
                       }}
                       maxLength={10}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="10-digit account number"
+                      className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="10-digit account"
                     />
                     <button
                       onClick={handleVerifyAccount}
                       disabled={verifying || !bankForm.bankCode || bankForm.accountNumber.length < 10}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     >
                       {verifying ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       ) : (
-                        <RefreshCw className="w-5 h-5" />
+                        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
                       )}
                     </button>
                   </div>
                 </div>
 
                 {bankForm.accountName && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <User className="w-5 h-5" />
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-2 sm:p-2.5 md:p-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-green-700 text-xs sm:text-sm">
+                      <User className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                       <span className="font-medium">{bankForm.accountName}</span>
                     </div>
                   </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={() => {
                       setShowBankForm(false)
                       setBankForm({ bankCode: '', accountNumber: '', accountName: '' })
                       setVerified(false)
                     }}
-                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveBankAccount}
                     disabled={!verified || saving}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                    className="flex-1 inline-flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {saving ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
+                        <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <span className="hidden sm:inline">Saving...</span>
                       </>
                     ) : (
                       <>
-                        <Save className="w-4 h-4" />
-                        Save Bank Account
+                        <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Save Bank Account</span>
+                        <span className="sm:hidden">Save</span>
                       </>
                     )}
                   </button>
@@ -403,22 +405,22 @@ export default function SellerSettingsPage() {
         </div>
 
         {/* Notifications Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Bell className="w-5 h-5 text-blue-600" />
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-              <p className="text-sm text-gray-500">Manage your notification preferences</p>
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Notifications</h2>
+              <p className="text-xs sm:text-sm text-gray-500">Manage your notification preferences</p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
+            <label className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
               <div>
-                <p className="font-medium text-gray-900">Email Notifications</p>
-                <p className="text-sm text-gray-500">Receive updates via email</p>
+                <p className="font-medium text-xs sm:text-sm text-gray-900">Email Notifications</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Receive updates via email</p>
               </div>
               <input
                 type="checkbox"
@@ -426,14 +428,14 @@ export default function SellerSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, emailNotifications: e.target.checked })
                 }
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 rounded focus:ring-indigo-500 flex-shrink-0"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
               <div>
-                <p className="font-medium text-gray-900">Order Notifications</p>
-                <p className="text-sm text-gray-500">Get notified when you receive orders</p>
+                <p className="font-medium text-xs sm:text-sm text-gray-900">Order Notifications</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Get notified when you receive orders</p>
               </div>
               <input
                 type="checkbox"
@@ -441,14 +443,14 @@ export default function SellerSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, orderNotifications: e.target.checked })
                 }
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 rounded focus:ring-indigo-500 flex-shrink-0"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
               <div>
-                <p className="font-medium text-gray-900">Payout Notifications</p>
-                <p className="text-sm text-gray-500">Get notified about payout status</p>
+                <p className="font-medium text-xs sm:text-sm text-gray-900">Payout Notifications</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Get notified about payout status</p>
               </div>
               <input
                 type="checkbox"
@@ -456,7 +458,7 @@ export default function SellerSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, payoutNotifications: e.target.checked })
                 }
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 rounded focus:ring-indigo-500 flex-shrink-0"
               />
             </label>
           </div>
@@ -464,38 +466,39 @@ export default function SellerSettingsPage() {
           <button
             onClick={handleSaveNotifications}
             disabled={saving}
-            className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="mt-3 sm:mt-4 md:mt-6 inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                <span className="hidden sm:inline">Saving...</span>
               </>
             ) : (
               <>
-                <Save className="w-4 h-4" />
-                Save Preferences
+                <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Save Preferences</span>
+                <span className="sm:hidden">Save</span>
               </>
             )}
           </button>
         </div>
 
         {/* Currency & Language Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Globe className="w-5 h-5 text-blue-600" />
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Display Preferences</h2>
-              <p className="text-sm text-gray-500">Customize how prices and content are displayed</p>
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Display Preferences</h2>
+              <p className="text-xs sm:text-sm text-gray-500">Customize how prices and content are displayed</p>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {/* Currency Selector */}
             <div>
-              <label htmlFor="displayCurrency" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="displayCurrency" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                 Display Currency
               </label>
               <select
@@ -506,7 +509,7 @@ export default function SellerSettingsPage() {
                   setMessage({ type: 'success', text: 'Currency preference saved!' })
                   setTimeout(() => setMessage(null), 3000)
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
               >
                 {currencies.map((curr) => (
                   <option key={curr.code} value={curr.code}>
@@ -514,16 +517,15 @@ export default function SellerSettingsPage() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                All prices across the platform will be displayed in your selected currency.
-                Actual payments are processed in the original currency.
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                All prices will be displayed in your selected currency. Actual payments are processed in the original currency.
               </p>
             </div>
 
             {/* Language Selector */}
-            <div className="pt-4 border-t border-gray-200">
-              <label htmlFor="displayLanguage" className="block text-sm font-medium text-gray-700 mb-2">
-                <Languages className="w-4 h-4 inline mr-1" />
+            <div className="pt-3 sm:pt-4 border-t border-gray-200">
+              <label htmlFor="displayLanguage" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                <Languages className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Language
               </label>
               <select
@@ -534,7 +536,7 @@ export default function SellerSettingsPage() {
                   setMessage({ type: 'success', text: 'Language preference saved!' })
                   setTimeout(() => setMessage(null), 3000)
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
               >
                 {supportedLocales.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -542,40 +544,40 @@ export default function SellerSettingsPage() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Interface text will be displayed in your selected language where translations are available.
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                Interface text will be displayed in your selected language where available.
               </p>
             </div>
           </div>
         </div>
 
         {/* Security Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-purple-600" />
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Account Security</h2>
-              <p className="text-sm text-gray-500">Manage your account security</p>
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Account Security</h2>
+              <p className="text-xs sm:text-sm text-gray-500">Manage your account security</p>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <Link
               href="/profile/settings"
-              className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="block p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <p className="font-medium text-gray-900">Change Password</p>
-              <p className="text-sm text-gray-500">Update your account password</p>
+              <p className="font-medium text-xs sm:text-sm text-gray-900">Change Password</p>
+              <p className="text-[10px] sm:text-xs text-gray-500">Update your account password</p>
             </Link>
 
             <Link
               href="/profile/edit"
-              className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="block p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <p className="font-medium text-gray-900">Edit Profile</p>
-              <p className="text-sm text-gray-500">Update your profile information</p>
+              <p className="font-medium text-xs sm:text-sm text-gray-900">Edit Profile</p>
+              <p className="text-[10px] sm:text-xs text-gray-500">Update your profile information</p>
             </Link>
           </div>
         </div>
