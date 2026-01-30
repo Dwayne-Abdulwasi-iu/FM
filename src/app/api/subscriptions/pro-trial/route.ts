@@ -99,26 +99,27 @@ export async function POST(req: NextRequest) {
       const code = crypto.randomInt(100000, 999999).toString()
       const verificationId = crypto.randomBytes(16).toString('hex')
 
-      // Store code in Redis for 10 minutes
+      // Store code in Redis for 10 minutes (REQUIRED - no fallback)
       const redis = getRedisClient()
-      if (redis) {
-        const redisKey = `trial:otp:${session.user.id}:${verificationId}`
-        await redis.setex(
-          redisKey,
-          600, // 10 minutes
-          JSON.stringify({
-            code,
-            email: user.email,
-            attempts: 0,
-            createdAt: new Date().toISOString(),
-          })
-        )
-      } else {
+      if (!redis) {
+        console.error('[Pro Trial] FATAL: Redis (REDIS_URL env var) is REQUIRED for trial OTP verification')
         return NextResponse.json(
-          { error: 'Verification service temporarily unavailable' },
+          { error: 'Verification service unavailable. This feature requires Redis configuration. Contact support if this persists.' },
           { status: 503 }
         )
       }
+
+      const redisKey = `trial:otp:${session.user.id}:${verificationId}`
+      await redis.setex(
+        redisKey,
+        600, // 10 minutes
+        JSON.stringify({
+          code,
+          email: user.email,
+          attempts: 0,
+          createdAt: new Date().toISOString(),
+        })
+      )
 
       // Send OTP email
       const emailSent = await sendTrialOTPEmail(
@@ -161,11 +162,12 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      // Retrieve stored OTP from Redis
+      // Retrieve stored OTP from Redis (REQUIRED - no fallback)
       const redis = getRedisClient()
       if (!redis) {
+        console.error('[Pro Trial] FATAL: Redis (REDIS_URL env var) is REQUIRED for trial OTP verification')
         return NextResponse.json(
-          { error: 'Verification service temporarily unavailable' },
+          { error: 'Verification service unavailable. This feature requires Redis configuration. Contact support if this persists.' },
           { status: 503 }
         )
       }

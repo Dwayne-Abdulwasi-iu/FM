@@ -28,6 +28,10 @@ export default async function SellerPayoutsPage() {
       displayName: true,
       totalEarnings: true,
       designerTier: true,
+      proSubscriptionActive: true,
+      proSubscriptionExpiresAt: true,
+      proTrialActivated: true,
+      proTrialExpiresAt: true,
       earnings: {
         select: {
           id: true,
@@ -73,9 +77,25 @@ export default async function SellerPayoutsPage() {
 
   const monthlyGMV = monthlyOrders.reduce((sum: number, order) => sum + order.totalAmount, 0)
   const monthlyCommissions = monthlyOrders.reduce((sum: number, order) => {
-    // Recalculate commission using tiered rates
+    // Recalculate commission using tiered rates with trial check
     const isProSubscriber = user.designerTier === 'VIP_DESIGNER' || user.designerTier === 'VVIP_DESIGNER'
-    const commissionRate = getCommissionRate(user.totalEarnings, isProSubscriber)
+    
+    // Check for active trial or subscription
+    const now = new Date()
+    const hasActiveTrial = Boolean(
+      (user.proTrialActivated ?? false) && 
+      user.proTrialExpiresAt && 
+      user.proTrialExpiresAt > now
+    )
+    const hasActiveSubscription = Boolean(
+      (user.proSubscriptionActive ?? false) && 
+      user.proSubscriptionExpiresAt && 
+      user.proSubscriptionExpiresAt > now
+    )
+    
+    // Apply trial benefits to commission rate (1% discount)
+    const hasProBenefits = isProSubscriber || hasActiveSubscription || hasActiveTrial
+    const commissionRate = getCommissionRate(user.totalEarnings, hasProBenefits)
     const commission = order.totalAmount * commissionRate
     return sum + commission
   }, 0)
