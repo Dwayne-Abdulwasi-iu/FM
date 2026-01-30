@@ -54,6 +54,20 @@ model User {
   designerTierUpdatedAt DateTime?
   trustScore          Float    @default(0)
   
+  // Pro Subscription System (Tier Stacking)
+  proSubscriptionActive Boolean  @default(false) // Is active subscription currently valid?
+  proSubscriptionTier   String?  // 'MONTHLY' or 'YEARLY' - tier above current earned tier
+  proSubscriptionStartedAt DateTime?
+  proSubscriptionExpiresAt DateTime?
+  proSubscriptionPrice  Float?   // Price paid (for record)
+  proSubscriptionStripeId String?  // Stripe subscription ID for recurring
+  proSubscriptionPaystackId String? // Paystack subscription plan ID
+  
+  // Pro Trial System (30-day free trial)
+  proTrialActivated Boolean  @default(false) // Has user ever activated the free trial?
+  proTrialActivatedAt DateTime? // When did they activate the trial?
+  proTrialExpiresAt DateTime? // When does the trial end (30 days after activation)?
+  
   // Analytics Fields
   profileViews    Int      @default(0)
   totalSales      Int      @default(0)
@@ -84,6 +98,7 @@ model User {
   commissionTypes       String[] // Types of work: "Custom Design", "Alterations", "Full Pattern", etc.
   commissionTerms       String?  // Custom terms/conditions for commissions
   commissionQueueSize   Int?     // How many active commissions they can handle
+  milestoneTemplate     String   @default("standard") // Payment milestone template: simple (50/50), standard (30/30/40), detailed (20/20/25/15/20)
 
   // Print-on-Demand (POD) Settings
   acceptsPOD            Boolean  @default(false)  // Designer must opt-in to offer POD products
@@ -106,6 +121,11 @@ model User {
   paystackTransfers PaystackTransfer[]
   transferNotifications TransferNotification[]
   notifications Notification[]
+  
+  // Ownership document system
+  sellerOwnershipDocuments OwnershipDocument[] @relation("SellerOwnershipDocuments")
+  buyerOwnershipContracts OwnershipContract[] @relation("BuyerOwnershipContracts")
+  sellerOwnershipContracts OwnershipContract[] @relation("SellerOwnershipContracts")
 
   accounts Account[]
   sessions Session[]
@@ -134,6 +154,9 @@ model User {
   messagesSent     DirectMessage[] @relation("MessagesSent")
   messagesReceived DirectMessage[] @relation("MessagesReceived")
   
+  // Pro Subscription (Tier Stacking)
+  proSubscription  ProSubscription? @relation("ProSubscription")
+  
   // Fashion Boutique (Physical Products)
   boutiqueProducts       BoutiqueProduct[] @relation("BoutiqueSeller")
   boutiqueOrdersBuyer    BoutiqueOrder[] @relation("BoutiqueOrderBuyer")
@@ -144,10 +167,16 @@ model User {
   boutiquePayouts        BoutiqueSellerPayout[] @relation("BoutiquePayouts")
   sellerShipments        SellerToAdminShipment[] @relation("SellerShipments")
   boutiqueReturns        BoutiqueReturn[] @relation("BoutiqueReturns")
+  boutiqueReposts        BoutiqueRepostRequest[] @relation("BoutiqueReposts")
   
   // Admin Messaging
   adminBroadcasts        AdminBroadcast[] @relation("AdminBroadcasts")
+  paymentTransactionsBuyer   PaymentTransaction[] @relation("PaymentTransactionBuyer")
+  paymentTransactionsSeller  PaymentTransaction[] @relation("PaymentTransactionSeller")
   broadcastRecipients    AdminBroadcastRecipient[] @relation("BroadcastRecipients")
+
+  // Fashion Boutique - Seller Settings
+  boutique_returnAddress Json?  // Return address for rejected product shipments { name, phone, address, city, state, country, postalCode }
 
   @@map("users")
 }
@@ -259,6 +288,9 @@ model Design {
   licenses   License[]
   similarTo  DesignSimilarity[] @relation("SimilarDesigns")
   similarFrom DesignSimilarity[] @relation("SourceDesigns")
+  
+  // Ownership document system
+  ownershipDocuments OwnershipDocument[] @relation("DesignOwnershipDocuments")
   
   // Commission requests that reference this design
   commissionReferences CommissionRequest[] @relation("ReferenceDesign")
@@ -484,8 +516,125 @@ model Purchase {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
   orderId  String
 
+  // FLAW #14, #15: Ownership purchase status tracking
+  status        String   @default("ACTIVE") // ACTIVE | RELEASED | CANCELLED | COMPLETED
+  cancelledAt   DateTime?
+  releasedAt    DateTime?
+
+  // Ownership contract relation
+  ownershipContract OwnershipContract?
+
   @@unique([userId, designId, purchaseType])
+  @@index([status])
   @@map("purchases")
+}
+
+// ============================================
+// OWNERSHIP DOCUMENT SYSTEM
+// ============================================
+
+model OwnershipDocument {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Seller Information (captured at submission)
+  sellerFullName    String
+  sellerUsername    String?
+  sellerSignature   String   // Signature name entered by seller
+  
+  // Status tracking
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason   String?
+  
+  // Admin review
+  verifiedBy        String?  // Admin user ID
+  verifiedAt        DateTime?
+  legallyBinding    Boolean  @default(false)
+  
+  // Document metadata
+  documentContent   String   // HTML of the legal contract displayed
+  documentVersion   Int      @default(1)
+  
+  // Preview file for escrow inspection
+  // Seller chooses which file buyers see during 7-day escrow
+  // Video (240p or lower) recommended for seller explanation
+  previewFileUrl    String?  // Cloudinary URL to preview file
+  previewFileType   String?  // 'video' | 'image'
+  previewFileName   String?  // Original filename for reference
+  previewDescription String? // Seller's description of preview content
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  designId          String
+  design            Design   @relation("DesignOwnershipDocuments", fields: [designId], references: [id], onDelete: Cascade)
+  sellerId          String
+  seller            User     @relation("SellerOwnershipDocuments", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Linked to purchases
+  ownershipContracts OwnershipContract[]
+  
+  // FLAW #16: Deletion failure logs
+  cloudinaryDeleteLogs CloudinaryDeleteLog[] @relation("DocumentCloudinaryLogs")
+  
+  @@index([sellerId])
+  @@index([designId])
+  @@index([status])
+  @@map("ownership_documents")
+}
+
+model OwnershipContract {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Buyer Information (captured at purchase)
+  buyerFullName     String
+  buyerUsername     String?
+  buyerSignature    String   // Signature name entered by buyer
+  
+  // Seller info (captured from document)
+  sellerFullName    String
+  sellerSignature   String
+  
+  // Design info
+  designTitle       String
+  designId          String
+  
+  // Status
+  status            String   @default("SIGNED") // SIGNED, EXECUTED, COMPLETED, CANCELLED
+  executedAt        DateTime?
+  
+  // FLAW #15: Track release status atomically
+  isReleased        Boolean  @default(false)
+  releasedAt        DateTime?
+  
+  // Document content (full HTML with all parties)
+  contractContent   String   // Full contract HTML for printing
+  
+  // Contract tracking
+  contractNumber    String   @unique // e.g., OC-2026-001-123456
+  purchaseDate      DateTime @default(now())
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  purchaseId        String   @unique
+  purchase          Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  
+  buyerId           String
+  buyer             User     @relation("BuyerOwnershipContracts", fields: [buyerId], references: [id], onDelete: Cascade)
+  
+  sellerId          String
+  seller            User     @relation("SellerOwnershipContracts", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  ownershipDocumentId String
+  ownershipDocument   OwnershipDocument @relation(fields: [ownershipDocumentId], references: [id], onDelete: Restrict)
+  
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([designId])
+  @@index([status])
+  @@map("ownership_contracts")
 }
 
 model SellerAccount {
@@ -505,6 +654,29 @@ model SellerAccount {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("seller_accounts")
+}
+
+// FLAW #16: Track failed Cloudinary deletions for retry
+model CloudinaryDeleteLog {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  documentId String
+  document   OwnershipDocument @relation("DocumentCloudinaryLogs", fields: [documentId], references: [id], onDelete: Cascade)
+
+  fileUrl String @unique
+  status  String @default("PENDING") // PENDING | SUCCESS | FAILED
+  attempts Int   @default(1)
+  lastError String?
+
+  markedForManualReview Boolean @default(false)
+
+  createdAt     DateTime @default(now())
+  lastAttemptAt DateTime?
+  deletedAt     DateTime?
+
+  @@index([status])
+  @@index([markedForManualReview])
+  @@map("cloudinary_delete_logs")
 }
 
 model ContactMessage {
@@ -1114,6 +1286,13 @@ model CommissionRequest {
   paymentMethod       String?   // 'stripe' or 'paystack'
   platformFee         Float?
   designerEarnings    Float?
+  stripePaymentIntentId String?   // Prevents duplicate Stripe payments (enforced in code)
+  
+  // Quote safety fields (prevent recalculation changes)
+  quotedCommissionRate Float?   // Commission rate locked at quote time
+  quotedDesignerTier   String?   // Designer tier locked at quote time
+  quoteExpiresAt       DateTime? // Quote expires after 30 days
+  quoteLockedAt        DateTime? // When quote was locked in
   
   // Deliverables & Completion
   deliverables        Json[]    // Array of { url, type, name, size, uploadedAt }
@@ -1730,6 +1909,7 @@ model BoutiqueProduct {
   // REJECTED - Admin rejected (content or physical)
   // CANCELLED - Auto-cancelled (shipment timeout)
   // RETURNED_TO_SELLER - Returned to seller (unsold/rejected)
+  // DELISTED_BY_STORAGE - Auto-delisted after 180 days (stays in warehouse, seller can repost free)
   // LIQUIDATED - Sold at discount after storage limit
   
   rejectionReason String?
@@ -1753,10 +1933,60 @@ model BoutiqueProduct {
   warehouseLocation  String?    // Shelf/bin location in admin warehouse
   warehouseReceivedAt DateTime?
   
+  // Warehouse Storage Timeline (for ADMIN_STOCK only)
+  receivedByAdminAt  DateTime?  // When admin physically received the product
+  firstWarehouseExpiresAt DateTime?  // 180 days from receivedByAdminAt (original expiration)
+  warehouseExpiresAt DateTime?  // Current 180-day cycle expiration (updates with each repost)
+  daysInWarehouseStartedAt DateTime? // When current 180-day cycle started
+  month5NotificationSent Boolean @default(false) // Track if Day 119 notification sent
+  month5PriceLocked   Boolean @default(false)  // Seller set price in Month 5
+  month5LockedPrice   Float?  // Price seller set during Month 5
+  month5LockedAt      DateTime?
+  
+  // Repost Tracking
+  repostRequests      BoutiqueRepostRequest[]  // History of repost requests
+  repostCount         Int      @default(0)  // Total reposts approved
+  lastRepostDate      DateTime? // When last repost was approved
+  repostCountToday    Int      @default(0)  // Track 3x/day limit
+  repostDayResetAt    DateTime? // When to reset daily repost count
+  
+  // Original vs Current Stock (for auditing)
+  originalStock       Int?     // Stock at first receipt
+  currentStock        Int?     // Current stock (depletes with reposts)
+  stockLockedAt       DateTime? // When stock was locked during repost review
+  isStockLocked       Boolean  @default(false) // True during repost admin review
+  lockedStockValue    Int?     // How many units locked
+  
   // Storage Fees
   storageFeeStartDate DateTime? // When storage fees start (30 days after receipt)
   storageFeesAccrued  Float     @default(0)
   lastStorageFeeDate  DateTime?
+  
+  // Storage Option (Seller chooses at day 175)
+  storageOption       String?   // FULL_RETURN, PARTIAL_LIQUIDATION, FLEXIBLE_STORAGE
+  storageOptionChosenAt DateTime?
+  storageOptionNotes  String?
+  
+  // Full Return Fields (Seller returns product)
+  fullReturnEnabled   Boolean @default(false)
+  returnRequestedAt   DateTime?
+  returnShippedAt     DateTime?
+  returnDeliveredAt   DateTime?
+  returnTrackingNumber String?
+  returnCost          Float?
+  
+  // Liquidation Fields (Automatic 50% off sale)
+  liquidationEnabled  Boolean @default(false)
+  liquidationStartedAt DateTime?
+  liquidationEndedAt  DateTime?
+  liquidationFinalPrice Float?
+  liquidationFinalSale Float?
+  
+  // Flexible Storage Fields (Extend storage for ₦5k/month)
+  flexibleStorageEnabled Boolean @default(false)
+  storagePaidUntil    DateTime?
+  storagePayments     Json[]   // [{ date: "2026-01-25", amount: 5000, period: "1 month" }]
+  storageExtensionCount Int @default(0)
   
   // Inventory
   condition   String   @default("NEW") // NEW, LIKE_NEW, GOOD, FAIR
@@ -1789,6 +2019,14 @@ model BoutiqueProduct {
   // Analytics
   viewCount   Int      @default(0)
   favoriteCount Int    @default(0)
+  
+  // Email Tracking for Rejected Products
+  rejectionEmailSentCount Int @default(0)
+  rejectionEmailLastSentAt DateTime?
+  
+  // Return Status Tracking
+  returnedToSellerAt DateTime?
+  returnTracking Json?  // { trackingNumber, courier, estimatedDelivery }
   
   // Timestamps
   submittedAt DateTime? // When seller submitted for review
@@ -2100,7 +2338,11 @@ model BoutiqueOrder {
   paymentMethod   String?     // PAYSTACK, STRIPE, etc.
   paymentReference String?
   paidAt          DateTime?
-  paymentStatus   String?     // PENDING, COMPLETED, FAILED
+  paymentStatus   String?     // PENDING, COMPLETED, PAYOUT_SCHEDULED, PAYOUT_RELEASED, FAILED
+  
+  // Seller Payout (delayed 1-2 days after delivery for returns protection)
+  payoutScheduledAt DateTime? // When payout was scheduled (1-2 days after delivery)
+  payoutReleasedAt  DateTime? // When payout was actually released to seller
   
   // Refund
   refundStatus    String?     // NONE, PENDING, REFUNDED
@@ -2120,6 +2362,7 @@ model BoutiqueOrder {
   items       BoutiqueOrderItem[]
   returns     BoutiqueReturn[]
   refunds     BoutiqueRefund[]
+  paymentTransactions PaymentTransaction[]
   
   @@index([buyerId])
   @@index([sellerId])
@@ -2521,10 +2764,50 @@ model AdminBroadcastRecipient {
   readAt      DateTime?
   
   createdAt   DateTime @default(now())
+}
+
+// Boutique Product Repost Request (for warehouse storage)
+model BoutiqueRepostRequest {
+  id          String   @id @default(cuid()) @map("_id")
   
-  @@unique([broadcastId, userId])
-  @@index([userId])
-  @@map("admin_broadcast_recipients")
+  productId   String
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  sellerId    String
+  seller      User     @relation("BoutiqueReposts", fields: [sellerId], references: [id])
+  
+  // Request details
+  reason      String   // Why seller is reposting (from dropdown)
+  notes       String?  // Additional seller notes
+  
+  // Stock tracking
+  originalStock Int    // Stock before repost
+  requestedStock Int   // Stock if approved
+  approvedStock Int?   // Stock actually approved (may differ if variant sold out)
+  
+  // Status
+  status      String   @default("PENDING") 
+  // PENDING - Awaiting admin review
+  // APPROVED - Stock locked in, product back to LIVE
+  // REJECTED - Rejected, stock returned to seller
+  
+  // Admin review
+  adminNotes  String?
+  reviewedAt  DateTime?
+  reviewedBy  String?  // Admin user ID
+  
+  // Timeline
+  daysInWarehouse Int?  // How many days was product in warehouse
+  expiryCountdown Int?  // Days until expiration
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([productId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("boutique_repost_requests")
 }
 
 // Cron job distributed locks (database fallback when Redis unavailable)
@@ -2537,4 +2820,157 @@ model CronLock {
   
   @@index([expiresAt])
   @@map("cron_locks")
+}
+
+// Payment Audit Trail - Unified transaction log across all processors
+model PaymentTransaction {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Order Reference
+  orderId           String
+  order             BoutiqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Parties Involved
+  buyerId           String
+  buyer             User     @relation("PaymentTransactionBuyer", fields: [buyerId], references: [id])
+  
+  sellerId          String
+  seller            User     @relation("PaymentTransactionSeller", fields: [sellerId], references: [id])
+  
+  // Payment Processor Info
+  processor         String   // PAYSTACK, STRIPE, FLUTTERWAVE
+  processorRefId    String   // Reference/txn ID from processor (for reconciliation)
+  processorStatus   String   // Status from processor (processing, completed, failed, etc.)
+  
+  // Amount Details
+  currency          String   @default("NGN")
+  buyerAmount       Float    // What buyer paid (includes fees)
+  platformFee       Float    // Platform commission
+  sellerPayout      Float    // What seller gets
+  processorFee      Float    // Fee from payment processor
+  
+  // Transaction Timeline
+  initiatedAt       DateTime
+  authorizedAt      DateTime?  // When payment was authorized
+  completedAt       DateTime?  // When payment fully completed
+  settledAt         DateTime?  // When payment settled (processor transferred)
+  
+  // Payout Tracking
+  payoutScheduledAt DateTime?  // When platform scheduled seller payout
+  payoutInitiatedAt DateTime?  // When payout was sent to seller
+  payoutCompletedAt DateTime?  // When seller confirmed receipt (or processor confirmed)
+  payoutStatus      String   @default("PENDING")  // PENDING, INITIATED, COMPLETED, FAILED
+  
+  // Reconciliation Fields
+  reconciliationStatus String @default("PENDING")  // PENDING, MATCHED, DISCREPANCY, RESOLVED
+  reconciliationNotes  String?  // Admin notes on any discrepancies
+  
+  // Metadata
+  metadata          Json?    // Additional processor-specific data
+  failureReason     String?  // If payment failed
+  retryCount        Int      @default(0)
+  lastRetryAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([orderId])
+  @@index([processorRefId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([processor])
+  @@index([payoutStatus])
+  @@index([reconciliationStatus])
+  @@map("payment_transactions")
+}
+
+// Payment Reconciliation Report (Admin dashboard summary)
+model PaymentReconciliationReport {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Report Period
+  reportDate        DateTime // Date this report was generated
+  periodStart       DateTime // Start of reconciliation period
+  periodEnd         DateTime // End of reconciliation period
+  
+  // Processor Balances
+  processor         String   // PAYSTACK, STRIPE, FLUTTERWAVE
+  
+  // Expected vs Actual
+  expectedBalance   Float    // What we expect to receive based on orders
+  actualBalance     Float    // What processor reports
+  discrepancy       Float    // Difference (could be pending, fees, etc.)
+  
+  // Transaction Summary
+  completedTxnCount  Int
+  pendingTxnCount    Int
+  failedTxnCount     Int
+  totalProcessed     Float
+  
+  // Payout Summary
+  payoutCount       Int
+  payoutTotal       Float
+  avgPayoutTime     Int      // Hours
+  failedPayouts     Int
+  
+  // Reconciliation Status
+  status            String   @default("UNREVIEWED")  // UNREVIEWED, REVIEWED, APPROVED, NEEDS_INVESTIGATION
+  reviewedBy        String?  // Admin user ID
+  reviewedAt        DateTime?
+  investigationNotes String?
+  
+  // Auto-calculated
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([processor])
+  @@index([reportDate])
+  @@index([status])
+  @@map("payment_reconciliation_reports")
+}
+
+model ProSubscription {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // User Reference
+  userId            String   @unique
+  user              User     @relation("ProSubscription", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Subscription Details
+  status            String   @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED, FAILED
+  billingPeriod     String   // 'MONTHLY' or 'YEARLY'
+  
+  // Pricing
+  amount            Float    // Price in seller's preferred currency
+  currency          String   @default("USD") // USD or NGN
+  
+  // Payment Provider IDs
+  stripeSubscriptionId String?  // For Stripe recurring
+  stripeCustomerId     String?  // For Stripe
+  paystackPlanCode     String?  // For Paystack plan
+  paystackAuthCode     String?  // Paystack authorization code
+  paystackReference    String?  // Last payment reference
+  
+  // Dates
+  startedAt         DateTime @default(now())
+  expiresAt         DateTime // When subscription ends
+  renewsAt          DateTime? // Next renewal date (for ACTIVE subscriptions)
+  cancelledAt       DateTime?
+  
+  // Tier Boost
+  tierBoost         Int      @default(1) // Tier level boost (always 1 currently)
+  
+  // Usage Tracking
+  featuredListings  Int      @default(6) // Increased from 5
+  commissionDiscount Float   @default(0.01) // 1% discount
+  
+  // Cancellation
+  cancellationReason String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([status])
+  @@index([expiresAt])
+  @@map("pro_subscriptions")
 }

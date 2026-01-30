@@ -549,11 +549,11 @@ export default function DesignPage() {
         ]}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-3 sm:mb-4 text-xs sm:text-sm"
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-2 sm:mb-3 text-xs sm:text-sm"
         >
           <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Back
@@ -685,7 +685,7 @@ export default function DesignPage() {
               
               if (totalFiles > 1) {
                 return (
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                     {/* Accessible Files */}
                     {accessibleFiles.map((file, index) => {
                       const isSelected = accessibleFiles[selectedMediaIndex]?.id === file.id
@@ -792,10 +792,10 @@ export default function DesignPage() {
           </div>
 
           {/* Details */}
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2 sm:space-y-3">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{design.title}</h1>
-              <p className="text-lg sm:text-xl font-bold text-indigo-600">
+              <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-0.5">{design.title}</h1>
+              <p className="text-base sm:text-lg font-bold text-indigo-600">
                 {formatPrice(priceTest.price)}
                 {priceTest.isTestActive && priceTest.variant === 'B' && priceTest.price !== design.price && (
                   <span className="ml-2 text-sm text-gray-400 line-through">{formatPrice(design.price)}</span>
@@ -851,21 +851,21 @@ export default function DesignPage() {
             )}
 
             {/* Category and Stats */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 text-xs mb-0.5">Category</h3>
-                <p className="text-gray-700 text-xs sm:text-sm">{design.category}</p>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+              <div className="p-1.5 sm:p-2 bg-white rounded shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-[10px] mb-0.5">Category</h3>
+                <p className="text-gray-700 text-[11px] sm:text-xs">{design.category}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 text-xs mb-0.5">Sales</h3>
-                <p className="text-gray-700 text-xs sm:text-sm">{design.totalSales}</p>
+              <div className="p-1.5 sm:p-2 bg-white rounded shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-[10px] mb-0.5">Sales</h3>
+                <p className="text-gray-700 text-[11px] sm:text-xs">{design.totalSales}</p>
               </div>
             </div>
 
             {/* Media Files Info */}
             {design.mediaFiles && design.mediaFiles.length > 0 && (
-              <div className="p-4 bg-white rounded-lg shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-3">Included Media</h3>
+              <div className="p-2 sm:p-3 bg-white rounded shadow-sm">
+                <h3 className="font-semibold text-gray-900 text-xs sm:text-sm mb-2">Included Media</h3>
                 <div className="grid grid-cols-1 gap-2">
                   {/* Accessible Files */}
                   {getAccessibleMediaFiles().map((file) => (
@@ -940,32 +940,33 @@ export default function DesignPage() {
             )}
 
             {/* Actions */}
-            <div className="space-y-4">
-              <div className="flex space-x-4">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex space-x-2 sm:space-x-3">
                 <button
                   onClick={handleAddToCart}
                   disabled={addingToCart}
-                  className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 bg-indigo-600 text-white py-2 sm:py-2.5 px-2 sm:px-4 rounded text-xs sm:text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2"
                 >
                   {addingToCart ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4 border-1.5 border-white border-t-transparent rounded-full" />
                   ) : (
-                    <ShoppingCart className="h-5 w-5" />
+                    <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                   )}
-                  {addingToCart ? 'Adding...' : 'Add to Cart'}
+                  <span className="hidden sm:inline">{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                  <span className="sm:hidden">{addingToCart ? 'Adding' : 'Cart'}</span>
                 </button>
                 
                 <button 
                   onClick={toggleWishlist}
                   disabled={togglingWishlist}
-                  className={`p-3 border rounded-lg transition-colors disabled:opacity-50 ${
+                  className={`p-2 sm:p-3 border rounded transition-colors disabled:opacity-50 ${
                     isWishlisted 
                       ? 'bg-pink-50 border-pink-300 hover:bg-pink-100' 
                       : 'border-gray-300 hover:bg-gray-50'
                   }`} 
                   aria-label={isWishlisted ? 'Remove from favorites' : 'Add to favorites'}
                 >
-                  <Heart className={`h-5 w-5 ${isWishlisted ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} />
+                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isWishlisted ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} />
                 </button>
                 
                 <ShareButton
@@ -982,14 +983,14 @@ export default function DesignPage() {
               <button
                 onClick={handleBuyNow}
                 disabled={buyingNow}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 sm:py-2.5 px-3 sm:px-4 rounded text-xs sm:text-sm hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 font-semibold"
               >
                 {buyingNow ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  <div className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4 border-1.5 border-white border-t-transparent rounded-full" />
                 ) : (
                   <>💳</>
                 )}
-                {buyingNow ? 'Processing...' : `Buy Now • ${formatPrice(design.price)}`}
+                <span className="text-xs sm:text-sm">{buyingNow ? 'Processing...' : `Buy Now • ${formatPrice(design.price)}`}</span>
               </button>
 
               {/* Commission Design - Only show if designer accepts commissions */}
@@ -1005,10 +1006,11 @@ export default function DesignPage() {
                       }
                       router.push(`/commission-request?design=${design.id}`)
                     }}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 font-medium"
+                    className="w-full py-2 sm:py-2.5 px-3 sm:px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded text-xs sm:text-sm hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-1.5 sm:gap-2 font-medium"
                   >
-                    <MessageCircle className="h-5 w-5" />
-                    Request Custom Commission
+                    <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="hidden sm:inline">Request Custom Commission</span>
+                    <span className="sm:hidden">Commission</span>
                   </button>
                   
                   {/* Commission Info */}
