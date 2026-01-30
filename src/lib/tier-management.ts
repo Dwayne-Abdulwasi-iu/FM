@@ -547,7 +547,9 @@ export async function expireAndRestoreSubscriptions(): Promise<{
         select: { 
           id: true, 
           name: true, 
-          totalEarnings: true, 
+          totalEarnings: true,
+          proTrialActivated: true,
+          proTrialExpiresAt: true,
           sellerAccount: { 
             select: { subaccountCode: true }
           } 
@@ -576,10 +578,19 @@ export async function expireAndRestoreSubscriptions(): Promise<{
 
       expired++
 
-      // Restore natural tier rate
+      // Check if user has an active trial - if so, maintain pro benefits
+      const now = new Date()
+      const hasActiveTrial = Boolean(
+        (sub.user.proTrialActivated ?? false) && 
+        sub.user.proTrialExpiresAt && 
+        sub.user.proTrialExpiresAt > now
+      )
+
+      // Restore natural tier rate (unless trial is active)
       if (sub.user.sellerAccount?.subaccountCode) {
-        const naturalTier = getCommissionTier(sub.user.totalEarnings)
-        const naturalRate = getCommissionRate(sub.user.totalEarnings, false)
+        const naturalTier = getCommissionTier(sub.user.totalEarnings || 0)
+        // If trial is active, maintain pro rate; otherwise use natural rate
+        const naturalRate = getCommissionRate(sub.user.totalEarnings || 0, hasActiveTrial)
         const paystackPercentage = rateToPaystackPercentage(naturalRate)
 
         try {
@@ -587,7 +598,8 @@ export async function expireAndRestoreSubscriptions(): Promise<{
             percentage_charge: paystackPercentage
           })
           restored++
-          console.log(`[Expire Subscription] Restored ${sub.user.name} to ${naturalTier}`)
+          const tierName = hasActiveTrial ? `${naturalTier} (with trial benefits)` : naturalTier
+          console.log(`[Expire Subscription] Restored ${sub.user.name} to ${tierName}`)
         } catch (error) {
           console.error(`[Expire Subscription] Failed to restore rate:`, error)
           errors++

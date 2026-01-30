@@ -8,15 +8,29 @@ import prisma from './prisma'
 
 /**
  * Check if user is eligible for pro trial activation
- * Only eligible if they haven't already activated the trial
+ * Only eligible if they haven't already activated the trial AND don't have a paid subscription
  */
 export async function isEligibleForProTrial(userId: string): Promise<boolean> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { proTrialActivated: true }
+      select: { 
+        proTrialActivated: true,
+        proSubscriptionActive: true,
+        proSubscriptionExpiresAt: true
+      }
     })
-    return !user?.proTrialActivated
+    
+    // Not eligible if already used trial
+    if (user?.proTrialActivated) return false
+    
+    // Not eligible if has active paid subscription
+    const now = new Date()
+    if (user?.proSubscriptionActive && user.proSubscriptionExpiresAt && user.proSubscriptionExpiresAt > now) {
+      return false
+    }
+    
+    return true
   } catch (error) {
     console.error('[Pro Trial] Eligibility check failed:', error)
     return false
