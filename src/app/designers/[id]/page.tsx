@@ -22,6 +22,9 @@ import {
   Grid,
   Heart
 } from 'lucide-react'
+import { DesignerProfileBadge } from '@/components/DesignerBadge'
+import { VerificationBadge } from '@/components/VerificationBadges'
+import SubscriptionTierBadge from '@/components/SubscriptionTierBadge'
 
 interface Designer {
   id: string
@@ -42,6 +45,8 @@ interface Designer {
     dribbble?: string
   } | null
   isVerified: boolean
+  designerTier: string | null
+  subscriptionTier: string | null
   verificationBadge: string | null
   verificationStatus: string
   createdAt: string
@@ -215,11 +220,19 @@ export default function DesignerProfilePage() {
             <div className="mt-3 sm:mt-0 flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-lg sm:text-3xl font-bold text-gray-900">
                       {designer.displayName || designer.name || 'Anonymous Designer'}
                     </h1>
-                    {getBadgeIcon(designer.verificationBadge)}
+                    {designer.verificationBadge && (
+                      <VerificationBadge badge={designer.verificationBadge} size="md" />
+                    )}
+                    {designer.designerTier && (
+                      <DesignerProfileBadge tier={designer.designerTier} />
+                    )}
+                    {designer.subscriptionTier && (
+                      <SubscriptionTierBadge tier={designer.subscriptionTier} />
+                    )}
                   </div>
                   {designer.location && (
                     <p className="text-xs sm:text-base text-gray-900 flex items-center gap-1 mt-1">
