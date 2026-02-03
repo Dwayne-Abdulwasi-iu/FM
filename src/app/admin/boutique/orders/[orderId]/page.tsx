@@ -73,6 +73,22 @@ interface Order {
     } | null
   } | null
   items: OrderItem[]
+  auditLogs?: Array<{
+    id: string
+    action: string
+    oldStatus: string | null
+    newStatus: string | null
+    changedFields: Record<string, any> | null
+    isManualOverride: boolean
+    overrideReason: string | null
+    triggerType: string
+    admin?: {
+      id: string
+      name: string | null
+      email: string
+    } | null
+    createdAt: string
+  }>
 }
 
 const ORDER_STATUSES = [
@@ -99,6 +115,9 @@ export default function AdminOrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState('')
   const [trackingUrl, setTrackingUrl] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
+  const [statusWarning, setStatusWarning] = useState<string | null>(null)
+  const [requiresOverrideReason, setRequiresOverrideReason] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -132,7 +151,49 @@ export default function AdminOrderDetailPage() {
     }
   }
 
+  const handleStatusChange = (selectedStatus: string) => {
+    setNewStatus(selectedStatus)
+    setStatusWarning(null)
+    setRequiresOverrideReason(false)
+    setOverrideReason('')
+
+    if (!order) return
+
+    // Check for unusual/risky transitions
+    const restrictions: Record<string, string[]> = {
+      PAID: ['PENDING'],
+      DELIVERED: ['PENDING', 'PAID', 'PROCESSING'],
+      COMPLETED: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED'],
+      REFUNDED: ['PENDING', 'PAID'],
+    }
+
+    const currentStatusRestrictions = restrictions[order.status] || []
+    const isDowngrade = selectedStatus && currentStatusRestrictions.includes(selectedStatus)
+    const isUnusualChange = selectedStatus === 'CANCELLED' && order.status === 'DELIVERED'
+
+    if (isDowngrade) {
+      setStatusWarning(`⚠️ Downgrading from ${order.status} to ${selectedStatus}. This requires an override reason.`)
+      setRequiresOverrideReason(true)
+    } else if (isUnusualChange) {
+      setStatusWarning(`⚠️ This is an unusual transition (Delivered → Cancelled). Please provide a reason.`)
+      setRequiresOverrideReason(true)
+    }
+  }
+
   const updateOrder = async () => {
+    if (!newStatus) {
+      toast.error('Please select a status')
+      setUpdating(false)
+      return
+    }
+
+    // Check if override reason is required
+    if (requiresOverrideReason && (!overrideReason || overrideReason.trim().length < 10)) {
+      toast.error('Override reason required (minimum 10 characters) for this status change')
+      setUpdating(false)
+      return
+    }
+
     setUpdating(true)
     try {
       const res = await fetch(`/api/boutique/admin/orders/${orderId}`, {
@@ -143,15 +204,22 @@ export default function AdminOrderDetailPage() {
           trackingNumber: trackingNumber || null,
           trackingUrl: trackingUrl || null,
           notes: adminNotes,
+          overrideReason: overrideReason || null,
         }),
       })
 
       if (res.ok) {
         const data = await res.json()
         setOrder(data)
+        setOverrideReason('')
+        setStatusWarning(null)
+        setRequiresOverrideReason(false)
         toast.success('Order updated successfully')
       } else {
         const error = await res.json()
+        if (error.requiresReason) {
+          setRequiresOverrideReason(true)
+        }
         toast.error(error.error || 'Failed to update order')
       }
     } catch (error) {
@@ -265,11 +333,11 @@ export default function AdminOrderDetailPage() {
               <div className="mt-6 pt-4 border-t space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span>{formatCurrency(order.subtotal)}</span>
+                  <span className="text-black">{formatCurrency(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span>{formatCurrency(order.shippingCost)}</span>
+                  <span className="text-black">{formatCurrency(order.shippingCost)}</span>
                 </div>
                 {order.discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
@@ -321,14 +389,41 @@ export default function AdminOrderDetailPage() {
                   <select
                     id="orderStatus"
                     value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
+                    onChange={(e) => handleStatusChange(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-gray-900"
                   >
+                    <option value="" disabled className="text-gray-500">Select a status...</option>
                     {ORDER_STATUSES.map(s => (
                       <option key={s.value} value={s.value} className="text-gray-900">{s.label}</option>
                     ))}
                   </select>
                 </div>
+
+                {/* Status Change Warning */}
+                {statusWarning && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                    {statusWarning}
+                  </div>
+                )}
+
+                {/* Override Reason (required for certain status changes) */}
+                {requiresOverrideReason && (
+                  <div>
+                    <label className="block text-sm font-medium text-red-700 mb-1">
+                      * Reason for Status Override
+                    </label>
+                    <textarea
+                      value={overrideReason}
+                      onChange={(e) => setOverrideReason(e.target.value)}
+                      placeholder="Explain why this status change is necessary (minimum 10 characters)..."
+                      rows={3}
+                      className="w-full border border-red-300 rounded-lg px-3 py-2 text-gray-900 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {overrideReason.length}/10 characters minimum
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -379,6 +474,60 @@ export default function AdminOrderDetailPage() {
                 </button>
               </div>
             </div>
+
+            {/* Audit Log History */}
+            {order.auditLogs && order.auditLogs.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Change History</h2>
+                <div className="space-y-3">
+                  {order.auditLogs.map((log) => (
+                    <div key={log.id} className="border-l-4 border-purple-200 pl-4 py-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">
+                            {log.action === 'STATUS_CHANGE' ? `Status: ${log.oldStatus} → ${log.newStatus}` : log.action}
+                          </div>
+                          {log.isManualOverride && (
+                            <div className="mt-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                              ⚠️ Manual Override: {log.overrideReason}
+                            </div>
+                          )}
+                          {log.changedFields && Object.keys(log.changedFields).length > 0 && (
+                            <div className="mt-1 text-xs text-gray-600">
+                              {Object.entries(log.changedFields)
+                                .filter(([key]) => key !== 'status')
+                                .map(([key, value]) => (
+                                  <div key={key}>
+                                    {key}: {JSON.stringify(value)}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right whitespace-nowrap">
+                          <div className="text-xs text-gray-600">
+                            {new Date(log.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                          {log.admin && (
+                            <div className="text-xs font-medium text-gray-900 mt-1">
+                              {log.admin.name || log.admin.email}
+                            </div>
+                          )}
+                          {log.triggerType === 'SYSTEM' && (
+                            <div className="text-xs text-blue-600">System</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

@@ -58,6 +58,20 @@ export async function GET(
             },
           },
         },
+        auditLogs: {
+          include: {
+            admin: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
     })
 
@@ -82,9 +96,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const adminId = (session.user as any).id
     const { orderId } = await params
     const body = await request.json()
-    const { status, trackingNumber, trackingUrl, notes } = body
+    const { status, trackingNumber, trackingUrl, notes, overrideReason } = body
 
     // Validate status if provided
     const validStatuses = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED', 'REFUNDED']
@@ -103,10 +118,40 @@ export async function PATCH(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
+    // Check if status change is being made
+    const isStatusChange = status && status !== existingOrder.status
+    
+    // Validate status transitions - certain changes require override reason
+    if (isStatusChange) {
+      const restrictions = {
+        // Can't downgrade status without reason
+        PAID: ['PENDING'], // Can't go back to pending from paid
+        DELIVERED: ['PENDING', 'PAID', 'PROCESSING'], // Can't downgrade from delivered
+        COMPLETED: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED'], // Can't downgrade from completed
+        REFUNDED: ['PENDING', 'PAID'], // These are normally handled by system
+      }
+
+      const currentStatusRestrictions = restrictions[existingOrder.status as keyof typeof restrictions] || []
+      const isDowngrade = status && currentStatusRestrictions.includes(status)
+
+      // If downgrading or unusual transition, require override reason
+      if (isDowngrade || (status === 'CANCELLED' && existingOrder.status === 'DELIVERED')) {
+        if (!overrideReason || overrideReason.trim().length < 10) {
+          return NextResponse.json(
+            { error: 'Override reason required for this status change (minimum 10 characters)', requiresReason: true },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
     // Build update data with status-specific timestamps
     const updateData: Record<string, unknown> = {}
+    const changedFields: Record<string, unknown> = {}
+
     if (status) {
       updateData.status = status
+      changedFields.status = status
       // Set timestamps based on status change
       if (status === 'SHIPPED' && !existingOrder.shippedAt) {
         updateData.shippedAt = new Date()
@@ -118,9 +163,18 @@ export async function PATCH(
         updateData.completedAt = new Date()
       }
     }
-    if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber
-    if (trackingUrl !== undefined) updateData.trackingUrl = trackingUrl
-    if (notes !== undefined) updateData.adminNotes = notes
+    if (trackingNumber !== undefined) {
+      updateData.trackingNumber = trackingNumber
+      changedFields.trackingNumber = trackingNumber
+    }
+    if (trackingUrl !== undefined) {
+      updateData.trackingUrl = trackingUrl
+      changedFields.trackingUrl = trackingUrl
+    }
+    if (notes !== undefined) {
+      updateData.adminNotes = notes
+      changedFields.adminNotes = notes
+    }
 
     const order = await prisma.boutiqueOrder.update({
       where: { id: orderId },
@@ -165,6 +219,25 @@ export async function PATCH(
 
     const productTitle = order.items[0]?.product.title || 'your order'
     const orderUrl = `${process.env.NEXTAUTH_URL}/boutique/orders/${order.id}`
+
+    // Create audit log for this change
+    if (Object.keys(changedFields).length > 0) {
+      const isManualStatusOverride = status && status !== existingOrder.status && overrideReason
+      
+      await prisma.boutiqueOrderAuditLog.create({
+        data: {
+          orderId,
+          adminId,
+          action: status ? 'STATUS_CHANGE' : 'NOTES_UPDATE',
+          oldStatus: existingOrder.status,
+          newStatus: status || undefined,
+          changedFields,
+          isManualOverride: isManualStatusOverride,
+          overrideReason: overrideReason || undefined,
+          triggerType: 'ADMIN',
+        },
+      })
+    }
 
     // Send notification emails based on status change
     if (status && status !== existingOrder.status) {

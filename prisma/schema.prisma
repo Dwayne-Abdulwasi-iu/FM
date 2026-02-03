@@ -68,6 +68,11 @@ model User {
   proTrialActivatedAt DateTime? // When did they activate the trial?
   proTrialExpiresAt DateTime? // When does the trial end (30 days after activation)?
   
+  // Subscription Tier (NEW - tracks which plan user is on)
+  subscriptionTier    String?  // 'STARTER' | 'PRO' | 'VIP' | null
+  subscriptionPrice   Float?   // Price of current subscription ($4.99, $9.99, $14.99)
+  billingCycle        String?  // 'MONTHLY' | 'YEARLY' | null
+  
   // Analytics Fields
   profileViews    Int      @default(0)
   totalSales      Int      @default(0)
@@ -168,6 +173,13 @@ model User {
   sellerShipments        SellerToAdminShipment[] @relation("SellerShipments")
   boutiqueReturns        BoutiqueReturn[] @relation("BoutiqueReturns")
   boutiqueReposts        BoutiqueRepostRequest[] @relation("BoutiqueReposts")
+  
+  // Order Audit Logs (admin actions)
+  orderAuditLogs         BoutiqueOrderAuditLog[] @relation("AdminOrderAuditLogs")
+  
+  // Featured items (seller-managed, subject to subscription tier limits)
+  featuredDesigns        FeaturedDesign[]
+  featuredBoutiqueProducts FeaturedBoutiqueProduct[]
   
   // Admin Messaging
   adminBroadcasts        AdminBroadcast[] @relation("AdminBroadcasts")
@@ -307,6 +319,9 @@ model Design {
   priceTestRevenueA   Float    @default(0) // Revenue at original price
   priceTestRevenueB   Float    @default(0) // Revenue at variant price
 
+  // Featured designs (seller-managed, subject to subscription tier limits)
+  featuredInList FeaturedDesign[]
+
   @@map("designs")
 }
 
@@ -348,6 +363,58 @@ model DesignMedia {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
   @@map("design_media")
+}
+
+// Featured designs by seller (subject to subscription tier limits)
+model FeaturedDesign {
+  id        String   @id @default(cuid()) @map("_id")
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  designId  String
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  
+  position  Int      @default(0) // Display order
+  addedAt   DateTime @default(now())
+  
+  @@unique([sellerId, designId])
+  @@index([sellerId])
+  @@index([designId])
+  @@map("featured_designs")
+}
+
+// Featured boutique products by seller (subject to subscription tier limits)
+model FeaturedBoutiqueProduct {
+  id        String   @id @default(cuid()) @map("_id")
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  position  Int      @default(0) // Display order
+  addedAt   DateTime @default(now())
+  
+  @@unique([sellerId, productId])
+  @@index([sellerId])
+  @@index([productId])
+  @@map("featured_boutique_products")
+}
+
+// Admin-featured items (unlimited, for platform promotion)
+model AdminFeaturedItem {
+  id        String   @id @default(cuid()) @map("_id")
+  itemType  String   // 'DESIGN' or 'BOUTIQUE_PRODUCT'
+  itemId    String   // ID of design or boutique product
+  position  Int      @default(0) // Display order
+  reason    String?  // Why admin featured this item
+  addedAt   DateTime @default(now())
+  addedBy   String   // Admin ID who featured this
+  
+  @@unique([itemType, itemId])
+  @@index([itemType])
+  @@index([addedAt])
+  @@map("admin_featured_items")
 }
 
 model Order {
@@ -428,6 +495,11 @@ model OrderItem {
   podProductId   String?  // Product ID from POD catalog (printful_123, printify_456)
   podVariantId   String?  // Variant ID (size/color combination)
   podProductName String?  // "Unisex Cotton Tee - Black / XL"
+  
+  // Promotion tracking
+  promotionId    String?   // ID of promotion applied (if any)
+  promotionType  String?   // DISCOUNT, BUNDLE, FLASH_SALE (if any)
+  discountAmount Float  @default(0) // Amount discounted from original price
   
   @@map("order_items")
 }
@@ -979,7 +1051,7 @@ model TrafficSource {
 model Promotion {
   id          String   @id @default(cuid()) @map("_id")
   sellerId    String
-  type        String   // DISCOUNT, BUNDLE, FEATURED_SLOT
+  type        String   // DISCOUNT, BUNDLE, FLASH_SALE
   name        String
   description String?
   
@@ -989,6 +1061,7 @@ model Promotion {
   
   // Bundle settings
   designIds   String[]
+  productIds  String[]  // Boutique product IDs
   bundlePrice Float?
   
   // Validity
@@ -2045,6 +2118,7 @@ model BoutiqueProduct {
   favorites   BoutiqueFavorite[]
   reviews     BoutiqueReview[]
   cartItems   BoutiqueCartItem[]
+  featuredInList FeaturedBoutiqueProduct[]
   
   @@index([sellerId])
   @@index([categoryId])
@@ -2363,12 +2437,50 @@ model BoutiqueOrder {
   returns     BoutiqueReturn[]
   refunds     BoutiqueRefund[]
   paymentTransactions PaymentTransaction[]
+  auditLogs   BoutiqueOrderAuditLog[]
   
   @@index([buyerId])
   @@index([sellerId])
   @@index([productId])
   @@index([status])
   @@map("boutique_orders")
+}
+
+// Order Audit Log (tracks all status changes and admin overrides)
+model BoutiqueOrderAuditLog {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  orderId     String
+  order       BoutiqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Who made the change
+  adminId     String?  // null if system-triggered (webhook)
+  admin       User?    @relation("AdminOrderAuditLogs", fields: [adminId], references: [id])
+  
+  // What changed
+  action      String   // "STATUS_CHANGE", "TRACKING_UPDATE", "NOTES_UPDATE", "MANUAL_OVERRIDE"
+  oldStatus   String?
+  newStatus   String?
+  
+  // Change details
+  changedFields Json?  // { trackingNumber, trackingUrl, adminNotes }
+  
+  // Override information
+  isManualOverride Boolean @default(false)
+  overrideReason String? // Why admin manually changed the status
+  
+  // Automatic vs manual
+  triggerType String  // "SYSTEM" (webhook), "ADMIN", "SELLER"
+  
+  // For reverting if needed
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([orderId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("boutique_order_audit_logs")
 }
 
 // Order Items (for variant tracking)
