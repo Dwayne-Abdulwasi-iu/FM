@@ -58,20 +58,6 @@ export async function GET(
             },
           },
         },
-        auditLogs: {
-          include: {
-            admin: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
       },
     })
 
@@ -79,7 +65,31 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    return NextResponse.json(order)
+    // Fetch audit logs separately to avoid 500 error if table doesn't exist yet
+    const auditLogs: any[] = []
+    try {
+      const logs = await prisma.boutiqueOrderAuditLog.findMany({
+        where: { orderId },
+        include: {
+          admin: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+      auditLogs.push(...logs)
+    } catch (error) {
+      // Table doesn't exist yet or error occurred, continue without audit logs
+      console.warn('Could not fetch audit logs:', error)
+    }
+
+    return NextResponse.json({ ...order, auditLogs })
   } catch (error) {
     console.error('Admin order detail error:', error)
     return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 })
@@ -224,19 +234,24 @@ export async function PATCH(
     if (Object.keys(changedFields).length > 0) {
       const isManualStatusOverride = status && status !== existingOrder.status && overrideReason
       
-      await prisma.boutiqueOrderAuditLog.create({
-        data: {
-          orderId,
-          adminId,
-          action: status ? 'STATUS_CHANGE' : 'NOTES_UPDATE',
-          oldStatus: existingOrder.status,
-          newStatus: status || undefined,
-          changedFields,
-          isManualOverride: isManualStatusOverride,
-          overrideReason: overrideReason || undefined,
-          triggerType: 'ADMIN',
-        },
-      })
+      try {
+        await prisma.boutiqueOrderAuditLog.create({
+          data: {
+            orderId,
+            adminId,
+            action: status ? 'STATUS_CHANGE' : 'NOTES_UPDATE',
+            oldStatus: existingOrder.status,
+            newStatus: status || undefined,
+            changedFields: changedFields as any,
+            isManualOverride: isManualStatusOverride,
+            overrideReason: overrideReason || undefined,
+            triggerType: 'ADMIN',
+          },
+        })
+      } catch (auditError) {
+        // Audit log creation failed, but continue with order update
+        console.error('Failed to create audit log:', auditError)
+      }
     }
 
     // Send notification emails based on status change
