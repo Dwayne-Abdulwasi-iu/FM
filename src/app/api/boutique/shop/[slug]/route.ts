@@ -37,7 +37,6 @@ export async function GET(
           orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
         },
         variants: {
-          where: { quantity: { gt: 0 } },
           orderBy: [{ size: "asc" }, { color: "asc" }],
         },
         seller: {
@@ -70,6 +69,21 @@ export async function GET(
       );
     }
 
+    // Check if product has any stock available
+    const totalStock = product.variants.reduce((sum, v) => sum + v.quantity, 0);
+    if (totalStock <= 0) {
+      return NextResponse.json(
+        { success: false, message: "Product out of stock" },
+        { status: 404 }
+      );
+    }
+
+    // Filter variants to only show those with quantity > 0
+    const productWithStock = {
+      ...product,
+      variants: product.variants.filter(v => v.quantity > 0),
+    };
+
     // Increment view count
     await prisma.boutiqueProduct.update({
       where: { id: product.id },
@@ -88,31 +102,38 @@ export async function GET(
           where: { isPrimary: true },
           take: 1,
         },
+        variants: true,
       },
       take: 4,
+    });
+
+    // Filter related products to only include those with stock
+    const relatedProductsWithStock = relatedProducts.filter(p => {
+      const totalStock = p.variants.reduce((sum, v) => sum + v.quantity, 0);
+      return totalStock > 0;
     });
 
     return NextResponse.json({
       success: true,
       product: {
-        id: product.id,
-        title: product.title,
-        slug: product.slug,
-        description: product.description,
-        basePrice: product.basePrice,
-        salePrice: product.salePrice,
-        brand: product.brand,
-        material: product.material,
-        careInstructions: product.careInstructions,
-        condition: product.condition,
-        gender: product.gender,
-        style: product.style,
-        occasion: product.occasion,
-        tags: product.tags,
-        category: product.category,
-        thumbnailUrl: product.thumbnailUrl,
-        media: product.media,
-        variants: product.variants.map((v: { id: string; size: string | null; color: string | null; colorHex: string | null; quantity: number; priceAdjustment: number }) => ({
+        id: productWithStock.id,
+        title: productWithStock.title,
+        slug: productWithStock.slug,
+        description: productWithStock.description,
+        basePrice: productWithStock.basePrice,
+        salePrice: productWithStock.salePrice,
+        brand: productWithStock.brand,
+        material: productWithStock.material,
+        careInstructions: productWithStock.careInstructions,
+        condition: productWithStock.condition,
+        gender: productWithStock.gender,
+        style: productWithStock.style,
+        occasion: productWithStock.occasion,
+        tags: productWithStock.tags,
+        category: productWithStock.category,
+        thumbnailUrl: productWithStock.thumbnailUrl,
+        media: productWithStock.media,
+        variants: productWithStock.variants.map((v: { id: string; size: string | null; color: string | null; colorHex: string | null; quantity: number; priceAdjustment: number }) => ({
           id: v.id,
           size: v.size,
           color: v.color,
@@ -120,11 +141,11 @@ export async function GET(
           quantity: v.quantity,
           priceAdjustment: v.priceAdjustment,
         })),
-        seller: product.seller,
-        avgRating: product.avgRating,
-        reviewCount: product._count.reviews,
-        favoriteCount: product._count.favorites,
-        reviews: product.reviews.map((r) => ({
+        seller: productWithStock.seller,
+        avgRating: productWithStock.avgRating,
+        reviewCount: productWithStock._count.reviews,
+        favoriteCount: productWithStock._count.favorites,
+        reviews: productWithStock.reviews.map((r) => ({
           id: r.id,
           rating: r.rating,
           title: r.title,
@@ -134,7 +155,7 @@ export async function GET(
           createdAt: r.createdAt,
         })),
       },
-      relatedProducts: relatedProducts.map((p) => ({
+      relatedProducts: relatedProductsWithStock.map((p) => ({
         id: p.id,
         title: p.title,
         slug: p.slug,

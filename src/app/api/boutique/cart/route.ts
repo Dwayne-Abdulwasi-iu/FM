@@ -83,7 +83,11 @@ export async function GET() {
         unavailableItems: invalidItems.map(item => ({
           id: item.id,
           product: item.product,
-          reason: item.product.status !== "LIVE" ? "Product no longer available" : "Out of stock",
+          reason: item.product.status === "OUT_OF_STOCK" 
+            ? "Out of stock" 
+            : item.product.status !== "LIVE" 
+              ? "Product no longer available" 
+              : "Out of stock",
         })),
         subtotal,
         itemCount: validItems.reduce((sum, item) => sum + item.quantity, 0),

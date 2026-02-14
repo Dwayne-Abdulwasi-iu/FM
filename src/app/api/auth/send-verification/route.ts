@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { sendEmail } from '@/lib/email'
 
 /**
  * POST /api/auth/send-verification
@@ -41,7 +42,8 @@ export async function POST(_request: NextRequest) {
       where: { id: userId },
       select: { 
         id: true, 
-        email: true, 
+        email: true,
+        name: true,
         emailVerified: true 
       }
     })
@@ -81,8 +83,31 @@ export async function POST(_request: NextRequest) {
     // In production, send email with verification link
     console.log(`Email verification token for ${user.email}: ${verifyToken}`)
     
-    // TODO: Implement email sending
-    // await sendVerificationEmail(user.email, verifyToken)
+    // Send verification email
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com'
+    const verificationLink = `${baseUrl}/auth/verify-email?token=${verifyToken}`
+    
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify Your Email Address',
+      html: `
+        <h2>Email Verification Required</h2>
+        <p>Hello ${user.name || 'User'},</p>
+        <p>Thank you for signing up! Please verify your email address to complete your account setup.</p>
+        
+        <p>
+          <a href="${verificationLink}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            Verify Email Address
+          </a>
+        </p>
+        
+        <p>Or copy this link: <code>${verificationLink}</code></p>
+        
+        <p><strong>This link will expire in 24 hours.</strong></p>
+        
+        <p>If you did not create this account, please ignore this email.</p>
+      `,
+    })
 
     return NextResponse.json({
       message: 'Verification email sent. Please check your inbox.'

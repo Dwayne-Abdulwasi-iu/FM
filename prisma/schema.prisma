@@ -145,6 +145,9 @@ model User {
   commissionRequestsBy  CommissionRequest[] @relation("CommissionRequestsBy")
   commissionRequestsFor CommissionRequest[] @relation("CommissionRequestsFor")
   
+  // Content Violation System
+  contentViolations ContentViolation[]
+  
   // Community Features
   forumPosts      ForumPost[]
   forumComments   ForumComment[]
@@ -189,6 +192,13 @@ model User {
 
   // Fashion Boutique - Seller Settings
   boutique_returnAddress Json?  // Return address for rejected product shipments { name, phone, address, city, state, country, postalCode }
+
+  // Variant Discrepancy Decisions (Admin audit trail)
+  variantDecisionsMade VariantDiscrepancyDecision[] @relation("VariantDecisionsMade")
+  
+  // Variant Discrepancy Appeals
+  sellerAppeals VariantDiscrepancyAppeal[] @relation("SellerDiscrepancyAppeals")
+  appealResolutions VariantDiscrepancyAppeal[] @relation("AppealResolutions")
 
   @@map("users")
 }
@@ -376,6 +386,7 @@ model FeaturedDesign {
   
   position  Int      @default(0) // Display order
   addedAt   DateTime @default(now())
+  addedByAdmin Boolean @default(false) // True if admin featured this, false if seller featured it
   
   @@unique([sellerId, designId])
   @@index([sellerId])
@@ -394,6 +405,7 @@ model FeaturedBoutiqueProduct {
   
   position  Int      @default(0) // Display order
   addedAt   DateTime @default(now())
+  addedByAdmin Boolean @default(false) // True if admin featured this, false if seller featured it
   
   @@unique([sellerId, productId])
   @@index([sellerId])
@@ -1575,6 +1587,7 @@ model ContentViolation {
   
   // Who violated
   userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userEmail       String?
   userRole        String   // CLIENT, DESIGNER
   
@@ -1586,6 +1599,8 @@ model ContentViolation {
   violationType   String   // EMAIL, PHONE, SOCIAL_HANDLE, URL, SUSPICIOUS_KEYWORD
   originalContent String   // The original content before redaction
   detectedValue   String   // The specific email/phone/handle detected
+  severity        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  description     String?  // Human-readable description of the violation
   
   // Status
   reviewed        Boolean  @default(false)
@@ -1954,6 +1969,11 @@ model BoutiqueProduct {
   salePrice   Float?   // Discounted price if on sale
   currency    String   @default("NGN")
   
+  // Submitted Price (original currency for audit trail)
+  submittedPrice    Float?   // Original price as entered by seller
+  submittedCurrency String?  // Currency code (USD, NGN, etc.) - null = legacy NGN
+  submittedSalePrice Float?  // Original sale price if any
+  
   // Category
   categoryId  String
   category    BoutiqueCategory @relation(fields: [categoryId], references: [id])
@@ -1978,15 +1998,23 @@ model BoutiqueProduct {
   // RECEIVED_BY_ADMIN - Admin received physical product
   // VERIFICATION_PASSED - Physical product verified, ready to go live
   // LIVE - Available for purchase
+  // IN_RETURN - Admin approved warehouse return request (product being returned to seller)
+  // OUT_OF_STOCK - All stock sold (auto-set when stock reaches 0)
   // SOLD - Product sold
   // REJECTED - Admin rejected (content or physical)
   // CANCELLED - Auto-cancelled (shipment timeout)
   // RETURNED_TO_SELLER - Returned to seller (unsold/rejected)
   // DELISTED_BY_STORAGE - Auto-delisted after 180 days (stays in warehouse, seller can repost free)
   // LIQUIDATED - Sold at discount after storage limit
+  // DELISTED_BY_STORAGE - Auto-delisted after 180 days (stays in warehouse, seller can repost free)
+  // LIQUIDATED - Sold at discount after storage limit
   
   rejectionReason String?
   rejectionDate   DateTime?
+  
+  // Out of Stock Tracking
+  outOfStockAt    DateTime?  // When product sold out (status changed to OUT_OF_STOCK)
+  originalQuantity Int?      // Total quantity when first went LIVE
   
   // Content Review
   contentReviewedAt DateTime?
@@ -2189,6 +2217,9 @@ model BoutiqueProductVariant {
   reserved    Int      @default(0)  // Items reserved during checkout
   sku         String?  // Stock Keeping Unit
   
+  // Sold-out tracking
+  soldOutAt   DateTime? // When this variant sold out (quantity reached 0)
+  
   // Variant-specific images
   imageUrl    String?
   
@@ -2199,6 +2230,7 @@ model BoutiqueProductVariant {
   
   orderItems  BoutiqueOrderItem[]
   cartItems   BoutiqueCartItem[]
+  discrepancies VariantDiscrepancy[] @relation("VariantDiscrepancies")
   
   @@index([productId])
   @@map("boutique_product_variants")
@@ -2280,6 +2312,9 @@ model SellerToAdminShipment {
   // Notes
   sellerNotes     String?
   adminNotes      String?
+  
+  // Variant-level discrepancies
+  variantDiscrepancies VariantDiscrepancy[] @relation("ShipmentVariantDiscrepancies")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -3085,4 +3120,129 @@ model ProSubscription {
   @@index([status])
   @@index([expiresAt])
   @@map("pro_subscriptions")
+}
+
+// ===== VARIANT-LEVEL DISCREPANCY TRACKING =====
+// When a shipment arrives with damaged/missing items, track at variant level
+// Example: Shipment expected 5 small red (qty 5), but only 3 received (qty 2 damaged)
+model VariantDiscrepancy {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Reference to shipment
+  shipmentId        String
+  shipment          SellerToAdminShipment @relation("ShipmentVariantDiscrepancies", fields: [shipmentId], references: [id], onDelete: Cascade)
+  
+  // Reference to product variant
+  variantId         String
+  variant           BoutiqueProductVariant @relation("VariantDiscrepancies", fields: [variantId], references: [id], onDelete: Cascade)
+  
+  // Quantity tracking for THIS variant
+  quantityExpected  Int      // What seller said they'd send for this variant
+  quantityReceived  Int?     // What actually arrived
+  quantityDamaged   Int?     // How many arrived damaged
+  quantityMissing   Int?     // How many didn't arrive (= expected - received)
+  
+  // Issue description
+  condition         String?  // EXCELLENT, GOOD, FAIR, DAMAGED, MISSING
+  notes             String?  // Specific notes about this variant's condition
+  
+  // Resolution
+  acceptanceStatus  String   @default("PENDING") 
+  // PENDING - Not yet decided
+  // ACCEPTED - This variant accepted as-is
+  // RETURNING - This variant marked for return
+  // PARTIAL - Split: X accepted, Y returning
+  
+  unitsAccepted     Int?     // If partial, how many units being accepted
+  unitsReturning    Int?     // If partial, how many units being returned
+  
+  // Audit trail of decisions
+  decisions         VariantDiscrepancyDecision[] @relation("DiscrepancyDecisions")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([shipmentId, variantId]) // One record per variant per shipment
+  @@index([shipmentId])
+  @@index([variantId])
+  @@map("variant_discrepancies")
+}
+
+// ===== VARIANT DISCREPANCY DECISION AUDIT TRAIL =====
+// Tracks every decision made by admins on variant discrepancies
+// Enables dispute resolution and accountability
+model VariantDiscrepancyDecision {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Reference to the discrepancy
+  discrepancyId     String
+  discrepancy       VariantDiscrepancy @relation("DiscrepancyDecisions", fields: [discrepancyId], references: [id], onDelete: Cascade)
+  
+  // Who made the decision
+  adminId           String
+  admin             User     @relation("VariantDecisionsMade", fields: [adminId], references: [id])
+  
+  // The decision
+  acceptanceStatus  String   // ACCEPTED, RETURNING, PARTIAL
+  rejectionCategory String?  // DAMAGED, QUANTITY_MISMATCH, QUALITY, WRONG_PRODUCT, MISSING (only if RETURNING/PARTIAL)
+  unitsAccepted     Int?     // For PARTIAL decisions
+  unitsReturning    Int?     // For PARTIAL decisions
+  notes             String?  // Admin's reasoning/explanation (max 500 chars)
+  decisionPhotos    String[] // Cloudinary URLs of evidence photos
+  
+  // Revision tracking
+  revisionCount     Int      @default(0) // Increments each time decision is changed (0 = original, 1 = 1st revision, etc)
+  revisionReason    String?  // Required if this is a revision: why did admin change the decision?
+  
+  // Timestamps
+  decidedAt         DateTime @default(now())
+  
+  // Optional: if decision was revised, link to previous decision
+  previousDecisionId String?
+  previousDecision   VariantDiscrepancyDecision? @relation("DecisionRevisions", fields: [previousDecisionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  revisions          VariantDiscrepancyDecision[] @relation("DecisionRevisions")
+  
+  // Appeals
+  appeals            VariantDiscrepancyAppeal[] @relation("DecisionAppeals")
+  
+  createdAt         DateTime @default(now())
+  
+  @@index([discrepancyId])
+  @@index([adminId])
+  @@index([decidedAt])
+  @@map("variant_discrepancy_decisions")
+}
+
+// ===== VARIANT DISCREPANCY APPEAL SYSTEM =====
+// Allows sellers to dispute admin decisions
+model VariantDiscrepancyAppeal {
+  id                String   @id @default(cuid()) @map("_id")
+  
+  // Reference to the decision being appealed
+  decisionId        String
+  decision          VariantDiscrepancyDecision @relation("DecisionAppeals", fields: [decisionId], references: [id], onDelete: Cascade)
+  
+  // Who is appealing
+  sellerId          String
+  seller            User     @relation("SellerDiscrepancyAppeals", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Appeal details
+  reason            String   // Why seller is appealing (max 1000 chars)
+  appealPhotos      String[] // Cloudinary URLs of seller's evidence
+  appealStatus      String   @default("PENDING") // PENDING, APPROVED, REJECTED, RESOLVED
+  
+  // Admin response
+  resolvedBy        String?  // Admin who resolved appeal
+  resolutionAdmin   User?    @relation("AppealResolutions", fields: [resolvedBy], references: [id], onDelete: SetNull)
+  resolutionNotes   String?  // Admin's response to appeal
+  resolutionAction  String?  // OVERTURN_DECISION, UPHOLD_DECISION, COMPENSATE_SELLER
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  resolvedAt        DateTime?
+  
+  @@index([decisionId])
+  @@index([sellerId])
+  @@index([appealStatus])
+  @@map("variant_discrepancy_appeals")
 }

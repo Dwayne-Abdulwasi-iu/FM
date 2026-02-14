@@ -439,14 +439,203 @@ export async function rejectRepostRequest(
 }
 
 /**
+ * Request return from warehouse at any time with tiered admin fee
+ * Fee structure:
+ * - Days 0-119: Admin keeps 2 units/variant
+ * - Days 120-180: Admin keeps 1 unit/variant
+ * - Day 181+: Auto-return already triggered
+ */
+/**
+ * STEP 1: Seller requests return (no deduction yet)
+ * Creates PENDING_ADMIN_REVIEW shipment
+ * Returns fee info for seller verification modal
+ */
+export async function requestWarehouseReturn(
+  productId: string,
+  sellerId: string,
+  product: any // BoutiqueProduct with variants
+) {
+  // Check if product is in return already
+  if (product.fullReturnEnabled) {
+    throw new Error('Return already initiated for this product')
+  }
+
+  const daysInWarehouse = getDaysInWarehouse(product.warehouseReceivedAt)
+  const daysInCurrentCycle = daysInWarehouse % WAREHOUSE_CYCLE_DAYS
+
+  // Calculate admin fee based on days in cycle
+  let adminFeePerVariant = 1 // Default: Days 120-180
+  if (daysInCurrentCycle < MONTH_5_START_DAY) {
+    adminFeePerVariant = 2 // Days 0-119
+  }
+
+  // Get current stock
+  const variants = await prisma.boutiqueProductVariant.findMany({
+    where: { productId }
+  })
+
+  let totalReturning = 0
+  const feeDetails: { variantId: string; quantity: number; fee: number; returning: number }[] = []
+
+  // Calculate what will be returned
+  for (const variant of variants) {
+    const fee = Math.min(adminFeePerVariant, variant.quantity) // Fee capped at actual stock
+    const returning = Math.max(0, variant.quantity - fee)
+
+    if (returning > 0 || fee > 0) {
+      totalReturning += returning
+      feeDetails.push({
+        variantId: variant.id,
+        quantity: variant.quantity,
+        fee,
+        returning
+      })
+    }
+  }
+
+  // Check if return shipment already exists
+  const existingReturn = await prisma.sellerToAdminShipment.findFirst({
+    where: {
+      sellerId,
+      productIds: { has: productId },
+      status: { in: ['PENDING_ADMIN_REVIEW', 'APPROVED_BY_ADMIN', 'SHIPPED_BY_ADMIN', 'RECEIVED_BY_SELLER'] }
+    }
+  })
+
+  if (existingReturn) {
+    throw new Error('Return shipment already exists for this product')
+  }
+
+  // Create return shipment in PENDING_ADMIN_REVIEW status (no -2 variant yet)
+  await prisma.sellerToAdminShipment.create({
+    data: {
+      sellerId,
+      productIds: [productId],
+      status: 'PENDING_ADMIN_REVIEW', // Awaiting admin approval
+      itemsExpected: totalReturning,
+      sellerNotes: `Seller requested return after ${daysInWarehouse} days in warehouse.`,
+      adminNotes: `Seller requested return at day ${daysInWarehouse} of cycle. Proposed fee: ${adminFeePerVariant} unit(s) per variant.`,
+      disputeNotes: ''
+    }
+  })
+
+  // Mark product as return-in-progress (not locked yet)
+  await prisma.boutiqueProduct.update({
+    where: { id: productId },
+    data: {
+      fullReturnEnabled: true,
+      returnRequestedAt: new Date(),
+      status: 'RETURN_IN_PROGRESS'
+    }
+  })
+
+  return {
+    daysInWarehouse,
+    daysInCurrentCycle,
+    adminFeePerVariant,
+    totalReturning,
+    feeDetails
+  }
+}
+
+/**
+ * STEP 2: Admin approves return (creates -2 variant - irreversible)
+ * Creates -2 variant representing locked units for admin fee
+ * Sends approval email to seller
+ */
+export async function approveWarehouseReturn(
+  productId: string,
+  sellerId: string,
+  product: any,
+  adminNotes?: string
+) {
+  // Verify shipment exists and is still pending or being approved
+  const shipment = await prisma.sellerToAdminShipment.findFirst({
+    where: {
+      sellerId,
+      productIds: { has: productId },
+      status: { in: ['PENDING_ADMIN_REVIEW', 'APPROVED_BY_ADMIN'] }
+    }
+  })
+
+  if (!shipment) {
+    throw new Error('No pending return request found for this product')
+  }
+
+  // Fetch fresh product data to ensure we have warehouseReceivedAt
+  const freshProduct = await prisma.boutiqueProduct.findUnique({
+    where: { id: productId }
+  })
+
+  if (!freshProduct) {
+    throw new Error('Product not found')
+  }
+
+  const daysInWarehouse = getDaysInWarehouse(freshProduct.warehouseReceivedAt)
+  const daysInCurrentCycle = daysInWarehouse % WAREHOUSE_CYCLE_DAYS
+
+  // Calculate fee
+  let adminFeePerVariant = 1
+  if (daysInCurrentCycle < MONTH_5_START_DAY) {
+    adminFeePerVariant = 2
+  }
+
+  // Create -2 variant for each existing variant (irreversible fee lock)
+  const variants = await prisma.boutiqueProductVariant.findMany({
+    where: { productId },
+    select: { id: true, quantity: true }
+  })
+
+  for (const variant of variants) {
+    // Create -2 variant (admin fee lock)
+    await prisma.boutiqueProductVariant.create({
+      data: {
+        productId,
+        quantity: -adminFeePerVariant,
+        sku: `ADMIN-FEE-${productId}-${Date.now()}`,
+        color: `Admin Fee Lock (${adminFeePerVariant} units)`,
+        priceAdjustment: 0
+      }
+    })
+  }
+
+  // Update shipment to APPROVED_BY_ADMIN (idempotent - safe to call multiple times)
+  await prisma.sellerToAdminShipment.update({
+    where: { id: shipment.id },
+    data: {
+      status: 'APPROVED_BY_ADMIN',
+      adminNotes: adminNotes ? `${shipment.adminNotes || ''}\n\n[APPROVED]: ${adminNotes}` : shipment.adminNotes
+    }
+  })
+
+  // Update product status to reflect return approval
+  const updateResult = await prisma.boutiqueProduct.update({
+    where: { id: productId },
+    data: {
+      status: 'IN_RETURN'
+    }
+  })
+  console.log('Product status updated to IN_RETURN:', {
+    productId,
+    oldStatus: product.status,
+    newStatus: updateResult.status,
+    timestamp: new Date().toISOString()
+  })
+
+  return {
+    daysInWarehouse,
+    daysInCurrentCycle,
+    adminFeePerVariant,
+    shipmentId: shipment.id
+  }
+}
+
+/**
  * Process warehouse deductions and returns (cron job)
  * Runs daily to:
  * 1. Send Month 5 notifications (Day 120)
  * 2. Send final warnings (Day 173)
  * 3. Process automatic stock deductions (Day 180, 360, 540, etc.)
- */
-/**
- * Check if product can be liquidated (reached cycle end with stock > 0)
  */
 export function canBeLiquidated(daysInWarehouse: number, status: string): boolean {
   if (status !== 'LIVE') return false
@@ -628,7 +817,8 @@ export async function processWarehouseDeductions() {
       }
       
       // Step 3b: Process stock deduction at cycle boundaries (Day 180, 360, 540, etc.)
-      if (daysInCurrentCycle === 0 && daysInWarehouse >= WAREHOUSE_CYCLE_DAYS) {
+      // SKIP if product is already in return process (Step 3a handled it)
+      if (daysInCurrentCycle === 0 && daysInWarehouse >= WAREHOUSE_CYCLE_DAYS && !product.fullReturnEnabled) {
         // Deduct 1 unit per variant
         let totalDeducted = 0
         for (const variant of product.variants) {
@@ -645,12 +835,24 @@ export async function processWarehouseDeductions() {
         
         // Check if all variants are now 0
         if (newTotalStock <= 0) {
-          // All stock depleted, delist product
+          // All stock depleted, delist product and release warehouse lock
+          // Delete the -1 variant (warehouse lock)
+          const minusOneVariant = product.variants.find((v) => v.quantity === -1)
+          if (minusOneVariant) {
+            await prisma.boutiqueProductVariant.delete({
+              where: { id: minusOneVariant.id }
+            })
+          }
+
           await prisma.boutiqueProduct.update({
             where: { id: product.id },
             data: {
               status: 'DELISTED_BY_STORAGE',
               month5NotificationSent: false, // Reset for potential re-upload
+              warehouseReceivedAt: null,
+              warehouseExpiresAt: null,
+              warehouseLocation: null,
+              shipmentId: null,
             }
           })
           
@@ -805,4 +1007,39 @@ export function getDeductionSchedule(
   }
   
   return schedule
+}
+
+/**
+ * Get -2 fee variant for a product (warehouse return fee representation)
+ * Returns null if no -2 variant exists
+ */
+export async function getFeeVariant(productId: string) {
+  const variant = await prisma.boutiqueProductVariant.findFirst({
+    where: {
+      productId,
+      color: '-2' // -2 represents the warehouse return fee lock
+    }
+  })
+  return variant || null
+}
+
+/**
+ * Filter out -2 variants from a list (for displaying to seller/admin)
+ * -2 variants are internal fee tracking only
+ */
+export function filterOutFeeVariants(variants: Array<{ color: string }>) {
+  return variants.filter(v => v.color !== '-2')
+}
+
+/**
+ * Check if -2 variant exists (indicates approved return pending shipment)
+ */
+export async function hasFeeVariant(productId: string): Promise<boolean> {
+  const count = await prisma.boutiqueProductVariant.count({
+    where: {
+      productId,
+      color: '-2'
+    }
+  })
+  return count > 0
 }

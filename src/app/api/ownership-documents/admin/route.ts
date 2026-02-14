@@ -94,6 +94,8 @@ export async function GET(request: NextRequest) {
         verifiedAt: doc.verifiedAt,
         createdAt: doc.createdAt,
         rejectionReason: doc.rejectionReason,
+        documentContent: doc.documentContent,
+        documentVersion: doc.documentVersion,
         // FLAW FIX #4: Include preview metadata for admin review
         previewFileUrl: doc.previewFileUrl,
         previewFileType: doc.previewFileType,
@@ -125,13 +127,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PATCH /api/ownership-documents/[id]/approve
- * Admin: Approve an ownership document
+ * PATCH /api/ownership-documents/admin
+ * Admin: Approve or reject an ownership document
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -149,10 +148,10 @@ export async function PATCH(
       )
     }
 
-    const { searchParams, pathname } = new URL(request.url)
+    const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
-    const paramsObj = await params
-    const documentId = paramsObj.id
+    const body = await request.json()
+    const { id: documentId, reason } = body
 
     if (!documentId || typeof documentId !== 'string' || documentId.trim().length === 0) {
       return NextResponse.json(
@@ -182,9 +181,6 @@ export async function PATCH(
     }
 
     if (action === 'reject') {
-      const body = await request.json()
-      const { reason } = body
-
       if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
         return NextResponse.json(
           { message: 'Rejection reason is required' },
@@ -206,8 +202,7 @@ export async function PATCH(
           rejectionReason: updated.rejectionReason
         }
       })
-    } else {
-      // Default action is approve
+    } else if (action === 'approve') {
       const updated = await approveOwnershipDocument(documentId, session.user.id)
 
       return NextResponse.json({
@@ -219,6 +214,11 @@ export async function PATCH(
           verifiedAt: updated.verifiedAt
         }
       })
+    } else {
+      return NextResponse.json(
+        { message: 'Invalid action. Must be "approve" or "reject"' },
+        { status: 400 }
+      )
     }
   } catch (error) {
     console.error('Update document status error:', error)
@@ -227,6 +227,14 @@ export async function PATCH(
       return NextResponse.json(
         { message: 'Database error - please try again later' },
         { status: 503 }
+      )
+    }
+
+    // Return specific error message if available
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: 400 }
       )
     }
 

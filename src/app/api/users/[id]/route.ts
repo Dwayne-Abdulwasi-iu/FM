@@ -30,6 +30,8 @@ export async function GET(
         portfolioUrl: true,
         socialLinks: true,
         isVerified: true,
+        designerTier: true,
+        subscriptionTier: true,
         verificationBadge: true,
         verificationStatus: true,
         createdAt: true,

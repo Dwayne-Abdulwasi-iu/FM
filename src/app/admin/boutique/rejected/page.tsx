@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Mail,
   User,
+  Play,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { ProductImage } from '@/components/ProductImage'
@@ -40,13 +41,31 @@ interface RejectedProduct {
   basePrice: number
   rejectionReason: string | null
   createdAt: string
+  description?: string
+  originalStock: number | null
+  currentStock: number | null
+  totalRejectedQty?: number
+  variants?: Array<{
+    id: string
+    quantity: number
+    size?: string | null
+    color?: string | null
+  }>
+  media?: Array<{
+    id: string
+    url: string
+    type: string
+    sortOrder: number
+  }>
   seller: Seller
   shipment?: {
     id: string
     itemsMissing: number | null
     itemsDamaged: number | null
     disputeNotes: string | null
+    status?: string
   }
+  returnStatus?: 'none' | 'in_progress' | 'completed'
 }
 
 export default function RejectedProductsPage() {
@@ -59,9 +78,10 @@ export default function RejectedProductsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState<RejectedProduct | null>(null)
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null)
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
   const [emailLoading, setEmailLoading] = useState(false)
   const [returnDate, setReturnDate] = useState('')
-  const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -70,7 +90,7 @@ export default function RejectedProductsPage() {
       return
     }
     fetchRejectedProducts()
-  }, [session, status, router])
+  }, [session, status, router, page, searchQuery])
 
   const fetchRejectedProducts = async () => {
     setLoading(true)
@@ -85,7 +105,9 @@ export default function RejectedProductsPage() {
       if (res.ok) {
         const data = await res.json()
         setProducts(data.products || [])
-        setTotalPages(data.totalPages || 1)
+        setTotalPages(data.pagination?.totalPages || data.totalPages || 1)
+      } else {
+        toast.error('Failed to load rejected products')
       }
     } catch (error) {
       console.error('Failed to fetch rejected products:', error)
@@ -146,11 +168,23 @@ export default function RejectedProductsPage() {
         headers: { 'Content-Type': 'application/json' },
       })
 
+      const data = await res.json()
+
       if (res.ok) {
         toast.success('Return shipment created! Seller will be notified.')
         fetchRejectedProducts()
+      } else if (res.status === 409) {
+        // Conflict: Return shipment already exists
+        toast.error(data.message || 'Return shipment already exists')
+        // Update product status immediately to disable button
+        setProducts(prevProducts =>
+          prevProducts.map(p =>
+            p.id === product.id
+              ? { ...p, returnStatus: 'in_progress' }
+              : p
+          )
+        )
       } else {
-        const data = await res.json()
         toast.error(data.message || 'Failed to create return shipment')
       }
     } catch (error) {
@@ -250,7 +284,21 @@ export default function RejectedProductsPage() {
               >
                 {/* Collapsible Header */}
                 <button
-                  onClick={() => setExpandedProductId(expandedProductId === product.id ? null : product.id)}
+                  onClick={() => {
+                    if (expandedProductId === product.id) {
+                      // Collapse and reset media
+                      setExpandedProductId(null)
+                      setSelectedMediaUrl(null)
+                    } else {
+                      // Expand and initialize first media
+                      setExpandedProductId(product.id)
+                      if (product.media && product.media.length > 0) {
+                        setSelectedMediaUrl(product.media[0].url)
+                      } else if (product.thumbnailUrl) {
+                        setSelectedMediaUrl(product.thumbnailUrl)
+                      }
+                    }
+                  }}
                   className="w-full p-1.5 sm:p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition"
                 >
                   <div className="flex items-center gap-1.5 sm:gap-4 flex-1 min-w-0">
@@ -293,8 +341,86 @@ export default function RejectedProductsPage() {
                 {/* Expanded Details */}
                 {expandedProductId === product.id && (
                   <div className="border-t px-1.5 sm:px-4 md:px-6 py-2 sm:py-4 bg-gray-50 space-y-2 sm:space-y-3">
+                    {/* Media Gallery */}
+                    {product.media && product.media.length > 0 && (
+                      <div className="bg-white rounded-lg p-2 sm:p-3 border border-gray-200">
+                        <p className="text-black font-semibold text-[7px] sm:text-xs mb-2">Product Media</p>
+                        
+                        {/* Main Display */}
+                        <div className="mb-2 relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                          {selectedMediaUrl ? (
+                            product.media.find(m => m.url === selectedMediaUrl)?.type === 'VIDEO' ? (
+                              <video
+                                src={selectedMediaUrl}
+                                controls
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <img
+                                src={selectedMediaUrl}
+                                alt="Product"
+                                className="w-full h-full object-cover"
+                              />
+                            )
+                          ) : product.thumbnailUrl ? (
+                            <img
+                              src={product.thumbnailUrl}
+                              alt="Product"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No image
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Thumbnails */}
+                        {product.media.length > 1 && (
+                          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1">
+                            {product.media.map((media) => (
+                              <button
+                                key={media.id}
+                                onClick={() => setSelectedMediaUrl(media.url)}
+                                className={`relative aspect-square rounded border-2 overflow-hidden transition ${
+                                  selectedMediaUrl === media.url
+                                    ? 'border-blue-500'
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <img
+                                  src={media.url}
+                                  alt="Thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                                {media.type === 'VIDEO' && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <Play className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    {product.description && (
+                      <div className="p-0.5 sm:p-3 bg-white rounded-lg border border-gray-200">
+                        <p className="text-[7.5px] sm:text-sm text-gray-800 font-medium mb-1">Description</p>
+                        <p className="text-[7.5px] sm:text-sm text-gray-700 line-clamp-3">{product.description}</p>
+                      </div>
+                    )}
+
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-[8px] sm:text-sm">
+                      <div>
+                        <p className="text-black font-semibold text-[7px] sm:text-xs">Rejected Qty</p>
+                        <p className="text-black text-[7.5px] sm:text-xs mt-1 font-medium text-red-600">
+                          {product.totalRejectedQty || 0} units
+                        </p>
+                      </div>
                       <div>
                         <p className="text-black font-semibold text-[7px] sm:text-xs">Seller</p>
                         <p className="text-black flex items-center gap-0.5 truncate mt-1 text-[7.5px] sm:text-xs">
@@ -309,10 +435,6 @@ export default function RejectedProductsPage() {
                       <div>
                         <p className="text-black font-semibold text-[7px] sm:text-xs">Rejected Date</p>
                         <p className="text-black text-[7.5px] sm:text-xs mt-1">{formatDate(product.createdAt)}</p>
-                      </div>
-                      <div>
-                        <p className="text-black font-semibold text-[7px] sm:text-xs">Status</p>
-                        <p className="text-black text-[7.5px] sm:text-xs mt-1">Awaiting Pickup</p>
                       </div>
                     </div>
 
@@ -381,10 +503,29 @@ export default function RejectedProductsPage() {
                       {/* Return Item Button */}
                       <button
                         onClick={() => handleReturnItem(product)}
-                        className="flex items-center gap-1 sm:gap-2 bg-green-600 text-white px-2 sm:px-4 py-0.5 sm:py-1.5 rounded-lg text-[8px] sm:text-sm font-medium hover:bg-green-700 transition"
+                        disabled={product.returnStatus !== 'none'}
+                        title={
+                          product.returnStatus === 'in_progress'
+                            ? 'Return already in progress'
+                            : product.returnStatus === 'completed'
+                            ? 'Return completed'
+                            : 'Create return shipment'
+                        }
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-0.5 sm:py-1.5 rounded-lg text-[8px] sm:text-sm font-medium transition ${
+                          product.returnStatus === 'completed'
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : product.returnStatus === 'in_progress'
+                            ? 'bg-yellow-500 text-white cursor-not-allowed'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
                       >
-                        <Package className="w-3 h-3" />
-                        <span>Return Item</span>
+                        <span>
+                          {product.returnStatus === 'completed'
+                            ? 'Return Complete'
+                            : product.returnStatus === 'in_progress'
+                            ? 'Return Already in Progress'
+                            : 'Return Item'}
+                        </span>
                       </button>
                     </div>
                   </div>

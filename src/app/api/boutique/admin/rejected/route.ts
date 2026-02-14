@@ -45,6 +45,27 @@ export async function GET(request: NextRequest) {
           rejectionReason: true,
           rejectionDate: true,
           createdAt: true,
+          thumbnailUrl: true,
+          description: true,
+          originalStock: true,
+          currentStock: true,
+          variants: {
+            select: {
+              id: true,
+              quantity: true,
+              size: true,
+              color: true,
+            },
+          },
+          media: {
+            select: {
+              id: true,
+              url: true,
+              type: true,
+              sortOrder: true,
+            },
+            orderBy: { sortOrder: 'asc' },
+          },
           seller: {
             select: { 
               id: true, 
@@ -72,12 +93,28 @@ export async function GET(request: NextRequest) {
             itemsMissing: true,
             itemsDamaged: true,
             disputeNotes: true,
+            status: true,
           },
         })
+
+        // Determine return status
+        let returnStatus = 'none' // 'none' | 'in_progress' | 'completed'
+        if (shipment) {
+          if (['DELIVERED', 'RETURNED', 'COMPLETED', 'RESOLVED'].includes(shipment.status)) {
+            returnStatus = 'completed'
+          } else if (['PENDING', 'RETURN_SCHEDULED', 'SHIPPED', 'IN_TRANSIT'].includes(shipment.status)) {
+            returnStatus = 'in_progress'
+          }
+        }
+
+        // Calculate total quantity from variants
+        const totalRejectedQty = product.variants?.reduce((sum, v) => sum + (v.quantity || 0), 0) || 0
 
         return {
           ...product,
           shipment,
+          returnStatus,
+          totalRejectedQty,
         }
       })
     )

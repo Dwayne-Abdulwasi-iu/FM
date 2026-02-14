@@ -2,6 +2,7 @@
 
 interface VerificationBadgeProps {
   badge?: string | null
+  badges?: string[]
   isVerified?: boolean
   size?: 'sm' | 'md' | 'lg'
   showLabel?: boolean
@@ -42,10 +43,39 @@ const sizeClasses = {
 
 export function VerificationBadge({ 
   badge, 
+  badges,
   isVerified = false, 
   size = 'md',
   showLabel = false 
 }: VerificationBadgeProps) {
+  // Handle multiple badges (preferred)
+  if (badges && badges.length > 0) {
+    return (
+      <div className="flex items-center gap-1.5">
+        {badges.map((b) => {
+          const config = badgeConfig[b]
+          if (!config) return null
+          
+          return (
+            <span key={b} className="inline-flex items-center gap-1" title={config.label}>
+              <span className={`inline-flex items-center justify-center rounded-full ${config.bgColor} ${config.color} p-1`}>
+                {b === 'VERIFIED_PRO' ? (
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <span>{config.icon}</span>
+                )}
+              </span>
+              {showLabel && <span className={`text-xs ${config.color} font-medium`}>{config.label}</span>}
+            </span>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Handle single badge (legacy support)
   // No badge to display
   if (!badge || badge === 'NONE') {
     if (!isVerified) return null

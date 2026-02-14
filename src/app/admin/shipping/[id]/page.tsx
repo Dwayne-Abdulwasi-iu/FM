@@ -56,7 +56,7 @@ export default function ShippingZoneDetailPage() {
       return
     }
     if (session?.user?.role !== 'ADMIN') {
-      router.push('/dashboard')
+      router.push('/admin')
       return
     }
     if (status !== 'authenticated') return

@@ -15,24 +15,18 @@
   ┬╖ serverActions
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 50s
+Γ£ô Compiled successfully in 27.4s
   Running TypeScript ...
 Failed to compile.
 
-.next/types/validator.ts:1620:31
-Type error: Type 'typeof import("C:/Users/Dwayne/OneDrive/Desktop/fashion-marketplace/src/app/api/boutique/seller/products/[productId]/rejection-details/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/boutique/seller/products/[productId]/rejection-details">'.
-  Types of property 'GET' are incompatible.
-    Type '(request: NextRequest, { params }: { params: { productId: string; }; }) => Promise<NextResponse<{ success: boolean; message: string; }> | NextResponse<{ success: boolean; shipment: { ...; } | null; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ productId: string; }>; }) => void | Response | Promise<void | Response>'.
-      Types of parameters '__1' and 'context' are incompatible.
-        Type '{ params: Promise<{ productId: string; }>; }' is not assignable to type '{ params: { productId: string; }; }'.
-          Types of property 'params' are incompatible.
-            Property 'productId' is missing in type 'Promise<{ productId: string; }>' but required in type '{ productId: string; }'.
+./src/app/seller/upgrade/page.tsx:483:54
+Type error: 'subscriptionStatus.totalEarnings' is possibly 'undefined'.
 
-  1618 |   type __IsExpected<Specific extends RouteHandlerConfig<"/api/boutique/seller/products/[productId]/rejection-details">> = Specific
-  1619 |   const handler = {} as typeof import("../../src/app/api/boutique/seller/products/[productId]/rejection-details/route.js")
-> 1620 |   type __Check = __IsExpected<typeof handler>
-       |                               ^
-  1621 |   // @ts-ignore
-  1622 |   type __Unused = __Check
-  1623 | }
+  481 |                         className="bg-amber-500 h-2 rounded-full transition-all"
+  482 |                         // eslint-disable-next-line -- dynamic width calculation
+> 483 |                         style={{ width: `${Math.min((subscriptionStatus.totalEarnings / 100) * 100, 100)}%` }}
+      |                                                      ^
+  484 |                       />
+  485 |                     </div>
+  486 |                     <p className="text-xs md:text-sm text-gray-600">
 Next.js build worker exited with code: 1 and signal: null

@@ -11,6 +11,8 @@ import {
   Banknote, Send
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { STATUS_DISPLAY, getValidTransitions, requiresOverrideReason as checkNeedsOverride, type BoutiqueOrderStatus, ALL_STATUSES } from '@/lib/boutique/statusMapping'
+import { convertFromUSD } from '@/lib/currency'
 
 interface OrderItem {
   id: string
@@ -91,16 +93,11 @@ interface Order {
   }>
 }
 
-const ORDER_STATUSES = [
-  { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'PAID', label: 'Paid', color: 'bg-blue-100 text-blue-800' },
-  { value: 'PROCESSING', label: 'Processing', color: 'bg-purple-100 text-purple-800' },
-  { value: 'SHIPPED', label: 'Shipped', color: 'bg-indigo-100 text-indigo-800' },
-  { value: 'DELIVERED', label: 'Delivered', color: 'bg-teal-100 text-teal-800' },
-  { value: 'COMPLETED', label: 'Completed', color: 'bg-green-100 text-green-800' },
-  { value: 'CANCELLED', label: 'Cancelled', color: 'bg-red-100 text-red-800' },
-  { value: 'REFUNDED', label: 'Refunded', color: 'bg-gray-100 text-gray-800' },
-]
+const ORDER_STATUSES = ALL_STATUSES.map(status => ({
+  value: status,
+  label: STATUS_DISPLAY[status as BoutiqueOrderStatus].label,
+  color: STATUS_DISPLAY[status as BoutiqueOrderStatus].color,
+}))
 
 export default function AdminOrderDetailPage() {
   const { data: session, status } = useSession()
@@ -111,22 +108,47 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
-  const [newStatus, setNewStatus] = useState('')
+  const [newStatus, setNewStatus] = useState('')  // Starts empty, not set to current status
   const [trackingNumber, setTrackingNumber] = useState('')
   const [trackingUrl, setTrackingUrl] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
   const [overrideReason, setOverrideReason] = useState('')
   const [statusWarning, setStatusWarning] = useState<string | null>(null)
   const [requiresOverrideReason, setRequiresOverrideReason] = useState(false)
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ NGN: 1200, USD: 1 })
 
   useEffect(() => {
+    // Check authentication only once on mount
     if (status === 'loading') return
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session) {
       router.push('/auth/signin')
       return
     }
+    if ((session.user as any).role !== 'ADMIN') {
+      router.push('/')
+      return
+    }
+  }, [])
+
+  useEffect(() => {
+    // Fetch order when orderId changes
+    if (!orderId) return
+    fetchRates()
     fetchOrder()
-  }, [session, status, orderId])
+  }, [orderId])
+
+  const fetchRates = async () => {
+    try {
+      const res = await fetch('/api/currency/rates')
+      if (res.ok) {
+        const data = await res.json()
+        setExchangeRates(data.rates)
+      }
+    } catch (error) {
+      console.error('Failed to fetch exchange rates:', error)
+      // Keep fallback rates
+    }
+  }
 
   const fetchOrder = async () => {
     setLoading(true)
@@ -134,17 +156,18 @@ export default function AdminOrderDetailPage() {
       const res = await fetch(`/api/boutique/admin/orders/${orderId}`)
       if (res.ok) {
         const data = await res.json()
+        console.log('[ORDER-FETCH] Loaded order:', { orderId, status: data.status, auditLogCount: data.auditLogs?.length || 0 })
         setOrder(data)
-        setNewStatus(data.status)
         setTrackingNumber(data.trackingNumber || '')
         setTrackingUrl(data.trackingUrl || '')
         setAdminNotes(data.adminNotes || '')
       } else {
+        console.error('[ORDER-FETCH-ERROR] Status:', res.status)
         toast.error('Order not found')
         router.push('/admin/boutique/orders')
       }
     } catch (error) {
-      console.error('Failed to fetch order:', error)
+      console.error('[ORDER-FETCH-ERROR] Exception:', error)
       toast.error('Failed to load order')
     } finally {
       setLoading(false)
@@ -159,24 +182,17 @@ export default function AdminOrderDetailPage() {
 
     if (!order) return
 
-    // Check for unusual/risky transitions
-    const restrictions: Record<string, string[]> = {
-      PAID: ['PENDING'],
-      DELIVERED: ['PENDING', 'PAID', 'PROCESSING'],
-      COMPLETED: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED'],
-      REFUNDED: ['PENDING', 'PAID'],
-    }
+    try {
+      const isUnusualChange = checkNeedsOverride(order.status as BoutiqueOrderStatus, selectedStatus as BoutiqueOrderStatus)
 
-    const currentStatusRestrictions = restrictions[order.status] || []
-    const isDowngrade = selectedStatus && currentStatusRestrictions.includes(selectedStatus)
-    const isUnusualChange = selectedStatus === 'CANCELLED' && order.status === 'DELIVERED'
-
-    if (isDowngrade) {
-      setStatusWarning(`⚠️ Downgrading from ${order.status} to ${selectedStatus}. This requires an override reason.`)
-      setRequiresOverrideReason(true)
-    } else if (isUnusualChange) {
-      setStatusWarning(`⚠️ This is an unusual transition (Delivered → Cancelled). Please provide a reason.`)
-      setRequiresOverrideReason(true)
+      if (isUnusualChange) {
+        const fromLabel = STATUS_DISPLAY[order.status as BoutiqueOrderStatus]?.label || order.status
+        const toLabel = STATUS_DISPLAY[selectedStatus as BoutiqueOrderStatus]?.label || selectedStatus
+        setStatusWarning(`⚠️ Unusual status change: ${fromLabel} → ${toLabel}. This requires an override reason.`)
+        setRequiresOverrideReason(true)
+      }
+    } catch (error) {
+      console.error('Error checking status transition:', error, { fromStatus: order.status, toStatus: selectedStatus })
     }
   }
 
@@ -210,19 +226,40 @@ export default function AdminOrderDetailPage() {
 
       if (res.ok) {
         const data = await res.json()
-        setOrder(data)
+        
+        // Refetch the order to get updated status and audit logs
+        const refreshRes = await fetch(`/api/boutique/admin/orders/${orderId}`)
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json()
+          console.log('[ORDER-UPDATE] Refreshed order after update:', { status: refreshData.status, auditLogCount: refreshData.auditLogs?.length || 0, latestAuditLog: refreshData.auditLogs?.[0] })
+          setOrder(refreshData)
+          // Reset dropdown to empty so user must select a new status for next change
+          setNewStatus('')
+          setTrackingNumber(refreshData.trackingNumber || '')
+          setTrackingUrl(refreshData.trackingUrl || '')
+          setAdminNotes(refreshData.adminNotes || '')
+        } else {
+          console.error('Failed to refresh order after update:', refreshRes.status)
+          setOrder(data)
+          setNewStatus('')
+        }
+        
         setOverrideReason('')
         setStatusWarning(null)
         setRequiresOverrideReason(false)
         toast.success('Order updated successfully')
       } else {
         const error = await res.json()
+        console.error('Failed to update order:', error)
         if (error.requiresReason) {
           setRequiresOverrideReason(true)
+          toast.error('⚠️ ' + error.error)
+        } else {
+          toast.error(error.error || 'Failed to update order')
         }
-        toast.error(error.error || 'Failed to update order')
       }
     } catch (error) {
+      console.error('Error updating order:', error)
       toast.error('Failed to update order')
     } finally {
       setUpdating(false)
@@ -234,12 +271,14 @@ export default function AdminOrderDetailPage() {
     toast.success(`${label} copied!`)
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amountUSD: number) => {
+    // Convert from USD to NGN
+    const convertedAmount = convertFromUSD(amountUSD, 'NGN', exchangeRates)
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount)
+    }).format(convertedAmount)
   }
 
   const formatDate = (date: string | null) => {
@@ -386,17 +425,32 @@ export default function AdminOrderDetailPage() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="orderStatus" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    id="orderStatus"
-                    value={newStatus}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-gray-900"
-                  >
-                    <option value="" disabled className="text-gray-500">Select a status...</option>
-                    {ORDER_STATUSES.map(s => (
-                      <option key={s.value} value={s.value} className="text-gray-900">{s.label}</option>
-                    ))}
-                  </select>
+                  {order && (
+                    <>
+                      <p className="text-xs text-gray-500 mb-2">Current: <strong>{STATUS_DISPLAY[order.status as BoutiqueOrderStatus]?.label || order.status}</strong></p>
+                      <select
+                        id="orderStatus"
+                        value={newStatus}
+                        onChange={(e) => {
+                          handleStatusChange(e.target.value)
+                        }}
+                        className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                      >
+                        <option value="">Select a new status...</option>
+                        {(() => {
+                          const validTransitions = getValidTransitions(order.status as BoutiqueOrderStatus)
+                          return validTransitions.map(status => {
+                            const statusInfo = STATUS_DISPLAY[status];
+                            return (
+                              <option key={status} value={status} className="text-gray-900">
+                                {statusInfo?.label || status}
+                              </option>
+                            );
+                          });
+                        })()}
+                      </select>
+                    </>
+                  )}
                 </div>
 
                 {/* Status Change Warning */}
@@ -496,9 +550,10 @@ export default function AdminOrderDetailPage() {
                             <div className="mt-1 text-xs text-gray-600">
                               {Object.entries(log.changedFields)
                                 .filter(([key]) => key !== 'status')
+                                .filter(([, value]) => value !== null && value !== undefined)
                                 .map(([key, value]) => (
                                   <div key={key}>
-                                    {key}: {JSON.stringify(value)}
+                                    {key}: {typeof value === 'string' ? value : JSON.stringify(value)}
                                   </div>
                                 ))}
                             </div>

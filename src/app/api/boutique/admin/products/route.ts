@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
+import { notifyContentApproved, notifyContentRejected, notifyProductStatusChange } from '@/lib/boutique-notifications';
 
 // GET - List products for admin review
 export async function GET(request: NextRequest) {
@@ -189,7 +190,17 @@ export async function PATCH(request: NextRequest) {
           contentNotes: notes,
         };
         message = 'Content approved. Seller notified to ship product within 7 days.';
-        // TODO: Send email to seller with shipping instructions
+        
+        // Send email and platform notifications to seller
+        if (product.seller) {
+          await notifyContentApproved(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id
+          );
+        }
         break;
 
       case 'reject_content':
@@ -215,7 +226,19 @@ export async function PATCH(request: NextRequest) {
           contentNotes: notes,
         };
         message = 'Content rejected. Seller notified with feedback.';
-        // TODO: Send email to seller with rejection reason
+        
+        // Send email and platform notifications to seller
+        if (product.seller) {
+          await notifyContentRejected(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id,
+            reason,
+            notes
+          );
+        }
         break;
 
       case 'mark_received':
@@ -242,6 +265,19 @@ export async function PATCH(request: NextRequest) {
           });
         }
         message = 'Product marked as received. Proceed with physical verification.';
+        
+        // Notify seller that product was received
+        if (product.seller) {
+          await notifyProductStatusChange(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id,
+            product.status,
+            PRODUCT_STATUS.RECEIVED_BY_ADMIN
+          );
+        }
         break;
 
       case 'verify_physical':
@@ -304,7 +340,7 @@ export async function PATCH(request: NextRequest) {
             shelf: warehouseLocation?.split('-')[1] || '1',
             bin: warehouseLocation?.split('-')[2] || 'A1',
             status: 'IN_STOCK',
-            conditionOnReceipt: product.condition,
+            conditionOnReceipt: verification?.condition || 'GOOD',
             conditionNotes: verification?.notes || notes,
             storageStartDate: new Date(),
             storageFreeUntil: new Date(Date.now() + BOUTIQUE_DEFAULTS.freeStorageDays * 24 * 60 * 60 * 1000),
@@ -315,6 +351,19 @@ export async function PATCH(request: NextRequest) {
         message = verification?.hasDiscrepancy 
           ? `Verification complete with discrepancies. ${verification.totalPassed} of ${verification.totalExpected} items passed.`
           : 'Physical verification passed. Product ready to go live.';
+        
+        // Notify seller of verification result
+        if (product.seller) {
+          await notifyProductStatusChange(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id,
+            product.status,
+            PRODUCT_STATUS.VERIFICATION_PASSED
+          );
+        }
         break;
 
       case 'reject_physical':
@@ -357,7 +406,28 @@ export async function PATCH(request: NextRequest) {
           physicalNotes: verification?.notes || reason,
         };
         message = 'Physical verification failed. Product will be returned to seller.';
+        
+        // Notify seller of rejection
+        if (product.seller) {
+          await notifyProductStatusChange(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id,
+            product.status,
+            PRODUCT_STATUS.REJECTED,
+            {
+              rejectionReason: reason || verification?.notes || 'Verification failed',
+            }
+          );
+        }
         // TODO: Initiate return to seller process
+        // When a product is rejected after physical verification:
+        // 1. Create a return shipment request
+        // 2. Notify seller with return shipping instructions
+        // 3. Track return process through SellerToAdminShipment with reverse flow
+        // 4. Update product status to RETURNED_TO_SELLER once received
         break;
 
       case 'go_live':
@@ -374,7 +444,19 @@ export async function PATCH(request: NextRequest) {
           storageFeeStartDate: new Date(Date.now() + BOUTIQUE_DEFAULTS.freeStorageDays * 24 * 60 * 60 * 1000),
         };
         message = 'Product is now live and available for purchase!';
-        // TODO: Send notification to seller
+        
+        // Send celebration notification to seller
+        if (product.seller) {
+          await notifyProductStatusChange(
+            product.id,
+            product.title,
+            product.seller.email,
+            product.seller.name || 'Seller',
+            product.seller.id,
+            product.status,
+            PRODUCT_STATUS.LIVE
+          );
+        }
         break;
 
       default:

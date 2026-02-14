@@ -20,6 +20,43 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+@layer base {
+  /* Input and textarea text color */
+  input {
+    @apply text-black;
+  }
+  
+  input::placeholder {
+    @apply text-gray-500;
+  }
+  
+  textarea {
+    @apply text-black;
+  }
+  
+  textarea::placeholder {
+    @apply text-gray-500;
+  }
+  
+  /* Select/dropdown text color */
+  select {
+    @apply text-black;
+  }
+  
+  select option {
+    @apply text-black bg-white;
+  }
+  
+  /* Search input */
+  input[type="search"] {
+    @apply text-black;
+  }
+  
+  input[type="search"]::placeholder {
+    @apply text-gray-500;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

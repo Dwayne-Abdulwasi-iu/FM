@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
+import { sendEmail } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -103,8 +104,70 @@ export async function POST(
       },
     });
 
-    // TODO: Send notification to admin about new product for review
-    // TODO: Send email to seller confirming submission
+    // Implement notifications with email service
+
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com';
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    // Send confirmation email to seller
+    if (session.user.email) {
+      const sellerEmailHtml = `
+        <h2>Product Submitted for Review</h2>
+        <p>Hello ${session.user.name || 'Seller'},</p>
+        <p>Your boutique product <strong>${product.title}</strong> has been successfully submitted for content review.</p>
+        
+        <h3>Submission Details</h3>
+        <ul>
+          <li><strong>Product:</strong> ${product.title}</li>
+          <li><strong>Status:</strong> Pending Content Review</li>
+          <li><strong>Submitted Date:</strong> ${new Date().toLocaleDateString()}</li>
+        </ul>
+        
+        <p>Our content review team will inspect the product for compliance and quality standards. This typically takes 2-3 business days.</p>
+        
+        <p>You will receive an email notification once the review is complete.</p>
+        
+        <p>
+          <a href="${baseUrl}/seller/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            View Product
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: session.user.email,
+        subject: `Product Submitted: ${product.title}`,
+        html: sellerEmailHtml,
+      });
+    }
+
+    // Notify admin about new product submission
+    if (adminEmail) {
+      const adminEmailHtml = `
+        <h2>New Boutique Product Submission</h2>
+        <p>A seller has submitted a new product for content review.</p>
+        
+        <h3>Product Details</h3>
+        <ul>
+          <li><strong>Product ID:</strong> ${id}</li>
+          <li><strong>Product:</strong> ${product.title}</li>
+          <li><strong>Seller:</strong> ${session.user.name || 'Unknown'}</li>
+          <li><strong>Submitted:</strong> ${new Date().toLocaleString()}</li>
+        </ul>
+        
+        <p>
+          <a href="${baseUrl}/admin/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #FF6B6B; color: white; text-decoration: none; border-radius: 8px;">
+            Review Product
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: adminEmail,
+        subject: `New Boutique Product for Review: ${product.title}`,
+        html: adminEmailHtml,
+      });
+    }
 
     return NextResponse.json({
       success: true,

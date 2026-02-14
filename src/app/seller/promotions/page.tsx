@@ -31,12 +31,15 @@ interface Promotion {
   discountValue: number
   bundlePrice: number | null
   designIds: string[]
+  productIds?: string[]
   startDate: string
   endDate: string
   maxUsage: number | null
   usageCount: number
   isActive: boolean
   createdAt: string
+  designs?: Array<{ id: string; title: string; thumbnailUrl?: string; price: number }>
+  products?: Array<{ id: string; title: string; thumbnailUrl?: string; basePrice: number }>
 }
 
 export default function SellerPromotionsPage() {
@@ -44,11 +47,25 @@ export default function SellerPromotionsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [designs, setDesigns] = useState<any[]>([])
   const [filter, setFilter] = useState<'all' | 'active' | 'expired'>('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [expandedPromotionId, setExpandedPromotionId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [promotedDesignIds, setPromotedDesignIds] = useState<string[]>([])
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [designPromotionMap, setDesignPromotionMap] = useState<Record<string, {
+    promotionId: string
+    promotionName: string
+    promotionType: string
+  }> | null>(null)
+  const [conflictingPromotions, setConflictingPromotions] = useState<Array<{
+    id: string
+    name: string
+    type: string
+  }> | null>(null)
 
   const [newPromotion, setNewPromotion] = useState<{
     type: 'DISCOUNT' | 'BUNDLE' | 'FLASH_SALE'
@@ -56,7 +73,9 @@ export default function SellerPromotionsPage() {
     description: string
     discountType: 'PERCENTAGE' | 'FIXED'
     discountValue: number
-    bundlePrice: number
+    bundlePrice: number | null
+    designIds: string[]
+    productIds: string[]
     startDate: string
     endDate: string
     maxUsage: number | null
@@ -66,11 +85,15 @@ export default function SellerPromotionsPage() {
     description: '',
     discountType: 'PERCENTAGE',
     discountValue: 10,
-    bundlePrice: 0,
+    bundlePrice: null,
+    designIds: [],
+    productIds: [],
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     maxUsage: null as number | null,
   })
+
+  const [itemType, setItemType] = useState<'designs' | 'products'>('designs')
 
   useEffect(() => {
     if (authStatus === 'loading') return
@@ -79,7 +102,32 @@ export default function SellerPromotionsPage() {
       return
     }
     fetchPromotions()
+    fetchDesigns()
   }, [session, authStatus, router, filter])
+
+  const fetchDesigns = async () => {
+    try {
+      const response = await fetch('/api/seller/designs')
+      if (response.ok) {
+        const data = await response.json()
+        setDesigns(data.designs || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch designs:', error)
+    }
+
+    // Fetch designs that already have active promotions
+    try {
+      const response = await fetch('/api/seller/promotions/active-designs')
+      if (response.ok) {
+        const data = await response.json()
+        setDesignPromotionMap(data.designPromos || {})
+        setPromotedDesignIds(Object.keys(data.designPromos || {}))
+      }
+    } catch (error) {
+      console.error('Failed to fetch promoted designs:', error)
+    }
+  }
 
   const fetchPromotions = async () => {
     setLoading(true)
@@ -98,8 +146,53 @@ export default function SellerPromotionsPage() {
 
   const handleCreatePromotion = async (e: React.FormEvent) => {
     e.preventDefault()
-    setCreating(true)
     setError('')
+
+    // Client-side validation
+    if (!newPromotion.name.trim()) {
+      setError('Promotion name is required')
+      return
+    }
+
+    if (newPromotion.discountValue <= 0) {
+      setError('Discount value must be greater than 0')
+      return
+    }
+
+    if (newPromotion.discountType === 'PERCENTAGE' && newPromotion.discountValue > 100) {
+      setError('Percentage discount cannot exceed 100%')
+      return
+    }
+
+    if (newPromotion.type === 'BUNDLE') {
+      const hasItems = (itemType === 'designs' && newPromotion.designIds.length > 0) ||
+                       (itemType === 'products' && newPromotion.productIds.length > 0);
+      if (!hasItems) {
+        const itemName = itemType === 'designs' ? 'design' : 'product';
+        setError(`Bundle promotion must include at least one ${itemName}`)
+        return
+      }
+
+      if (!newPromotion.bundlePrice || newPromotion.bundlePrice <= 0) {
+        setError('Bundle price must be greater than 0')
+        return
+      }
+    }
+
+    const startDate = new Date(newPromotion.startDate)
+    const endDate = new Date(newPromotion.endDate)
+
+    if (endDate <= startDate) {
+      setError('End date must be after start date')
+      return
+    }
+
+    if (newPromotion.maxUsage !== null && newPromotion.maxUsage < 1) {
+      setError('Maximum usage must be at least 1')
+      return
+    }
+
+    setCreating(true)
 
     try {
       const response = await fetch('/api/seller/promotions', {
@@ -111,13 +204,16 @@ export default function SellerPromotionsPage() {
       if (response.ok) {
         setSuccess('Promotion created successfully!')
         setShowCreateModal(false)
+        setItemType('designs')
         setNewPromotion({
           type: 'DISCOUNT',
           name: '',
           description: '',
           discountType: 'PERCENTAGE',
           discountValue: 10,
-          bundlePrice: 0,
+          bundlePrice: null,
+          designIds: [],
+          productIds: [],
           startDate: new Date().toISOString().split('T')[0],
           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           maxUsage: null,
@@ -126,7 +222,18 @@ export default function SellerPromotionsPage() {
         setTimeout(() => setSuccess(''), 3000)
       } else {
         const data = await response.json()
-        setError(data.error || 'Failed to create promotion')
+        
+        // Format conflict error with details
+        if (response.status === 409 && data.conflictingDesigns) {
+          setConflictingPromotions(data.existingPromotions || [])
+          const conflictDetails = Object.entries(data.conflictingDesigns)
+            .map(([_, promo]) => `• ${promo}`)
+            .join('\n')
+          setError(`${data.error}\n\n${conflictDetails}`)
+        } else {
+          setConflictingPromotions(null)
+          setError(data.error || 'Failed to create promotion')
+        }
       }
     } catch (error) {
       console.error('Failed to create promotion:', error)
@@ -153,8 +260,6 @@ export default function SellerPromotionsPage() {
   }
 
   const handleDeletePromotion = async (promotionId: string) => {
-    if (!confirm('Are you sure you want to delete this promotion?')) return
-
     try {
       const response = await fetch(`/api/seller/promotions/${promotionId}`, {
         method: 'DELETE',
@@ -162,6 +267,7 @@ export default function SellerPromotionsPage() {
 
       if (response.ok) {
         setSuccess('Promotion deleted')
+        setDeleteConfirmId(null)
         fetchPromotions()
         setTimeout(() => setSuccess(''), 3000)
       }
@@ -260,9 +366,59 @@ export default function SellerPromotionsPage() {
         )}
 
         {error && (
-          <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-xs sm:text-sm text-red-700">
-            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-            {error}
+          <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-700">
+            <div className="flex gap-2">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium whitespace-pre-wrap">{error}</p>
+                {conflictingPromotions && conflictingPromotions.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="font-medium text-red-800">To resolve this, deactivate:</p>
+                    {conflictingPromotions.map(promo => (
+                      <button
+                        key={promo.id}
+                        onClick={() => {
+                          setError('')
+                          setConflictingPromotions(null)
+                          // Scroll to the promotion in the list
+                          const element = document.getElementById(`promotion-${promo.id}`)
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            element.classList.add('ring-2', 'ring-yellow-400')
+                            setTimeout(() => element.classList.remove('ring-2', 'ring-yellow-400'), 2000)
+                          }
+                        }}
+                        className="block w-full text-left px-2 py-1 bg-red-100 hover:bg-red-200 rounded transition-colors font-medium"
+                      >
+                        → {promo.name} ({promo.type})
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Stats Summary */}
+        {promotions.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="bg-white rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{promotions.length}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Total Promotions</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-green-600">{promotions.filter(p => p.isActive && new Date(p.endDate) > new Date()).length}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Active Now</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-orange-600">{promotions.filter(p => new Date(p.startDate) > new Date()).length}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Scheduled</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 sm:p-4 text-center">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-400">{promotions.filter(p => new Date(p.endDate) <= new Date()).length}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Expired</p>
+            </div>
           </div>
         )}
 
@@ -303,6 +459,7 @@ export default function SellerPromotionsPage() {
           <div className="grid gap-3 sm:gap-4">
             {promotions.map((promotion) => (
               <div
+                id={`promotion-${promotion.id}`}
                 key={promotion.id}
                 className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow"
               >
@@ -355,6 +512,19 @@ export default function SellerPromotionsPage() {
                           </span>
                         )}
                       </div>
+                      {(promotion.type === 'BUNDLE' || promotion.type === 'FLASH_SALE' || promotion.type === 'DISCOUNT') && promotion.designIds.length > 0 && (
+                        <button
+                          onClick={() => setExpandedPromotionId(expandedPromotionId === promotion.id ? null : promotion.id)}
+                          className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-2 transition-colors"
+                        >
+                          {expandedPromotionId === promotion.id
+                            ? '▼ Hide designs'
+                            : `▶ View ${promotion.designIds.length} design${promotion.designIds.length !== 1 ? 's' : ''}`}
+                        </button>
+                      )}
+                      {promotion.type === 'DISCOUNT' && promotion.designIds.length === 0 && (
+                        <p className="text-xs text-gray-500 mt-2">Applies to all designs</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -370,7 +540,7 @@ export default function SellerPromotionsPage() {
                       {promotion.isActive ? <Eye className="w-4 h-4 sm:w-5 sm:h-5" /> : <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </button>
                     <button
-                      onClick={() => handleDeletePromotion(promotion.id)}
+                      onClick={() => setDeleteConfirmId(promotion.id)}
                       className="p-1 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
@@ -378,6 +548,78 @@ export default function SellerPromotionsPage() {
                     </button>
                   </div>
                 </div>
+                {expandedPromotionId === promotion.id && (promotion.type === 'BUNDLE' || promotion.type === 'FLASH_SALE' || promotion.type === 'DISCOUNT') && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    {promotion.designIds && promotion.designIds.length > 0 && (
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium text-gray-700 mb-3">Designs included in this promotion:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+                          {(promotion.designs || [])
+                            .map(design => (
+                              <Link
+                                key={design.id}
+                                href={`/seller/designs/${design.id}`}
+                                className="group relative bg-gray-100 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                              >
+                                <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden relative">
+                                  {design.thumbnailUrl ? (
+                                    <img
+                                      src={design.thumbnailUrl}
+                                      alt={design.title}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-center w-full h-full text-gray-400 text-xs text-center px-2">
+                                      No image
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">View Design</span>
+                                  </div>
+                                </div>
+                                <p className="text-xs sm:text-sm font-medium text-gray-900 mt-1 line-clamp-2">{design.title}</p>
+                                <p className="text-xs text-gray-500">${design.price.toFixed(2)}</p>
+                              </Link>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {promotion.productIds && promotion.productIds.length > 0 && (
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium text-gray-700 mb-3">Products included in this promotion:</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+                          {(promotion.products || [])
+                            .map(product => (
+                              <Link
+                                key={product.id}
+                                href={`/seller/boutique/${product.id}`}
+                                className="group relative bg-gray-100 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                              >
+                                <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden relative">
+                                  {product.thumbnailUrl ? (
+                                    <img
+                                      src={product.thumbnailUrl}
+                                      alt={product.title}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-center w-full h-full text-gray-400 text-xs text-center px-2">
+                                      No image
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                    <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">View Product</span>
+                                  </div>
+                                </div>
+                                <p className="text-xs sm:text-sm font-medium text-gray-900 mt-1 line-clamp-2">{product.title}</p>
+                                <p className="text-xs text-gray-500">${product.basePrice.toFixed(2)}</p>
+                              </Link>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -410,6 +652,36 @@ export default function SellerPromotionsPage() {
                 </div>
 
                 <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Apply To *</label>
+                  <div className="flex gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={itemType === 'designs'}
+                        onChange={() => {
+                          setItemType('designs')
+                          setNewPromotion({ ...newPromotion, designIds: [], productIds: [] })
+                        }}
+                        className="w-4 h-4 text-indigo-600"
+                      />
+                      <span className="text-xs sm:text-sm text-gray-700">Designs</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={itemType === 'products'}
+                        onChange={() => {
+                          setItemType('products')
+                          setNewPromotion({ ...newPromotion, designIds: [], productIds: [] })
+                        }}
+                        className="w-4 h-4 text-indigo-600"
+                      />
+                      <span className="text-xs sm:text-sm text-gray-700">Boutique Products</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name *</label>
                   <input
                     type="text"
@@ -420,6 +692,83 @@ export default function SellerPromotionsPage() {
                     placeholder="Summer Sale"
                   />
                 </div>
+
+                {itemType === 'designs' && (newPromotion.type === 'BUNDLE' || newPromotion.type === 'DISCOUNT' || newPromotion.type === 'FLASH_SALE') && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Select Designs {newPromotion.type === 'BUNDLE' ? '*' : '(Optional - leave empty to apply to all)'}
+                    </label>
+                    {promotedDesignIds.length > 0 && (
+                      <p className="text-xs text-amber-600 mb-2 p-2 bg-amber-50 rounded">
+                        ℹ️ Some designs already have active promotions and cannot be added
+                      </p>
+                    )}
+                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                      {designs.length === 0 ? (
+                        <p className="text-xs text-gray-500">No designs available</p>
+                      ) : (
+                        designs.map((design) => {
+                          const isPromoted = promotedDesignIds.includes(design.id)
+                          const promotionInfo = isPromoted ? designPromotionMap?.[design.id] : null
+                          return (
+                            <label 
+                              key={design.id} 
+                              className={`flex items-center gap-2 py-1 text-xs sm:text-sm cursor-pointer hover:bg-gray-50 ${
+                                isPromoted ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                              title={promotionInfo ? `Promotion: ${promotionInfo.promotionName}` : ''}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={newPromotion.designIds.includes(design.id)}
+                                disabled={isPromoted}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setNewPromotion({
+                                      ...newPromotion,
+                                      designIds: [...newPromotion.designIds, design.id],
+                                    })
+                                  } else {
+                                    setNewPromotion({
+                                      ...newPromotion,
+                                      designIds: newPromotion.designIds.filter((id) => id !== design.id),
+                                    })
+                                  }
+                                }}
+                                className="w-4 h-4 rounded border-gray-300 text-indigo-600 disabled:opacity-50"
+                              />
+                              <div className="flex-1">
+                                <span className={`${isPromoted ? 'text-gray-500' : 'text-gray-700'}`}>
+                                  {design.title}
+                                </span>
+                                {isPromoted && promotionInfo && (
+                                  <div className="text-xs text-amber-600 font-medium ml-1">
+                                    {promotionInfo.promotionName} ({promotionInfo.promotionType})
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {itemType === 'products' && (newPromotion.type === 'BUNDLE' || newPromotion.type === 'DISCOUNT' || newPromotion.type === 'FLASH_SALE') && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Select Boutique Products {newPromotion.type === 'BUNDLE' ? '*' : '(Optional - leave empty to apply to all)'}
+                    </label>
+                    <p className="text-xs text-blue-600 mb-2 p-2 bg-blue-50 rounded">
+                      ℹ️ Products will be fetched from your available boutique inventory
+                    </p>
+                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 text-gray-500 text-xs">
+                      <p>Products list will be populated when you save the promotion</p>
+                      <p className="mt-2">For now, enter product IDs directly or manage them after creation.</p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -470,6 +819,30 @@ export default function SellerPromotionsPage() {
                     />
                   </div>
                 </div>
+
+                {newPromotion.type === 'BUNDLE' && (
+                  <div>
+                    <label htmlFor="bundlePrice" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Bundle Price ($) *
+                    </label>
+                    <input
+                      id="bundlePrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newPromotion.bundlePrice || 0}
+                      onChange={(e) =>
+                        setNewPromotion({
+                          ...newPromotion,
+                          bundlePrice: e.target.value ? parseFloat(e.target.value) : 0,
+                        })
+                      }
+                      required={newPromotion.type === 'BUNDLE'}
+                      className="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-black border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="29.99"
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
@@ -545,6 +918,43 @@ export default function SellerPromotionsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-xl max-w-sm w-full">
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  Delete Promotion?
+                </h3>
+              </div>
+              <div className="p-4 sm:p-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  Are you sure you want to delete this promotion? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteConfirmId(null)}
+                    className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (deleteConfirmId) {
+                        handleDeletePromotion(deleteConfirmId);
+                      }
+                    }}
+                    className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

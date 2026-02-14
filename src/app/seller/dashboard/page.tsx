@@ -163,7 +163,7 @@ export default function SellerDashboardPage() {
 
   const fetchTrialInfo = async () => {
     try {
-      const response = await fetch('/api/subscriptions/pro-trial/status')
+      const response = await fetch('/api/subscriptions/pro-trial')
       if (response.ok) {
         const data = await response.json()
         setTrialInfo({
@@ -473,6 +473,28 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
+        {/* Featured Items Section */}
+        <div className="bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-8 text-white">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-3">
+              <Star className="w-6 h-6" />
+              <h2 className="text-sm sm:text-lg font-semibold">Featured Items</h2>
+            </div>
+            <Link href="/seller/featured-items" className="text-[10px] sm:text-sm bg-white/20 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full hover:bg-white/30 transition">
+              Manage
+            </Link>
+          </div>
+          <p className="text-[10px] sm:text-sm opacity-90 mb-3 sm:mb-4">
+            Showcase your best designs and products! Feature up to 6 items in your shop and platform.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+            <Link href="/seller/featured-items" className="bg-white/10 rounded-lg p-2.5 sm:p-4 hover:bg-white/20 transition">
+              <p className="text-lg sm:text-2xl font-bold">⭐</p>
+              <p className="text-[10px] sm:text-sm mt-0.5 sm:mt-1">Manage Featured</p>
+            </Link>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 md:gap-8">
           {/* Top Designs */}
           <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6">
@@ -492,7 +514,7 @@ export default function SellerDashboardPage() {
                   <span className="text-sm sm:text-lg font-bold text-gray-400 w-4 sm:w-6">{index + 1}</span>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-gray-100 relative flex-shrink-0">
                     <Image
-                      src={design.thumbnailUrl || design.imageUrl}
+                      src={design.thumbnailUrl || design.imageUrl || '/api/placeholder?w=48&h=48&text=Design'}
                       alt={design.title}
                       fill
                       sizes="48px"
@@ -626,301 +648,303 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-4 sm:mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-          <Link
-            href="/seller/boutique"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-purple-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Store className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Products</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage physical items</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+        {/* Quick Actions - Organized by Category */}
+        <div className="mt-4 sm:mt-8">
+          {/* Digital Products Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Digital Products</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/designs"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Manage Designs</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Edit & organize your work</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/boutique/orders"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-pink-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 text-pink-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Orders</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Track & fulfill orders</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/featured-items"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-yellow-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Featured Items</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage featured designs & products</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/commission-requests"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-rose-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-rose-100 rounded-lg flex items-center justify-center">
-              <Palette className="w-4 h-4 sm:w-6 sm:h-6 text-rose-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Commission Requests</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Custom work inquiries</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/pod-orders"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">📦</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">POD Orders</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Print-on-demand order tracking</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/promotions"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Tag className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
+              <Link
+                href="/seller/pod-settings"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">POD Settings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage POD availability</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Manage Promotions</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Create discounts & bundles</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          </div>
 
-          <Link
-            href="/seller/designs"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Package className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Manage Designs</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Edit & organize your work</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          {/* Physical Products Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Physical Products</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/boutique"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-purple-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Store className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Products</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage physical items</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/earnings"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-green-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Earnings & Payouts</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Track revenue & withdrawals</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/boutique/orders"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-pink-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 text-pink-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Orders</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Track & fulfill orders</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/commission-settings"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Commission Settings</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage commission availability</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/boutique/returns"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">↩️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Returns</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage return requests</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/settings"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" />
+              <Link
+                href="/seller/boutique/settings"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-slate-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Settings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Shipping & product settings</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Seller Settings</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Bank account & payout preferences</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          </div>
 
-          <Link
-            href="/seller/pod-settings"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Package className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">POD Settings</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage POD availability</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          {/* Orders & Commissions Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Orders & Commissions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/orders"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">All Orders</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Digital & physical orders</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/profile/edit"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Profile Settings</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Profile & preferences</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/commission-requests"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-rose-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-rose-100 rounded-lg flex items-center justify-center">
+                  <Palette className="w-4 h-4 sm:w-6 sm:h-6 text-rose-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Commission Requests</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Custom work inquiries</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/orders"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">All Orders</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Digital & physical orders</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/commission-settings"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Commission Settings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage commission availability</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/payments"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-600" />
+              <Link
+                href="/seller/commission-settings/milestones"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-rose-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-rose-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Tier Milestones</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Track seller tier progress</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Payment History</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">View transactions & audit trail</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          </div>
 
-          <Link
-            href="/seller/payouts"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-green-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg">💳</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Payouts</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Commission & payout details</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          {/* Finances & Promotions Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Finances & Promotions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/finances"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-indigo-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Finances Hub</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Earnings, payments & transfers</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/transfers"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg">💸</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Money Transfers</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Withdraw & manage payouts</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/promotions"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Tag className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Manage Promotions</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Create discounts & bundles</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/pod-orders"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg">📦</span>
+              <Link
+                href="/seller/upgrade"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">⬆️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Upgrade Account</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Explore premium seller benefits</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">POD Orders</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Print-on-demand order tracking</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          </div>
 
-          <Link
-            href="/seller/boutique/returns"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg">↩️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Returns</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Manage return requests</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          {/* Settings & Verification Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Settings & Verification</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/settings"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Seller Settings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Bank account & payout preferences</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/verification"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-violet-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-4 h-4 sm:w-6 sm:h-6 text-violet-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Account Verification</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Verify seller account status</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/profile/edit"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Profile Settings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Profile & preferences</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/onboarding"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-indigo-100"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Getting Started</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Seller onboarding guide</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+              <Link
+                href="/seller/verification"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-violet-100 rounded-lg flex items-center justify-center">
+                  <Shield className="w-4 h-4 sm:w-6 sm:h-6 text-violet-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Account Verification</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Verify seller account status</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
 
-          <Link
-            href="/seller/boutique/settings"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6 text-slate-600" />
+              <Link
+                href="/seller/onboarding"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-2 border-indigo-100"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Getting Started</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Seller onboarding guide</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Boutique Settings</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Shipping & product settings</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
-
-          <Link
-            href="/seller/commission-settings/milestones"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-rose-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-rose-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Tier Milestones</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Track seller tier progress</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
-
-          <Link
-            href="/seller/upgrade"
-            className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <span className="text-lg">⬆️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Upgrade Account</p>
-              <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Explore premium seller benefits</p>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
-          </Link>
+          </div>
         </div>
 
         {/* Help & Resources Section */}

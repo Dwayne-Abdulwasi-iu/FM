@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import DesignerBadge from '@/components/DesignerBadge';
+import { VerificationBadge } from '@/components/VerificationBadges';
 
 interface Designer {
   id: string;
@@ -31,13 +32,11 @@ export default function DesignersPage() {
       try {
         // Fetch users who are sellers OR have uploaded at least one design
         const response = await fetch('/api/users?designers=true&limit=50');
-        console.log('Designers API response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('Designers data received:', data);
           setDesigners(data.users || []);
         } else {
-          console.error('API returned non-OK status:', response.status);
+          console.error('Failed to fetch designers:', response.status);
         }
       } catch (error) {
         console.error('Failed to fetch designers:', error);
@@ -147,8 +146,8 @@ export default function DesignersPage() {
                 )}
                 
                 {designer.verificationBadge && (
-                  <div className="text-[10px] sm:text-xs text-purple-600 font-medium mt-0.5 sm:mt-1">
-                    {designer.verificationBadge}
+                  <div className="mt-1 sm:mt-2">
+                    <VerificationBadge badge={designer.verificationBadge} size="sm" />
                   </div>
                 )}
 

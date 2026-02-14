@@ -20,6 +20,11 @@ interface CartItem {
   // A/B Price Test fields
   priceTestVariant?: 'A' | 'B'
   priceTestPrice?: number
+  // Promotion fields
+  promotionId?: string | null
+  promotionType?: 'DISCOUNT' | 'BUNDLE' | 'FLASH_SALE' | null
+  promotionPrice?: number
+  discountAmount?: number
   design: {
     id: string
     title: string
@@ -230,6 +235,10 @@ export default function CartPage() {
     if (item.purchaseType === 'POD' && item.podPrice) {
       return item.podPrice
     }
+    // Promotion prices take priority
+    if (item.promotionPrice !== undefined) {
+      return item.promotionPrice
+    }
     // A/B test items use the stored test price
     if (item.priceTestVariant && item.priceTestPrice) {
       return item.priceTestPrice
@@ -238,7 +247,12 @@ export default function CartPage() {
     return item.design.price
   }
   
-  // Check if item has a test price (for display purposes)
+  // Helper to check if item has a promotion applied
+  const hasPromotion = (item: CartItem) => {
+    return item.promotionId !== null && item.promotionId !== undefined && item.promotionPrice !== undefined
+  }
+
+  // Helper to check if item has test price
   const hasTestPrice = (item: CartItem) => {
     return item.priceTestVariant === 'B' && item.priceTestPrice && item.priceTestPrice !== item.design.price
   }
@@ -407,9 +421,19 @@ export default function CartPage() {
                       </div>
                       <p className="font-semibold text-xs sm:text-sm text-gray-900 mt-0.5">
                         {formatPrice(getItemPrice(item))}
+                        {hasPromotion(item) && (
+                          <span className="ml-1 text-[9px] text-gray-400 line-through font-normal">
+                            {formatPrice(item.design.price)}
+                          </span>
+                        )}
                         {hasTestPrice(item) && (
                           <span className="ml-1 text-[9px] text-gray-400 line-through font-normal">
                             {formatPrice(item.design.price)}
+                          </span>
+                        )}
+                        {hasPromotion(item) && (
+                          <span className="ml-2 inline-block px-1.5 py-0.5 text-[8px] bg-green-100 text-green-700 rounded font-semibold">
+                            {item.promotionType === 'BUNDLE' ? 'Bundle Deal' : item.promotionType === 'FLASH_SALE' ? 'Flash Sale' : 'Promo'}
                           </span>
                         )}
                       </p>
@@ -514,6 +538,32 @@ export default function CartPage() {
                       <span className="text-gray-700">Items Total</span>
                       <span className="font-medium text-gray-900">{formatPrice(total)}</span>
                     </div>
+
+                    {cartItems.some(item => item.promotionId) && (
+                      <div className="bg-green-50 border border-green-200 rounded p-2 sm:p-3 mt-2">
+                        <p className="text-[10px] sm:text-xs font-semibold text-green-900 mb-1.5">🎉 Promotions Applied</p>
+                        <div className="space-y-1">
+                          {cartItems
+                            .filter(item => item.promotionId)
+                            .map((item) => (
+                              <div key={item.id} className="text-[9px] sm:text-[10px] text-green-800">
+                                <span className="font-medium">{item.design.title}</span>
+                                <span className="text-green-700 ml-1">
+                                  -{formatPrice(item.discountAmount || 0)}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                        <div className="border-t border-green-200 mt-1.5 pt-1.5 flex justify-between text-[10px] sm:text-xs font-semibold text-green-900">
+                          <span>You Save</span>
+                          <span>
+                            {formatPrice(
+                              cartItems.reduce((sum, item) => sum + ((item.discountAmount || 0) * item.quantity), 0)
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="border-t border-gray-200 pt-1.5 mt-1.5">
                       <div className="flex justify-between text-xs sm:text-sm">

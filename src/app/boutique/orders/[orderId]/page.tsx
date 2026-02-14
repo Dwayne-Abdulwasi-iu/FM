@@ -81,6 +81,20 @@ const STATUS_STEPS = [
 
 const STATUS_ORDER = ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
+const getReturnWindowInfo = (deliveredAt: string | null) => {
+  if (!deliveredAt) return { daysRemaining: 0, isOpen: false };
+  
+  const delivered = new Date(deliveredAt).getTime();
+  const now = Date.now();
+  const daysSinceDelivery = Math.floor((now - delivered) / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, 7 - daysSinceDelivery);
+  
+  return {
+    daysRemaining,
+    isOpen: daysRemaining > 0,
+  };
+};
+
 export default function BoutiqueOrderDetailPage() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
@@ -124,8 +138,8 @@ export default function BoutiqueOrderDetailPage() {
   };
 
   const submitReturnRequest = async () => {
-    if (!returnReason || !selectedItemId) {
-      toast.error('Please select an item and reason');
+    if (!returnReason || !selectedItemId || !returnDescription.trim()) {
+      toast.error('Please select an item, provide a reason, and add a description');
       return;
     }
     setConfirming(true);
@@ -356,13 +370,13 @@ export default function BoutiqueOrderDetailPage() {
                       {item.product.title}
                     </Link>
                     {item.variantSnapshot && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-900">
                         {item.variantSnapshot.size && `Size: ${item.variantSnapshot.size}`}
                         {item.variantSnapshot.size && item.variantSnapshot.color && ' • '}
                         {item.variantSnapshot.color && `Color: ${item.variantSnapshot.color}`}
                       </p>
                     )}
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                    <p className="text-sm text-gray-900">Qty: {item.quantity}</p>
                     <p className="font-medium text-gray-900 mt-1">
                       {formatPrice(item.finalPrice)}
                     </p>
@@ -379,12 +393,12 @@ export default function BoutiqueOrderDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>{formatPrice(order.subtotal)}</span>
+                  <span className="text-gray-900">Subtotal</span>
+                  <span className="text-gray-900">{formatPrice(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span>{formatPrice(order.shippingCost)}</span>
+                  <span className="text-gray-900">Shipping</span>
+                  <span className="text-gray-900">{formatPrice(order.shippingCost)}</span>
                 </div>
                 {order.discount > 0 && (
                   <div className="flex justify-between text-green-600">
@@ -404,16 +418,16 @@ export default function BoutiqueOrderDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span>{order.shippingAddress.name}</span>
+                  <User className="w-4 h-4 text-gray-900" />
+                  <span className="text-gray-900">{order.shippingAddress.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span>{order.shippingAddress.phone}</span>
+                  <Phone className="w-4 h-4 text-gray-900" />
+                  <span className="text-gray-900">{order.shippingAddress.phone}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <span>
+                  <MapPin className="w-4 h-4 text-gray-900 mt-0.5" />
+                  <span className="text-gray-900">
                     {order.shippingAddress.street}<br />
                     {order.shippingAddress.city}, {order.shippingAddress.state}<br />
                     {order.shippingAddress.country}
@@ -427,31 +441,31 @@ export default function BoutiqueOrderDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Order Placed</span>
-                  <span>{formatDate(order.createdAt)}</span>
+                  <span className="text-gray-900">Order Placed</span>
+                  <span className="text-gray-900">{formatDate(order.createdAt)}</span>
                 </div>
                 {order.paidAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Confirmed</span>
-                    <span>{formatDate(order.paidAt)}</span>
+                    <span className="text-gray-900">Payment Confirmed</span>
+                    <span className="text-gray-900">{formatDate(order.paidAt)}</span>
                   </div>
                 )}
                 {order.shippedAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shipped</span>
-                    <span>{formatDate(order.shippedAt)}</span>
+                    <span className="text-gray-900">Shipped</span>
+                    <span className="text-gray-900">{formatDate(order.shippedAt)}</span>
                   </div>
                 )}
                 {order.deliveredAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Delivered</span>
-                    <span>{formatDate(order.deliveredAt)}</span>
+                    <span className="text-gray-900">Delivered</span>
+                    <span className="text-gray-900">{formatDate(order.deliveredAt)}</span>
                   </div>
                 )}
                 {order.completedAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Completed</span>
-                    <span>{formatDate(order.completedAt)}</span>
+                    <span className="text-gray-900">Completed</span>
+                    <span className="text-gray-900">{formatDate(order.completedAt)}</span>
                   </div>
                 )}
               </div>
@@ -489,15 +503,33 @@ export default function BoutiqueOrderDetailPage() {
             )}
 
             {/* Request Return - Show for DELIVERED or COMPLETED orders */}
-            {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.boutiqueReturn && (
-              <button
-                onClick={() => setShowReturnModal(true)}
-                className="flex-1 flex items-center justify-center gap-2 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 font-medium"
-              >
-                <RotateCcw className="w-5 h-5" />
-                Request Return
-              </button>
-            )}
+            {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.boutiqueReturn && (() => {
+              const returnWindow = getReturnWindowInfo(order.deliveredAt);
+              return returnWindow.isOpen ? (
+                <button
+                  onClick={() => setShowReturnModal(true)}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 border-2 border-amber-300 bg-amber-50 text-amber-900 py-3 px-6 rounded-lg hover:bg-amber-100 font-medium"
+                >
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-5 h-5" />
+                    Request Return
+                  </div>
+                  <span className="text-xs font-normal">
+                    {returnWindow.daysRemaining} day{returnWindow.daysRemaining !== 1 ? 's' : ''} remaining
+                  </span>
+                </button>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-1 border-2 border-gray-200 bg-gray-50 text-gray-500 py-3 px-6 rounded-lg font-medium cursor-not-allowed">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-5 h-5" />
+                    Return window closed
+                  </div>
+                  <span className="text-xs font-normal">
+                    (7 days from delivery)
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Leave Review - Show for COMPLETED orders */}
             {order.status === 'COMPLETED' && (
@@ -576,14 +608,14 @@ export default function BoutiqueOrderDetailPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description (Optional)
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={returnDescription}
                   onChange={(e) => setReturnDescription(e.target.value)}
                   rows={3}
                   className="w-full border rounded-lg px-3 py-2 text-gray-900"
-                  placeholder="Provide more details about your return request..."
+                  placeholder="Provide details about your return request..."
                 />
               </div>
             </div>
@@ -597,7 +629,7 @@ export default function BoutiqueOrderDetailPage() {
               </button>
               <button
                 onClick={submitReturnRequest}
-                disabled={confirming || !returnReason || !selectedItemId}
+                disabled={confirming || !returnReason || !selectedItemId || !returnDescription.trim()}
                 className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
               >
                 {confirming ? 'Submitting...' : 'Submit Request'}

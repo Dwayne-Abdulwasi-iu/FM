@@ -118,9 +118,17 @@ export async function PATCH(
       console.log(`[Content Violation] User ${violation.userId} marked for ban due to violation ${id}`);
     }
     
-    // Create notification for the user if warned
+    // Create notification and send email for the user if warned
     if (action === "WARNED") {
       try {
+        // Get user details for email
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user = await (prisma as any).user.findUnique({
+          where: { id: violation.userId },
+          select: { email: true, name: true },
+        });
+
+        // Create platform notification
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma as any).notification.create({
           data: {
@@ -134,6 +142,32 @@ export async function PATCH(
             },
           },
         });
+
+        // Send email warning
+        if (user?.email) {
+          try {
+            await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/send-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: user.email,
+                subject: 'Content Policy Warning - Fashion Marketplace',
+                html: `
+                  <h2>Content Policy Warning</h2>
+                  <p>Hi ${user.name || 'User'},</p>
+                  <p>Your recent message in commission <strong>${violation.commissionTitle}</strong> contained ${violation.violationType.toLowerCase()} information that violates our messaging policy.</p>
+                  <p><strong>Policy:</strong> Sharing contact details to avoid platform fees is strictly prohibited. The platform exists to protect both buyers and sellers.</p>
+                  <p><strong>What happened:</strong> Your message was automatically redacted to prevent the sharing of contact information.</p>
+                  <p><strong>Consequences:</strong> Repeated violations may result in account suspension or permanent banning.</p>
+                  <p>If you believe this is an error, please <a href="https://fashionmarketplace.com/support">contact our support team</a>.</p>
+                  <p>Best regards,<br/>Fashion Marketplace Team</p>
+                `,
+              }),
+            });
+          } catch (emailError) {
+            console.error('Failed to send warning email:', emailError);
+          }
+        }
       } catch (notifError) {
         console.error("Failed to create warning notification:", notifError);
       }

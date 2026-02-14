@@ -23,6 +23,7 @@ import {
   Warehouse,
   ShoppingBag,
   RotateCcw,
+  TrendingDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { FULFILLMENT_METHOD, SELLER_TIER_CONFIG, type SellerTier } from '@/lib/boutique/constants';
@@ -407,6 +408,13 @@ export default function AdminBoutiquePage() {
               >
                 <Truck className="w-4 h-4" />
                 Shipments
+              </Link>
+              <Link
+                href="/admin/boutique/out-of-stock"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 text-sm font-medium transition"
+              >
+                <TrendingDown className="w-4 h-4" />
+                Sold Out
               </Link>
             </div>
           </div>

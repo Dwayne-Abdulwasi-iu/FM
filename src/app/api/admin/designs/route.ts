@@ -42,14 +42,29 @@ export async function GET(request: NextRequest) {
               email: true,
               displayName: true
             }
+          },
+          featuredInList: {
+            select: {
+              id: true
+            },
+            take: 1
           }
         }
       }),
       prisma.design.count()
     ])
 
+    // Map designs to include isFeatured flag
+    const designsWithFeatured = designs.map(design => ({
+      ...design,
+      isFeatured: design.featuredInList.length > 0
+    }))
+
     return NextResponse.json({ 
-      designs,
+      designs: designsWithFeatured.map(d => {
+        const { featuredInList, ...rest } = d
+        return rest
+      }),
       pagination: {
         page,
         limit,

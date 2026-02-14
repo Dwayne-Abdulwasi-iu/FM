@@ -86,6 +86,56 @@ export function calculateBadge(stats: {
 }
 
 /**
+ * Calculate all earned badges for a seller (returns array of all qualified badges)
+ */
+export function calculateAllBadges(stats: {
+  totalSales: number
+  avgRating: number
+  designCount: number
+  isManuallyVerified?: boolean
+}): string[] {
+  const { totalSales, avgRating, designCount, isManuallyVerified } = stats
+  const badges: string[] = []
+
+  // Check each badge - note that lower badges can be earned even if you qualify for higher ones
+  if (
+    totalSales >= BADGE_THRESHOLDS.RISING_STAR.minSales &&
+    avgRating >= BADGE_THRESHOLDS.RISING_STAR.minRating &&
+    designCount >= BADGE_THRESHOLDS.RISING_STAR.minDesigns
+  ) {
+    badges.push('RISING_STAR')
+  }
+
+  if (
+    totalSales >= BADGE_THRESHOLDS.TOP_SELLER.minSales &&
+    avgRating >= BADGE_THRESHOLDS.TOP_SELLER.minRating &&
+    designCount >= BADGE_THRESHOLDS.TOP_SELLER.minDesigns
+  ) {
+    badges.push('TOP_SELLER')
+  }
+
+  if (
+    totalSales >= BADGE_THRESHOLDS.VERIFIED_PRO.minSales &&
+    avgRating >= BADGE_THRESHOLDS.VERIFIED_PRO.minRating &&
+    designCount >= BADGE_THRESHOLDS.VERIFIED_PRO.minDesigns &&
+    isManuallyVerified
+  ) {
+    badges.push('VERIFIED_PRO')
+  }
+
+  if (
+    totalSales >= BADGE_THRESHOLDS.ELITE.minSales &&
+    avgRating >= BADGE_THRESHOLDS.ELITE.minRating &&
+    designCount >= BADGE_THRESHOLDS.ELITE.minDesigns &&
+    isManuallyVerified
+  ) {
+    badges.push('ELITE')
+  }
+
+  return badges
+}
+
+/**
  * Calculate the appropriate tier for a seller based on sales and revenue
  */
 export function calculateTier(stats: {

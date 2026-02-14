@@ -37,7 +37,13 @@ export async function GET(request: NextRequest) {
     const [orders, total] = await Promise.all([
       prisma.boutiqueOrder.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          total: true,
+          shippingCost: true,
+          createdAt: true,
           buyer: {
             select: {
               id: true,

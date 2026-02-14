@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PRODUCT_STATUS } from '@/lib/boutique/constants';
+import { sendEmail } from '@/lib/email';
 
 // GET - List shipments for admin (with filters)
 export async function GET(request: NextRequest) {
@@ -233,8 +234,45 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // TODO: Send notification to seller about receipt
-    // If discrepancy, notify them of the dispute
+    // Send notification email to seller
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com';
+    if (shipment.seller?.email) {
+      const statusMessage = hasDiscrepancy
+        ? `received with discrepancy (${itemsReceived}/${itemsExpected} items)`
+        : `received successfully (${itemsReceived} items)`;
+      
+      const emailHtml = `
+        <h2>Shipment Receipt Confirmation</h2>
+        <p>Hello ${shipment.seller.name || 'Seller'},</p>
+        <p>Your shipment to our warehouse has been ${statusMessage}.</p>
+        
+        <h3>Receipt Summary</h3>
+        <ul>
+          <li><strong>Items Expected:</strong> ${itemsExpected}</li>
+          <li><strong>Items Received:</strong> ${itemsReceived}</li>
+          ${itemsMissing > 0 ? `<li><strong>Items Missing:</strong> ${itemsMissing}</li>` : ''}
+          ${itemsDamaged ? `<li><strong>Items Damaged:</strong> ${itemsDamaged}</li>` : ''}
+          <li><strong>Status:</strong> ${newStatus}</li>
+        </ul>
+        
+        ${hasDiscrepancy ? `
+          <h3>Discrepancy Dispute Opened</h3>
+          <p>A dispute has been opened to investigate the missing or damaged items. Our team will contact you shortly to resolve this matter.</p>
+        ` : ''}
+        
+        <p>
+          <a href="${baseUrl}/seller/boutique/shipments" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            View Shipment Details
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: shipment.seller.email,
+        subject: `Shipment ${hasDiscrepancy ? 'Received with Discrepancy' : 'Received'}: ${shipment.id}`,
+        html: emailHtml,
+      });
+    }
 
     return NextResponse.json({
       success: true,

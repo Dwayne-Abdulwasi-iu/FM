@@ -28,8 +28,12 @@ export default function SellerReturnsPage() {
   const fetchReturns = async () => {
     try {
       setLoading(true)
-      // TODO: Implement API endpoint for fetching returns
-      setReturns([])
+      // Fetch returns from API
+      const res = await fetch(`/api/boutique/seller/returns?status=${filter}`)
+      if (!res.ok) throw new Error('Failed to load returns')
+      
+      const data = await res.json()
+      setReturns(data.returns || [])
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load returns'
       toast.error(message)

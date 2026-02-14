@@ -29,14 +29,45 @@ export function FeaturedDesigns() {
 
   const fetchFeaturedDesigns = async () => {
     try {
-      const response = await fetch('/api/designs?featured=true&userOnly=true')
+      // Fetch from admin featured items API for designs only
+      const response = await fetch('/api/admin/featured-items?itemType=DESIGN&limit=6')
       if (response.ok) {
         const data = await response.json()
-        setDesigns(data.designs.slice(0, 6)) // Show only 6 featured designs
+        // Map the API response to Design interface
+        setDesigns(data.items?.map((item: any) => ({
+          id: item.itemId,
+          title: item.title,
+          description: null,
+          price: item.price || 0,
+          imageUrl: item.imageUrl || '',
+          category: item.category || 'Design',
+          totalSales: 0,
+          designer: {
+            name: item.seller?.displayName || item.seller?.name,
+            email: item.seller?.email || '',
+            role: 'seller'
+          }
+        })) || [])
+      } else {
+        // Fallback to regular featured designs from old API
+        const fallbackResponse = await fetch('/api/designs?featured=true&limit=6')
+        if (fallbackResponse.ok) {
+          const data = await fallbackResponse.json()
+          setDesigns(data.designs?.slice(0, 6) || [])
+        }
       }
     } catch (error) {
-        void error
       console.error('Error fetching featured designs:', error)
+      // Fallback to old featured API
+      try {
+        const response = await fetch('/api/designs?featured=true&limit=6')
+        if (response.ok) {
+          const data = await response.json()
+          setDesigns(data.designs?.slice(0, 6) || [])
+        }
+      } catch (err) {
+        console.error('Error fetching fallback designs:', err)
+      }
     } finally {
       setLoading(false)
     }

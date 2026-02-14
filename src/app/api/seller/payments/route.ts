@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { prismaErrorResponse } from '@/lib/prismaError'
 
 /**
  * GET /api/seller/payments
@@ -10,18 +11,44 @@ import prisma from '@/lib/prisma'
  */
 export async function GET(request: NextRequest) {
   try {
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { success: false, message: 'Authentication required' },
+        { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
+    // Check seller role
+    if (session?.user?.role && !['SELLER', 'ADMIN'].includes(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Only sellers can access this' },
+        { status: 403 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    
+    const pageParsed = parseInt(searchParams.get('page') || '1', 10)
+    const limitParsed = parseInt(searchParams.get('limit') || '20', 10)
+    
+    if (isNaN(pageParsed) || isNaN(limitParsed)) {
+      return NextResponse.json(
+        { error: 'Invalid pagination parameters' },
+        { status: 400 }
+      )
+    }
+    
+    const page = Math.max(1, pageParsed)
+    const limit = Math.min(100, Math.max(1, limitParsed))
     const status = searchParams.get('status') // PENDING, COMPLETED, FAILED
     const processor = searchParams.get('processor') // PAYSTACK, STRIPE, FLUTTERWAVE
     const startDate = searchParams.get('startDate')
@@ -43,14 +70,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (startDate) {
-      where.completedAt = { gte: new Date(startDate) }
+      const startDateObj = new Date(startDate)
+      if (!isNaN(startDateObj.getTime())) {
+        where.completedAt = { gte: startDateObj }
+      }
     }
 
     if (endDate) {
-      if (where.completedAt) {
-        where.completedAt.lte = new Date(endDate)
-      } else {
-        where.completedAt = { lte: new Date(endDate) }
+      const endDateObj = new Date(endDate)
+      if (!isNaN(endDateObj.getTime())) {
+        if (where.completedAt) {
+          where.completedAt.lte = endDateObj
+        } else {
+          // If only endDate is provided, only filter by endDate
+          where.completedAt = { lte: endDateObj }
+        }
       }
     }
 
@@ -121,13 +155,12 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      success: true,
       transactions,
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: limit > 0 ? Math.ceil(total / limit) : 0,
       },
       summary: {
         totalTransactions: summary._count,
@@ -145,8 +178,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching seller payments:', error)
+    const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable')
+    if (prismaResp) return prismaResp
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch payments' },
+      { error: 'Failed to fetch payments' },
       { status: 500 }
     )
   }

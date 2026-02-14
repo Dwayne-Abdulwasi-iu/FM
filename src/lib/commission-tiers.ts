@@ -36,9 +36,11 @@ export const COMMISSION_TIERS = {
 
 export type CommissionTierKey = keyof typeof COMMISSION_TIERS
 
-// Pro subscriber discount
-export const PRO_SUBSCRIBER_DISCOUNT = 0.01 // 1% additional discount
-export const MINIMUM_COMMISSION_RATE = 0.06 // 6% minimum for Pro subscribers
+// Subscription discounts
+export const STARTER_SUBSCRIBER_DISCOUNT = 0.01 // 1% discount for Starter tier
+export const PRO_SUBSCRIBER_DISCOUNT = 0.01 // 1% discount for Pro tier
+export const VIP_SUBSCRIBER_DISCOUNT = 0.02 // 2% discount for VIP tier
+export const MINIMUM_COMMISSION_RATE = 0.06 // 6% minimum for subscribers
 
 /**
  * Get commission tier based on total earnings
@@ -56,9 +58,14 @@ export function getCommissionTier(totalEarnings: number): CommissionTierKey {
 /**
  * Get commission rate for a seller
  * @param totalEarnings - User's total earnings in USD
- * @param isProSubscriber - Has paid Pro subscription OR active trial
+ * @param subscriptionTierOrBool - 'STARTER' | 'PRO' | 'VIP' | null (new) OR boolean for legacy isProSubscriber (deprecated)
+ * @param isProSubscriber - Legacy: Has paid Pro subscription OR active trial (DEPRECATED)
  */
-export function getCommissionRate(totalEarnings: number, isProSubscriber: boolean = false): number {
+export function getCommissionRate(
+  totalEarnings: number, 
+  subscriptionTierOrBool: string | boolean | null = null,
+  isProSubscriber: boolean = false
+): number {
   const tier = getCommissionTier(totalEarnings)
   const baseRate = COMMISSION_TIERS[tier].rate
   
@@ -67,10 +74,28 @@ export function getCommissionRate(totalEarnings: number, isProSubscriber: boolea
     return PAYSTACK_MINIMUM_RATE
   }
   
-  // Apply Pro subscriber discount (minimum 6%)
-  // This applies to BOTH paid subscribers AND active trial users
-  if (isProSubscriber) {
-    return Math.max(baseRate - PRO_SUBSCRIBER_DISCOUNT, MINIMUM_COMMISSION_RATE)
+  // Apply subscription discount (minimum 6%)
+  // Support both new tier-based system and legacy boolean
+  let discount = 0
+  
+  // Handle new tier-based system (string)
+  if (typeof subscriptionTierOrBool === 'string') {
+    if (subscriptionTierOrBool === 'VIP') {
+      discount = VIP_SUBSCRIBER_DISCOUNT // 2%
+    } else if (subscriptionTierOrBool === 'PRO' || subscriptionTierOrBool === 'STARTER') {
+      discount = PRO_SUBSCRIBER_DISCOUNT // 1%
+    }
+  } 
+  // Handle legacy boolean system
+  else if (typeof subscriptionTierOrBool === 'boolean' && subscriptionTierOrBool) {
+    discount = PRO_SUBSCRIBER_DISCOUNT // 1% for boolean true
+  } else if (isProSubscriber) {
+    // Legacy parameter for backward compatibility
+    discount = PRO_SUBSCRIBER_DISCOUNT // 1%
+  }
+  
+  if (discount > 0) {
+    return Math.max(baseRate - discount, MINIMUM_COMMISSION_RATE)
   }
   
   return baseRate
@@ -183,4 +208,68 @@ export function getAllTiersInfo(currentEarnings: number = 0, isProSubscriber: bo
       isUnlocked: currentEarnings >= tier.threshold,
     }
   })
+}
+/**
+ * Get maximum featured listings allowed for a subscription tier
+ * STARTER: 0 (no featured)
+ * PRO: 6 featured listings
+ * VIP: 10 featured listings
+ * null (no subscription): 0
+ */
+export function getMaxFeaturedListings(subscriptionTier: string | null): number {
+  switch (subscriptionTier) {
+    case 'STARTER':
+      return 2 // STARTER gets 2 featured items
+    case 'PRO':
+      return 6
+    case 'VIP':
+      return 10
+    default:
+      return 0 // Non-subscribers get no featured
+  }
+}
+
+/**
+ * Get remaining featured slots for a seller
+ * Returns how many more items can be featured
+ */
+export async function getRemainingFeaturedSlots(
+  userId: string,
+  itemType: 'DESIGN' | 'BOUTIQUE'
+): Promise<{
+  max: number
+  current: number
+  remaining: number
+  canAddMore: boolean
+}> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      subscriptionTier: true,
+    }
+  })
+
+  if (!user) {
+    return { max: 0, current: 0, remaining: 0, canAddMore: false }
+  }
+
+  const maxAllowed = getMaxFeaturedListings(user.subscriptionTier)
+
+  // Count BOTH featured designs and boutique products (shared slot limit)
+  const featuredDesignCount = await prisma.featuredDesign.count({
+    where: { sellerId: userId }
+  })
+
+  const featuredBoutiqueCount = await prisma.featuredBoutiqueProduct.count({
+    where: { sellerId: userId }
+  })
+
+  const currentCount = featuredDesignCount + featuredBoutiqueCount
+
+  return {
+    max: maxAllowed,
+    current: currentCount,
+    remaining: Math.max(0, maxAllowed - currentCount),
+    canAddMore: currentCount < maxAllowed
+  }
 }

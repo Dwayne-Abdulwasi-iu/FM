@@ -134,70 +134,70 @@ export default function AdminPaymentReconciliationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-3 sm:py-6 lg:py-8 px-2 sm:px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Payment Reconciliation</h1>
-          <p className="text-gray-600">Monitor processor balances, transaction status, and reconciliation reports</p>
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-lg sm:text-2xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Payment Reconciliation</h1>
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600">Monitor processor balances, transaction status, and reconciliation reports</p>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">₦{overview.totalRevenue.toLocaleString()}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8">
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-blue-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Total Revenue</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">₦{overview.totalRevenue.toLocaleString()}</p>
               </div>
-              <BarChart3 className="text-blue-600 w-8 h-8" />
+              <BarChart3 className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Payouts</p>
-                <p className="text-2xl font-bold text-gray-900">₦{overview.totalPayouts.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-green-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Total Payouts</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">₦{overview.totalPayouts.toLocaleString()}</p>
               </div>
-              <CheckCircle className="text-green-600 w-8 h-8" />
+              <CheckCircle className="text-green-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Pending Payouts</p>
-                <p className="text-2xl font-bold text-gray-900">₦{overview.pendingPayouts.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-red-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Pending Payouts</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">₦{overview.pendingPayouts.toLocaleString()}</p>
               </div>
-              <AlertTriangle className="text-red-600 w-8 h-8" />
+              <AlertTriangle className="text-red-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Processor Fees</p>
-                <p className="text-2xl font-bold text-gray-900">₦{overview.totalProcessorFees.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-orange-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Processor Fees</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">₦{overview.totalProcessorFees.toLocaleString()}</p>
               </div>
-              <TrendingUp className="text-orange-600 w-8 h-8" />
+              <TrendingUp className="text-orange-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Platform Fees</p>
-                <p className="text-2xl font-bold text-gray-900">₦{overview.totalPlatformFees.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-purple-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Platform Fees</p>
+                <p className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-900 truncate">₦{overview.totalPlatformFees.toLocaleString()}</p>
               </div>
-              <BarChart3 className="text-purple-600 w-8 h-8" />
+              <BarChart3 className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Transactions</p>
+          <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 border-l-4 border-indigo-600">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-gray-600 text-xs sm:text-sm lg:text-base truncate">Total Transactions</p>
                 <p className="text-2xl font-bold text-gray-900">{overview.totalTransactions}</p>
               </div>
               <BarChart3 className="text-indigo-600 w-8 h-8" />
@@ -207,13 +207,13 @@ export default function AdminPaymentReconciliationPage() {
 
         {/* Processor Summaries */}
         {Object.keys(processorSummaries).length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Processor Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 lg:mb-4">Processor Summary</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
               {Object.entries(processorSummaries).map(([processor, data]: any) => (
-                <div key={processor} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">{processor}</h3>
-                  <div className="space-y-2 text-sm">
+                <div key={processor} className="border border-gray-200 rounded-lg p-2 sm:p-3 lg:p-4">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 sm:mb-2">{processor}</h3>
+                  <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Transactions:</span>
                       <span className="font-medium">{data.count}</span>
@@ -238,18 +238,18 @@ export default function AdminPaymentReconciliationPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow p-2 sm:p-3 lg:p-6 mb-2 sm:mb-4 lg:mb-8">
+          <h2 className="text-xs sm:text-base lg:text-xl font-semibold text-gray-900 mb-1.5 sm:mb-2 lg:mb-4">Filters</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 lg:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Processor</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">Processor</label>
               <select
                 value={filters.processor}
                 onChange={(e) => {
                   setFilters((prev) => ({ ...prev, processor: e.target.value }))
                   setPage(1)
                 }}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-1.5 sm:px-3 py-1 sm:py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">All Processors</option>
                 <option value="PAYSTACK">Paystack</option>
@@ -259,7 +259,7 @@ export default function AdminPaymentReconciliationPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">Start Date</label>
               <input
                 type="date"
                 value={filters.startDate}
@@ -267,12 +267,12 @@ export default function AdminPaymentReconciliationPage() {
                   setFilters((prev) => ({ ...prev, startDate: e.target.value }))
                   setPage(1)
                 }}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-1.5 sm:px-3 py-1 sm:py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">End Date</label>
               <input
                 type="date"
                 value={filters.endDate}
@@ -280,63 +280,63 @@ export default function AdminPaymentReconciliationPage() {
                   setFilters((prev) => ({ ...prev, endDate: e.target.value }))
                   setPage(1)
                 }}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-1.5 sm:px-3 py-1 sm:py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </div>
 
         {/* Transactions Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+        <div className="bg-white rounded-lg shadow overflow-hidden mb-4 sm:mb-6 lg:mb-8">
+          <div className="px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 border-b border-gray-200">
+            <h2 className="text-xs sm:text-base lg:text-lg font-semibold text-gray-900">Recent Transactions</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Seller</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Processor</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Payout</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Reconciliation</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-left text-xs font-semibold text-gray-900">Seller</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-left text-xs font-semibold text-gray-900">Processor</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-right text-xs font-semibold text-gray-900">Amount</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-right text-xs font-semibold text-gray-900">Payout</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-left text-xs font-semibold text-gray-900">Status</th>
+                  <th className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-left text-xs font-semibold text-gray-900">Reconciliation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-2 sm:px-3 lg:px-6 py-2 sm:py-4 lg:py-6 text-center text-xs text-gray-500">
                       No transactions found
                     </td>
                   </tr>
                 ) : (
                   transactions.map((txn) => (
                     <tr key={txn.id} className={`hover:bg-gray-50 ${getPayoutStatusColor(txn.payoutStatus)}`}>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900">{txn.seller.name}</span>
-                          <span className="text-xs text-gray-500">{txn.seller.email}</span>
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-medium text-gray-900 truncate">{txn.seller.name}</span>
+                          <span className="text-xs text-gray-500 truncate hidden sm:block">{txn.seller.email}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4">
+                        <span className="inline-block bg-gray-100 px-1 sm:px-2 py-0.5 rounded text-xs font-medium truncate">
                           {txn.processor}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-medium text-gray-900">₦{txn.buyerAmount.toFixed(2)}</span>
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4 text-right">
+                        <span className="font-medium text-xs text-gray-900 truncate">₦{txn.buyerAmount.toFixed(2)}</span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-medium text-green-600">₦{txn.sellerPayout.toFixed(2)}</span>
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4 text-right">
+                        <span className="font-medium text-xs text-green-600 truncate">₦{txn.sellerPayout.toFixed(2)}</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-opacity-20 bg-gray-800">
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4">
+                        <span className="inline-block px-1 sm:px-2 py-0.5 rounded text-xs font-medium bg-opacity-20 bg-gray-800 truncate">
                           {txn.payoutStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-opacity-20 bg-blue-800">
+                      <td className="px-1 sm:px-3 lg:px-6 py-1.5 sm:py-2 lg:py-4">
+                        <span className="inline-block px-1 sm:px-2 py-0.5 rounded text-xs font-medium bg-opacity-20 bg-blue-800 truncate">
                           {txn.reconciliationStatus}
                         </span>
                       </td>

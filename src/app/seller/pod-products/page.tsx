@@ -342,7 +342,7 @@ export default function PODProductSelector() {
                 >
                   <div className="w-20 h-20 relative bg-gray-100">
                     <Image
-                      src={design.imageUrl || '/placeholder-design.jpg'}
+                      src={design.imageUrl || '/api/placeholder?w=300&h=300&text=No+Design'}
                       alt={design.title}
                       fill
                       className="object-cover"

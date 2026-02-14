@@ -45,14 +45,17 @@ export default async function SellerPayoutsPage() {
     },
   })
 
-  if (!user || user.role !== 'SELLER') {
-    redirect('/dashboard')
+  // All logged-in users are allowed to access payouts page (no role check)
+  // This lets regular users who have become sellers view their payouts
+  if (!user) {
+    redirect('/auth/signin')
   }
 
   // Calculate statistics
   const totalEarnings = user.earnings.reduce((sum: number, e) => sum + (e.sellerAmount || 0), 0)
   const totalCommissions = user.earnings.reduce((sum: number, e) => sum + (e.platformCommission || 0), 0)
-  const paidOutEarnings = 0 // TODO: track paid status in SellerEarning model
+  // Note: Paid out earnings should be tracked separately in the database
+  const paidOutEarnings = 0
   const pendingEarnings = totalEarnings - paidOutEarnings
 
   // Calculate monthly GMV (last 30 days)

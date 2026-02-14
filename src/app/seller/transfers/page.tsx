@@ -38,7 +38,17 @@ export default function SellerTransfersPage() {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.email) {
+    if (status === 'loading') return
+    if (status === 'unauthenticated') {
+      // Redirect handled by middleware/ProtectedRoute
+      return
+    }
+    // Check seller role
+    if (session?.user?.role && !['SELLER', 'ADMIN'].includes(session.user.role)) {
+      setError('Access denied - only sellers can view transfers')
+      return
+    }
+    if (session?.user?.id) {
       fetchTransfers()
     }
   }, [status, session])
@@ -49,7 +59,8 @@ export default function SellerTransfersPage() {
       const response = await fetch('/api/seller/transfers')
 
       if (!response.ok) {
-        throw new Error('Failed to fetch transfers')
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || errData.message || 'Failed to fetch transfers')
       }
 
       const data = await response.json()
@@ -90,13 +101,28 @@ export default function SellerTransfersPage() {
     )
   }
 
-  const filteredTransfers = selectedStatus
+  const filteredTransfers: Transfer[] = selectedStatus
     ? transfers.filter(t => t.paystackStatus === selectedStatus)
     : transfers
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
+        {/* Navigation Links */}
+        <div className="flex flex-wrap gap-2 mb-4 text-sm">
+          <Link href="/seller/finances" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+            ← Finances Hub
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/earnings" className="text-indigo-600 hover:text-indigo-700">
+            Earnings
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/payments" className="text-indigo-600 hover:text-indigo-700">
+            Payment History
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">Payment Transfers</h1>

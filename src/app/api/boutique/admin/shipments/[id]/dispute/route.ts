@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PRODUCT_STATUS } from '@/lib/boutique/constants';
+import { sendEmail } from '@/lib/email';
 
 // GET - Get dispute details
 export async function GET(
@@ -115,6 +116,7 @@ export async function POST(
 
     const shipment = await prisma.sellerToAdminShipment.findUnique({
       where: { id },
+      include: { seller: true },
     });
 
     if (!shipment) {
@@ -227,10 +229,99 @@ export async function POST(
       }
     }
 
-    // TODO: Send notifications
-    // - Notify seller of dispute resolution
-    // - If CARRIER_FAULT, initiate insurance claim process
-    // - If SELLER_RESHIP, send reship instructions
+    // Send dispute resolution notifications via email
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com';
+    if (shipment.seller?.email) {
+      let resolutionText = '';
+      let sellerAction = '';
+      let itemsToReturn = 0;
+      
+      switch (resolution) {
+        case 'SELLER_FAULT':
+          resolutionText = 'The discrepancy was determined to be due to seller error. In this case, <strong>NO items will be returned</strong> to you as the fault lies with your shipment preparation.';
+          sellerAction = 'Your account may be subject to review for compliance.';
+          break;
+        case 'CARRIER_FAULT':
+          itemsToReturn = Math.max(0, (shipment.itemsReceived || 0) - 1);
+          resolutionText = `The carrier is responsible for the missing or damaged items. An insurance claim has been initiated. A return shipment of <strong>${itemsToReturn} items</strong> will be prepared for you (1 item retained for verification records).`;
+          sellerAction = 'You will receive compensation from the insurance claim once processed. Return tracking will be sent within 5 business days.';
+          break;
+        case 'WRITTEN_OFF':
+          resolutionText = 'The discrepancy has been written off as a business loss.';
+          sellerAction = 'No further action is required.';
+          break;
+        case 'SELLER_RESHIP':
+          resolutionText = 'You have been requested to reship the missing items to our warehouse.';
+          sellerAction = 'Please follow the reship instructions provided in your dashboard. When we receive the reshipped items, they will be processed and the original missing items will not be returned.';
+          break;
+      }
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+          <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #4F46E5; margin-top: 0;">📋 Shipment Dispute Resolution</h2>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+              Hello <strong>${shipment.seller.name || 'Seller'}</strong>,
+            </p>
+            <p style="color: #555; font-size: 15px; line-height: 1.6;">
+              The dispute regarding your shipment has been resolved.
+            </p>
+            
+            <div style="background-color: #f3f4f6; border-left: 4px solid #4F46E5; padding: 20px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0 0 10px 0; color: #1f2937; font-weight: bold;">📦 Resolution Details:</p>
+              <p style="color: #374151; margin: 5px 0;"><strong>Shipment ID:</strong> ${id}</p>
+              <p style="color: #374151; margin: 5px 0;"><strong>Resolution Type:</strong> ${resolution}</p>
+              <p style="color: #374151; margin: 5px 0;"><strong>Status:</strong> Resolved</p>
+            </div>
+            
+            <div style="background-color: #F0F9FF; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0 0 10px 0; color: #0C4A6E; font-weight: bold;">🔍 What This Means:</p>
+              <p style="color: #0C4A6E; margin: 8px 0 0 0;">${resolutionText}</p>
+            </div>
+            
+            <div style="background-color: #DBEAFE; border-left: 4px solid #0284C7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0; color: #0C4A6E; font-weight: bold;">✅ What You Need To Do:</p>
+              <p style="color: #0C4A6E; margin: 8px 0 0 0;"><strong>${sellerAction}</strong></p>
+            </div>
+            
+            ${notes ? `
+              <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; color: #92400E; font-weight: bold;">📝 Admin Notes:</p>
+                <p style="color: #92400E; margin: 8px 0 0 0;">${notes}</p>
+              </div>
+            ` : ''}
+            
+            ${insuranceClaimId ? `
+              <div style="background-color: #D1FAE5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; color: #065F46; font-weight: bold;">🛡️ Insurance Claim Information:</p>
+                <p style="color: #065F46; margin: 5px 0;"><strong>Claim ID:</strong> ${insuranceClaimId}</p>
+                ${insuranceClaimAmount ? `<p style="color: #065F46; margin: 5px 0;"><strong>Claim Amount:</strong> $${insuranceClaimAmount}</p>` : ''}
+              </div>
+            ` : ''}
+            
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${baseUrl}/seller/boutique/shipments" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                View Shipment Details
+              </a>
+            </div>
+            
+            <p style="color: #555; font-size: 14px; line-height: 1.6; margin-top: 20px;">
+              If you have questions about this resolution or need further assistance, please contact our support team.
+            </p>
+            
+            <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+              This is an automated notification from Fashion Marketplace
+            </p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({
+        to: shipment.seller.email,
+        subject: `Dispute Resolved: ${id}`,
+        html: emailHtml,
+      });
+    }
 
     return NextResponse.json({
       success: true,

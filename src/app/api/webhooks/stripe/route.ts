@@ -9,6 +9,7 @@ import { fulfillPODOrder } from '@/lib/pod-service'
 import { queueFailedNotification } from '@/lib/notification-queue'
 import { createOwnershipContract } from '@/lib/ownership-documents'
 import { validateDesignOwnershipState } from '@/lib/ownership-validation'
+import { incrementPromotionUsage } from '@/lib/promotion-engine'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -23,6 +24,10 @@ type StripeOrderItem = {
   podProductId?: string
   podVariantId?: string
   podProductName?: string
+  // Promotion tracking
+  promotionId?: string | null
+  promotionType?: string | null
+  discountAmount?: number
 }
 
 type StripeCheckoutSession = {
@@ -192,7 +197,11 @@ async function handleCheckoutCompleted(session: unknown) {
               designId: item.designId,
               quantity: item.quantity,
               price: item.price,
-              purchaseType: item.purchaseType || 'REGULAR'
+              purchaseType: item.purchaseType || 'REGULAR',
+              // Store promotion data for tracking
+              promotionId: item.promotionId || null,
+              promotionType: item.promotionType || null,
+              discountAmount: item.discountAmount || 0,
             }))
         }
       },
@@ -546,7 +555,22 @@ async function handleCheckoutCompleted(session: unknown) {
       }
     }
 
-    // Check if any designers should be auto-promoted to SELLER role
+    // Check if any designers should be auto-promoted to SELLER role    // Get array of promotion IDs that were used in this order
+    const promotionIds = orderItems
+      .filter(item => item.promotionId)
+      .map(item => item.promotionId as string)
+    
+    // Increment promotion usage if any were applied
+    if (promotionIds.length > 0) {
+      const uniquePromotionIds = [...new Set(promotionIds)]
+      for (const promotionId of uniquePromotionIds) {
+        await prisma.promotion.update({
+          where: { id: promotionId },
+          data: { usageCount: { increment: 1 } }
+        }).catch(err => console.error(`[Stripe] Failed to increment promotion ${promotionId}:`, err))
+      }
+      console.log(`[Stripe] Incremented usage for ${uniquePromotionIds.length} promotions`)
+    }
     const designerIds = orderItems
       .map((item: StripeOrderItem) => item.designerId)
       .filter((id): id is string => !!id)
@@ -774,7 +798,7 @@ async function handleSubscriptionCreated(subscription: unknown, stripe: ReturnTy
     const sub = subscription as {
       id?: string
       customer?: string
-      metadata?: { userId?: string; billingPeriod?: string }
+      metadata?: { userId?: string; billingPeriod?: string; tier?: string }
       current_period_end?: number
     }
 
@@ -790,6 +814,7 @@ async function handleSubscriptionCreated(subscription: unknown, stripe: ReturnTy
     }
 
     const billingPeriod = sub.metadata?.billingPeriod === 'YEARLY' ? 'YEARLY' : 'MONTHLY'
+    const tier = sub.metadata?.tier || 'PRO' // Default to PRO if not specified
     const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
     // Check if already activated (idempotency)
@@ -811,7 +836,17 @@ async function handleSubscriptionCreated(subscription: unknown, stripe: ReturnTy
     )
 
     if (result.success) {
-      console.log(`[Pro Subscription] Activated for user ${userId} via Stripe: ${sub.id}`)
+      console.log(`[Pro Subscription] Activated for user ${userId} via Stripe: ${sub.id} (tier: ${tier})`)
+      
+      // Update user's subscription tier
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionTier: tier,
+          subscriptionPrice: tier === 'STARTER' ? 4.99 : tier === 'VIP' ? 14.99 : 9.99,
+          billingCycle: billingPeriod
+        }
+      }).catch(() => null)
       
       // Retrieve customer email for logging
       try {
@@ -829,25 +864,34 @@ async function handleSubscriptionCreated(subscription: unknown, stripe: ReturnTy
             try {
               const sellerName = seller.displayName || seller.name || 'Seller'
               const expiresDate = new Date(expiresAt).toLocaleDateString()
+              
+              // Get tier benefits
+              let tierBenefits = ''
+              if (tier === 'STARTER') {
+                tierBenefits = '<li>1% commission discount on all sales</li>'
+              } else if (tier === 'PRO') {
+                tierBenefits = '<li>+1 tier boost above your natural tier</li><li>6 featured listings</li><li>1% commission discount on all sales</li>'
+              } else if (tier === 'VIP') {
+                tierBenefits = '<li>+1 tier boost above your natural tier</li><li>10 featured listings</li><li>2% commission discount on all sales</li><li>Priority support</li>'
+              }
+              
               await sendEmail({
                 to: seller.email,
-                subject: 'Pro Subscription Activated',
+                subject: `${tier} Subscription Activated`,
                 html: `
-                  <h2>Welcome to Pro Subscription!</h2>
+                  <h2>Welcome to ${tier} Subscription!</h2>
                   <p>Hi ${sellerName},</p>
-                  <p>Your Pro subscription has been successfully activated!</p>
+                  <p>Your ${tier} subscription has been successfully activated!</p>
                   <p><strong>Plan:</strong> ${billingPeriod === 'YEARLY' ? 'Yearly' : 'Monthly'}</p>
                   <p><strong>Expires:</strong> ${expiresDate}</p>
                   <p><strong>Benefits:</strong></p>
                   <ul>
-                    <li>+1 tier boost above your natural tier</li>
-                    <li>6 featured listings (vs 5 standard)</li>
-                    <li>1% lower commission on all sales</li>
+                    ${tierBenefits}
                   </ul>
                   <p>Thank you for upgrading!</p>
                 `
               })
-              console.log(`Pro subscription confirmation sent to ${seller.email}`)
+              console.log(`${tier} subscription confirmation sent to ${seller.email}`)
             } catch (emailError) {
               console.error('Failed to send Stripe subscription confirmation email:', emailError)
             }

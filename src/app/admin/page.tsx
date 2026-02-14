@@ -20,7 +20,11 @@ import {
   MessageCircle,
   BookOpen,
   Megaphone,
-  MessageSquare
+  MessageSquare,
+  Star,
+  FileText,
+  Clock,
+  Package
 } from 'lucide-react'
 
 interface User {
@@ -77,6 +81,7 @@ interface Design {
   isOwned: boolean
   buyingTypes: string
   ownershipPrice: number | null
+  isFeatured?: boolean
   designer: {
     id: string
     name: string | null
@@ -130,6 +135,11 @@ export default function AdminDashboard() {
   const [designSearchTerm, setDesignSearchTerm] = useState('')
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified'>('all')
   const [designFilter, setDesignFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [designShowAdvanced, setDesignShowAdvanced] = useState(false)
+  const [designFeaturedFilter, setDesignFeaturedFilter] = useState<'all' | 'featured' | 'unfeatured'>('all')
+  const [designOwnershipFilter, setDesignOwnershipFilter] = useState('')
+  const [designSortBy, setDesignSortBy] = useState<'date' | 'price' | 'sales'>('date')
+  const [designSortOrder, setDesignSortOrder] = useState<'asc' | 'desc'>('desc')
   const [deleteConfirm, setDeleteConfirm] = useState<{ step: number; userId: string; userEmail: string; inputValue?: string } | null>(null)
   const [adminConfirm, setAdminConfirm] = useState<{ step: number; userId: string; userEmail: string; action: 'makeAdmin' | 'removeAdmin' } | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -224,7 +234,7 @@ export default function AdminDashboard() {
         const chatData = await chatRes.json()
         setChatSessions(chatData.sessions || [])
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
       console.error('Error fetching admin data:', error)
     } finally {
       setLoading(false)
@@ -253,7 +263,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${action} user`)
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
       console.error(`Error ${action} user:`, error)
       showNotification('error', `Error occurred while ${action} user`)
     }
@@ -270,16 +280,13 @@ export default function AdminDashboard() {
     if (!deleteConfirm) return
     
     try {
-      console.log('Attempting to delete user:', deleteConfirm.userId)
       const response = await fetch('/api/admin/users/manage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: deleteConfirm.userId, action: 'delete' })
       })
 
-      console.log('Delete response status:', response.status)
       const responseData = await response.json()
-      console.log('Delete response data:', responseData)
 
       if (response.ok) {
         fetchAdminData()
@@ -288,7 +295,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to delete user account: ${responseData.error || 'Unknown error'}`)
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
       console.error('Error deleting user:', error)
       showNotification('error', 'Network error occurred while deleting user account')
     }
@@ -311,7 +318,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${adminConfirm.action} user`)
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
       console.error(`Error ${adminConfirm.action} user:`, error)
       showNotification('error', `Error occurred during ${adminConfirm.action}`)
     }
@@ -331,7 +338,7 @@ export default function AdminDashboard() {
       } else {
         showNotification('error', `Failed to ${action} design`)
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
       console.error(`Error ${action} design:`, error)
       showNotification('error', `Error occurred while ${action} design`)
     }
@@ -361,8 +368,46 @@ export default function AdminDashboard() {
         const error = await response.json()
         showToast(`Failed to ${action} design: ${error.message}`, 'error')
       }
-  } catch (error) { console.error(error);
+  } catch (error) {
+      console.error(`Error ${action} design:`, error)
       showToast(`Failed to ${action} design`, 'error')
+    }
+  }
+
+  const handleToggleFeaturedDesign = async (designId: string) => {
+    try {
+      const design = designs.find(d => d.id === designId)
+      if (!design) return
+
+      if (design.isFeatured) {
+        // Remove from featured
+        const response = await fetch(`/api/seller/featured-designs?designId=${designId}`, {
+          method: 'DELETE'
+        })
+        if (response.ok) {
+          showToast('Design removed from featured', 'success')
+          await fetchData()
+        } else {
+          showToast('Failed to remove from featured', 'error')
+        }
+      } else {
+        // Add to featured
+        const response = await fetch('/api/seller/featured-designs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId })
+        })
+        if (response.ok) {
+          showToast('Design added to featured', 'success')
+          await fetchData()
+        } else {
+          const error = await response.json()
+          showToast(error.message || 'Failed to add to featured', 'error')
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling featured:', error)
+      showToast('Error toggling featured status', 'error')
     }
   }
 
@@ -434,12 +479,44 @@ export default function AdminDashboard() {
     return matchesSearch && matchesFilter
   })
 
-  const filteredDesigns = designs.filter(design => {
-    return designFilter === 'all' || 
-           (designFilter === 'pending' && design.approvalStatus === 'PENDING') ||
-           (designFilter === 'approved' && design.approvalStatus === 'APPROVED') ||
-           (designFilter === 'rejected' && design.approvalStatus === 'REJECTED')
-  })
+  const filteredDesigns = designs
+    .filter(design => {
+      // Status filter
+      if (designFilter !== 'all') {
+        if (designFilter === 'pending' && design.approvalStatus !== 'PENDING') return false
+        if (designFilter === 'approved' && design.approvalStatus !== 'APPROVED') return false
+        if (designFilter === 'rejected' && design.approvalStatus !== 'REJECTED') return false
+      }
+
+      // Featured filter
+      if (designFeaturedFilter === 'featured' && !design.isFeatured) return false
+      if (designFeaturedFilter === 'unfeatured' && design.isFeatured) return false
+
+      // Ownership/Buying type filter
+      if (designOwnershipFilter && design.buyingTypes !== designOwnershipFilter) return false
+
+      return true
+    })
+    .sort((a, b) => {
+      let comparison = 0
+
+      // Sort by selected criteria
+      switch (designSortBy) {
+        case 'price':
+          comparison = a.price - b.price
+          break
+        case 'sales':
+          comparison = a.totalSales - b.totalSales
+          break
+        case 'date':
+        default:
+          comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          break
+      }
+
+      // Apply sort order
+      return designSortOrder === 'asc' ? comparison : -comparison
+    })
 
   if (status === 'loading' || loading) {
     return (
@@ -600,343 +677,362 @@ export default function AdminDashboard() {
 
                 <div>
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                    <Link
-                      href="/admin/users"
-                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5 text-violet-600" />
+                  
+                  {/* User & Content Management */}
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2.5">User & Content</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <Link
+                        href="/admin/users"
+                        className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
+                            <Users className="w-5 h-5 text-violet-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">User Management</p>
+                            <p className="text-xs text-gray-500">Search, message &amp; manage users</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">User Management</p>
-                          <p className="text-xs text-gray-500">Search, message &amp; manage users</p>
+                      </Link>
+                      <button
+                        onClick={() => setActiveTab('designs')}
+                        className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-yellow-200 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Design Approvals</p>
+                            <p className="text-xs text-gray-500">Review &amp; approve pending designs</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/analytics"
-                      className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-200 rounded-lg flex items-center justify-center">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                      </button>
+                      <Link
+                        href="/admin/commission-requests"
+                        className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
+                            <Mail className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Commission Requests</p>
+                            <p className="text-xs text-gray-500">Review &amp; forward to designers</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Analytics Dashboard</p>
-                          <p className="text-xs text-gray-500">Revenue, sales &amp; user insights</p>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Orders & Fulfillment */}
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2.5">Orders & Fulfillment</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setActiveTab('orders')}
+                        className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-red-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Order Management</p>
+                            <p className="text-xs text-gray-500">View &amp; manage all orders</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <button
-                      onClick={() => setActiveTab('designs')}
-                      className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-200 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-5 h-5 text-yellow-600" />
+                      </button>
+                      <Link
+                        href="/admin/deliveries"
+                        className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-pink-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Physical Deliveries</p>
+                            <p className="text-xs text-gray-500">Manage item collection &amp; shipping</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Design Approvals</p>
-                          <p className="text-xs text-gray-500">Review &amp; approve pending designs</p>
+                      </Link>
+                      <Link
+                        href="/admin/disputes"
+                        className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
+                            ⚠️
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-sm">Disputes</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Handle order disputes &amp; issues</p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('orders')}
-                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-5 h-5 text-red-600" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Boutique Management */}
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2.5">Boutique</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <Link
+                        href="/admin/boutique"
+                        className="p-3 sm:p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            👗
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Products</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Review &amp; manage physical products</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Order Management</p>
-                          <p className="text-xs text-gray-500">View &amp; manage all orders</p>
+                      </Link>
+                      <Link
+                        href="/admin/boutique/shipments"
+                        className="p-3 sm:p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            📦
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Shipments</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Verify seller shipments to warehouse</p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('earnings')}
-                      className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                          <DollarSign className="w-5 h-5 text-green-600" />
+                      </Link>
+                      <Link
+                        href="/admin/warehouse-inventory"
+                        className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            <Package className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Warehouse</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">View all products in warehouse</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Earnings Dashboard</p>
-                          <p className="text-xs text-gray-500">Platform commission &amp; volume</p>
+                      </Link>
+                      <Link
+                        href="/admin/boutique/orders"
+                        className="p-3 sm:p-4 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            🛍️
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Orders</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Manage product orders</p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                    <Link
-                      href="/admin/commission-requests"
-                      className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-                          <Mail className="w-5 h-5 text-purple-600" />
+                      </Link>
+                      <Link
+                        href="/admin/boutique/warehouse-returns"
+                        className="p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            ↩️
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Return Requests</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Review seller warehouse returns</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Commission Requests</p>
-                          <p className="text-xs text-gray-500">Review &amp; forward to designers</p>
+                      </Link>
+                      <Link
+                        href="/admin/boutique/rejected"
+                        className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            ❌
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Rejected</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">View rejected products &amp; reasons</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/deliveries"
-                      className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-5 h-5 text-pink-600" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Financial & Analytics */}
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2.5">Financial & Analytics</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <Link
+                        href="/admin/analytics"
+                        className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-emerald-200 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Analytics</p>
+                            <p className="text-xs text-gray-500">Revenue, sales &amp; user insights</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Physical Deliveries</p>
-                          <p className="text-xs text-gray-500">Manage item collection &amp; shipping</p>
+                      </Link>
+                      <button
+                        onClick={() => setActiveTab('earnings')}
+                        className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Earnings</p>
+                            <p className="text-xs text-gray-500">Commission &amp; volume</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/resources"
-                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-blue-600" />
+                      </button>
+                      <Link
+                        href="/admin/payments-reconciliation"
+                        className="p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            💰
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm">Payments</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Reconciliation &amp; payouts</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Resources</p>
-                          <p className="text-xs text-gray-500">Manage learning resources</p>
+                      </Link>
+                      <Link
+                        href="/admin/featured-items"
+                        className="p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-200 rounded-lg flex items-center justify-center flex-shrink-0 text-base sm:text-lg">
+                            ⭐
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm">Featured Items</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Manage platform curation</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/broadcasts"
-                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
-                          <Megaphone className="w-5 h-5 text-indigo-600" />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* System & Resources */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2.5">System & Resources</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <Link
+                        href="/admin/resources"
+                        className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Resources</p>
+                            <p className="text-xs text-gray-500">Learning resources</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
-                          <p className="text-xs text-gray-500">View sent announcements</p>
+                      </Link>
+                      <Link
+                        href="/admin/broadcasts"
+                        className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                            <Megaphone className="w-5 h-5 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
+                            <p className="text-xs text-gray-500">Announcements</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/messages"
-                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
-                          <MessageSquare className="w-5 h-5 text-violet-600" />
+                      </Link>
+                      <Link
+                        href="/admin/messages"
+                        className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5 text-violet-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Messages</p>
+                            <p className="text-xs text-gray-500">Admin-user messages</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Message Center</p>
-                          <p className="text-xs text-gray-500">Manage admin-user messages</p>
+                      </Link>
+                      <Link
+                        href="/admin/pod"
+                        className="p-4 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-cyan-200 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">🖨️</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">POD</p>
+                            <p className="text-xs text-gray-500">Print-on-demand orders</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/pod"
-                      className="p-4 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-cyan-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🖨️</span>
+                      </Link>
+                      <Link
+                        href="/admin/pod-webhooks"
+                        className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">🔧</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
+                            <p className="text-xs text-gray-500">Webhook config</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Print-on-Demand</p>
-                          <p className="text-xs text-gray-500">Monitor POD orders &amp; providers</p>
+                      </Link>
+                      <Link
+                        href="/admin/ownership"
+                        className="p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Ownership</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Transfer approvals</p>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/pod-webhooks"
-                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🔧</span>
+                      </Link>
+                      <Link
+                        href="/admin/audit-logs"
+                        className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm break-words">Audit Logs</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">Track admin actions</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
-                          <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique"
-                      className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">👗</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Boutique Products</p>
-                          <p className="text-xs text-gray-500">Review &amp; manage physical products</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/shipments"
-                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">📦</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Incoming Shipments</p>
-                          <p className="text-xs text-gray-500">Verify seller shipments to warehouse</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/orders"
-                      className="p-4 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-rose-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🛍️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Boutique Orders</p>
-                          <p className="text-xs text-gray-500">Manage physical product orders</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/disputes"
-                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">⚠️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Disputes</p>
-                          <p className="text-xs text-gray-500">Handle order disputes &amp; issues</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/ownership"
-                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-                          <Shield className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Ownership Documents</p>
-                          <p className="text-xs text-gray-500">Review &amp; approve ownership transfers</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/payments-reconciliation"
-                      className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">💰</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Payments Reconciliation</p>
-                          <p className="text-xs text-gray-500">Reconcile payments &amp; transactions</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/returns"
-                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">↩️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Product Returns</p>
-                          <p className="text-xs text-gray-500">Process &amp; approve returns</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/rejected-returns"
-                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">❌</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Rejected Returns</p>
-                          <p className="text-xs text-gray-500">Manage rejected return claims</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/rejected"
-                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🚫</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Rejected Products</p>
-                          <p className="text-xs text-gray-500">Review rejected boutique products</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/repost-approvals"
-                      className="p-4 bg-lime-50 border border-lime-200 rounded-lg hover:bg-lime-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-lime-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">✅</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Repost Approvals</p>
-                          <p className="text-xs text-gray-500">Approve product reposts</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/content-violations"
-                      className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">⚔️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Content Violations</p>
-                          <p className="text-xs text-gray-500">Review &amp; action violations</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/seller-badges"
-                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🏆</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Seller Badges</p>
-                          <p className="text-xs text-gray-500">Manage seller badges &amp; ratings</p>
-                        </div>
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                   </div>
                 </div>
 
@@ -1101,7 +1197,7 @@ export default function AdminDashboard() {
                       <option value="rejected">Rejected</option>
                     </select>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <Search className="w-4 h-4 text-gray-400" />
                     <input
                       type="text"
@@ -1110,7 +1206,91 @@ export default function AdminDashboard() {
                       onChange={(e) => setDesignSearchTerm(e.target.value)}
                       className="flex-1 px-3 py-2 text-xs sm:text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
+                    <button
+                      onClick={() => setDesignShowAdvanced(!designShowAdvanced)}
+                      className={`px-2.5 py-1.5 border rounded-md text-xs font-medium transition-colors ${
+                        designShowAdvanced
+                          ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                          : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                      title="Toggle advanced filters"
+                    >
+                      Filter
+                    </button>
                   </div>
+
+                  {designShowAdvanced && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      <div>
+                        <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1">Featured</label>
+                        <select
+                          value={designFeaturedFilter}
+                          onChange={(e) => setDesignFeaturedFilter(e.target.value as 'all' | 'featured' | 'unfeatured')}
+                          className="w-full px-2 sm:px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          aria-label="Filter by featured status"
+                        >
+                          <option value="all">All Items</option>
+                          <option value="featured">⭐ Featured</option>
+                          <option value="unfeatured">☆ Not Featured</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1">Buying Type</label>
+                        <select
+                          value={designOwnershipFilter}
+                          onChange={(e) => setDesignOwnershipFilter(e.target.value)}
+                          className="w-full px-2 sm:px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          aria-label="Filter by buying type"
+                        >
+                          <option value="">All Types</option>
+                          <option value="REGULAR">Regular</option>
+                          <option value="OWNERSHIP">Ownership</option>
+                          <option value="BOTH">Both</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                        <select
+                          value={designSortBy}
+                          onChange={(e) => setDesignSortBy(e.target.value as 'date' | 'price' | 'sales')}
+                          className="w-full px-2 sm:px-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          aria-label="Sort designs by"
+                        >
+                          <option value="date">📅 Date</option>
+                          <option value="price">💰 Price</option>
+                          <option value="sales">📊 Sales</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1">Order</label>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => setDesignSortOrder('desc')}
+                            className={`flex-1 px-2 py-1.5 rounded text-[10px] font-medium transition-colors ${
+                              designSortOrder === 'desc'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            ⬇️
+                          </button>
+                          <button
+                            onClick={() => setDesignSortOrder('asc')}
+                            className={`flex-1 px-2 py-1.5 rounded text-[10px] font-medium transition-colors ${
+                              designSortOrder === 'asc'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            ⬆️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                   {filteredDesigns
@@ -1152,6 +1332,17 @@ export default function AdminDashboard() {
                             <span className="text-white font-semibold text-xs sm:text-sm">INACTIVE</span>
                           </div>
                         )}
+                        <button
+                          onClick={() => handleToggleFeaturedDesign(design.id)}
+                          className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+                          title={design.isFeatured ? 'Remove from featured' : 'Add to featured'}
+                        >
+                          <Star className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                            design.isFeatured 
+                              ? 'text-yellow-400 fill-yellow-400' 
+                              : 'text-gray-300'
+                          }`} />
+                        </button>
                         {design.isOwned && (
                           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-[8px] sm:text-xs font-semibold">
                             OWNED

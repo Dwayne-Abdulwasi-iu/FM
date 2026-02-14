@@ -70,19 +70,25 @@ export async function GET(request: NextRequest) {
 
         return {
           id: r.id,
+          returnNumber: r.id.slice(0, 8).toUpperCase(),
           status: r.status,
           reason: r.reason,
           description: r.description,
           imageUrls: r.imageUrls,
           refundAmount: r.refundAmount,
           adminNotes: isAdmin ? r.adminNotes : undefined,
-          user,
-          order,
-          item: orderItem
+          user: user || { id: r.userId, name: null, email: '' },
+          order: order || { id: r.orderId, orderNumber: 'N/A' },
+          orderItem: orderItem
             ? {
+                id: orderItem.id,
                 quantity: orderItem.quantity,
-                product: orderItem.product,
-                variant: orderItem.variant,
+                price: orderItem.price,
+                product: {
+                  id: orderItem.product.id,
+                  title: orderItem.product.title,
+                  thumbnailUrl: orderItem.product.thumbnailUrl,
+                },
               }
             : null,
           createdAt: r.createdAt,
@@ -170,7 +176,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if order is eligible for return (delivered within 7 days)
-    if (order.status !== "DELIVERED") {
+    if (order.status !== "DELIVERED" && order.status !== "COMPLETED") {
       return NextResponse.json(
         { success: false, message: "Order must be delivered before requesting return" },
         { status: 400 }
@@ -355,6 +361,38 @@ export async function PATCH(request: NextRequest) {
               },
             },
           });
+          
+          // Check if product should be restored to LIVE
+          if (orderItem.productId) {
+            const variants = await prisma.boutiqueProductVariant.findMany({
+              where: { productId: orderItem.productId },
+              select: { quantity: true },
+            });
+            const totalStock = variants.reduce((sum, v) => sum + v.quantity, 0);
+            
+            const product = await prisma.boutiqueProduct.findUnique({
+              where: { id: orderItem.productId },
+              select: { status: true },
+            });
+            
+            // If product is OUT_OF_STOCK and now has stock, restore to LIVE
+            if (product?.status === "OUT_OF_STOCK" && totalStock > 0) {
+              await prisma.boutiqueProduct.update({
+                where: { id: orderItem.productId },
+                data: { 
+                  status: "LIVE",
+                  currentStock: totalStock,
+                },
+              });
+              console.log(`[Return Complete] Product ${orderItem.productId} restored to LIVE status (stock: ${totalStock})`);
+            } else {
+              // Sync currentStock field
+              await prisma.boutiqueProduct.update({
+                where: { id: orderItem.productId },
+                data: { currentStock: totalStock },
+              });
+            }
+          }
         }
         break;
 
