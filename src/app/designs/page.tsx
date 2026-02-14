@@ -33,6 +33,10 @@ interface Design {
   mediaFiles?: {
     accessType: string
   }[]
+  promotionPrice?: number
+  promotionType?: string
+  promotionId?: string
+  discountAmount?: number
 }
 
 export default function DesignsPage() {
@@ -224,9 +228,39 @@ export default function DesignsPage() {
                   </p>
                   
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-xs sm:text-sm text-gray-900">
-                      {formatPrice(design.price)}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                      {design.promotionPrice !== undefined ? (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-xs sm:text-sm text-indigo-600">
+                              {formatPrice(design.promotionPrice)}
+                            </span>
+                            {design.promotionType === 'BUNDLE' && (
+                              <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[8px] sm:text-[9px] font-bold rounded">
+                                BUNDLE
+                              </span>
+                            )}
+                            {design.promotionType === 'DISCOUNT' && (
+                              <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[8px] sm:text-[9px] font-bold rounded">
+                                % OFF
+                              </span>
+                            )}
+                            {design.promotionType === 'FLASH_SALE' && (
+                              <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-[8px] sm:text-[9px] font-bold rounded">
+                                FLASH
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[9px] sm:text-xs text-gray-400 line-through">
+                            {formatPrice(design.price)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-xs sm:text-sm text-gray-900">
+                          {formatPrice(design.price)}
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="flex items-center gap-1">
                       {design._count?.reviews ? (
@@ -250,6 +284,26 @@ export default function DesignsPage() {
                       </button>
                     </div>
                   </div>
+                  
+                  {design.promotionType && (
+                    <div className="flex gap-1 mb-2">
+                      {design.promotionType === 'BUNDLE' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] sm:text-xs font-medium bg-purple-100 text-purple-700">
+                          Bundle Deal
+                        </span>
+                      )}
+                      {design.promotionType === 'DISCOUNT' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] sm:text-xs font-medium bg-green-100 text-green-700">
+                          On Sale
+                        </span>
+                      )}
+                      {design.promotionType === 'FLASH_SALE' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[8px] sm:text-xs font-medium bg-orange-100 text-orange-700">
+                          Flash Sale
+                        </span>
+                      )}
+                    </div>
+                  )}
                   
                   {/* View Details Button */}
                   <Link 

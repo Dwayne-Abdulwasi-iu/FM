@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { sendEmail } from '@/lib/email'
 
 interface OnboardingRequest {
   storeName: string
@@ -124,8 +125,84 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // TODO: Send confirmation email to seller
-    // TODO: Send notification to admin for review
+    // Send confirmation email to seller
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com'
+    const adminEmail = process.env.ADMIN_EMAIL
+    
+    if (session.user.email) {
+      const sellerEmailHtml = `
+        <h2>Welcome to the Fashion Marketplace!</h2>
+        <p>Hello ${session.user.name || 'Seller'},</p>
+        <p>Your store <strong>${storeName}</strong> has been successfully created.</p>
+        
+        <h3>Store Details</h3>
+        <ul>
+          <li><strong>Store Name:</strong> ${storeName}</li>
+          <li><strong>Category:</strong> ${body.category}</li>
+          <li><strong>First Product:</strong> ${boutiqueProduct.title}</li>
+        </ul>
+        
+        <p>Our admin team is reviewing your store and first product submission. You will receive an email notification within 24 hours with the review results.</p>
+        
+        <p>In the meantime, you can:</p>
+        <ul>
+          <li>Complete your seller profile</li>
+          <li>Add more products</li>
+          <li>Set up your payment preferences</li>
+        </ul>
+        
+        <p>
+          <a href="${baseUrl}/seller/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            Go to Dashboard
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: session.user.email,
+        subject: `Welcome ${storeName}!`,
+        html: sellerEmailHtml,
+      });
+    }
+
+    // Notify admin for review
+    if (adminEmail) {
+      const adminEmailHtml = `
+        <h2>New Seller Store for Review</h2>
+        <p>A new seller has submitted their store and first product for review.</p>
+        
+        <h3>Store Details</h3>
+        <ul>
+          <li><strong>Store Name:</strong> ${storeName}</li>
+          <li><strong>Seller Name:</strong> ${session.user.name || 'Unknown'}</li>
+          <li><strong>Seller Email:</strong> ${session.user.email || 'N/A'}</li>
+          <li><strong>Category:</strong> ${body.category}</li>
+          <li><strong>Submitted:</strong> ${new Date().toLocaleString()}</li>
+        </ul>
+        
+        <h3>First Product</h3>
+        <ul>
+          <li><strong>Title:</strong> ${boutiqueProduct.title}</li>
+          <li><strong>Description:</strong> ${body.product.description}</li>
+          <li><strong>Price:</strong> $${body.product.basePrice}</li>
+          <li><strong>Product ID:</strong> ${boutiqueProduct.id}</li>
+        </ul>
+        
+        <p>Please review the store and product for compliance and quality.</p>
+        
+        <p>
+          <a href="${baseUrl}/admin/onboarding" style="display: inline-block; padding: 12px 24px; background-color: #FF6B6B; color: white; text-decoration: none; border-radius: 8px;">
+            Review Store
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: adminEmail,
+        subject: `New Store for Review: ${storeName}`,
+        html: adminEmailHtml,
+      });
+    }
 
     return NextResponse.json(
       {

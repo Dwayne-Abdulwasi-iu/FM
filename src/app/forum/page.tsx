@@ -33,6 +33,7 @@ interface Post {
     image: string | null;
     isVerified: boolean;
     verificationBadge: string | null;
+    allBadges?: string[];
   };
   category: {
     id: string;

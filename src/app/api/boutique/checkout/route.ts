@@ -136,11 +136,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate all items are available
+    // Validate all items are available AND reserve them in a transaction
+    // This prevents race conditions where multiple checkouts could oversell
+    
+    // First, validate everything is available
     const unavailableItems = cartItems.filter(
       item => item.product.status !== 'LIVE' || 
               !item.variant || 
-              item.variant.quantity < item.quantity
+              (item.variant.quantity - item.variant.reserved) < item.quantity
     );
 
     if (unavailableItems.length > 0) {
@@ -152,6 +155,67 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Reserve stock atomically per variant to prevent race conditions
+    // This ensures only one checkout can claim the stock
+    for (const item of cartItems) {
+      if (!item.variant) continue;
+      
+      // Use a transaction to check available quantity and reserve atomically
+      try {
+        await prisma.$transaction(async (tx) => {
+          const currentVariant = await tx.boutiqueProductVariant.findUnique({
+            where: { id: item.variant!.id }
+          });
+          
+          if (!currentVariant) {
+            throw new Error(`Variant ${item.variant!.id} not found`);
+          }
+          
+          const available = currentVariant.quantity - currentVariant.reserved;
+          if (available < item.quantity) {
+            throw new Error(`Insufficient stock for variant ${item.variant!.id}. Available: ${available}, Requested: ${item.quantity}`);
+          }
+          
+          // Reserve the stock
+          await tx.boutiqueProductVariant.update({
+            where: { id: item.variant!.id },
+            data: {
+              quantity: { decrement: item.quantity },
+              reserved: { increment: item.quantity },
+            },
+          });
+        });
+      } catch (error) {
+        // If any variant fails to reserve, the transaction rolls back
+        // Restore inventory for already-reserved items
+        for (const previousItem of cartItems) {
+          if (previousItem.variant && previousItem !== item) {
+            try {
+              await prisma.boutiqueProductVariant.update({
+                where: { id: previousItem.variant.id },
+                data: {
+                  quantity: { increment: previousItem.quantity },
+                  reserved: { decrement: previousItem.quantity },
+                },
+              });
+            } catch (restoreError) {
+              console.error('Error restoring inventory:', restoreError);
+            }
+          }
+        }
+        
+        const errorMessage = error instanceof Error ? error.message : 'Stock reservation failed';
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Item(s) no longer available. Please try again.',
+            details: errorMessage,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Group items by seller and fulfillment method
@@ -326,11 +390,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Clear cart
-    await prisma.boutiqueCartItem.deleteMany({
-      where: { userId: session.user.id },
-    });
-
     // Initialize payment based on processor selection
     if (paymentProcessor === 'PAYSTACK' && isPaystackConfigured()) {
       const user = await prisma.user.findUnique({
@@ -476,6 +535,11 @@ export async function POST(request: NextRequest) {
       await prisma.boutiqueOrder.updateMany({
         where: { id: { in: createdOrders } },
         data: { paymentReference: paystackResponse.data.reference },
+      });
+
+      // Clear cart only after successful payment initialization
+      await prisma.boutiqueCartItem.deleteMany({
+        where: { userId: session.user.id },
       });
 
       return NextResponse.json({

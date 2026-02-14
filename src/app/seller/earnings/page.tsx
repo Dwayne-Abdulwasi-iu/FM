@@ -53,17 +53,22 @@ export default function SellerEarningsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Reset page to 1 when filter or dateRange changes
+    setPage(1)
+  }, [filter, dateRange])
+
+  useEffect(() => {
     if (authStatus === 'loading') return
     if (!session) {
       router.push('/auth/signin')
       return
     }
-    if (session.user?.role !== 'SELLER' && session.user?.role !== 'ADMIN') {
+    if (session?.user?.role && !['SELLER', 'ADMIN'].includes(session.user.role)) {
       router.push('/')
       return
     }
     fetchEarningsData()
-  }, [session, authStatus, router, filter, dateRange])
+  }, [session, authStatus, router, filter, dateRange, page])
 
   const fetchEarningsData = async () => {
     setLoading(true)
@@ -71,10 +76,12 @@ export default function SellerEarningsPage() {
     try {
       // Fetch stats
       const statsResponse = await fetch('/api/seller/earnings/stats')
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData)
+      if (!statsResponse.ok) {
+        const statsError = await statsResponse.json().catch(() => ({}))
+        throw new Error(statsError.error || statsError.message || 'Failed to fetch earnings stats')
       }
+      const statsData = await statsResponse.json()
+      setStats(statsData)
 
       // Fetch transactions
       const queryParams = new URLSearchParams({
@@ -84,14 +91,17 @@ export default function SellerEarningsPage() {
         ...(filter !== 'ALL' && { type: filter }),
       })
       const txResponse = await fetch(`/api/seller/earnings/transactions?${queryParams}`)
-      if (txResponse.ok) {
-        const txData = await txResponse.json()
-        setTransactions(txData.transactions)
-        setHasMore(txData.hasMore)
+      if (!txResponse.ok) {
+        const txError = await txResponse.json().catch(() => ({}))
+        throw new Error(txError.error || txError.message || 'Failed to fetch transactions')
       }
+      const txData = await txResponse.json()
+      setTransactions(txData.transactions || [])
+      setHasMore(txData.hasMore || false)
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
       console.error('Failed to fetch earnings data:', error)
-      setError('Failed to load earnings data. Please try again.')
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -164,6 +174,21 @@ export default function SellerEarningsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Links */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Link href="/seller/finances" className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+            ← Finances Hub
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/payments" className="text-sm text-indigo-600 hover:text-indigo-700">
+            Payment History
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/transfers" className="text-sm text-indigo-600 hover:text-indigo-700">
+            Transfers
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>

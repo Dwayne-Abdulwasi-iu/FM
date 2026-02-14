@@ -171,6 +171,11 @@ export async function GET(request: NextRequest) {
           }
 
           // TODO: Initiate refund
+          // Refund logic would depend on payment processor (Stripe/Paystack)
+          // Check order.paymentProcessor and order.paymentIntentId/chargeId
+          // Call appropriate refund endpoint
+          // Example: await stripe.refunds.create({ charge: order.chargeId })
+          // For now, just mark order as cancelled
           results.autoCancelled++;
 
           // Notify buyer about cancellation

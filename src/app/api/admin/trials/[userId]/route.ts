@@ -196,15 +196,25 @@ export async function PATCH(
     console.log(logMessage)
 
     // TODO: Store audit log in database
-    // await prisma.adminAuditLog.create({
-    //   data: {
-    //     adminId: session.user.id,
-    //     action: 'trial_management',
-    //     targetUserId: userId,
-    //     details: { action, reason },
-    //     timestamp: new Date(),
-    //   }
-    // })
+    // Requires AdminAuditLog model in schema:
+    // - adminId (who made the change)
+    // - action (trial_management)
+    // - targetUserId (affected user)
+    // - details (JSON: action, reason, trial info)
+    // - timestamp
+    // 
+    // Example implementation:
+    // if (prisma.adminAuditLog) {
+    //   await prisma.adminAuditLog.create({
+    //     data: {
+    //       adminId: session.user.id,
+    //       action: 'trial_management',
+    //       targetUserId: userId,
+    //       details: { action, reason },
+    //       createdAt: new Date(),
+    //     }
+    //   })
+    // }
 
     return NextResponse.json({
       success: true,

@@ -285,7 +285,7 @@ export default function PODSetupWizard() {
                     >
                       <div className="aspect-square relative">
                         <Image
-                          src={design.imageUrl || '/placeholder-design.jpg'}
+                          src={design.imageUrl || '/api/placeholder?w=300&h=300&text=No+Design'}
                           alt={design.title}
                           fill
                           className="object-cover"
@@ -451,7 +451,7 @@ export default function PODSetupWizard() {
                   <div className="w-14 h-14 sm:w-20 sm:h-20 relative rounded-lg overflow-hidden shrink-0">
                     {selectedDesign && (
                       <Image
-                        src={selectedDesign.imageUrl || '/placeholder-design.jpg'}
+                        src={selectedDesign.imageUrl || '/api/placeholder?w=400&h=400&text=No+Design'}
                         alt={selectedDesign.title}
                         fill
                         className="object-cover"

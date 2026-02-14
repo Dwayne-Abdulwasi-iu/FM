@@ -54,6 +54,26 @@ export async function GET(request: NextRequest) {
       take: limit,
       orderBy: { createdAt: "desc" },
     });
+
+    // Fetch user data separately for each violation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const violationsWithUsers = await Promise.all(
+      violations.map(async (violation: any) => {
+        try {
+          const user = await (prisma as any).user.findUnique({
+            where: { id: violation.userId },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          });
+          return { ...violation, user: user || { id: violation.userId, name: "Unknown", email: violation.userEmail } };
+        } catch (err) {
+          return { ...violation, user: { id: violation.userId, name: "Unknown", email: violation.userEmail } };
+        }
+      })
+    );
     
     // Get stats
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,7 +88,7 @@ export async function GET(request: NextRequest) {
     });
     
     return NextResponse.json({
-      violations,
+      violations: violationsWithUsers,
       pagination: {
         page,
         limit,
@@ -85,8 +105,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching content violations:", error);
+    
+    // Log more details if it's a Prisma error
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    
     return NextResponse.json(
-      { error: "Failed to fetch violations" },
+      { error: "Failed to fetch violations", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

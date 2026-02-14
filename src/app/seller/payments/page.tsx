@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { DollarSign, AlertCircle, CheckCircle, Clock, TrendingUp } from 'lucide-react'
 
@@ -52,7 +53,7 @@ interface Summary {
 }
 
 export default function SellerPaymentsPage() {
-  const { status } = useSession()
+  const { status, data: session } = useSession()
   const router = useRouter()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,7 +82,16 @@ export default function SellerPaymentsPage() {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
     }
-  }, [status, router])
+    // Check seller role
+    if (session?.user?.role && !['SELLER', 'ADMIN'].includes(session.user.role)) {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    // Reset pagination to page 1 when filters change
+    setPagination((prev) => ({ ...prev, page: 1 }))
+  }, [filters.status, filters.processor, filters.startDate, filters.endDate])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -102,15 +112,19 @@ export default function SellerPaymentsPage() {
       })
 
       const res = await fetch(`/api/seller/payments?${params}`)
-      if (!res.ok) throw new Error('Failed to fetch payments')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || errData.message || 'Failed to fetch payments')
+      }
 
       const data = await res.json()
       setTransactions(data.transactions)
       setPagination(data.pagination)
       setSummary(data.summary)
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
       console.error('Error fetching payments:', error)
-      toast.error('Failed to load payments')
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -160,6 +174,21 @@ export default function SellerPaymentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-8 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Navigation Links */}
+        <div className="flex flex-wrap gap-2 mb-6 text-sm">
+          <Link href="/seller/finances" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+            ← Finances Hub
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/earnings" className="text-indigo-600 hover:text-indigo-700">
+            Earnings
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link href="/seller/transfers" className="text-indigo-600 hover:text-indigo-700">
+            Transfers
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Payment Audit Trail</h1>

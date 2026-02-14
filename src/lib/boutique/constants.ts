@@ -129,10 +129,13 @@ export const PRODUCT_STATUS = {
   RECEIVED_BY_ADMIN: 'RECEIVED_BY_ADMIN',
   VERIFICATION_PASSED: 'VERIFICATION_PASSED',
   LIVE: 'LIVE',
+  IN_RETURN: 'IN_RETURN',
+  RETURN_REQUESTED: 'RETURN_REQUESTED',
+  RETURN_SHIPPED: 'RETURN_SHIPPED',
+  RETURNED_TO_SELLER: 'RETURNED_TO_SELLER',
   SOLD: 'SOLD',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
-  RETURNED_TO_SELLER: 'RETURNED_TO_SELLER',
   LIQUIDATED: 'LIQUIDATED',
 } as const;
 
@@ -147,10 +150,13 @@ export const PRODUCT_STATUS_CONFIG: Record<ProductStatus, { label: string; color
   RECEIVED_BY_ADMIN: { label: 'Received', color: 'text-indigo-700', bgColor: 'bg-indigo-100', description: 'Product received, verifying...' },
   VERIFICATION_PASSED: { label: 'Verified', color: 'text-teal-700', bgColor: 'bg-teal-100', description: 'Ready to go live' },
   LIVE: { label: 'Live', color: 'text-green-700', bgColor: 'bg-green-100', description: 'Available for purchase' },
+  IN_RETURN: { label: 'Approved for Return', color: 'text-orange-700', bgColor: 'bg-orange-100', description: 'Return approved by admin' },
+  RETURN_REQUESTED: { label: 'Return Requested', color: 'text-amber-700', bgColor: 'bg-amber-100', description: 'Return request pending approval' },
+  RETURN_SHIPPED: { label: 'Return Shipped', color: 'text-orange-600', bgColor: 'bg-orange-100', description: 'Product being returned to seller' },
+  RETURNED_TO_SELLER: { label: 'Returned Successfully', color: 'text-emerald-700', bgColor: 'bg-emerald-100', description: 'Returned to seller' },
   SOLD: { label: 'Sold', color: 'text-emerald-700', bgColor: 'bg-emerald-100', description: 'Product has been sold' },
   REJECTED: { label: 'Rejected', color: 'text-red-700', bgColor: 'bg-red-100', description: 'Did not meet requirements' },
   CANCELLED: { label: 'Cancelled', color: 'text-orange-700', bgColor: 'bg-orange-100', description: 'Shipment deadline passed' },
-  RETURNED_TO_SELLER: { label: 'Returned', color: 'text-gray-700', bgColor: 'bg-gray-200', description: 'Sent back to seller' },
   LIQUIDATED: { label: 'Liquidated', color: 'text-amber-700', bgColor: 'bg-amber-100', description: 'Sold at discounted price' },
 };
 

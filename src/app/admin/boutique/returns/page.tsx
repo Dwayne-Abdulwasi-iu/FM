@@ -240,10 +240,10 @@ export default function AdminReturnsPage() {
                     <div className="flex items-start gap-2 sm:gap-4">
                       {/* Product Image */}
                       <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
-                        {ret.orderItem.product.thumbnailUrl ? (
+                        {ret.orderItem?.product?.thumbnailUrl ? (
                           <Image
-                            src={ret.orderItem.product.thumbnailUrl}
-                            alt={ret.orderItem.product.title}
+                            src={ret.orderItem?.product?.thumbnailUrl || ''}
+                            alt={ret.orderItem?.product?.title || 'Product'}
                             width={64}
                             height={64}
                             className="object-cover w-full h-full"
@@ -260,19 +260,19 @@ export default function AdminReturnsPage() {
                         <div className="flex items-center justify-between gap-2 mb-0.5 sm:mb-1">
                           <div>
                             <p className="font-semibold text-black text-[10px] sm:text-base">{ret.returnNumber}</p>
-                            <p className="text-[8px] sm:text-sm text-black">Order: {ret.order.orderNumber}</p>
+                            <p className="text-[8px] sm:text-sm text-black">Order: {ret.order?.orderNumber || 'N/A'}</p>
                           </div>
                           <span className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[7px] sm:text-xs font-medium ${statusInfo.bg}`}>
                             <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             <span className="hidden xs:inline">{ret.status.replace(/_/g, ' ')}</span>
                           </span>
                         </div>
-                        <p className="text-[9px] sm:text-sm text-black font-medium line-clamp-1">{ret.orderItem.product.title}</p>
+                        <p className="text-[9px] sm:text-sm text-black font-medium line-clamp-1">{ret.orderItem?.product?.title || 'Product'}</p>
                         <p className="text-[8px] sm:text-sm text-black">
-                          {ret.user.name || ret.user.email} • Qty: {ret.orderItem.quantity}
+                          {ret.user?.name || ret.user?.email || 'Unknown'} • Qty: {ret.orderItem?.quantity || 0}
                         </p>
                         <p className="text-[8px] sm:text-sm text-black">
-                          Reason: <span className="font-medium">{ret.reason.replace(/_/g, ' ')}</span>
+                          Reason: <span className="font-medium">{ret.reason?.replace(/_/g, ' ')}</span>
                         </p>
                         {ret.description && (
                           <p className="text-[8px] sm:text-sm text-black mt-0.5">&ldquo;{ret.description}&rdquo;</p>
@@ -346,13 +346,13 @@ export default function AdminReturnsPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Order Number</p>
-                      <Link href={`/admin/boutique/orders/${selectedReturn.order.id}`} className="font-medium text-purple-600 hover:underline">
-                        {selectedReturn.order.orderNumber}
+                      <Link href={`/admin/boutique/orders/${selectedReturn.order?.id || ''}`} className="font-medium text-purple-600 hover:underline">
+                        {selectedReturn.order?.orderNumber || 'N/A'}
                       </Link>
                     </div>
                     <div>
                       <p className="text-gray-500">Buyer</p>
-                      <p className="font-medium text-gray-900">{selectedReturn.user.name || selectedReturn.user.email}</p>
+                      <p className="font-medium text-gray-900">{selectedReturn.user?.name || selectedReturn.user?.email || 'Unknown'}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Refund Amount</p>
@@ -360,11 +360,11 @@ export default function AdminReturnsPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Reason</p>
-                      <p className="font-medium text-gray-900">{selectedReturn.reason.replace(/_/g, ' ')}</p>
+                      <p className="font-medium text-gray-900">{selectedReturn.reason?.replace(/_/g, ' ') || 'Unknown'}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Status</p>
-                      <p className="font-medium text-gray-900">{selectedReturn.status.replace(/_/g, ' ')}</p>
+                      <p className="font-medium text-gray-900">{selectedReturn.status?.replace(/_/g, ' ') || 'Unknown'}</p>
                     </div>
                   </div>
 

@@ -3,10 +3,12 @@
 import { useState, useEffect, ElementType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, Settings, ChevronRight, ChevronDown } from 'lucide-react'
+import { User, Mail, Calendar, Upload, DollarSign, TrendingUp, Eye, CreditCard, CheckCircle, X, Download, Package, Truck, ExternalLink, Settings, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { DesignerProfileBadge } from '@/components/DesignerBadge'
+import SubscriptionTierBadge from '@/components/SubscriptionTierBadge'
+import { convertFromUSD } from '@/lib/currency'
 import JSZip from 'jszip'
 
 interface UserProfile {
@@ -21,6 +23,7 @@ interface UserProfile {
   createdAt: string
   isVerified: boolean
   designerTier: string | null
+  subscriptionTier: string | null
 }
 
 interface UserStats {
@@ -145,6 +148,8 @@ export default function ProfilePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
+  const [preferredCurrency, setPreferredCurrency] = useState('USD')
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ USD: 1, NGN: 1200, EUR: 0.92, GBP: 0.79 })
   const [profileForm, setProfileForm] = useState({
     name: '',
     displayName: '',
@@ -165,12 +170,14 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const [profileRes, statsRes, designsRes, purchasesRes, ordersRes] = await Promise.all([
+      const [profileRes, statsRes, designsRes, purchasesRes, ordersRes, prefsRes, ratesRes] = await Promise.all([
         fetch('/api/profile'),
         fetch('/api/profile/stats'),
         fetch('/api/profile/designs'),
         fetch('/api/profile/purchases'),
-        fetch('/api/profile/orders')
+        fetch('/api/profile/orders'),
+        fetch('/api/preferences'),
+        fetch('/api/currency/rates')
       ])
 
       if (profileRes.ok) {
@@ -183,6 +190,16 @@ export default function ProfilePage() {
           website: profileData.user.website || '',
           location: profileData.user.location || ''
         })
+      }
+
+      if (prefsRes.ok) {
+        const prefsData = await prefsRes.json()
+        setPreferredCurrency(prefsData.currency || 'USD')
+      }
+
+      if (ratesRes.ok) {
+        const ratesData = await ratesRes.json()
+        setExchangeRates(ratesData.rates || { NGN: 1200, EUR: 0.92, GBP: 0.79 })
       }
 
       if (statsRes.ok) {
@@ -245,11 +262,23 @@ export default function ProfilePage() {
     }
   }
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (priceUSD: number) => {
+    const amount = priceUSD
+    const currency = preferredCurrency
+    
+    // Convert from USD to preferred currency
+    if (preferredCurrency !== 'USD' && exchangeRates[preferredCurrency]) {
+      const convertedAmount = convertFromUSD(priceUSD, preferredCurrency, exchangeRates)
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency
+      }).format(convertedAmount)
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(price)
+      currency
+    }).format(amount)
   }
 
   const formatDate = (dateString: string) => {
@@ -271,12 +300,6 @@ export default function ProfilePage() {
       minute: '2-digit',
       hour12: true
     })
-  }
-
-  const handleEditDesign = (designId: string) => {
-    // For now, redirect to upload page with edit mode
-    // In a full implementation, you'd create an edit page
-    router.push(`/upload?edit=${designId}`)
   }
 
   const handleDeleteDesign = (designId: string, title: string) => {
@@ -513,6 +536,9 @@ export default function ProfilePage() {
               {profile.designerTier && (
                 <DesignerProfileBadge tier={profile.designerTier} />
               )}
+              {profile.subscriptionTier && (
+                <SubscriptionTierBadge tier={profile.subscriptionTier} />
+              )}
               {profile.isVerified && (
                 <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
                   Verified
@@ -738,8 +764,8 @@ export default function ProfilePage() {
 
                       {/* Buyer Quick Links Section */}
                       <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h3 className="text-[9px] sm:text-xs font-semibold text-black mb-2 sm:mb-3">Buyer Tools</h3>
-                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                        <h3 className="text-[9px] sm:text-xs font-semibold text-black mb-2 sm:mb-3">Quick Access</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-2xl">
                           <Link
                             href="/orders"
                             className="flex items-center gap-1 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition"
@@ -747,15 +773,6 @@ export default function ProfilePage() {
                             <Package className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
                             <div className="min-w-0">
                               <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">My Orders</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/buyer/boutique-orders"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">👜</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Boutique Orders</p>
                             </div>
                           </Link>
                           <Link
@@ -773,7 +790,7 @@ export default function ProfilePage() {
                           >
                             <span className="text-sm sm:text-lg flex-shrink-0">🛒</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Cart</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Cart</p>
                             </div>
                           </Link>
                           <Link
@@ -782,25 +799,7 @@ export default function ProfilePage() {
                           >
                             <span className="text-sm sm:text-lg flex-shrink-0">🔔</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Notifications</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/commissions"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🎨</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Commissions</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/my-commissions"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-cyan-50 border border-cyan-200 rounded hover:bg-cyan-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">✏️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">My Work</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Notifications</p>
                             </div>
                           </Link>
                           <Link
@@ -809,124 +808,25 @@ export default function ProfilePage() {
                           >
                             <span className="text-sm sm:text-lg flex-shrink-0">🎭</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Browse Designs</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Browse</p>
                             </div>
                           </Link>
                           <Link
-                            href="/trending"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition"
+                            href="/my-commissions"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-cyan-50 border border-cyan-200 rounded hover:bg-cyan-100 transition"
                           >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🔥</span>
+                            <span className="text-sm sm:text-lg flex-shrink-0">✏️</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Trending</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">My Work</p>
                             </div>
                           </Link>
                           <Link
-                            href="/contests"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-yellow-50 border border-yellow-200 rounded hover:bg-yellow-100 transition"
+                            href="/commissions"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-emerald-50 border border-emerald-200 rounded hover:bg-emerald-100 transition"
                           >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🏆</span>
+                            <span className="text-sm sm:text-lg flex-shrink-0">🎨</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Contests</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/forum"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-teal-50 border border-teal-200 rounded hover:bg-teal-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">💬</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Community</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/resources"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">📚</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Resources</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/help"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">❓</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Help & FAQs</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/boutique/orders"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-rose-50 border border-rose-200 rounded hover:bg-rose-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">📦</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Orders</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/boutique/favorites"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-fuchsia-50 border border-fuchsia-200 rounded hover:bg-fuchsia-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">⭐</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Favorites</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/boutique"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-violet-50 border border-violet-200 rounded hover:bg-violet-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🛍️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Shop Physical</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/designers"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-sky-50 border border-sky-200 rounded hover:bg-sky-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">👥</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Find Designers</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/categories"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-lime-50 border border-lime-200 rounded hover:bg-lime-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🏷️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Categories</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/search/advanced"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-slate-50 border border-slate-200 rounded hover:bg-slate-100 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🔍</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Advanced Search</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/updates"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-orange-100 border border-orange-300 rounded hover:bg-orange-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">📰</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Feed & Updates</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/contact"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-red-100 border border-red-300 rounded hover:bg-red-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">✉️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Contact Us</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Commissions</p>
                             </div>
                           </Link>
                           <Link
@@ -935,88 +835,16 @@ export default function ProfilePage() {
                           >
                             <span className="text-sm sm:text-lg flex-shrink-0">💬</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Support Chat</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/buyer-protection"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-indigo-100 border border-indigo-300 rounded hover:bg-indigo-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🛡️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Buyer Protection</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/commission-request"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-100 border border-green-300 rounded hover:bg-green-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">✍️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Request Commission</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/designers"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-purple-100 border border-purple-300 rounded hover:bg-purple-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">👨‍🎨</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Explore Designers</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/boutique/cart"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-orange-200 border border-orange-400 rounded hover:bg-orange-300 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🛒</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Cart</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/boutique/checkout"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-blue-200 border border-blue-400 rounded hover:bg-blue-300 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">💳</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Boutique Checkout</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/profile/edit"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-pink-200 border border-pink-400 rounded hover:bg-pink-300 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">✏️</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Edit Profile</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Support Chat</p>
                             </div>
                           </Link>
                           <Link
                             href="/profile/settings"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-gray-200 border border-gray-400 rounded hover:bg-gray-300 transition"
+                            className="flex items-center gap-1 p-2 sm:p-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition"
                           >
                             <span className="text-sm sm:text-lg flex-shrink-0">⚙️</span>
                             <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Settings</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/terms"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-yellow-100 border border-yellow-300 rounded hover:bg-yellow-200 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">📜</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Terms & Conditions</p>
-                            </div>
-                          </Link>
-                          <Link
-                            href="/privacy"
-                            className="flex items-center gap-1 p-2 sm:p-3 bg-green-200 border border-green-400 rounded hover:bg-green-300 transition"
-                          >
-                            <span className="text-sm sm:text-lg flex-shrink-0">🔒</span>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-medium line-clamp-1 text-black">Privacy Policy</p>
+                              <p className="text-xs sm:text-sm font-medium text-black line-clamp-1">Settings</p>
                             </div>
                           </Link>
                         </div>
@@ -1052,7 +880,7 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                     {designs.map((design) => (
                         <div key={design.id} className="border border-gray-200 rounded overflow-hidden hover:shadow-md transition-shadow">
                           <div className="aspect-square bg-gray-100">
@@ -1067,11 +895,11 @@ export default function ProfilePage() {
                         <div className="p-3 sm:p-4">
                           <h4 className="font-medium text-black mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{design.title}</h4>
                           <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">{design.category}</p>
-                          <div className="flex items-center justify-between text-xs sm:text-sm">
-                            <span className="font-bold text-indigo-600">{formatPrice(design.price)}</span>
-                            <span className="text-gray-500">{design.totalSales} sales</span>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-indigo-600 text-[10px] sm:text-xs line-clamp-1">{formatPrice(design.price)}</span>
+                            <span className="text-gray-500 text-[10px] sm:text-xs">{design.totalSales} sales</span>
                           </div>
-                          <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600">
+                          <div className="mt-1 sm:mt-2 text-[10px] sm:text-xs text-gray-600 line-clamp-1">
                             Revenue: {formatPrice(design.totalRevenue || 0)}
                           </div>
                           <div className="mt-2 flex gap-2 sm:gap-3">
@@ -1081,12 +909,6 @@ export default function ProfilePage() {
                             >
                               View
                             </Link>
-                            <button
-                              onClick={() => handleEditDesign(design.id)}
-                              className="flex-1 bg-indigo-100 text-indigo-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-indigo-200"
-                            >
-                              Edit
-                            </button>
                             <button
                               onClick={() => handleDeleteDesign(design.id, design.title)}
                               className="flex-1 bg-red-100 text-red-700 px-2 sm:px-3 py-1 rounded text-center text-xs hover:bg-red-200"
@@ -1197,7 +1019,7 @@ export default function ProfilePage() {
                                       <span className="font-medium">{formatDateWithTime(order.createdAt)}</span>
                                     </p>
                                     <p className="text-gray-600 mt-0.5">
-                                      <span className="font-medium text-indigo-600">${item.price.toFixed(2)}</span>
+                                      <span className="font-medium text-indigo-600">{formatPrice(item.price)}</span>
                                     </p>
                                   </div>
 

@@ -61,11 +61,21 @@ async function initiateDocuSignRequest(request: SignatureRequest): Promise<Signa
     }
 
     // TODO: Implement actual DocuSign API call
-    // This would typically involve:
-    // 1. Creating envelope
-    // 2. Adding document and recipients
-    // 3. Sending for signature
-    // 4. Webhook to track completion
+    // REQUIRES: npm install docusign-esign
+    // Environment variables needed:
+    // - DOCUSIGN_INTEGRATION_KEY: from DocuSign developer account
+    // - DOCUSIGN_ACCOUNT_ID: DocuSign account ID
+    // - DOCUSIGN_PRIVATE_KEY: Private key for JWT authentication
+    //
+    // Implementation steps:
+    // 1. Authenticate using JWT grant flow
+    // 2. Create an envelope with document and recipients
+    // 3. Add signing fields to document
+    // 4. Send for signature
+    // 5. Return envelope ID for tracking
+    // 6. Set up webhook to track signing status
+    //
+    // Fallback: Uses initiateManualSignatureRequest if not configured
 
     const requestId = `DOCUSIGN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -96,8 +106,18 @@ async function initiateHelloSignRequest(request: SignatureRequest): Promise<Sign
     }
 
     // TODO: Implement actual HelloSign API call
-    // This would typically involve:
-    // 1. Creating signature request
+    // REQUIRES: npm install @dropbox/sign
+    // Environment variables needed:
+    // - HELLOSIGN_API_KEY: from Dropbox Sign/HelloSign
+    //
+    // Implementation steps:
+    // 1. Create client with API key
+    // 2. Create signature request with document and signers
+    // 3. Configure signing requirements
+    // 4. Send request
+    // 5. Track status via API
+    //
+    // Fallback: Uses initiateManualSignatureRequest if not configured
     // 2. Adding signers with email
     // 3. Setting callback URL for completion notification
     // 4. Getting signing URL to send to user
@@ -129,11 +149,21 @@ async function initiateAdobeSignRequest(request: SignatureRequest): Promise<Sign
     }
 
     // TODO: Implement actual Adobe Sign API call
-    // This would typically involve:
-    // 1. Creating agreement
-    // 2. Adding signers
-    // 3. Getting signing URL
-    // 4. Webhook for completion
+    // REQUIRES: Adobe Sign API documentation and credentials
+    // Environment variables needed:
+    // - ADOBE_API_KEY: API key from Adobe developer console
+    // - ADOBE_API_ENDPOINT: Adobe Sign API endpoint
+    // - ADOBE_CLIENT_ID: Client ID for OAuth (if using OAuth)
+    //
+    // Implementation steps:
+    // 1. Create agreement with document
+    // 2. Add signers and set signing order
+    // 3. Configure signing experience
+    // 4. Send agreement for signature
+    // 5. Monitor status via webhooks
+    //
+    // Reference: https://opensource.adobe.com/dc-legal-docs-api-reference/
+    // Fallback: Uses initiateManualSignatureRequest if not configured
 
     const requestId = `ADOBE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 

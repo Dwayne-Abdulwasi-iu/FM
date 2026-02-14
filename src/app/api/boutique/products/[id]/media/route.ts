@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
 import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
 
 export async function POST(
@@ -236,7 +236,19 @@ export async function DELETE(
       where: { id: mediaId },
     });
 
-    // TODO: Delete from Cloudinary as well
+    // Delete from Cloudinary storage
+    try {
+      // Extract public ID from the URL if available
+      // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/{type}/{upload}/{public_id}.{ext}
+      const urlParts = media.url?.match(/\/([^\/]+)\.(?:jpg|png|gif|webp|mp4|webm)$/);
+      if (urlParts && urlParts[1]) {
+        const publicId = `fashion-marketplace/${urlParts[1]}`;
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (error) {
+      console.error('Failed to delete from Cloudinary:', error);
+      // Don't fail the request if Cloudinary deletion fails - the DB record is already deleted
+    }
 
     return NextResponse.json({
       success: true,

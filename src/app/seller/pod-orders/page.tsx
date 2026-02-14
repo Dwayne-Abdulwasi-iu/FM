@@ -278,7 +278,7 @@ export default function PODOrdersPage() {
                         <div key={item.id} className="flex items-center gap-3 flex-shrink-0">
                           <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100">
                             <Image
-                              src={item.design.imageUrl || '/placeholder-design.jpg'}
+                              src={item.design.imageUrl || '/api/placeholder?w=100&h=100&text=Design'}
                               alt={item.design.title}
                               width={56}
                               height={56}

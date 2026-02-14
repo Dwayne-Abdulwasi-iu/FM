@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { getPromotionForDesign } from '@/lib/promotion-engine'
 
 export async function GET() {
   try {
@@ -37,31 +38,78 @@ export async function GET() {
 
     // Calculate total based on purchase type and A/B test prices
     type CartItemWithDesign = {
+      id: string
+      designId: string
       purchaseType?: string | null
       quantity: number
       priceTestVariant?: string | null
       priceTestPrice?: number | null
-      design: { ownershipPrice?: number | null; price: number }
+      design: { 
+        id: string
+        ownershipPrice?: number | null
+        price: number
+        designerId: string
+      }
     }
 
     const typedCartItems = cartItems as unknown as CartItemWithDesign[]
-    const total = typedCartItems.reduce((sum: number, item) => {
-      let price: number
-      
-      if (item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice) {
-        price = item.design.ownershipPrice
-      } else if (item.priceTestVariant && item.priceTestPrice) {
-        // Use the A/B test price that was shown to the user
-        price = item.priceTestPrice
-      } else {
-        price = item.design.price
-      }
-      
-      return sum + (price * item.quantity)
-    }, 0)
+    
+    // Get all design IDs for promotion checking
+    const allDesignIds = cartItems.map(item => item.designId)
+    
+    // Apply promotions to cart items
+    let total = 0
+    const itemsWithPromotions = await Promise.all(
+      typedCartItems.map(async (item) => {
+        let price: number
+        let promotionId: string | null = null
+        let promotionType: string | null = null
+        let promotionPrice: number | undefined = undefined
+        let discountAmount = 0
+        
+        if (item.purchaseType === 'OWNERSHIP' && item.design.ownershipPrice) {
+          price = item.design.ownershipPrice
+        } else if (item.priceTestVariant && item.priceTestPrice) {
+          // Use the A/B test price that was shown to the user
+          price = item.priceTestPrice
+        } else {
+          price = item.design.price
+          
+          // Check for promotions (only for regular digital items)
+          try {
+            const promotion = await getPromotionForDesign(
+              item.design.id,
+              item.design.designerId,
+              price,
+              allDesignIds
+            )
+            
+            if (promotion) {
+              promotionId = promotion.promotionId
+              promotionType = promotion.type
+              promotionPrice = promotion.discountedPrice
+              discountAmount = promotion.discountAmount
+              price = promotionPrice
+            }
+          } catch (error) {
+            console.error('Failed to check promotions for design:', error)
+          }
+        }
+        
+        total += price * item.quantity
+        
+        return {
+          ...item,
+          promotionId,
+          promotionType,
+          promotionPrice,
+          discountAmount
+        }
+      })
+    )
 
     return NextResponse.json({
-      items: cartItems,
+      items: itemsWithPromotions,
       total,
       count: cartItems.length
     })

@@ -196,8 +196,90 @@ export async function GET(request: NextRequest) {
   prisma.design.count({ where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */ }),
     ]);
 
+    // Add promotion data to each design
+    const now = new Date();
+    const designsWithPromotions = await Promise.all(
+      designs.map(async (design) => {
+        // Find active promotions for this design
+        const promotions = await prisma.promotion.findMany({
+          where: {
+            sellerId: design.designerId,
+            isActive: true,
+            startDate: { lte: now },
+            endDate: { gte: now },
+            designIds: {
+              hasSome: [design.id]
+            },
+            OR: [
+              { maxUsage: null },
+              { maxUsage: { gt: 0 } }
+            ]
+          },
+          select: {
+            id: true,
+            type: true,
+            discountType: true,
+            discountValue: true,
+            bundlePrice: true,
+            usageCount: true,
+            maxUsage: true
+          }
+        });
+
+        let promotionPrice = design.price;
+        let promotionType: string | null = null;
+        let promotionId: string | null = null;
+        let discountAmount = 0;
+
+        // Find the best promotion (highest discount)
+        if (promotions.length > 0) {
+          let bestDiscount = 0;
+          for (const promo of promotions) {
+            // Skip if max usage reached
+            if (promo.maxUsage !== null && promo.usageCount >= promo.maxUsage) {
+              continue;
+            }
+
+            let currentDiscount = 0;
+            let currentPrice = design.price;
+
+            if (promo.type === 'BUNDLE') {
+              // For BUNDLE, show the bundlePrice as hint (actual price depends on other items)
+              currentPrice = promo.bundlePrice || design.price;
+              currentDiscount = design.price - currentPrice;
+            } else if (promo.type === 'DISCOUNT' || promo.type === 'FLASH_SALE') {
+              if (promo.discountType === 'PERCENTAGE' && promo.discountValue) {
+                currentDiscount = (design.price * promo.discountValue) / 100;
+                currentPrice = design.price - currentDiscount;
+              } else if (promo.discountType === 'FIXED' && promo.discountValue) {
+                currentDiscount = promo.discountValue;
+                currentPrice = Math.max(0, design.price - currentDiscount);
+              }
+            }
+
+            // Use the promotion with highest discount
+            if (currentDiscount > bestDiscount) {
+              bestDiscount = currentDiscount;
+              promotionPrice = currentPrice;
+              promotionType = promo.type;
+              promotionId = promo.id;
+              discountAmount = currentDiscount;
+            }
+          }
+        }
+
+        return {
+          ...design,
+          promotionPrice: promotionType ? promotionPrice : undefined,
+          promotionType,
+          promotionId,
+          discountAmount: discountAmount > 0 ? discountAmount : undefined
+        };
+      })
+    );
+
     return NextResponse.json({
-      designs,
+      designs: designsWithPromotions,
       pagination: {
         page,
         limit,

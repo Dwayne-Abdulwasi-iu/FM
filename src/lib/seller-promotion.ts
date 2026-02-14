@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { sendEmail } from '@/lib/email'
 
 /**
  * Designer Tier Levels based on total sales:
@@ -126,15 +127,28 @@ async function sendDesignerPromotionEmail(
   console.log(`Subject: ${subject}`)
   console.log(emailContent)
 
-  // TODO: Integrate with email service
-  // Example with SendGrid:
-  // await sendgrid.send({
-  //   to: email,
-  //   from: 'noreply@fashionmarketplace.com',
-  //   subject,
-  //   text: emailContent,
-  //   html: generateHtmlEmail(emailContent, badgeInfo)
-  // })
+  // Generate HTML version of email with badge styling
+  const badgeHtml = badgeInfo ? `
+    <div style="text-align: center; margin: 20px 0; padding: 15px; background-color: ${badgeInfo.bgColor.replace('bg-', '#').replace('100', 'F0')}; border-radius: 8px;">
+      <p style="font-size: 40px; margin: 0;">${badgeInfo.icon}</p>
+      <p style="font-size: 18px; font-weight: bold; color: ${badgeInfo.color.replace('text-', '#').replace('700', '')}; margin: 5px 0;">${badgeInfo.label}</p>
+      <p style="font-size: 14px; color: #666; margin: 0;">${badgeInfo.description}</p>
+    </div>
+  ` : ''
+
+  const htmlContent = `
+    <h2>Congratulations!</h2>
+    <p>${emailContent.split('Congratulations!')[1] || emailContent}</p>
+    ${badgeHtml}
+  `;
+
+  // Send email using the email service
+  await sendEmail({
+    to: email,
+    subject,
+    html: htmlContent,
+    text: emailContent,
+  })
 }
 
 /**

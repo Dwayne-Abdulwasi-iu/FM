@@ -5,11 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import { Heart, ShoppingCart, ArrowLeft, CheckCircle, X, Shield, MessageCircle, Star, Clock, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
+import toast from 'react-hot-toast'
 import DesignerBadge from '@/components/DesignerBadge'
 import { ProductJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { useCurrency } from '@/components/CurrencyProvider'
 import SimilarDesigns from '@/components/SimilarDesigns'
 import { ShareButton } from '@/components/social/SocialShare'
+import { SubscriptionRequiredModal } from '@/components/SubscriptionRequiredModal'
 import { usePriceTest, trackVariantView } from '@/lib/price-test'
 
 
@@ -113,6 +115,15 @@ export default function DesignPage() {
   const [showPODSection, setShowPODSection] = useState(false)
   const [submittingReview, setSubmittingReview] = useState(false)
   const [hasReviewed, setHasReviewed] = useState(false)
+  const [isFeatured, setIsFeatured] = useState(false)
+  const [featuringDesign, setFeaturingDesign] = useState(false)
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const [subscriptionError, setSubscriptionError] = useState<{
+    code?: string
+    currentTier?: string
+    current?: number
+    max?: number
+  } | null>(null)
   
   // A/B Price Testing - get the price to show this user
   const priceTest = usePriceTest(
@@ -185,9 +196,24 @@ export default function DesignPage() {
         }
       }
       checkReviewEligibility()
+
+      // Check if design is featured (only for designer)
+      const checkFeaturedStatus = async () => {
+        try {
+          const response = await fetch(`/api/seller/featured-designs?designId=${params.id}`)
+          if (response.ok) {
+            const data = await response.json()
+            setIsFeatured(data.isFeatured || false)
+          }
+        } catch (error) {
+          console.error('Failed to check featured status:', error)
+        }
+      }
+      checkFeaturedStatus()
     } else {
       setIsWishlisted(false)
       setCanReview(false)
+      setIsFeatured(false)
     }
   }, [params.id, session?.user])
 
@@ -217,6 +243,84 @@ export default function DesignPage() {
       setTimeout(() => setErrorMessage(null), 2000)
     } finally {
       setTogglingWishlist(false)
+    }
+  }
+
+  const toggleFeatured = async () => {
+    if (!session?.user?.id) {
+      router.push('/auth/signin')
+      return
+    }
+    if (!design || session.user.id !== design.designer.id) {
+      setErrorMessage('Only the designer can feature this design')
+      setTimeout(() => setErrorMessage(null), 2000)
+      return
+    }
+
+    setFeaturingDesign(true)
+    try {
+      if (isFeatured) {
+        // DELETE - pass designId as query param
+        const response = await fetch(`/api/seller/featured-designs?designId=${design.id}`, {
+          method: 'DELETE'
+        })
+
+        if (response.ok) {
+          setIsFeatured(false)
+          setSuccessMessage('Removed from featured')
+          setTimeout(() => setSuccessMessage(null), 2000)
+        } else {
+          const error = await response.json()
+          setErrorMessage(error.error || 'Failed to remove from featured')
+          setTimeout(() => setErrorMessage(null), 2000)
+        }
+      } else {
+        // POST - pass designId in body
+        const response = await fetch('/api/seller/featured-designs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId: design.id }),
+        })
+
+        if (response.ok) {
+          setIsFeatured(true)
+          setSuccessMessage('Added to featured items!')
+          setTimeout(() => setSuccessMessage(null), 2000)
+        } else {
+          const error = await response.json()
+          
+          // Check if it's a subscription-related error
+          if (response.status === 403 && error.errorCode === 'NO_FEATURED_ACCESS') {
+            // Show subscription modal for no access
+            setSubscriptionError({
+              code: error.errorCode,
+              currentTier: error.currentTier,
+            })
+            setShowSubscriptionModal(true)
+            toast.error('Upgrade required: Your plan doesn\'t include featured items')
+          } else if (response.status === 409 && error.errorCode === 'TIER_LIMIT_REACHED') {
+            // Show subscription modal for tier limit
+            setSubscriptionError({
+              code: error.errorCode,
+              currentTier: error.currentTier,
+              current: error.current,
+              max: error.max,
+            })
+            setShowSubscriptionModal(true)
+            toast.error(`You've reached your featured items limit (${error.current}/${error.max})`)
+          } else {
+            // Generic error message
+            setErrorMessage(error.error || 'Failed to add to featured')
+            setTimeout(() => setErrorMessage(null), 2000)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle featured:', error)
+      setErrorMessage('Failed to update featured status')
+      setTimeout(() => setErrorMessage(null), 2000)
+    } finally {
+      setFeaturingDesign(false)
     }
   }
 
@@ -1000,6 +1104,23 @@ export default function DesignPage() {
                   <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isWishlisted ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} />
                 </button>
                 
+                {/* Feature Button - Only show for designer */}
+                {session?.user?.id === design?.designer.id && (
+                  <button 
+                    onClick={toggleFeatured}
+                    disabled={featuringDesign}
+                    className={`p-2 sm:p-3 border rounded transition-colors disabled:opacity-50 ${
+                      isFeatured 
+                        ? 'bg-yellow-50 border-yellow-300 hover:bg-yellow-100' 
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`} 
+                    aria-label={isFeatured ? 'Remove from featured' : 'Add to featured'}
+                    title={isFeatured ? 'Remove from featured items' : 'Add to featured items'}
+                  >
+                    <Star className={`h-4 w-4 sm:h-5 sm:w-5 ${isFeatured ? 'text-yellow-500 fill-yellow-500' : 'text-gray-600'}`} />
+                  </button>
+                )}
+                
                 <ShareButton
                   url={typeof window !== 'undefined' ? window.location.href : ''}
                   title={`${design.title} by ${design.designer.name || 'Designer'} | DesignDrop`}
@@ -1423,6 +1544,17 @@ export default function DesignPage() {
           limit={4}
         />
       </div>
+
+      {/* Subscription Modal */}
+      <SubscriptionRequiredModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        currentTier={subscriptionError?.currentTier || 'FREE'}
+        current={subscriptionError?.current}
+        max={subscriptionError?.max}
+        errorCode={subscriptionError?.code as 'NO_FEATURED_ACCESS' | 'TIER_LIMIT_REACHED' | undefined}
+        itemType="DESIGN"
+      />
     </div>
   )
 }

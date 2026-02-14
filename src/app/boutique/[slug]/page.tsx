@@ -100,6 +100,18 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [featuringProduct, setFeaturingProduct] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [submitReviewLoading, setSubmitReviewLoading] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewFit, setReviewFit] = useState<'RUNS_SMALL' | 'TRUE_TO_SIZE' | 'RUNS_LARGE' | ''>('');
+  const [userReview, setUserReview] = useState<any>(null);
+  const [editingReview, setEditingReview] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (slug) {
@@ -107,14 +119,43 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
+  useEffect(() => {
+    if (product && session?.user?.id) {
+      fetchUserReview();
+    }
+  }, [product?.id, session?.user?.id]);
+
+  const fetchUserReview = async () => {
+    if (!product) return;
+    try {
+      const response = await fetch(`/api/boutique/reviews?productId=${product.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.userReview) {
+          setUserReview(data.userReview);
+          setReviewRating(data.userReview.rating);
+          setReviewTitle(data.userReview.title || '');
+          setReviewComment(data.userReview.comment || '');
+          setReviewFit(data.userReview.fitRating || '');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user review:', error);
+    }
+  };
+
   const fetchProduct = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/boutique/shop/${slug}`);
       
       if (!response.ok) {
-        console.error('API returned:', response.status, response.statusText);
-        router.push('/boutique');
+        if (response.status === 404) {
+          setError('This product is no longer available for purchase.');
+        } else {
+          setError('Failed to load product details. Please try again later.');
+        }
         return;
       }
       
@@ -131,12 +172,11 @@ export default function ProductDetailPage() {
         if (sizes.length > 0) setSelectedSize(sizes[0] as string);
         if (colors.length > 0) setSelectedColor(colors[0] as string);
       } else {
-        console.error('Failed to fetch product:', data);
-        router.push('/boutique');
+        setError('Failed to load product details. Please try again later.');
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
-      router.push('/boutique');
+      setError('Failed to load product details. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -205,9 +245,160 @@ export default function ProductDetailPage() {
       router.push('/auth/signin');
       return;
     }
-    // TODO: Implement favorites API
-    setIsFavorite(!isFavorite);
+    // Toggle favorite using API
+    try {
+      if (!product) {
+        toast.error('Product not found');
+        return;
+      }
+      const method = isFavorite ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/boutique/favorites?productId=${product.id}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!res.ok) throw new Error('Failed to update favorite');
+      setIsFavorite(!isFavorite);
+      toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update favorite');
+    }
   };
+
+  const toggleFeatured = async () => {
+    if (!session?.user?.id) {
+      router.push('/auth/signin');
+      return;
+    }
+    if (!product || session.user.id !== product.seller.id) {
+      toast.error('Only the seller can feature this product');
+      return;
+    }
+
+    setFeaturingProduct(true);
+    try {
+      if (isFeatured) {
+        // DELETE - pass productId as query param
+        const response = await fetch(`/api/seller/featured-boutique-products?productId=${product.id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          setIsFeatured(false);
+          toast.success('Removed from featured');
+        } else {
+          const error = await response.json();
+          toast.error(error.error || 'Failed to remove from featured');
+        }
+      } else {
+        // POST - pass productId in body
+        const response = await fetch('/api/seller/featured-boutique-products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id }),
+        });
+
+        if (response.ok) {
+          setIsFeatured(true);
+          toast.success('Added to featured items!');
+        } else {
+          const error = await response.json();
+          toast.error(error.error || 'Failed to add to featured');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle featured:', error);
+      toast.error('Failed to update featured status');
+    } finally {
+      setFeaturingProduct(false);
+    }
+  };
+
+  const submitReview = async () => {
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!reviewRating || !reviewComment.trim()) {
+      toast.error('Please provide a rating and comment');
+      return;
+    }
+
+    try {
+      setSubmitReviewLoading(true);
+      const method = userReview ? 'PATCH' : 'POST';
+      const url = userReview 
+        ? `/api/boutique/reviews/${userReview.id}`
+        : '/api/boutique/reviews';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product!.id,
+          rating: reviewRating,
+          title: reviewTitle.trim(),
+          comment: reviewComment.trim(),
+          fitRating: reviewFit || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to submit review');
+        return;
+      }
+
+      toast.success(userReview ? 'Review updated successfully!' : 'Review submitted successfully!');
+      setUserReview(data);
+      setShowReviewForm(false);
+      setEditingReview(false);
+      
+      // Refresh product data
+      fetchProduct();
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      toast.error('Failed to submit review');
+    } finally {
+      setSubmitReviewLoading(false);
+    }
+  };
+
+  const deleteReview = async () => {
+    if (!userReview) return;
+
+    try {
+      setSubmitReviewLoading(true);
+      const response = await fetch(`/api/boutique/reviews/${userReview.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to delete review');
+        return;
+      }
+
+      toast.success('Review deleted successfully');
+      setUserReview(null);
+      setDeleteConfirm(false);
+      setReviewRating(5);
+      setReviewTitle('');
+      setReviewComment('');
+      setReviewFit('');
+      
+      // Refresh product data
+      fetchProduct();
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      toast.error('Failed to delete review');
+    } finally {
+      setSubmitReviewLoading(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -484,6 +675,20 @@ export default function ProductDetailPage() {
               >
                 <Heart className={`w-5 h-5 sm:w-6 sm:h-6 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-black'}`} />
               </button>
+              {/* Feature Button - Only show for seller */}
+              {session?.user?.id === product?.seller.id && (
+                <button
+                  onClick={toggleFeatured}
+                  disabled={featuringProduct}
+                  className={`p-2 sm:p-3 border rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 ${
+                    isFeatured ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'
+                  }`}
+                  aria-label={isFeatured ? 'Remove from featured' : 'Add to featured'}
+                  title={isFeatured ? 'Remove from featured items' : 'Add to featured items'}
+                >
+                  <Star className={`w-5 h-5 sm:w-6 sm:h-6 ${isFeatured ? 'text-yellow-500 fill-yellow-500' : 'text-black'}`} />
+                </button>
+              )}
               <button className="p-2 sm:p-3 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50" aria-label="Share product">
                 <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
               </button>
@@ -508,7 +713,7 @@ export default function ProductDetailPage() {
             {/* Description */}
             <div className="border-t pt-4 sm:pt-6">
               <h3 className="font-semibold text-black mb-2 sm:mb-3 text-[11px] sm:text-base">Description</h3>
-              <p className="text-black whitespace-pre-line text-[9px] sm:text-base">{product.description}</p>
+              <p className="text-black whitespace-pre-line text-[9px] sm:text-base break-words overflow-hidden w-full">{product.description}</p>
 
               {/* Details */}
               <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-3 sm:mt-4">
@@ -561,9 +766,180 @@ export default function ProductDetailPage() {
 
         {/* Reviews Section */}
         <div id="reviews" className="mt-8 sm:mt-12 pt-4 sm:pt-8 border-t">
-          <h2 className="text-lg sm:text-2xl font-bold text-black mb-4 sm:mb-6">
-            Customer Reviews ({product.reviewCount})
-          </h2>
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-2xl font-bold text-black">
+              Customer Reviews ({product.reviewCount})
+            </h2>
+            {session ? (
+              !userReview ? (
+                <button
+                  onClick={() => {
+                    setShowReviewForm(!showReviewForm);
+                    setEditingReview(false);
+                  }}
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white text-xs sm:text-sm rounded-lg hover:bg-purple-700 font-medium"
+                >
+                  {showReviewForm ? 'Cancel' : 'Write a Review'}
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingReview(!editingReview);
+                      setShowReviewForm(!showReviewForm);
+                    }}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(true)}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )
+            ) : (
+              <Link
+                href="/auth/signin"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white text-xs sm:text-sm rounded-lg hover:bg-purple-700 font-medium"
+              >
+                Sign In to Review
+              </Link>
+            )}
+          </div>
+
+          {/* Delete Confirmation */}
+          {deleteConfirm && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg max-w-sm w-full p-6">
+                <h3 className="text-lg font-bold text-black mb-3">Delete Review?</h3>
+                <p className="text-gray-700 text-sm mb-6">
+                  Are you sure you want to delete your review? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteConfirm(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-black font-medium rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteReview}
+                    disabled={submitReviewLoading}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {submitReviewLoading ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Review Form */}
+          {showReviewForm && session && (
+            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl border border-purple-200 mb-6 sm:mb-8">
+              <h3 className="font-semibold text-black text-sm sm:text-base mb-3 sm:mb-4">
+                {editingReview ? 'Edit Your Review' : 'Share Your Experience'}
+              </h3>
+              
+              <div className="space-y-3 sm:space-y-4">
+                {/* Rating */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-black mb-2">Rating</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        onClick={() => setReviewRating(i)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star
+                          className={`w-6 h-6 sm:w-8 sm:h-8 ${
+                            i <= reviewRating
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label htmlFor="reviewTitle" className="block text-xs sm:text-sm font-medium text-black mb-1">
+                    Review Title (Optional)
+                  </label>
+                  <input
+                    id="reviewTitle"
+                    type="text"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    placeholder="e.g., Excellent quality and fit!"
+                    maxLength={100}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                {/* Comment */}
+                <div>
+                  <label htmlFor="reviewComment" className="block text-xs sm:text-sm font-medium text-black mb-1">
+                    Your Review <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="reviewComment"
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share details about the product quality, fit, delivery, and more..."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{reviewComment.length}/500 characters</p>
+                </div>
+
+                {/* Fit Feedback */}
+                <div>
+                  <label htmlFor="reviewFit" className="block text-xs sm:text-sm font-medium text-black mb-1">
+                    How does it fit?
+                  </label>
+                  <select
+                    id="reviewFit"
+                    value={reviewFit}
+                    onChange={(e) => setReviewFit(e.target.value as 'RUNS_SMALL' | 'TRUE_TO_SIZE' | 'RUNS_LARGE' | '')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select fit (optional)</option>
+                    <option value="RUNS_SMALL">Runs Small</option>
+                    <option value="TRUE_TO_SIZE">True to Size</option>
+                    <option value="RUNS_LARGE">Runs Large</option>
+                  </select>
+                </div>
+
+                {/* Submit */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={submitReview}
+                    disabled={submitReviewLoading || !reviewComment.trim()}
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitReviewLoading ? (editingReview ? 'Updating...' : 'Submitting...') : (editingReview ? 'Update Review' : 'Submit Review')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowReviewForm(false);
+                      setEditingReview(false);
+                    }}
+                    className="px-4 py-2 border border-gray-300 text-black text-sm font-medium rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {product.reviews.length > 0 ? (
             <div className="space-y-4 sm:space-y-6">

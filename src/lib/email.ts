@@ -1687,6 +1687,74 @@ export async function sendWarehouseProductDelistedNotification(
   });
 }
 
+interface WarehouseReturnApprovedData {
+  sellerName: string;
+  sellerEmail: string;
+  productTitle: string;
+  productId: string;
+  daysInWarehouse?: number;
+  adminFee?: number;
+  itemsReturning?: number;
+}
+
+export async function sendWarehouseReturnApprovedNotification(
+  data: WarehouseReturnApprovedData
+): Promise<boolean> {
+  const dashboardUrl = `${BASE_URL}/seller/boutique`;
+
+  return sendEmail({
+    to: data.sellerEmail,
+    subject: `Product Returned from Warehouse: ${data.productTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #4B5563; margin-top: 0;">Product Returned from Warehouse</h2>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${data.sellerName}</strong>,
+          </p>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            Your product <strong>"${data.productTitle}"</strong> has been successfully returned from the warehouse and the warehouse lock has been released.
+          </p>
+          
+          <div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; color: #047857; font-weight: bold;">What This Means:</p>
+            <p style="color: #047857; margin: 8px 0 0 0;">
+              • The -1 inventory lock variant has been deleted<br>
+              • Warehouse metadata has been cleared<br>
+              • Your product is now independent of the warehouse system<br>
+              • You can manage this product normally
+            </p>
+          </div>
+          
+          <p style="color: #555; font-size: 15px; line-height: 1.6;">
+            <strong>Product Details:</strong><br>
+            • Product: <strong>${data.productTitle}</strong><br>
+            • Product ID: <strong>${data.productId}</strong><br>
+            • Status: <strong style="color: #10B981;">RETURNED</strong>
+          </p>
+          
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+              View Your Products
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            If you need to send this product to the warehouse again, you can do so through your dashboard. 
+            Thank you for using ${APP_NAME}!
+          </p>
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+            This is an automated notification from ${APP_NAME}
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 interface WarehouseRepostApprovedData {
   sellerName: string;
   sellerEmail: string;

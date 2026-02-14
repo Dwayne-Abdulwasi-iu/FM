@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { sendEmail } from '@/lib/email'
 
 /**
  * POST /api/auth/reset-password
@@ -91,8 +92,27 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // TODO: Send confirmation email
-    // await sendPasswordChangedEmail(user.email)
+    // Send confirmation email
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com'
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Changed Successfully',
+      html: `
+        <h2>Password Reset Confirmation</h2>
+        <p>Hello ${user.name || 'User'},</p>
+        <p>Your password has been successfully reset.</p>
+        
+        <p>If you did not request this change, please contact our support team immediately.</p>
+        
+        <p>
+          <a href="${baseUrl}/auth/signin" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            Sign In
+          </a>
+        </p>
+        
+        <p>Thank you for keeping your account secure.</p>
+      `,
+    })
 
     return NextResponse.json({
       message: 'Password reset successfully. You can now sign in with your new password.'

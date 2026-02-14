@@ -11,12 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all products for this seller that have been received by admin
+    // Get all ADMIN_STOCK products that have been received by admin (regardless of status)
     const products = await prisma.boutiqueProduct.findMany({
       where: {
         sellerId: session.user.id,
         fulfillmentMethod: 'ADMIN_STOCK',
-        receivedByAdminAt: { not: null },
+        receivedByAdminAt: { not: null }, // Must have been received by admin
       },
       select: {
         id: true,
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         thumbnailUrl: true,
         receivedByAdminAt: true,
         currentStock: true,
+        status: true,
       },
       orderBy: { receivedByAdminAt: 'desc' },
     })
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
         currentStock: product.currentStock || 0,
         thumbnailUrl: product.thumbnailUrl,
         receivedByAdminAt: product.receivedByAdminAt,
+        status: product.status,
         daysInWarehouse,
         inMonth5,
         canRepost: repostCheck.can,

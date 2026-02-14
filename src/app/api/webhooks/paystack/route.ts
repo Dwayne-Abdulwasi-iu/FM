@@ -21,6 +21,10 @@ type PaystackOrderItem = {
   podProductId?: string
   podVariantId?: string
   podProductName?: string
+  // Promotion tracking
+  promotionId?: string | null
+  promotionType?: string | null
+  discountAmount?: number
 }
 
 export async function POST(request: NextRequest) {
@@ -197,7 +201,11 @@ export async function POST(request: NextRequest) {
                 designId: item.designId,
                 quantity: item.quantity,
                 price: item.price,
-                purchaseType: item.purchaseType || 'REGULAR'
+                purchaseType: item.purchaseType || 'REGULAR',
+                // Store promotion data for tracking
+                promotionId: item.promotionId || null,
+                promotionType: item.promotionType || null,
+                discountAmount: item.discountAmount || 0,
               }))
             }
           },
@@ -233,6 +241,22 @@ export async function POST(request: NextRequest) {
           }
         }
       })
+
+      // Increment promotion usage if any were applied
+      const promotionIds = order.items
+        .filter(item => item.promotionId)
+        .map(item => item.promotionId as string)
+      
+      if (promotionIds.length > 0) {
+        const uniquePromotionIds = [...new Set(promotionIds)]
+        for (const promotionId of uniquePromotionIds) {
+          await prisma.promotion.update({
+            where: { id: promotionId },
+            data: { usageCount: { increment: 1 } }
+          }).catch(err => console.error(`[Paystack] Failed to increment promotion ${promotionId}:`, err))
+        }
+        console.log(`[Paystack] Incremented usage for ${uniquePromotionIds.length} promotions`)
+      }
 
       // Create seller earnings, purchase records, and handle ownership for each item
       for (const item of order.items) {

@@ -102,14 +102,61 @@ export async function initiateBoutiqueRefund(
           });
 
           // Update order
-          await prisma.boutiqueOrder.update({
+          const refundedOrder = await prisma.boutiqueOrder.update({
             where: { id: orderId },
             data: {
               refundStatus: 'REFUNDED',
               refundedAt: new Date(),
               refundAmount: order.total,
             },
+            include: { items: true },
           });
+          
+          // Restore inventory for refunded order
+          for (const item of refundedOrder.items) {
+            if (item.variantId) {
+              await prisma.boutiqueProductVariant.update({
+                where: { id: item.variantId },
+                data: { quantity: { increment: item.quantity } },
+              });
+            }
+          }
+          
+          // Check if products should be restored to LIVE
+          const productIds = new Set(
+            refundedOrder.items.filter(i => i.productId).map(i => i.productId)
+          );
+          
+          for (const productId of productIds) {
+            const variants = await prisma.boutiqueProductVariant.findMany({
+              where: { productId },
+              select: { quantity: true },
+            });
+            const totalStock = variants.reduce((sum, v) => sum + v.quantity, 0);
+            
+            const product = await prisma.boutiqueProduct.findUnique({
+              where: { id: productId },
+              select: { status: true },
+            });
+            
+            // If product is OUT_OF_STOCK and now has stock, restore to LIVE
+            if (product?.status === 'OUT_OF_STOCK' && totalStock > 0) {
+              await prisma.boutiqueProduct.update({
+                where: { id: productId },
+                data: { 
+                  status: 'LIVE',
+                  currentStock: totalStock,
+                },
+              });
+              console.log(`[Refund] Product ${productId} restored to LIVE status (stock: ${totalStock})`);
+            } else {
+              // Sync currentStock field
+              await prisma.boutiqueProduct.update({
+                where: { id: productId },
+                data: { currentStock: totalStock },
+              });
+            }
+          }
 
           return {
             success: true,

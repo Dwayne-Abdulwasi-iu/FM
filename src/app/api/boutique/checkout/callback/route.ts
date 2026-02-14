@@ -204,12 +204,103 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Commit inventory (move from reserved)
+      // Commit inventory (move from reserved) and check for OUT_OF_STOCK
+      const productsToCheck = new Set<string>();
+      
       for (const item of order.items) {
         if (item.variantId) {
           await prisma.boutiqueProductVariant.update({
             where: { id: item.variantId },
             data: { reserved: { decrement: item.quantity } },
+          });
+        }
+        if (item.productId) {
+          productsToCheck.add(item.productId);
+        }
+      }
+
+      // Track sold-out variants and products
+      for (const item of order.items) {
+        // Track when variant sells out
+        if (item.variantId) {
+          const variant = await prisma.boutiqueProductVariant.findUnique({
+            where: { id: item.variantId },
+            select: { quantity: true, soldOutAt: true },
+          });
+          
+          if (variant && variant.quantity === 0 && !variant.soldOutAt) {
+            await prisma.boutiqueProductVariant.update({
+              where: { id: item.variantId },
+              data: { soldOutAt: new Date() },
+            });
+            console.log(`[Boutique Callback] Variant ${item.variantId} sold out`);
+          }
+        }
+      }
+
+      // Check all affected products for OUT_OF_STOCK status
+      for (const productId of productsToCheck) {
+        const product = await prisma.boutiqueProduct.findUnique({
+          where: { id: productId },
+          select: { originalQuantity: true, outOfStockAt: true, warehouseReceivedAt: true },
+        });
+        
+        const variants = await prisma.boutiqueProductVariant.findMany({
+          where: { productId },
+          select: { quantity: true, reserved: true },
+        });
+        
+        // Calculate truly available stock (accounting for reserved items)
+        const totalAvailable = variants.reduce((sum, v) => sum + (v.quantity - v.reserved), 0);
+        
+        if (totalAvailable === 0) {
+          // Track original quantity if not already set
+          const originalQty = product?.originalQuantity || 0;
+          
+          // Mark as out of stock
+          await prisma.boutiqueProduct.update({
+            where: { id: productId },
+            data: { 
+              status: 'OUT_OF_STOCK',
+              currentStock: 0,
+              outOfStockAt: product?.outOfStockAt || new Date(),
+            },
+          });
+
+          // If product was in warehouse, release the -1 variant lock
+          if (product?.warehouseReceivedAt) {
+            const minusOneVariant = await prisma.boutiqueProductVariant.findFirst({
+              where: {
+                productId,
+                quantity: -1
+              }
+            })
+
+            if (minusOneVariant) {
+              await prisma.boutiqueProductVariant.delete({
+                where: { id: minusOneVariant.id }
+              })
+
+              // Clear warehouse metadata
+              await prisma.boutiqueProduct.update({
+                where: { id: productId },
+                data: {
+                  warehouseReceivedAt: null,
+                  warehouseExpiresAt: null,
+                  warehouseLocation: null,
+                  month5NotificationSent: false,
+                  shipmentId: null,
+                }
+              })
+            }
+          }
+
+          console.log(`[Boutique Callback] Product ${productId} marked as OUT_OF_STOCK (stock reached 0)`);
+        } else {
+          // Sync currentStock field (only truly available, not reserved)
+          await prisma.boutiqueProduct.update({
+            where: { id: productId },
+            data: { currentStock: totalAvailable },
           });
         }
       }
@@ -317,12 +408,44 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Commit inventory
+        // Commit inventory and check for OUT_OF_STOCK
+        const productsToCheck = new Set<string>();
+        
         for (const item of order.items) {
           if (item.variantId) {
             await prisma.boutiqueProductVariant.update({
               where: { id: item.variantId },
               data: { reserved: { decrement: item.quantity } },
+            });
+          }
+          if (item.productId) {
+            productsToCheck.add(item.productId);
+          }
+        }
+
+        // Check all affected products for OUT_OF_STOCK status
+        for (const productId of productsToCheck) {
+          const variants = await prisma.boutiqueProductVariant.findMany({
+            where: { productId },
+            select: { quantity: true },
+          });
+          
+          const totalStock = variants.reduce((sum, v) => sum + v.quantity, 0);
+          
+          if (totalStock === 0) {
+            await prisma.boutiqueProduct.update({
+              where: { id: productId },
+              data: { 
+                status: 'OUT_OF_STOCK',
+                currentStock: 0,
+              },
+            });
+            console.log(`[Boutique Callback] Product ${productId} marked as OUT_OF_STOCK (stock reached 0)`);
+          } else {
+            // Sync currentStock field
+            await prisma.boutiqueProduct.update({
+              where: { id: productId },
+              data: { currentStock: totalStock },
             });
           }
         }

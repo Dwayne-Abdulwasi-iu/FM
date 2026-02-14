@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
+import { sendEmail } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -122,8 +123,75 @@ export async function POST(
       },
     });
 
-    // TODO: Send notification to admin about incoming shipment
-    // TODO: Send confirmation email to seller
+    // Send notifications via email service
+
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com';
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    // Send confirmation email to seller
+    if (session.user.email) {
+      const sellerEmailHtml = `
+        <h2>Shipment Confirmed</h2>
+        <p>Hello ${session.user.name || 'Seller'},</p>
+        <p>Your shipment for <strong>${product.title}</strong> has been recorded in our system.</p>
+        
+        <h3>Shipment Information</h3>
+        <ul>
+          <li><strong>Product:</strong> ${product.title}</li>
+          <li><strong>Shipment ID:</strong> ${shipment.id}</li>
+          <li><strong>Status:</strong> In Transit to Warehouse</li>
+          <li><strong>Expected Arrival:</strong> Within 7 days</li>
+        </ul>
+        
+        <p><strong>Important:</strong> Please ensure your package arrives at our warehouse within 7 days. After this period, the product may be cancelled.</p>
+        
+        <p>Our warehouse team will notify you once they receive and inspect your shipment.</p>
+        
+        <p>
+          <a href="${baseUrl}/seller/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            Track Shipment
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: session.user.email,
+        subject: `Shipment Confirmed: ${product.title}`,
+        html: sellerEmailHtml,
+      });
+    }
+
+    // Notify admin about incoming shipment
+    if (adminEmail) {
+      const adminEmailHtml = `
+        <h2>Incoming Shipment to Warehouse</h2>
+        <p>A seller's shipment has been recorded and is expected to arrive at the warehouse.</p>
+        
+        <h3>Shipment Details</h3>
+        <ul>
+          <li><strong>Shipment ID:</strong> ${shipment.id}</li>
+          <li><strong>Product ID:</strong> ${id}</li>
+          <li><strong>Product:</strong> ${product.title}</li>
+          <li><strong>Seller:</strong> ${session.user.name || 'Unknown'}</li>
+          <li><strong>Seller Email:</strong> ${session.user.email || 'N/A'}</li>
+          <li><strong>Expected Arrival:</strong> Within 7 days from ${new Date().toLocaleDateString()}</li>
+        </ul>
+        
+        <p>Once this shipment arrives, it will need to be received and verified in the warehouse system.</p>
+        
+        <p>
+          <a href="${baseUrl}/admin/boutique/shipments?shipmentId=${shipment.id}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            View Shipment
+          </a>
+        </p>
+      `;
+
+      await sendEmail({
+        to: adminEmail,
+        subject: `Incoming Shipment: ${product.title}`,
+        html: adminEmailHtml,
+      });
+    }
 
     return NextResponse.json({
       success: true,

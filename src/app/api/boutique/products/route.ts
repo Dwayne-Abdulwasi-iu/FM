@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
+    // Build where clause - only show LIVE products (not in any return workflow)
     const where: Record<string, unknown> = {
-      status: PRODUCT_STATUS.LIVE,
+      status: 'LIVE', // Product status must be exactly LIVE
     };
 
     if (category) {
@@ -124,14 +124,113 @@ export async function GET(request: NextRequest) {
       prisma.boutiqueProduct.count({ where }),
     ]);
 
+    // Filter out products with no stock - fetch ALL variants and check total quantity
+    const productsWithStock = await Promise.all(
+      products.map(async (product) => {
+        const allVariants = await prisma.boutiqueProductVariant.findMany({
+          where: { 
+            productId: product.id,
+            isActive: true,
+          },
+          select: { quantity: true },
+        });
+        const totalStock = allVariants.reduce((sum, v) => sum + v.quantity, 0);
+        return { product, totalStock };
+      })
+    );
+
+    const filteredProducts = productsWithStock
+      .filter(({ totalStock }) => {
+        return totalStock > 0;
+      })
+      .map(({ product }) => product);
+
+    // Add promotion data to products
+    const now = new Date();
+    const productsWithPromotions = await Promise.all(
+      filteredProducts.map(async (product) => {
+        // Get active promotions for this product
+        const promotions = await prisma.promotion.findMany({
+          where: {
+            sellerId: product.sellerId,
+            isActive: true,
+            startDate: { lte: now },
+            endDate: { gte: now },
+            productIds: { hasSome: [product.id] },
+            OR: [
+              { maxUsage: null },
+              { maxUsage: { gt: 0 } }
+            ]
+          },
+          select: { id: true, type: true, discountType: true, discountValue: true, bundlePrice: true, usageCount: true, maxUsage: true }
+        });
+
+        // Calculate best discount
+        let promotionPrice = product.basePrice;
+        let promotionType = null;
+        let promotionId = null;
+        let discountAmount = 0;
+
+        if (promotions.length > 0) {
+          let bestDiscount = 0;
+          for (const promo of promotions) {
+            if (promo.maxUsage !== null && promo.usageCount >= promo.maxUsage) continue;
+            
+            let currentDiscount = 0;
+            let currentPrice = product.basePrice;
+            if (promo.type === 'BUNDLE') {
+              currentDiscount = product.basePrice - (promo.bundlePrice || product.basePrice);
+              currentPrice = promo.bundlePrice || product.basePrice;
+            } else if (promo.discountValue) {
+              // DISCOUNT/FLASH_SALE logic
+              if (promo.discountType === 'PERCENTAGE') {
+                currentDiscount = (product.basePrice * promo.discountValue) / 100;
+                currentPrice = product.basePrice - currentDiscount;
+              } else if (promo.discountType === 'FIXED') {
+                currentDiscount = promo.discountValue;
+                currentPrice = Math.max(0, product.basePrice - currentDiscount);
+              }
+            }
+
+            if (currentDiscount > bestDiscount) {
+              bestDiscount = currentDiscount;
+              promotionPrice = currentPrice;
+              promotionType = promo.type;
+              promotionId = promo.id;
+              discountAmount = currentDiscount;
+            }
+          }
+        }
+
+        return {
+          id: product.id,
+          slug: product.slug,
+          title: product.title,
+          basePrice: product.basePrice,
+          salePrice: product.salePrice,
+          promotionPrice: promotionType ? promotionPrice : undefined,
+          promotionType,
+          promotionId,
+          discountAmount: discountAmount > 0 ? discountAmount : undefined,
+          imageUrl: product.thumbnailUrl,
+          category: product.category,
+          seller: product.seller,
+          averageRating: product.avgRating,
+          _count: product._count,
+          media: product.media,
+          variants: product.variants,
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      products,
+      products: productsWithPromotions,
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: filteredProducts.length,
+        totalPages: Math.ceil(filteredProducts.length / limit),
       },
     });
   } catch (error) {
@@ -195,6 +294,56 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'Title, description, category, and price are required' },
         { status: 400 }
       );
+    }
+
+    // Validate title length
+    if (title.trim().length < 5 || title.trim().length > 200) {
+      return NextResponse.json(
+        { success: false, message: 'Title must be between 5 and 200 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Validate description length
+    if (description.trim().length < 20 || description.trim().length > 5000) {
+      return NextResponse.json(
+        { success: false, message: 'Description must be between 20 and 5000 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Validate prices
+    const parsedBasePrice = parseFloat(basePrice);
+    const parsedSalePrice = salePrice ? parseFloat(salePrice) : null;
+
+    if (isNaN(parsedBasePrice) || parsedBasePrice <= 0) {
+      return NextResponse.json(
+        { success: false, message: 'Base price must be a positive number' },
+        { status: 400 }
+      );
+    }
+
+    if (parsedBasePrice > 1000000) {
+      return NextResponse.json(
+        { success: false, message: 'Base price cannot exceed 1,000,000' },
+        { status: 400 }
+      );
+    }
+
+    if (parsedSalePrice !== null) {
+      if (isNaN(parsedSalePrice) || parsedSalePrice <= 0) {
+        return NextResponse.json(
+          { success: false, message: 'Sale price must be a positive number' },
+          { status: 400 }
+        );
+      }
+
+      if (parsedSalePrice >= parsedBasePrice) {
+        return NextResponse.json(
+          { success: false, message: 'Sale price must be lower than base price' },
+          { status: 400 }
+        );
+      }
     }
 
     // Get seller info for tier check
@@ -272,7 +421,12 @@ export async function POST(request: NextRequest) {
       slug = `${baseSlug}-${suffix}`;
     }
 
-    // Create the product
+    // Calculate initial stock from variants
+    const initialStock = variants && variants.length > 0
+      ? variants.reduce((sum: number, v: { quantity?: number }) => sum + (v.quantity || 1), 0)
+      : 0;
+
+    // Create the product with variants in one transaction
     const product = await prisma.boutiqueProduct.create({
       data: {
         title,
@@ -282,6 +436,9 @@ export async function POST(request: NextRequest) {
         subcategory,
         basePrice: parseFloat(basePrice),
         salePrice: salePrice ? parseFloat(salePrice) : null,
+        submittedPrice: parseFloat(basePrice),
+        submittedCurrency: 'NGN',
+        submittedSalePrice: salePrice ? parseFloat(salePrice) : null,
         brand,
         material,
         careInstructions,
@@ -294,30 +451,30 @@ export async function POST(request: NextRequest) {
         dimensions: dimensions || null,
         sellerId: session.user.id,
         status: isDraft ? PRODUCT_STATUS.DRAFT : PRODUCT_STATUS.DRAFT,
+        // Initialize currentStock to sum of variant quantities
+        currentStock: initialStock,
+        // Track original quantity when first created
+        originalQuantity: initialStock,
         // Fulfillment method fields
         fulfillmentMethod: validatedFulfillmentMethod,
         shipsFrom: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? 'SELLER_LOCATION' : 'ADMIN_WAREHOUSE',
         sellerShippingLocations: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingLocations : [],
         sellerShippingTime: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingTime : null,
         sellerReturnPolicy: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerReturnPolicy : null,
-        // All new products start as draft until submitted
+        // Create variants at the same time
+        variants: variants && variants.length > 0 ? {
+          create: variants.map((v: { size?: string; color?: string; colorHex?: string; priceAdjustment?: number; quantity?: number; sku?: string }) => ({
+            size: v.size,
+            color: v.color,
+            colorHex: v.colorHex,
+            priceAdjustment: v.priceAdjustment || 0,
+            quantity: v.quantity || 1,
+            sku: v.sku,
+          }))
+        } : undefined,
       },
+      include: { variants: true },
     });
-
-    // Create variants if provided
-    if (variants && variants.length > 0) {
-      await prisma.boutiqueProductVariant.createMany({
-        data: variants.map((v: { size?: string; color?: string; colorHex?: string; priceAdjustment?: number; quantity?: number; sku?: string }, _index: number) => ({
-          productId: product.id,
-          size: v.size,
-          color: v.color,
-          colorHex: v.colorHex,
-          priceAdjustment: v.priceAdjustment || 0,
-          quantity: v.quantity || 1,
-          sku: v.sku,
-        })),
-      });
-    }
 
     // Fetch the complete product with relations
     const completeProduct = await prisma.boutiqueProduct.findUnique({

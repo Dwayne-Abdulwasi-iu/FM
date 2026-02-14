@@ -176,51 +176,52 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-3 sm:py-6">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-start sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-5">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition flex-shrink-0"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Bell className="w-6 h-6" />
-              Notifications
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="truncate">Notifications</span>
             </h1>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-500">{unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{unreadCount} unread</p>
             )}
           </div>
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+              className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition flex-shrink-0 whitespace-nowrap"
             >
-              <CheckCheck className="w-4 h-4" />
-              Mark all read
+              <CheckCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Mark all read</span>
+              <span className="sm:hidden">Mark all</span>
             </button>
           )}
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 mb-3 sm:mb-5">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             {/* Read/Unread Filter */}
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-3.5 h-3.5 text-gray-400" />
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as 'all' | 'unread')}
-                className="text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-xs sm:text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                 aria-label="Filter by read status"
               >
-                <option value="all">All notifications</option>
-                <option value="unread">Unread only</option>
+                <option value="all">All</option>
+                <option value="unread">Unread</option>
               </select>
             </div>
 
@@ -229,7 +230,7 @@ export default function NotificationsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-xs sm:text-sm text-gray-900 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                 aria-label="Filter by notification type"
               >
                 <option value="">All types</option>
@@ -246,12 +247,12 @@ export default function NotificationsPage() {
         {/* Notifications List */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {filteredNotifications.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-8 h-8 text-gray-400" />
+            <div className="p-6 sm:p-12 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-2 sm:mb-4">
+                <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No notifications</h3>
-              <p className="text-gray-500">
+              <h3 className="text-sm sm:text-lg font-medium text-gray-900 mb-0.5 sm:mb-1">No notifications</h3>
+              <p className="text-xs sm:text-sm text-gray-500">
                 {filter === 'unread' ? "You're all caught up!" : "You don't have any notifications yet."}
               </p>
             </div>
@@ -263,35 +264,31 @@ export default function NotificationsPage() {
                 const link = getNotificationLink(notification);
                 
                 const content = (
-                  <div className={`flex items-start gap-4 p-4 hover:bg-gray-50 transition ${
-                    !notification.isRead ? 'bg-indigo-50/30' : ''
+                  <div className={`flex items-start gap-2 sm:gap-4 p-2.5 sm:p-4 hover:bg-gray-50 transition ${
+                    !notification.isRead ? 'bg-indigo-50/40' : ''
                   }`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                      <IconComponent className="w-5 h-5" />
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                      <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm ${!notification.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                      <div className="flex items-start justify-between gap-1 sm:gap-2">
+                        <p className={`text-xs sm:text-sm ${!notification.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
                           {notification.title}
                         </p>
                         {!notification.isRead && (
-                          <span className="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-2" />
+                          <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full flex-shrink-0 mt-1.5" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 line-clamp-2">
                         {notification.message}
                       </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <p className="text-xs text-gray-400">
-                          {formatTime(notification.createdAt)}
-                        </p>
-                        <span className="text-xs text-gray-300">•</span>
-                        <span className="text-xs text-gray-400">
-                          {TYPE_LABELS[notification.type] || notification.type}
-                        </span>
+                      <div className="flex items-center gap-2 mt-1 sm:mt-2 text-[10px] sm:text-xs text-gray-400">
+                        <span>{formatTime(notification.createdAt)}</span>
+                        <span>•</span>
+                        <span>{TYPE_LABELS[notification.type] || notification.type}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                       {!notification.isRead && (
                         <button
                           onClick={(e) => {
@@ -299,10 +296,10 @@ export default function NotificationsPage() {
                             e.stopPropagation();
                             markAsRead(notification.id);
                           }}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition"
+                          className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition"
                           title="Mark as read"
                         >
-                          <Check className="w-4 h-4 text-gray-400" />
+                          <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
                         </button>
                       )}
                       <button
@@ -311,10 +308,10 @@ export default function NotificationsPage() {
                           e.stopPropagation();
                           deleteNotification(notification.id);
                         }}
-                        className="p-2 hover:bg-red-50 rounded-lg transition"
+                        className="p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition"
                         title="Delete notification"
                       >
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500" />
                       </button>
                     </div>
                   </div>
@@ -340,16 +337,16 @@ export default function NotificationsPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="mt-6 flex justify-center gap-4">
+        <div className="mt-3 sm:mt-6 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-center">
           <Link
             href="/my-commissions"
-            className="text-sm text-indigo-600 hover:text-indigo-800"
+            className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 transition"
           >
             View My Commissions →
           </Link>
           <Link
             href="/seller/commission-requests"
-            className="text-sm text-indigo-600 hover:text-indigo-800"
+            className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 transition"
           >
             View Commission Requests →
           </Link>

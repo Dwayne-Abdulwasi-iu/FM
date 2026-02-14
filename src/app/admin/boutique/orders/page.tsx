@@ -27,8 +27,8 @@ interface BoutiqueOrder {
   id: string
   orderNumber: string
   status: string
-  totalAmount: number
-  shippingFee: number
+  total: number
+  shippingCost: number
   shippingAddress: any
   paymentReference: string
   createdAt: string
@@ -43,18 +43,24 @@ interface BoutiqueOrder {
 
 const ORDER_STATUSES = [
   { value: '', label: 'All Statuses' },
-  { value: 'PENDING', label: 'Pending' },
+  { value: 'PENDING_PAYMENT', label: 'Pending Payment' },
   { value: 'PAID', label: 'Paid' },
   { value: 'PROCESSING', label: 'Processing' },
   { value: 'SHIPPED', label: 'Shipped' },
   { value: 'DELIVERED', label: 'Delivered' },
-  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'RETURN_REQUESTED', label: 'Return Requested' },
+  { value: 'RETURN_APPROVED', label: 'Return Approved' },
+  { value: 'RETURN_SHIPPED', label: 'Return Shipped' },
+  { value: 'RETURN_RECEIVED', label: 'Return Received' },
   { value: 'REFUNDED', label: 'Refunded' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'DISPUTED', label: 'Disputed' },
 ]
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'PENDING':
+    case 'PENDING_PAYMENT':
       return 'bg-yellow-100 text-yellow-800'
     case 'PAID':
       return 'bg-blue-100 text-blue-800'
@@ -64,10 +70,22 @@ function getStatusColor(status: string) {
       return 'bg-indigo-100 text-indigo-800'
     case 'DELIVERED':
       return 'bg-green-100 text-green-800'
-    case 'CANCELLED':
-      return 'bg-red-100 text-red-800'
+    case 'COMPLETED':
+      return 'bg-green-100 text-green-800'
+    case 'RETURN_REQUESTED':
+      return 'bg-amber-100 text-amber-800'
+    case 'RETURN_APPROVED':
+      return 'bg-orange-100 text-orange-800'
+    case 'RETURN_SHIPPED':
+      return 'bg-orange-100 text-orange-800'
+    case 'RETURN_RECEIVED':
+      return 'bg-emerald-100 text-emerald-800'
     case 'REFUNDED':
       return 'bg-gray-100 text-gray-800'
+    case 'CANCELLED':
+      return 'bg-red-100 text-red-800'
+    case 'DISPUTED':
+      return 'bg-red-100 text-red-800'
     default:
       return 'bg-gray-100 text-gray-800'
   }
@@ -75,7 +93,7 @@ function getStatusColor(status: string) {
 
 function getStatusIcon(status: string) {
   switch (status) {
-    case 'PENDING':
+    case 'PENDING_PAYMENT':
       return <Clock className="w-4 h-4" />
     case 'PAID':
       return <CheckCircle className="w-4 h-4" />
@@ -85,8 +103,21 @@ function getStatusIcon(status: string) {
       return <Truck className="w-4 h-4" />
     case 'DELIVERED':
       return <CheckCircle className="w-4 h-4" />
-    case 'CANCELLED':
+    case 'COMPLETED':
+      return <CheckCircle className="w-4 h-4" />
+    case 'RETURN_REQUESTED':
+      return <Clock className="w-4 h-4" />
+    case 'RETURN_APPROVED':
+      return <CheckCircle className="w-4 h-4" />
+    case 'RETURN_SHIPPED':
+      return <Truck className="w-4 h-4" />
+    case 'RETURN_RECEIVED':
+      return <CheckCircle className="w-4 h-4" />
     case 'REFUNDED':
+      return <CheckCircle className="w-4 h-4" />
+    case 'CANCELLED':
+      return <XCircle className="w-4 h-4" />
+    case 'DISPUTED':
       return <XCircle className="w-4 h-4" />
     default:
       return <Clock className="w-4 h-4" />
@@ -319,11 +350,11 @@ export default function AdminBoutiqueOrdersPage() {
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="text-xs sm:text-sm font-medium text-gray-900">
-                          {formatCurrency(order.totalAmount)}
+                          {formatCurrency(order.total)}
                         </div>
-                        {order.shippingFee > 0 && (
+                        {order.shippingCost > 0 && (
                           <div className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">
-                            +{formatCurrency(order.shippingFee)} ship
+                            +{formatCurrency(order.shippingCost)} ship
                           </div>
                         )}
                       </td>

@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import { isMainAdmin } from '@/lib/admin'
 import { checkRateLimit, adminMessageRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
+import { sendEmail } from '@/lib/email'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -231,8 +232,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     })
 
-    // TODO: Send email notification if user has email notifications enabled
-    // This would use the email service to send a notification email
+    // Send email notification if user has email notifications enabled
+    if (user.emailNotifications && user.email) {
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com'
+      const emailHtml = `
+        <h2>New Message from Admin</h2>
+        <p>Hello ${user.name || 'User'},</p>
+        <p>You have received a new message from our admin team.</p>
+        
+        <h3>Message</h3>
+        <p>${content.replace(/\n/g, '<br>')}</p>
+        
+        <p>
+          <a href="${baseUrl}/dashboard/messages" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+            View Message
+          </a>
+        </p>
+        
+        <p>You can manage your notification preferences in your account settings.</p>
+      `;
+
+      await sendEmail({
+        to: user.email,
+        subject: 'New Message from Admin',
+        html: emailHtml,
+      });
+    }
 
     return NextResponse.json({
       success: true,

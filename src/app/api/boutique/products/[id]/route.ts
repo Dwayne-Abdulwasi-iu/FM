@@ -78,6 +78,15 @@ export async function GET(
     const isOwner = session?.user?.id === product.sellerId;
     const isAdmin = session?.user?.role === 'ADMIN';
     const isLive = product.status === PRODUCT_STATUS.LIVE;
+    const isOutOfStock = product.status === 'OUT_OF_STOCK';
+
+    // Don't allow viewing OUT_OF_STOCK products unless owner or admin
+    if (isOutOfStock && !isOwner && !isAdmin) {
+      return NextResponse.json(
+        { success: false, message: 'Product not available' },
+        { status: 404 }
+      );
+    }
 
     if (!isLive && !isOwner && !isAdmin) {
       return NextResponse.json(

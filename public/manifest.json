@@ -26,22 +26,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Explore trending fashion designs"
-    },
-    {
-      "src": "/screenshots/home-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Fashion Marketplace on mobile"
-    }
-  ],
   "categories": ["shopping", "lifestyle", "design"],
   "shortcuts": [
     {

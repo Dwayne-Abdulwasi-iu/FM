@@ -24,6 +24,46 @@ interface Product {
   title: string
   thumbnailUrl: string | null
   basePrice: number
+  variants?: Array<{
+    id: string
+    size: string | null
+    color: string | null
+    colorHex: string | null
+    quantity: number
+    priceAdjustment: number
+    sku: string | null
+  }>
+}
+
+interface VariantDiscrepancy {
+  id: string
+  shipmentId: string
+  variantId: string
+  quantityExpected: number
+  quantityReceived: number | null
+  quantityDamaged: number | null
+  quantityMissing: number | null
+  condition: string | null
+  notes: string | null
+  acceptanceStatus: string
+  unitsAccepted: number | null
+  unitsReturning: number | null
+  createdAt: string
+  updatedAt: string
+  variant: {
+    id: string
+    size: string | null
+    color: string | null
+    colorHex: string | null
+    quantity: number
+    priceAdjustment: number
+    sku: string | null
+    product: {
+      id: string
+      title: string
+      thumbnailUrl: string | null
+    }
+  }
 }
 
 interface Shipment {
@@ -52,6 +92,7 @@ interface Shipment {
   }
   products?: Product[]
   product?: Product
+  variantDiscrepancies?: VariantDiscrepancy[]
 }
 
 function formatCurrency(price: number) {
@@ -96,6 +137,18 @@ export default function ShipmentDetailPage() {
   const [showApproveConfirm, setShowApproveConfirm] = useState(false)
   const [showRejectConfirm, setShowRejectConfirm] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+
+  // Variant discrepancy decision states
+  const [variantDecisions, setVariantDecisions] = useState<Record<string, {
+    status: 'ACCEPTED' | 'RETURNING' | 'PARTIAL' | null
+    unitsAccepted?: number
+    unitsReturning?: number
+    notes?: string
+    rejectionCategory?: string
+    loading?: boolean
+  }>>({})
+  const [showPartialModal, setShowPartialModal] = useState<string | null>(null)
+  const [partialForm, setPartialForm] = useState({ unitsAccepted: 0, unitsReturning: 0, notes: '', rejectionCategory: '' })
 
   useEffect(() => {
     if (status === 'loading') return
@@ -151,6 +204,68 @@ export default function ShipmentDetailPage() {
       setActionLoading(false)
     }
   }
+
+  const handleVariantDecision = async (variantId: string, acceptanceStatus: 'ACCEPTED' | 'RETURNING' | 'PARTIAL') => {
+    const decision = variantDecisions[variantId]
+    if (!decision) return
+
+    setVariantDecisions(prev => ({
+      ...prev,
+      [variantId]: { ...decision, loading: true }
+    }))
+
+    try {
+      const payload: any = { 
+        acceptanceStatus,
+        notes: decision.notes || undefined,
+        rejectionCategory: decision.rejectionCategory || undefined
+      }
+      
+      if (acceptanceStatus === 'PARTIAL') {
+        if (!decision.unitsAccepted || !decision.unitsReturning) {
+          toast.error('Please specify accepted and returning units')
+          setVariantDecisions(prev => ({
+            ...prev,
+            [variantId]: { ...decision, loading: false }
+          }))
+          return
+        }
+        payload.unitsAccepted = decision.unitsAccepted
+        payload.unitsReturning = decision.unitsReturning
+      }
+
+      const res = await fetch(`/api/boutique/admin/shipments/${shipmentId}/variant-discrepancies/${variantId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const result = await res.json()
+      if (res.ok) {
+        toast.success(`Variant marked as ${acceptanceStatus}`)
+        setVariantDecisions(prev => ({
+          ...prev,
+          [variantId]: { status: null, loading: false }
+        }))
+        setShowPartialModal(null)
+        fetchShipment()
+      } else {
+        toast.error(result.message || 'Failed to update variant')
+        setVariantDecisions(prev => ({
+          ...prev,
+          [variantId]: { ...decision, loading: false }
+        }))
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('An error occurred')
+      setVariantDecisions(prev => ({
+        ...prev,
+        [variantId]: { ...decision, loading: false }
+      }))
+    }
+  }
+
 
   if (status === 'loading' || loading) {
     return (
@@ -284,11 +399,292 @@ export default function ShipmentDetailPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-[10px] sm:text-sm font-semibold text-black">{product.title}</h3>
                     <p className="text-[9px] sm:text-xs text-black mt-0.5">{formatCurrency(product.basePrice)}</p>
+                    {(product as any).variants && (product as any).variants.length > 0 && (
+                      <p className="text-[9px] sm:text-xs text-gray-600 mt-1">{(product as any).variants.length} variant(s)</p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Variant Discrepancies */}
+          {shipment.variantDiscrepancies && shipment.variantDiscrepancies.length > 0 && (
+            <div className="mb-4 sm:mb-6 p-2 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-[10px] sm:text-sm text-blue-800 font-medium mb-2 sm:mb-3">Variant-Level Discrepancies</p>
+              <div className="space-y-2">
+                {shipment.variantDiscrepancies.map((discrepancy: any) => (
+                  <div key={discrepancy.id} className="p-2 sm:p-3 bg-white rounded border border-blue-100">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex-1">
+                        <p className="text-[9px] sm:text-xs font-semibold text-black">
+                          {discrepancy.variant.product.title}
+                          {discrepancy.variant.size && ` - Size: ${discrepancy.variant.size}`}
+                          {discrepancy.variant.color && ` - Color: ${discrepancy.variant.color}`}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[8px] sm:text-xs font-medium flex-shrink-0 ${
+                        discrepancy.acceptanceStatus === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                        discrepancy.acceptanceStatus === 'RETURNING' ? 'bg-red-100 text-red-800' :
+                        discrepancy.acceptanceStatus === 'PARTIAL' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {discrepancy.acceptanceStatus}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[9px] sm:text-xs text-black mt-2">
+                      <div>Expected: <span className="font-semibold">{discrepancy.quantityExpected}</span></div>
+                      {discrepancy.quantityReceived !== null && <div>Received: <span className="font-semibold">{discrepancy.quantityReceived}</span></div>}
+                      {discrepancy.quantityDamaged !== null && <div>Damaged: <span className="font-semibold text-red-600">{discrepancy.quantityDamaged}</span></div>}
+                      {discrepancy.quantityMissing !== null && <div>Missing: <span className="font-semibold text-orange-600">{discrepancy.quantityMissing}</span></div>}
+                    </div>
+                    {discrepancy.acceptanceStatus === 'PARTIAL' && (
+                      <div className="grid grid-cols-2 gap-1 text-[9px] sm:text-xs text-black mt-1">
+                        {discrepancy.unitsAccepted !== null && <div>Accepting: <span className="font-semibold text-green-600">{discrepancy.unitsAccepted}</span></div>}
+                        {discrepancy.unitsReturning !== null && <div>Returning: <span className="font-semibold text-red-600">{discrepancy.unitsReturning}</span></div>}
+                      </div>
+                    )}
+                    {discrepancy.notes && (
+                      <p className="text-[9px] sm:text-xs text-gray-600 mt-1 italic">{discrepancy.notes}</p>
+                    )}
+                    
+                    {/* Decision Controls */}
+                    {discrepancy.acceptanceStatus === 'PENDING' && (
+                      <div className="mt-3 pt-3 border-t border-blue-100">
+                        <div className="mb-3">
+                          <label className="text-[8px] sm:text-xs text-black font-medium block mb-1">Decision Notes (optional)</label>
+                          <textarea
+                            value={variantDecisions[discrepancy.id]?.notes || ''}
+                            onChange={(e) => {
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [discrepancy.id]: { 
+                                  ...prev[discrepancy.id], 
+                                  notes: e.target.value 
+                                }
+                              }))
+                            }}
+                            placeholder="e.g., 'Items damaged in transit', 'Quality below standard'"
+                            rows={2}
+                            aria-label="Decision Notes"
+                            className="w-full border border-gray-300 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm"
+                          />
+                          <p className="text-[8px] sm:text-xs text-gray-600 mt-1">Seller will receive this explanation in their notification</p>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="text-[8px] sm:text-xs text-black font-medium block mb-1">Rejection Category (if rejecting)</label>
+                          <select
+                            value={variantDecisions[discrepancy.id]?.rejectionCategory || ''}
+                            onChange={(e) => {
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [discrepancy.id]: { 
+                                  ...prev[discrepancy.id], 
+                                  rejectionCategory: e.target.value
+                                }
+                              }))
+                            }}
+                            className="w-full border border-gray-300 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm"
+                          >
+                            <option value="">Select reason (optional)</option>
+                            <option value="DAMAGED">Damaged/Defective</option>
+                            <option value="QUANTITY_MISMATCH">Quantity Mismatch</option>
+                            <option value="QUALITY">Quality Below Standard</option>
+                            <option value="WRONG_PRODUCT">Wrong Product</option>
+                            <option value="MISSING">Missing Items</option>
+                          </select>
+                        </div>
+
+                        <p className="text-[8px] sm:text-xs text-gray-600 mb-2">Decision:</p>
+                        <div className="flex flex-wrap gap-1 items-center">
+                          <button
+                            onClick={() => {
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [discrepancy.id]: { status: 'ACCEPTED', loading: false }
+                              }))
+                              handleVariantDecision(discrepancy.id, 'ACCEPTED')
+                            }}
+                            disabled={variantDecisions[discrepancy.id]?.loading}
+                            className="px-2 sm:px-3 py-1 text-[8px] sm:text-xs bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded font-medium transition"
+                          >
+                            {variantDecisions[discrepancy.id]?.loading ? 'Processing...' : 'Accept All'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [discrepancy.id]: { status: 'RETURNING', loading: false }
+                              }))
+                              handleVariantDecision(discrepancy.id, 'RETURNING')
+                            }}
+                            disabled={variantDecisions[discrepancy.id]?.loading}
+                            className="px-2 sm:px-3 py-1 text-[8px] sm:text-xs bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded font-medium transition"
+                          >
+                            {variantDecisions[discrepancy.id]?.loading ? 'Processing...' : 'Return All'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowPartialModal(discrepancy.id)
+                              setPartialForm({
+                                unitsAccepted: Math.max(0, discrepancy.quantityReceived || 0),
+                                unitsReturning: 0,
+                                notes: '',
+                                rejectionCategory: ''
+                              })
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [discrepancy.id]: { 
+                                  status: 'PARTIAL',
+                                  unitsAccepted: discrepancy.quantityReceived || 0,
+                                  unitsReturning: 0
+                                }
+                              }))
+                            }}
+                            disabled={variantDecisions[discrepancy.id]?.loading}
+                            className="px-2 sm:px-3 py-1 text-[8px] sm:text-xs bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white rounded font-medium transition"
+                          >
+                            Partial Split
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Edit Decision Button for Decided Variants */}
+                    {discrepancy.acceptanceStatus !== 'PENDING' && (
+                      <div className="mt-3 pt-3 border-t border-blue-100">
+                        <button
+                          onClick={() => {
+                            setVariantDecisions(prev => ({
+                              ...prev,
+                              [discrepancy.id]: { 
+                                status: 'PENDING', 
+                                loading: false,
+                                notes: '' 
+                              }
+                            }))
+                          }}
+                          className="px-2 sm:px-3 py-1 text-[8px] sm:text-xs bg-blue-500 hover:bg-blue-600 text-white rounded font-medium transition"
+                        >
+                          ✎ Edit Decision
+                        </button>
+                        <p className="text-[8px] sm:text-xs text-gray-600 mt-2">Current: <span className="font-semibold">{discrepancy.acceptanceStatus}</span></p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Partial Decision Modal */}
+          {showPartialModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 z-50">
+              <div className="bg-white rounded-lg p-4 sm:p-6 max-w-sm w-full">
+                <h3 className="text-sm sm:text-lg font-bold text-black mb-3 sm:mb-4">Partial Acceptance Decision</h3>
+                
+                {(() => {
+                  const discrepancy = shipment?.variantDiscrepancies?.find((d: any) => d.id === showPartialModal)
+                  const received = discrepancy?.quantityReceived || 0
+                  return (
+                    <div className="space-y-3 sm:space-y-4">
+                      <p className="text-[9px] sm:text-xs text-gray-600">
+                        Total received: <span className="font-semibold text-black">{received} units</span>
+                      </p>
+                      
+                      <div>
+                        <label className="text-[9px] sm:text-xs text-black font-medium block mb-1">Units to Accept</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={received}
+                          value={partialForm.unitsAccepted}
+                          onChange={(e) => {
+                            const val = Math.min(parseInt(e.target.value) || 0, received)
+                            setPartialForm(prev => ({ ...prev, unitsAccepted: val }))
+                            setVariantDecisions(prev => ({
+                              ...prev,
+                              [showPartialModal]: { status: 'PARTIAL', unitsAccepted: val, unitsReturning: received - val }
+                            }))
+                          }}
+                          aria-label="Units to Accept"
+                          className="w-full border border-gray-300 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] sm:text-xs text-black font-medium block mb-1">Units to Return</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={received - partialForm.unitsAccepted}
+                          disabled
+                          aria-label="Units to Return"
+                          className="w-full border border-gray-300 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-gray-50"
+                        />
+                        <p className="text-[8px] sm:text-xs text-gray-600 mt-1">Auto-calculated: {received} - {partialForm.unitsAccepted} = {received - partialForm.unitsAccepted}</p>
+                      </div>
+
+                      {partialForm.unitsAccepted + (received - partialForm.unitsAccepted) !== received && (
+                        <p className="text-[9px] sm:text-xs text-red-600">⚠️ Total must equal {received}</p>
+                      )}
+
+                      <div>
+                        <label className="text-[9px] sm:text-xs text-black font-medium block mb-1">Decision Notes (optional)</label>
+                        <textarea
+                          value={partialForm.notes}
+                          onChange={(e) => {
+                            setPartialForm(prev => ({ ...prev, notes: e.target.value }))
+                            if (showPartialModal) {
+                              setVariantDecisions(prev => ({
+                                ...prev,
+                                [showPartialModal]: { 
+                                  ...prev[showPartialModal], 
+                                  notes: e.target.value 
+                                }
+                              }))
+                            }
+                          }}
+                          placeholder="e.g., '10 units have water damage, 10 units are intact'"
+                          rows={3}
+                          aria-label="Decision Notes"
+                          className="w-full border border-gray-300 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm"
+                        />
+                        <p className="text-[8px] sm:text-xs text-gray-600 mt-1">Seller will receive this in their notification email</p>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => {
+                            setShowPartialModal(null)
+                            setVariantDecisions(prev => {
+                              const newDecisions = { ...prev }
+                              delete newDecisions[showPartialModal]
+                              return newDecisions
+                            })
+                          }}
+                          className="flex-1 px-3 py-2 text-[9px] sm:text-xs bg-gray-300 hover:bg-gray-400 text-black rounded font-medium transition"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleVariantDecision(showPartialModal, 'PARTIAL')
+                          }}
+                          disabled={variantDecisions[showPartialModal]?.loading}
+                          className="flex-1 px-3 py-2 text-[9px] sm:text-xs bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white rounded font-medium transition"
+                        >
+                          {variantDecisions[showPartialModal]?.loading ? 'Processing...' : 'Confirm'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
+
 
           {/* Discrepancy Info */}
           {shipment.hasDiscrepancy && (

@@ -60,7 +60,7 @@ export default function AdminSecurityPage() {
       return
     }
     if (session?.user?.role !== 'ADMIN') {
-      router.push('/dashboard')
+      router.push('/admin')
       return
     }
 

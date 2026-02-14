@@ -8,6 +8,7 @@ import { initializePayment as initFlutterwavePayment, isFlutterwaveConfigured, g
 import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
 import { fetchExchangeRates, convertFromUSD } from '@/lib/currency'
+import { getPromotionForDesign, incrementPromotionUsage } from '@/lib/promotion-engine'
 
 /**
  * Get the effective price for a design, considering A/B price tests
@@ -233,6 +234,11 @@ export async function POST(request: NextRequest) {
     // A/B test tracking
     priceTestVariant?: 'A' | 'B';
     isTestPrice?: boolean;
+    // Promotion tracking
+    promotionId?: string | null;
+    promotionType?: string | null;
+    originalPrice?: number;
+    discountAmount?: number;
   }
   const orderItems: OrderItem[] = []
 
@@ -306,6 +312,41 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Check for active promotions and apply if applicable
+      let promotionId: string | null = null
+      let promotionType: string | null = null
+      let originalPrice = price
+      let discountAmount = 0
+
+      // Only apply promotions to regular digital designs (not POD or ownership)
+      if (item.purchaseType !== 'POD' && item.purchaseType !== 'OWNERSHIP') {
+        const allDesignIds = cartItems.map((ci: any) => ci.designId)
+        const promotion = await getPromotionForDesign(
+          design.id,
+          design.designerId,
+          price,
+          allDesignIds
+        )
+
+        if (promotion) {
+          promotionId = promotion.promotionId
+          promotionType = promotion.type
+          price = promotion.discountedPrice
+          discountAmount = promotion.discountAmount
+          
+          // Safety check: final price should never exceed original price
+          if (price > originalPrice) {
+            console.error(`[CHECKOUT] ALERT: Promotion resulted in price increase! Original: ${originalPrice}, After: ${price}`)
+            price = originalPrice
+            promotionId = null
+            promotionType = null
+            discountAmount = 0
+          }
+          
+          console.log(`[CHECKOUT] Applied ${promotionType} promotion to design ${design.id}: ${discountAmount} discount`)
+        }
+      }
+
       const itemTotal = price * item.quantity
       totalAmount += itemTotal
 
@@ -335,7 +376,12 @@ export async function POST(request: NextRequest) {
         price: price,
         purchaseType: item.purchaseType || 'REGULAR',
         designerId: design.designerId,
-        designTitle: design.title
+        designTitle: design.title,
+        // Promotion tracking
+        promotionId: promotionId,
+        promotionType: promotionType,
+        originalPrice: originalPrice,
+        discountAmount: discountAmount,
       }
       
       // Add POD-specific fields if this is a POD item
@@ -486,7 +532,11 @@ export async function POST(request: NextRequest) {
               designId: item.designId,
               quantity: item.quantity,
               price: item.price,
-              purchaseType: item.purchaseType || 'REGULAR'
+              purchaseType: item.purchaseType || 'REGULAR',
+              // Store promotion data for tracking
+              promotionId: item.promotionId || null,
+              promotionType: item.promotionType || null,
+              discountAmount: item.discountAmount || 0,
             }))
           },
           ...(hasPodItems && shippingAddress ? {

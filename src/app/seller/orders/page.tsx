@@ -154,45 +154,45 @@ export default function SellerOrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/seller/dashboard"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-              <p className="text-gray-500 mt-1">Manage orders for your designs</p>
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Orders</h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Manage orders for your designs</p>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-2 sm:p-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by order number, customer name, or email..."
+                placeholder="Search by order number..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 aria-label="Filter by order status"
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="all">All Statuses</option>
+                <option value="all">All</option>
                 <option value="PENDING">Pending</option>
                 <option value="PROCESSING">Processing</option>
                 <option value="SHIPPED">Shipped</option>
@@ -206,17 +206,17 @@ export default function SellerOrdersPage() {
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
-            <p className="text-gray-500">
+          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-12 text-center">
+            <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-300 mb-2 sm:mb-4" />
+            <h3 className="text-sm sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No orders found</h3>
+            <p className="text-xs sm:text-sm text-gray-500">
               {orders.length === 0 
                 ? "You haven't received any orders yet. Keep creating great designs!"
                 : "No orders match your current filters."}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4">
             {filteredOrders.map((order) => {
               const status = statusConfig[order.status] || statusConfig.PENDING
               const sellerItems = order.items // Items are already filtered by the API
@@ -225,9 +225,9 @@ export default function SellerOrdersPage() {
               return (
                 <div key={order.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
                   {/* Order Header */}
-                  <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                         {order.customer.image ? (
                           <Image
                             src={order.customer.image}
@@ -237,55 +237,55 @@ export default function SellerOrdersPage() {
                             className="rounded-full"
                           />
                         ) : (
-                          <span className="text-gray-600 font-medium">
+                          <span className="text-xs sm:text-sm text-gray-600 font-medium">
                             {(order.customer.name || order.customer.email)[0].toUpperCase()}
                           </span>
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-900">Order #{order.orderNumber}</p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">Order #{order.orderNumber}</p>
                           {order.isPOD && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-100 text-cyan-700 rounded text-xs font-medium">
-                              <Printer className="w-3 h-3" />
-                              POD
+                            <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 bg-cyan-100 text-cyan-700 rounded text-xs font-medium flex-shrink-0">
+                              <Printer className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span className="hidden sm:inline">POD</span>
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {order.customer.name || order.customer.email} • {formatDate(order.createdAt)}
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                          {(order.customer.name || order.customer.email).substring(0, 20)} • {formatDate(order.createdAt)}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
+                    <div className="flex items-center gap-2 sm:gap-4 justify-between sm:justify-end">
+                      <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${status.color}`}>
                         {status.icon}
-                        {status.label}
+                        <span className="hidden sm:inline">{status.label}</span>
                       </span>
-                      <p className="font-bold text-gray-900">{formatCurrency(orderTotal)}</p>
+                      <p className="font-bold text-sm sm:text-base text-gray-900">{formatCurrency(orderTotal)}</p>
                     </div>
                   </div>
 
                   {/* POD Status Section - Only show for POD orders */}
                   {order.isPOD && order.podStatus && (
-                    <div className="px-6 py-3 bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-cyan-100">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                            <Printer className="w-4 h-4 text-cyan-600" />
+                    <div className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-cyan-100">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
+                            <Printer className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-600" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-700">Print-on-Demand</span>
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">POD</span>
                               {order.podProvider && (
                                 <span className="text-xs text-gray-500">via {order.podProvider}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${podStatusConfig[order.podStatus]?.color || 'bg-gray-100 text-gray-700'}`}>
+                            <div className="flex items-center gap-1 sm:gap-2 mt-0.5">
+                              <span className={`inline-flex px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium ${podStatusConfig[order.podStatus]?.color || 'bg-gray-100 text-gray-700'}`}>
                                 {podStatusConfig[order.podStatus]?.label || order.podStatus}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 hidden sm:inline">
                                 {podStatusConfig[order.podStatus]?.description}
                               </span>
                             </div>

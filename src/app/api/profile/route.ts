@@ -28,6 +28,7 @@ export async function GET() {
         role: true,
         isVerified: true,
         designerTier: true,
+        subscriptionTier: true,
         specialties: true,
         acceptsCommissions: true,
         commissionStatus: true,
@@ -94,6 +95,8 @@ export async function PUT(request: NextRequest) {
         location: true,
         role: true,
         isVerified: true,
+        designerTier: true,
+        subscriptionTier: true,
         specialties: true,
         createdAt: true,
         updatedAt: true

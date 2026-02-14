@@ -65,54 +65,138 @@ const PLANS = {
   },
 }
 
+// Define all subscription tiers
+interface SubscriptionPlan {
+  tier: 'STARTER' | 'PRO' | 'VIP'
+  name: string
+  description: string
+  monthlyPrice: number
+  yearlyPrice: number
+  yearlyDiscount: string
+  discount: number // Commission discount (0.01 = 1%, 0.02 = 2%)
+  tierBoost: boolean // +1 tier boost
+  featuredListings: number
+  prioritySupport: boolean
+  highlighted?: boolean
+}
+
+const SUBSCRIPTION_TIERS: Record<string, SubscriptionPlan> = {
+  STARTER: {
+    tier: 'STARTER',
+    name: 'Starter',
+    description: 'Perfect for getting started',
+    monthlyPrice: 4.99,
+    yearlyPrice: 49.99,
+    yearlyDiscount: '17% off',
+    discount: 0.01, // 1%
+    tierBoost: false, // No tier boost
+    featuredListings: 2, // 2 featured listings
+    prioritySupport: false,
+  },
+  PRO: {
+    tier: 'PRO',
+    name: 'Pro',
+    description: 'For serious sellers',
+    monthlyPrice: 9.99,
+    yearlyPrice: 99.99,
+    yearlyDiscount: '17% off',
+    discount: 0.01, // 1%
+    tierBoost: true, // +1 tier boost
+    featuredListings: 6,
+    prioritySupport: false,
+    highlighted: true,
+  },
+  VIP: {
+    tier: 'VIP',
+    name: 'VIP',
+    description: 'Premium everything',
+    monthlyPrice: 14.99,
+    yearlyPrice: 149.99,
+    yearlyDiscount: '17% off',
+    discount: 0.02, // 2%
+    tierBoost: true, // +1 tier boost
+    featuredListings: 10,
+    prioritySupport: true,
+  },
+}
+
 const FEATURES = [
   {
     icon: <TrendingUp className="h-5 w-5" />,
     title: '+1 Tier Boost',
     description: 'Instantly upgrade your tier level for all the tier benefits',
     highlight: true,
+    tiers: ['PRO', 'VIP'],
+  },
+  {
+    icon: <Star className="h-5 w-5" />,
+    title: '2 Featured Listings',
+    description: 'Premium placements on category pages',
+    highlight: false,
+    tiers: ['STARTER'],
   },
   {
     icon: <Star className="h-5 w-5" />,
     title: '6 Featured Listings',
-    description: 'Premium placements on category pages (instead of 5 for non-subscribers)',
+    description: 'Premium placements on category pages',
     highlight: true,
+    tiers: ['PRO'],
+  },
+  {
+    icon: <Crown className="h-5 w-5" />,
+    title: '10 Featured Listings',
+    description: 'Maximum premium placements (VIP only)',
+    highlight: true,
+    tiers: ['VIP'],
   },
   {
     icon: <TrendingUp className="h-5 w-5" />,
-    title: '1% Flat Commission Discount',
-    description: 'Get an additional 1% off your commission on every sale (stacks with tier benefits)',
+    title: '1% Commission Discount',
+    description: 'Save 1% on every sale (Starter & Pro)',
     highlight: true,
+    tiers: ['STARTER', 'PRO'],
+  },
+  {
+    icon: <TrendingUp className="h-5 w-5" />,
+    title: '2% Commission Discount',
+    description: 'Save 2% on every sale (VIP only)',
+    highlight: true,
+    tiers: ['VIP'],
   },
   {
     icon: <BarChart3 className="h-5 w-5" />,
     title: 'Advanced Analytics',
     description: 'Detailed insights on views, clicks, and conversions',
     highlight: false,
+    tiers: ['PRO', 'VIP'],
   },
   {
     icon: <Palette className="h-5 w-5" />,
     title: 'Custom Storefront',
     description: 'Personalize your seller page with custom branding',
     highlight: false,
+    tiers: ['PRO', 'VIP'],
   },
   {
     icon: <MessageCircle className="h-5 w-5" />,
     title: 'Priority Support',
-    description: '24-hour response time from our support team',
+    description: 'Fast response from our support team',
     highlight: false,
+    tiers: ['VIP'],
   },
   {
     icon: <Clock className="h-5 w-5" />,
     title: 'Early Access',
-    description: 'Be first to try new features and tools',
+    description: 'Be first to try new features',
     highlight: false,
+    tiers: ['PRO', 'VIP'],
   },
   {
     icon: <Crown className="h-5 w-5" />,
-    title: 'Pro Badge',
-    description: 'Stand out with a verified Pro seller badge',
+    title: 'Verified Badge',
+    description: 'Stand out with a verified seller badge',
     highlight: false,
+    tiers: ['PRO', 'VIP'],
   },
 ]
 
@@ -371,43 +455,76 @@ export default function UpgradePage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 py-12">
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Zap className="h-4 w-4" />
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs md:text-sm font-medium mb-3 md:mb-4">
+            <Zap className="h-3 w-3 md:h-4 md:w-4" />
             Upgrade to Pro
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
             Grow Your Fashion Business
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm md:text-lg text-gray-600 max-w-2xl mx-auto">
             Get lower commissions, featured listings, and powerful tools to boost your sales
           </p>
         </div>
 
-        {/* FREE TRIAL SECTION - Show if eligible */}
-        {subscriptionStatus?.trial?.isEligible && !subscriptionStatus?.trial?.isActive && (
-          <div className="mb-8 max-w-2xl mx-auto">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">🎁</div>
+        {/* Show lock message when earnings < $100 */}
+        {subscriptionStatus?.proSubscriptionLocked && (
+          <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 md:p-6">
+              <div className="flex items-start gap-3 md:gap-4">
+                <div className="text-2xl md:text-3xl flex-shrink-0">🔒</div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-green-900 mb-2">Try Pro Free for 30 Days!</h3>
-                  <p className="text-green-800 mb-4">
+                  <h3 className="font-bold text-amber-900 mb-1 md:mb-2 text-sm md:text-base">Subscriptions Locked</h3>
+                  <p className="text-amber-800 mb-2 md:mb-3 text-xs md:text-sm">
+                    Unlock subscriptions when you reach <span className="font-bold">$100 in earnings</span>. This ensures you're making consistent sales before upgrading.
+                  </p>
+                  <div className="bg-white rounded-lg p-2 md:p-3 border border-amber-200">
+                    <p className="text-xs md:text-sm text-gray-700 mb-2">
+                      Your earnings: <span className="font-bold text-amber-900">${subscriptionStatus.totalEarnings || 0}</span>
+                    </p>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div 
+                        className="bg-amber-500 h-2 rounded-full transition-all"
+                        // eslint-disable-next-line -- dynamic width calculation
+                        style={{ width: `${Math.min(((subscriptionStatus.totalEarnings ?? 0) / 100) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-600">
+                      <span className="font-bold">${subscriptionStatus.remainingToUnlock}</span> more to unlock
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FREE TRIAL SECTION - Always show but locked when earnings < $100 */}
+        {subscriptionStatus?.trial?.isEligible && !subscriptionStatus?.trial?.isActive && (
+          <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 md:p-6">
+              <div className="flex items-start gap-3 md:gap-4">
+                <div className="text-3xl md:text-4xl flex-shrink-0">🎁</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-green-900 mb-2 text-sm md:text-base">Try Pro Free for 30 Days!</h3>
+                  <p className="text-green-800 mb-2 md:mb-4 text-xs md:text-sm">
                     Every new seller gets <span className="font-bold">one month free</span> to experience all Pro benefits:
                   </p>
-                  <ul className="text-sm text-green-800 mb-4 space-y-1">
+                  <ul className="text-xs md:text-sm text-green-800 mb-3 md:mb-4 space-y-1">
                     <li>✓ +1 tier boost - Unlock higher seller status instantly</li>
                     <li>✓ 6 featured listings - Premium visibility for your designs</li>
                     <li>✓ 1% commission discount - Keep more of your earnings</li>
                     <li>✓ Full Pro access - All premium features</li>
                   </ul>
-                  <p className="text-sm text-green-800 mb-4 font-medium">
+                  <p className="text-xs md:text-sm text-green-800 mb-3 md:mb-4 font-medium">
                     After 30 days, choose to subscribe (pay) or revert to your current tier—completely your choice!
                   </p>
                   <button
                     onClick={handleTrialActivationInit}
-                    disabled={trialActivation.loading}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                    disabled={trialActivation.loading || subscriptionStatus?.proSubscriptionLocked}
+                    className="px-4 md:px-6 py-2 md:py-3 bg-green-600 text-white rounded-lg font-medium text-sm md:text-base hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={subscriptionStatus?.proSubscriptionLocked ? "Unlock at $100 earnings" : ""}
                   >
                     {trialActivation.loading ? (
                       <>
@@ -416,7 +533,7 @@ export default function UpgradePage() {
                       </>
                     ) : (
                       <>
-                        <Gift className="inline h-5 w-5 mr-2" />
+                        <Gift className="inline h-4 w-4 md:h-5 md:w-5 mr-2" />
                         Activate 30-Day Free Trial
                       </>
                     )}
@@ -451,39 +568,37 @@ export default function UpgradePage() {
           </div>
         )}
 
-        {/* STARTER Tier Lock Message */}
-        {subscriptionStatus?.proSubscriptionLocked && (
-          <div className="mb-8 max-w-2xl mx-auto">
-            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="text-3xl">🔒</div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-amber-900 mb-2">Pro Subscription Locked</h3>
-                  <p className="text-amber-800 mb-3">
-                    Pro subscription unlocks when you reach <span className="font-bold">NEW tier</span> with $100 or more in earnings.
-                  </p>
-                  <div className="bg-white rounded-lg p-3 border border-amber-200">
-                    <p className="text-sm text-gray-700 mb-2">
-                      Your earnings: <span className="font-bold text-amber-900">${subscriptionStatus.totalEarnings || 0}</span>
-                    </p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                      <div 
-                        className="bg-amber-500 h-2 rounded-full transition-all"
-                        // @ts-ignore - dynamic width calculation
-                        style={{ width: `${Math.min((subscriptionStatus.totalEarnings / 100) * 100, 100)}%` } as React.CSSProperties}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-bold">${subscriptionStatus.remainingToUnlock}</span> more to unlock Pro
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Currency Toggle */}
+        <div className="flex items-center justify-center gap-2 md:gap-3 mb-6 md:mb-8 p-3 md:p-4 bg-white rounded-lg max-w-md mx-auto">
+          <span className="text-xs md:text-sm font-medium text-gray-700">Currency:</span>
+          <button
+            onClick={() => setCurrency('USD')}
+            className={`py-1.5 md:py-2 px-4 md:px-6 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+              currency === 'USD'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            USD ($)
+          </button>
+          <button
+            onClick={() => setCurrency('NGN')}
+            className={`py-1.5 md:py-2 px-4 md:px-6 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+              currency === 'NGN'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            NGN (₦)
+          </button>
+          {currency === 'NGN' && exchangeRate && (
+            <span className="text-xs text-gray-600 ml-1 md:ml-2">
+              1 USD ≈ ₦{exchangeRate.toLocaleString()}
+            </span>
+          )}
+        </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Features */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -529,177 +644,406 @@ export default function UpgradePage() {
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Pricing Card */}
-          <div>
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-8">
-              <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
-                <div className="flex items-center gap-3 mb-2">
-                  <Crown className="h-6 w-6" />
-                  <h2 className="text-xl font-bold">Designer Pro</h2>
-                </div>
-                <p className="text-purple-100">
-                  The professional toolkit for serious sellers
-                </p>
+        {/* Pricing Cards - Grid Layout */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* STARTER MONTHLY */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 md:p-6 text-white">
+                <h2 className="text-lg md:text-xl font-bold mb-0.5 md:mb-1">Starter</h2>
+                <p className="text-blue-100 text-xs md:text-xs">Monthly Plan</p>
               </div>
 
-              <div className="p-6">
-                {/* Currency Toggle */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={() => setCurrency('USD')}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                      currency === 'USD'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    USD
-                  </button>
-                  <button
-                    onClick={() => setCurrency('NGN')}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                      currency === 'NGN'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    NGN (₦)
-                  </button>
-                </div>
-
-                {/* Plan Toggle */}
-                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-6">
-                  <button
-                    onClick={() => setSelectedPlan('monthly')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                      selectedPlan === 'monthly'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setSelectedPlan('yearly')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                      selectedPlan === 'yearly'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Yearly
-                    {PLANS.yearly.savings && (
-                      <span className="ml-2 text-xs text-green-600 font-bold">
-                        {PLANS.yearly.savings}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
+              <div className="p-3 md:p-6 flex-1 flex flex-col">
                 {/* Price */}
-                <div className="text-center mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-gray-900">
+                <div className="mb-4 md:mb-6">
+                  <div className="flex items-baseline gap-2 mb-1 md:mb-2">
+                    <span className="text-2xl md:text-4xl font-bold text-gray-900">
                       {currency === 'USD' 
-                        ? `$${PLANS[selectedPlan].price.toFixed(2)}`
-                        : `₦${convertedPrices[selectedPlan].toLocaleString()}`
+                        ? `$${SUBSCRIPTION_TIERS.STARTER.monthlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.STARTER.monthlyPrice * (exchangeRate || 1650)).toLocaleString()}`
                       }
                     </span>
-                    <span className="text-gray-600">
-                      /{PLANS[selectedPlan].interval}
-                    </span>
+                    <span className="text-xs md:text-base text-gray-600">/mo</span>
                   </div>
-                  
-                  {/* Discount Info */}
-                  {selectedPlan === 'yearly' && (
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-600">
-                        {currency === 'USD'
-                          ? `That's just $${(PLANS.yearly.price / 12).toFixed(2)}/month (Save $${(PLANS.monthly.price * 12 - PLANS.yearly.price).toFixed(2)})`
-                          : `That's just ₦${Math.round((convertedPrices.yearly / 12)).toLocaleString()}/month`
-                        }
-                      </p>
-                      <p className="text-xs text-green-600 font-medium mt-1">
-                        ✓ 17% savings vs. monthly plan
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Exchange Rate Info */}
-                  {currency === 'NGN' && exchangeRate && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Exchange rate: 1 USD ≈ ₦{exchangeRate.toLocaleString()}
-                    </p>
-                  )}
+                </div>
+
+                {/* Features */}
+                <div className="space-y-2 md:space-y-3 mb-4 md:mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-3 w-3 md:h-4 md:w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-700">1% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-3 w-3 md:h-4 md:w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-700">2 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-3 w-3 md:h-4 md:w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-400">Priority Support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-3 w-3 md:h-4 md:w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-400">Tier Boost</span>
+                  </div>
                 </div>
 
                 {/* CTA */}
-                <div className="space-y-3">
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
                   <button
                     onClick={() => handleSubscribe('stripe')}
-                    disabled={loading || subscriptionStatus?.proSubscriptionLocked}
-                    title={subscriptionStatus?.proSubscriptionLocked ? 'Unlock Pro by reaching $100 in earnings' : ''}
-                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={loading}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                        Processing...
-                      </>
-                    ) : subscriptionStatus?.proSubscriptionLocked ? (
-                      <>
-                        <span>🔒 Unlock at NEW Tier</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-5 w-5" />
-                        Pay with Card (Stripe)
-                      </>
-                    )}
+                    {loading ? 'Processing...' : 'Subscribe'}
                   </button>
+                )}
+              </div>
+            </div>
 
-                  <button
-                    onClick={() => handleSubscribe('paystack')}
-                    disabled={loading || subscriptionStatus?.proSubscriptionLocked}
-                    title={subscriptionStatus?.proSubscriptionLocked ? 'Unlock Pro by reaching $100 in earnings' : ''}
-                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                        Processing...
-                      </>
-                    ) : subscriptionStatus?.proSubscriptionLocked ? (
-                      <>
-                        <span>🔒 Unlock at NEW Tier</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-5 w-5" />
-                        Pay with Paystack (NGN)
-                      </>
-                    )}
-                  </button>
+            {/* STARTER YEARLY */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                <h2 className="text-xl font-bold mb-1">Starter</h2>
+                <p className="text-blue-100 text-xs">Yearly Plan (17% Off)</p>
+              </div>
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Price */}
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {currency === 'USD' 
+                        ? `$${SUBSCRIPTION_TIERS.STARTER.yearlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.STARTER.yearlyPrice * (exchangeRate || 1650)).toLocaleString()}`
+                      }
+                    </span>
+                    <span className="text-gray-600">/yr</span>
+                  </div>
+                  <p className="text-xs text-green-600 font-medium">
+                    Save {currency === 'USD' 
+                      ? `$${(SUBSCRIPTION_TIERS.STARTER.monthlyPrice * 12 - SUBSCRIPTION_TIERS.STARTER.yearlyPrice).toFixed(2)}`
+                      : `₦${Math.round((SUBSCRIPTION_TIERS.STARTER.monthlyPrice * 12 - SUBSCRIPTION_TIERS.STARTER.yearlyPrice) * (exchangeRate || 1650))}`
+                    }/year
+                  </p>
                 </div>
 
-                {/* Trust indicators */}
-                <div className="border-t border-gray-200 mt-6 pt-6">
-                  <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Shield className="h-4 w-4" />
-                      <span>Secure checkout</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Check className="h-4 w-4" />
-                      <span>No hidden fees</span>
-                    </div>
+                {/* Features */}
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">2 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-400">Priority Support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-400">Tier Boost</span>
                   </div>
                 </div>
+
+                {/* CTA */}
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe('stripe')}
+                    disabled={loading}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Subscribe'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* PRO MONTHLY */}
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-full relative border-2 border-purple-600">
+              <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1 text-xs font-bold rounded-bl-lg">
+                POPULAR
+              </div>
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
+                <h2 className="text-xl font-bold mb-1">Pro</h2>
+                <p className="text-purple-100 text-xs">Monthly Plan</p>
+              </div>
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Price */}
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {currency === 'USD' 
+                        ? `$${SUBSCRIPTION_TIERS.PRO.monthlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.PRO.monthlyPrice * (exchangeRate || 1650)).toLocaleString()}`
+                      }
+                    </span>
+                    <span className="text-gray-600">/mo</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">+1 Tier Boost</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">6 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-400">Priority Support</span>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe('stripe')}
+                    disabled={loading}
+                    className="w-full py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Subscribe'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* PRO YEARLY */}
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-full relative border-2 border-purple-600">
+              <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1 text-xs font-bold rounded-bl-lg">
+                POPULAR
+              </div>
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
+                <h2 className="text-xl font-bold mb-1">Pro</h2>
+                <p className="text-purple-100 text-xs">Yearly Plan (17% Off)</p>
+              </div>
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Price */}
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {currency === 'USD' 
+                        ? `$${SUBSCRIPTION_TIERS.PRO.yearlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.PRO.yearlyPrice * (exchangeRate || 1650)).toLocaleString()}`
+                      }
+                    </span>
+                    <span className="text-gray-600">/yr</span>
+                  </div>
+                  <p className="text-xs text-green-600 font-medium">
+                    Save {currency === 'USD' 
+                      ? `$${(SUBSCRIPTION_TIERS.PRO.monthlyPrice * 12 - SUBSCRIPTION_TIERS.PRO.yearlyPrice).toFixed(2)}`
+                      : `₦${Math.round((SUBSCRIPTION_TIERS.PRO.monthlyPrice * 12 - SUBSCRIPTION_TIERS.PRO.yearlyPrice) * (exchangeRate || 1650))}`
+                    }/year
+                  </p>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">+1 Tier Boost</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">6 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">1% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <X className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-400">Priority Support</span>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe('stripe')}
+                    disabled={loading}
+                    className="w-full py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Subscribe'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* VIP MONTHLY */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+              <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6 text-white">
+                <h2 className="text-xl font-bold mb-1">VIP</h2>
+                <p className="text-amber-100 text-xs">Monthly Plan</p>
+              </div>
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Price */}
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {currency === 'USD' 
+                        ? `$${SUBSCRIPTION_TIERS.VIP.monthlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.VIP.monthlyPrice * (exchangeRate || 1650)).toLocaleString()}`
+                      }
+                    </span>
+                    <span className="text-gray-600">/mo</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">+1 Tier Boost</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">10 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">2% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Priority Support</span>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe('stripe')}
+                    disabled={loading}
+                    className="w-full py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Subscribe'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* VIP YEARLY */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+              <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6 text-white">
+                <h2 className="text-xl font-bold mb-1">VIP</h2>
+                <p className="text-amber-100 text-xs">Yearly Plan (17% Off)</p>
+              </div>
+
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Price */}
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {currency === 'USD' 
+                        ? `$${SUBSCRIPTION_TIERS.VIP.yearlyPrice.toFixed(2)}`
+                        : `₦${Math.round(SUBSCRIPTION_TIERS.VIP.yearlyPrice * (exchangeRate || 1650)).toLocaleString()}`
+                      }
+                    </span>
+                    <span className="text-gray-600">/yr</span>
+                  </div>
+                  <p className="text-xs text-green-600 font-medium">
+                    Save {currency === 'USD' 
+                      ? `$${(SUBSCRIPTION_TIERS.VIP.monthlyPrice * 12 - SUBSCRIPTION_TIERS.VIP.yearlyPrice).toFixed(2)}`
+                      : `₦${Math.round((SUBSCRIPTION_TIERS.VIP.monthlyPrice * 12 - SUBSCRIPTION_TIERS.VIP.yearlyPrice) * (exchangeRate || 1650))}`
+                    }/year
+                  </p>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">+1 Tier Boost</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">10 Featured Listings</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">2% Commission Discount</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">Priority Support</span>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                {subscriptionStatus?.proSubscriptionLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed"
+                    title="Unlock at $100 earnings"
+                  >
+                    🔒 Unlock at $100
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe('stripe')}
+                    disabled={loading}
+                    className="w-full py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Subscribe'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
         {/* FAQ */}
         <div className="mt-16">
@@ -776,6 +1120,8 @@ export default function UpgradePage() {
               <button
                 onClick={() => setTrialActivation(prev => ({ ...prev, step: 'none', verificationCode: '' }))}
                 className="text-white hover:bg-green-700 p-1 rounded"
+                aria-label="Close modal"
+                title="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>

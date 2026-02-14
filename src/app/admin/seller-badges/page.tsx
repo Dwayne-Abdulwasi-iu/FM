@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Star, Shield, TrendingUp } from 'lucide-react'
+import { Star, Shield, TrendingUp, Lightbulb } from 'lucide-react'
 
 interface SellerBadge {
   id: string
@@ -15,6 +15,15 @@ interface SellerBadge {
   verificationBadge: string | null
   totalSales: number
   avgRating: number
+  suggestedBadge?: string | null
+  achievements?: {
+    totalSales: number
+    avgRating: number
+    reviewCount: number
+    designCount: number
+    accountAgeDays: number
+    trustScore: number
+  }
 }
 
 export default function AdminSellerBadgesPage() {
@@ -60,7 +69,7 @@ export default function AdminSellerBadgesPage() {
       const res = await fetch(`/api/admin/seller-badges/${sellerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verificationBadge: badge })
+        body: JSON.stringify({ badge })
       })
       if (!res.ok) throw new Error('Failed to update badge')
       toast.success('Seller badge updated')
@@ -81,6 +90,10 @@ export default function AdminSellerBadgesPage() {
         return 'bg-yellow-100 text-yellow-900 border-yellow-300'
       case 'TRENDING':
         return 'bg-pink-100 text-pink-900 border-pink-300'
+      case 'RISING_STAR':
+        return 'bg-green-100 text-green-900 border-green-300'
+      case 'VERIFIED_PRO':
+        return 'bg-indigo-100 text-indigo-900 border-indigo-300'
       default:
         return 'bg-gray-100 text-gray-900 border-gray-300'
     }
@@ -105,6 +118,7 @@ export default function AdminSellerBadgesPage() {
           {/* Filter */}
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <select
+              aria-label="Filter sellers by badge"
               value={badgeFilter}
               onChange={(e) => setBadgeFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
@@ -114,6 +128,8 @@ export default function AdminSellerBadgesPage() {
               <option value="TOP_SELLER">Top Sellers</option>
               <option value="BESTSELLER">Bestsellers</option>
               <option value="TRENDING">Trending</option>
+              <option value="RISING_STAR">Rising Stars</option>
+              <option value="VERIFIED_PRO">Verified Pros</option>
             </select>
           </div>
 
@@ -125,69 +141,156 @@ export default function AdminSellerBadgesPage() {
               </div>
             ) : (
               sellers.map((seller) => (
-                <div key={seller.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                  <div className="flex items-start gap-3 mb-3">
-                    {seller.image ? (
-                      <img
-                        src={seller.image}
-                        alt={seller.name || 'Seller'}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold">
-                        {(seller.name || 'U')[0].toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{seller.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{seller.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p className="text-xs text-gray-600">Sales</p>
-                      <p className="text-sm font-semibold text-gray-900">{seller.totalSales}</p>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-yellow-500" />
-                        <p className="text-sm font-semibold text-gray-900">{seller.avgRating.toFixed(1)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badge Selector */}
-                  <div className="border-t pt-3">
-                    <p className="text-xs font-medium text-gray-700 mb-2">Badge</p>
-                    <select
-                      value={seller.verificationBadge || ''}
-                      onChange={(e) => handleBadgeChange(seller.id, e.target.value || null)}
-                      className={`w-full px-2 py-1 text-xs rounded border ${getBadgeColor(seller.verificationBadge)}`}
-                    >
-                      <option value="">None</option>
-                      <option value="VERIFIED_SELLER">Verified Seller</option>
-                      <option value="TOP_SELLER">Top Seller</option>
-                      <option value="BESTSELLER">Bestseller</option>
-                      <option value="TRENDING">Trending</option>
-                    </select>
-                  </div>
-
-                  {/* Current Badge Display */}
-                  {seller.verificationBadge && (
-                    <div className="mt-3 pt-3 border-t">
-                      <span className={`inline-block px-2 py-1 text-xs font-medium rounded border ${getBadgeColor(seller.verificationBadge)}`}>
-                        {seller.verificationBadge.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <SellerBadgeCard
+                  key={seller.id}
+                  seller={seller}
+                  onBadgeChange={handleBadgeChange}
+                  getBadgeColor={getBadgeColor}
+                  fetchSellers={fetchSellers}
+                />
               ))
             )}
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * SellerBadgeCard Component - Displays individual seller with badge suggestion
+ */
+interface SellerBadgeCardProps {
+  seller: SellerBadge
+  onBadgeChange: (sellerId: string, badge: string | null) => Promise<void>
+  getBadgeColor: (badge: string | null) => string
+  fetchSellers: () => Promise<void>
+}
+
+function SellerBadgeCard({
+  seller,
+  onBadgeChange,
+  getBadgeColor,
+  fetchSellers
+}: SellerBadgeCardProps) {
+  const [loading, setLoading] = useState(false)
+  const [suggestion, setSuggestion] = useState<string | null>(null)
+  const [achievements, setAchievements] = useState<SellerBadge['achievements'] | undefined>(undefined)
+
+  useEffect(() => {
+    // Fetch suggestion on mount or when seller changes
+    const fetchSuggestion = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/admin/seller-badges/${seller.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSuggestion(data.suggestedBadge)
+          setAchievements(data.achievements)
+        }
+      } catch (error) {
+        console.error('Failed to fetch suggestion:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSuggestion()
+  }, [seller.id])
+
+  const showSuggestion = suggestion && suggestion !== seller.verificationBadge
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+      <div className="flex items-start gap-3 mb-3">
+        {seller.image ? (
+          <img
+            src={seller.image}
+            alt={seller.name || 'Seller'}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold">
+            {(seller.name || 'U')[0].toUpperCase()}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 truncate">{seller.name}</p>
+          <p className="text-xs text-gray-500 truncate">{seller.email}</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-gray-50 p-2 rounded">
+          <p className="text-xs text-gray-600">Sales</p>
+          <p className="text-sm font-semibold text-gray-900">{achievements?.totalSales ?? seller.totalSales}</p>
+        </div>
+        <div className="bg-gray-50 p-2 rounded">
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 text-yellow-500" />
+            <p className="text-sm font-semibold text-gray-900">{achievements?.avgRating?.toFixed(1) ?? seller.avgRating.toFixed(1)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Suggested Badge */}
+      {showSuggestion && (
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-blue-900 mb-2">Auto-Recommended Badge</p>
+              <button
+                onClick={() => onBadgeChange(seller.id, suggestion)}
+                className={`w-full px-2 py-1 text-xs font-medium rounded border transition ${getBadgeColor(suggestion)}`}
+              >
+                Apply: {suggestion.replace(/_/g, ' ')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Badge Selector */}
+      <div className="border-t pt-3">
+        <p className="text-xs font-medium text-gray-700 mb-2">Current Badge</p>
+        <select
+          aria-label={`Change badge for ${seller.name}`}
+          value={seller.verificationBadge || ''}
+          onChange={(e) => onBadgeChange(seller.id, e.target.value || null)}
+          className={`w-full px-2 py-1 text-xs rounded border ${getBadgeColor(seller.verificationBadge)}`}
+        >
+          <option value="">None</option>
+          <option value="RISING_STAR">Rising Star</option>
+          <option value="TOP_SELLER">Top Seller</option>
+          <option value="VERIFIED_PRO">Verified Pro</option>
+          <option value="VERIFIED_SELLER">Verified Seller</option>
+          <option value="BESTSELLER">Bestseller</option>
+          <option value="TRENDING">Trending</option>
+        </select>
+      </div>
+
+      {/* Current Badge Display */}
+      {seller.verificationBadge && (
+        <div className="mt-3 pt-3 border-t">
+          <span className={`inline-block px-2 py-1 text-xs font-medium rounded border ${getBadgeColor(seller.verificationBadge)}`}>
+            ✓ {seller.verificationBadge.replace(/_/g, ' ')}
+          </span>
+        </div>
+      )}
+
+      {/* Achievement Summary */}
+      {achievements && (
+        <div className="mt-3 pt-3 border-t space-y-1">
+          <p className="text-xs text-gray-600">
+            <span className="font-medium">{achievements.reviewCount}</span> reviews
+          </p>
+          <p className="text-xs text-gray-600">
+            <span className="font-medium">{achievements.designCount}</span> designs
+          </p>
+        </div>
+      )}
     </div>
   )
 }

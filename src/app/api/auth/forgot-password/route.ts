@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import crypto from 'crypto'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { sendEmail } from '@/lib/email'
 
 /**
  * POST /api/auth/forgot-password
@@ -66,8 +67,31 @@ export async function POST(request: NextRequest) {
       // For now, log the token (remove in production!)
       console.log(`Password reset token for ${normalizedEmail}: ${resetToken}`)
       
-      // TODO: Implement email sending
-      // await sendPasswordResetEmail(user.email, resetToken)
+      // Send password reset email
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://fashionmarketplace.example.com'
+      const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}`
+      
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset Instructions',
+        html: `
+          <h2>Reset Your Password</h2>
+          <p>Hello ${user.name || 'User'},</p>
+          <p>You requested a password reset for your account. Click the link below to reset your password.</p>
+          
+          <p>
+            <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+              Reset Password
+            </a>
+          </p>
+          
+          <p>Or copy this link: <code>${resetLink}</code></p>
+          
+          <p><strong>This link will expire in 1 hour.</strong></p>
+          
+          <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+        `,
+      })
     }
 
     // Always return success (prevents email enumeration)

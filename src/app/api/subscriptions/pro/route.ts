@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const { billingPeriod, processor, currency = 'USD' } = body
+    const { billingPeriod, processor, currency = 'USD', tier = 'PRO' } = body
 
     if (!['MONTHLY', 'YEARLY'].includes(billingPeriod)) {
       return NextResponse.json({ error: 'Invalid billing period' }, { status: 400 })
@@ -93,6 +93,10 @@ export async function POST(req: NextRequest) {
 
     if (!['USD', 'NGN'].includes(currency)) {
       return NextResponse.json({ error: 'Invalid currency' }, { status: 400 })
+    }
+
+    if (!['STARTER', 'PRO', 'VIP'].includes(tier)) {
+      return NextResponse.json({ error: 'Invalid subscription tier' }, { status: 400 })
     }
 
     // Get seller - ensure they have a seller account
@@ -159,10 +163,50 @@ export async function POST(req: NextRequest) {
       }).catch(() => null)
     }
 
-    // Pricing (USD)
-    const monthlyPrice = 9.99
-    const yearlyPrice = 99.99
-    const usdAmount = billingPeriod === 'YEARLY' ? yearlyPrice : monthlyPrice
+    // Pricing (USD) based on selected tier
+    interface TierPricing {
+      monthlyPrice: number
+      yearlyPrice: number
+      stripeMonthlyPriceId: string
+      stripeYearlyPriceId: string
+      discount: number
+      featuredListings: number
+      tierBoost: boolean
+    }
+
+    const TIER_PRICING: Record<string, TierPricing> = {
+      STARTER: {
+        monthlyPrice: 4.99,
+        yearlyPrice: 49.99,
+        stripeMonthlyPriceId: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_starter_monthly',
+        stripeYearlyPriceId: process.env.STRIPE_PRICE_STARTER_YEARLY || 'price_starter_yearly',
+        discount: 0.01,
+        featuredListings: 0,
+        tierBoost: false,
+      },
+      PRO: {
+        monthlyPrice: 9.99,
+        yearlyPrice: 99.99,
+        stripeMonthlyPriceId: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro_monthly',
+        stripeYearlyPriceId: process.env.STRIPE_PRICE_PRO_YEARLY || 'price_pro_yearly',
+        discount: 0.01,
+        featuredListings: 6,
+        tierBoost: true,
+      },
+      VIP: {
+        monthlyPrice: 14.99,
+        yearlyPrice: 149.99,
+        stripeMonthlyPriceId: process.env.STRIPE_PRICE_VIP_MONTHLY || 'price_vip_monthly',
+        stripeYearlyPriceId: process.env.STRIPE_PRICE_VIP_YEARLY || 'price_vip_yearly',
+        discount: 0.02,
+        featuredListings: 10,
+        tierBoost: true,
+      },
+    }
+
+    const tierPricing = TIER_PRICING[tier]
+    const usdAmount = billingPeriod === 'YEARLY' ? tierPricing.yearlyPrice : tierPricing.monthlyPrice
+    const stripePriceId = billingPeriod === 'YEARLY' ? tierPricing.stripeYearlyPriceId : tierPricing.stripeMonthlyPriceId
 
     if (processor === 'stripe') {
       // Create Stripe checkout session
@@ -175,9 +219,7 @@ export async function POST(req: NextRequest) {
           payment_method_types: ['card'],
           mode: 'subscription',
           line_items: [{
-            price: billingPeriod === 'YEARLY' 
-              ? (process.env.STRIPE_PRICE_PRO_YEARLY || 'price_pro_yearly')
-              : (process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro_monthly'),
+            price: stripePriceId,
             quantity: 1
           }],
           success_url: `${process.env.NEXTAUTH_URL}/seller/upgrade?success=true`,
@@ -185,6 +227,7 @@ export async function POST(req: NextRequest) {
           metadata: {
             userId: seller.id,
             billingPeriod,
+            tier, // Include tier in metadata for webhook handler
             type: 'pro_subscription'
           }
         })
@@ -212,6 +255,7 @@ export async function POST(req: NextRequest) {
           metadata: {
             userId: seller.id,
             billingPeriod,
+            tier, // Include tier in metadata for webhook handler
             amount: usdAmount,
             type: 'pro_subscription'
           }

@@ -267,10 +267,14 @@ export async function PATCH(request: NextRequest) {
           },
         });
 
-        // If shipped late, potentially log for tier review
+        // If shipped late, track for tier demotion
         if (isLate) {
           console.log(`Late shipment by seller ${order.sellerId} for order ${orderId}`);
           // TODO: Implement late shipment tracking and tier demotion logic
+          // 1. Update ShipmentPerformance record for seller
+          // 2. Calculate late shipment percentage
+          // 3. If exceeds threshold (e.g., >10% late), demote seller tier
+          // 4. Notify seller of performance impact
         }
 
         message = isLate 
@@ -297,7 +301,10 @@ export async function PATCH(request: NextRequest) {
         // Restore inventory - move reserved back to available quantity
         const orderItemsToRestore = await prisma.boutiqueOrderItem.findMany({
           where: { orderId: order.id },
+          include: { product: true },
         });
+        
+        const productsToCheck = new Set<string>();
         
         for (const item of orderItemsToRestore) {
           if (item.variantId) {
@@ -306,6 +313,41 @@ export async function PATCH(request: NextRequest) {
             await prisma.boutiqueProductVariant.update({
               where: { id: item.variantId },
               data: { quantity: { increment: item.quantity } },
+            });
+          }
+          if (item.productId) {
+            productsToCheck.add(item.productId);
+          }
+        }
+        
+        // Check if any OUT_OF_STOCK products now have stock and restore them to LIVE
+        for (const productId of productsToCheck) {
+          const variants = await prisma.boutiqueProductVariant.findMany({
+            where: { productId },
+            select: { quantity: true },
+          });
+          const totalStock = variants.reduce((sum, v) => sum + v.quantity, 0);
+          
+          const product = await prisma.boutiqueProduct.findUnique({
+            where: { id: productId },
+            select: { status: true },
+          });
+          
+          // If product is OUT_OF_STOCK and now has stock, restore to LIVE
+          if (product?.status === 'OUT_OF_STOCK' && totalStock > 0) {
+            await prisma.boutiqueProduct.update({
+              where: { id: productId },
+              data: { 
+                status: 'LIVE',
+                currentStock: totalStock,
+              },
+            });
+            console.log(`[Order Cancel] Product ${productId} restored to LIVE status (stock: ${totalStock})`);
+          } else {
+            // Sync currentStock field
+            await prisma.boutiqueProduct.update({
+              where: { id: productId },
+              data: { currentStock: totalStock },
             });
           }
         }

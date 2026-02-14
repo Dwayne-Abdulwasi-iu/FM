@@ -139,8 +139,8 @@ export default function AdminContentViolationsPage() {
                   {violations.map((violation) => (
                     <tr key={violation.id} className="hover:bg-gray-50">
                       <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
-                        <p className="font-medium">{violation.user.name}</p>
-                        <p className="text-xs text-gray-500">{violation.user.email}</p>
+                        <p className="font-medium">{violation.user?.name || 'Unknown User'}</p>
+                        <p className="text-xs text-gray-500">{violation.user?.email || 'No email'}</p>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
                         <div>
@@ -149,8 +149,8 @@ export default function AdminContentViolationsPage() {
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs font-medium border ${getSeverityColor(violation.severity)}`}>
-                          {violation.severity.toUpperCase()}
+                        <span className={`px-2 py-1 rounded text-xs font-medium border ${getSeverityColor(violation.severity || 'MEDIUM')}`}>
+                          {(violation.severity || 'MEDIUM').toUpperCase()}
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm">
@@ -166,7 +166,7 @@ export default function AdminContentViolationsPage() {
                         {!violation.reviewed && (
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleReview(violation.id, 'WARNING')}
+                              onClick={() => handleReview(violation.id, 'WARNED')}
                               className="p-1 text-yellow-600 hover:bg-yellow-50 rounded"
                               title="Issue warning"
                             >

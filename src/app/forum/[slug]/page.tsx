@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { VerificationBadge } from '@/components/VerificationBadges';
 
 interface Comment {
   id: string;
@@ -40,6 +41,7 @@ interface Post {
     bio: string | null;
     isVerified: boolean;
     verificationBadge: string | null;
+    allBadges?: string[];
     createdAt: string;
   };
   category: {
@@ -514,9 +516,9 @@ export default function ForumPostPage({ params }: { params: Promise<{ slug: stri
                     <span className="ml-0.5 text-blue-500 text-xs">✓</span>
                   )}
                 </Link>
-                {post.author.verificationBadge && (
-                  <div className="text-[10px] md:text-xs text-purple-600 mt-0.5 md:mt-1">
-                    {post.author.verificationBadge}
+                {(post.author.allBadges && post.author.allBadges.length > 0) && (
+                  <div className="mt-1 md:mt-2">
+                    <VerificationBadge badges={post.author.allBadges} size="sm" />
                   </div>
                 )}
                 <div className="text-[9px] md:text-xs text-gray-600 mt-1 md:mt-2">
