@@ -598,6 +598,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Quick Links - Main Overview */}
                 <div>
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
@@ -643,6 +644,13 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </button>
+                  </div>
+                </div>
+
+                {/* Digital Products Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Digital Products</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     <button
                       onClick={() => setActiveTab('orders')}
                       className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-left"
@@ -686,62 +694,6 @@ export default function AdminDashboard() {
                       </div>
                     </Link>
                     <Link
-                      href="/admin/deliveries"
-                      className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-5 h-5 text-pink-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Physical Deliveries</p>
-                          <p className="text-xs text-gray-500">Manage item collection &amp; shipping</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/resources"
-                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Resources</p>
-                          <p className="text-xs text-gray-500">Manage learning resources</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/broadcasts"
-                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
-                          <Megaphone className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
-                          <p className="text-xs text-gray-500">View sent announcements</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/messages"
-                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
-                          <MessageSquare className="w-5 h-5 text-violet-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Message Center</p>
-                          <p className="text-xs text-gray-500">Manage admin-user messages</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
                       href="/admin/pod"
                       className="p-4 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 transition-colors"
                     >
@@ -755,20 +707,13 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </Link>
-                    <Link
-                      href="/admin/pod-webhooks"
-                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🔧</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
-                          <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
-                        </div>
-                      </div>
-                    </Link>
+                  </div>
+                </div>
+
+                {/* Physical Products Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Physical Products</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     <Link
                       href="/admin/boutique"
                       className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
@@ -812,6 +757,27 @@ export default function AdminDashboard() {
                       </div>
                     </Link>
                     <Link
+                      href="/admin/deliveries"
+                      className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Physical Deliveries</p>
+                          <p className="text-xs text-gray-500">Manage item collection &amp; shipping</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Content & Quality Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Content & Quality</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <Link
                       href="/admin/disputes"
                       className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                     >
@@ -826,58 +792,16 @@ export default function AdminDashboard() {
                       </div>
                     </Link>
                     <Link
-                      href="/admin/ownership"
-                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-                          <Shield className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Ownership Documents</p>
-                          <p className="text-xs text-gray-500">Review &amp; approve ownership transfers</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/payments-reconciliation"
-                      className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">💰</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Payments Reconciliation</p>
-                          <p className="text-xs text-gray-500">Reconcile payments &amp; transactions</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/returns"
-                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">↩️</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Product Returns</p>
-                          <p className="text-xs text-gray-500">Process &amp; approve returns</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/boutique/rejected-returns"
+                      href="/admin/content-violations"
                       className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">❌</span>
+                          <span className="text-lg">⚔️</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Rejected Returns</p>
-                          <p className="text-xs text-gray-500">Manage rejected return claims</p>
+                          <p className="font-medium text-gray-900 text-sm">Content Violations</p>
+                          <p className="text-xs text-gray-500">Review &amp; action violations</p>
                         </div>
                       </div>
                     </Link>
@@ -909,17 +833,136 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </Link>
+                  </div>
+                </div>
+
+                {/* Returns & Refunds Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Returns & Refunds</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
                     <Link
-                      href="/admin/content-violations"
+                      href="/admin/boutique/returns"
+                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">↩️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Product Returns</p>
+                          <p className="text-xs text-gray-500">Process &amp; approve returns</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/rejected-returns"
                       className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">⚔️</span>
+                          <span className="text-lg">❌</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Content Violations</p>
-                          <p className="text-xs text-gray-500">Review &amp; action violations</p>
+                          <p className="font-medium text-gray-900 text-sm">Rejected Returns</p>
+                          <p className="text-xs text-gray-500">Manage rejected return claims</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/payments-reconciliation"
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">💰</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Payments Reconciliation</p>
+                          <p className="text-xs text-gray-500">Reconcile payments &amp; transactions</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Resources & Support Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Resources & Support</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <Link
+                      href="/admin/resources"
+                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Resources</p>
+                          <p className="text-xs text-gray-500">Manage learning resources</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/messages"
+                      className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-violet-200 rounded-lg flex items-center justify-center">
+                          <MessageSquare className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Message Center</p>
+                          <p className="text-xs text-gray-500">Manage admin-user messages</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/broadcasts"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <Megaphone className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
+                          <p className="text-xs text-gray-500">View sent announcements</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/pod-webhooks"
+                      className="p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🔧</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
+                          <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Settings & Verification Section */}
+                <div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Settings & Verification</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                    <Link
+                      href="/admin/ownership"
+                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Ownership Documents</p>
+                          <p className="text-xs text-gray-500">Review &amp; approve ownership transfers</p>
                         </div>
                       </div>
                     </Link>
