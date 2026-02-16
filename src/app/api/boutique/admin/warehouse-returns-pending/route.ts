@@ -48,13 +48,17 @@ export async function GET(request: NextRequest) {
         // Fee calculation
         const adminFeePerVariant = daysInWarehouse <= 119 ? 2 : 1
 
+        // Check if this is an auto-return from warehouse expiration
+        const isAutoReturn = shipment.sellerNotes?.includes('Auto-return triggered') || false
+
         return {
           shipment: {
             ...shipment,
             products: products
           },
           daysInWarehouse,
-          adminFeePerVariant
+          adminFeePerVariant,
+          isAutoReturn
         }
       })
     )

@@ -50,27 +50,44 @@ export default function WarehouseExpirationPage() {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/boutique/seller/warehouse-expiration')
-      if (!response.ok) throw new Error('Failed to fetch')
+      console.log('🔍 Fetching warehouse products...')
+      const response = await fetch('/api/boutique/seller/warehouse-expiration', {
+        credentials: 'include'
+      })
+      console.log(`📊 API Response status: ${response.status}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ API Error:', errorData)
+        throw new Error(errorData.error || `Failed to fetch (${response.status})`)
+      }
+      
       const data = await response.json()
+      console.log(`✅ Got ${data.products?.length || 0} products`, data)
       setProducts(data.products || [])
     } catch (error) {
       console.error('Error fetching products:', error)
-      toast.error('Failed to load products')
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load products'
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    console.log(`📍 Session status changed: ${status}`)
     if (status === 'unauthenticated') {
+      console.log('🚪 Redirecting to login (unauthenticated)')
       router.push('/login')
       return
     }
     if (status === 'authenticated') {
+      console.log('✅ User authenticated, fetching products')
       fetchProducts()
+    } else {
+      console.log(`⏳ Waiting for auth... status=${status}`)
     }
-  }, [status, router, fetchProducts])
+  }, [status, fetchProducts, router])
 
   // Search & filter
   useEffect(() => {
@@ -113,6 +130,7 @@ export default function WarehouseExpirationPage() {
       const response = await fetch(`/api/boutique/seller/warehouse-expiration/${selectedProduct.id}/repost`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           reason: repostReason,
           notes: repostNotes,
@@ -304,16 +322,37 @@ export default function WarehouseExpirationPage() {
                     {/* Actions */}
                     {product.inMonth5 && (
                       <div className="pt-3 sm:pt-4 border-t border-gray-200 space-y-2.5 sm:space-y-3">
-                        <button
-                          onClick={() => handleRepostClick(product)}
-                          disabled={repostingId === product.id}
-                          className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors text-xs sm:text-sm font-semibold"
-                        >
-                          {repostingId === product.id ? 'Submitting...' : 'Repost to Keep Selling'}
-                        </button>
-                        <p className="text-xs text-gray-500">
-                          Reposting will deduct 1 unit from stock and reset the 180-day countdown.
-                        </p>
+                        {product.pendingRepost ? (
+                          <div className="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                            <p className="text-xs sm:text-sm font-semibold text-blue-900">
+                              ✓ Repost request pending approval
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              Submitted: {new Date(product.pendingRepost.createdAt).toLocaleDateString()} at {new Date(product.pendingRepost.createdAt).toLocaleTimeString()}
+                            </p>
+                            {product.pendingRepost.notes && (
+                              <p className="text-xs text-blue-700">
+                                Reason: {product.pendingRepost.reason}
+                              </p>
+                            )}
+                            <p className="text-xs text-blue-600 pt-2 border-t border-blue-200">
+                              Admin will review and approve your repost request shortly.
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleRepostClick(product)}
+                              disabled={repostingId === product.id}
+                              className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors text-xs sm:text-sm font-semibold"
+                            >
+                              {repostingId === product.id ? 'Submitting...' : 'Repost to Keep Selling'}
+                            </button>
+                            <p className="text-xs text-gray-500">
+                              Reposting will deduct 1 unit from stock and reset the 180-day countdown.
+                            </p>
+                          </>
+                        )}
                       </div>
                     )}
 

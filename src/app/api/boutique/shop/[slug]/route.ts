@@ -29,7 +29,26 @@ export async function GET(
         slug,
         status: "LIVE",
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        basePrice: true,
+        salePrice: true,
+        brand: true,
+        material: true,
+        careInstructions: true,
+        condition: true,
+        gender: true,
+        style: true,
+        occasion: true,
+        tags: true,
+        thumbnailUrl: true,
+        avgRating: true,
+        categoryId: true,
+        fulfillmentMethod: true,
+        currentStock: true,
         category: {
           select: { id: true, name: true, slug: true },
         },
@@ -70,7 +89,10 @@ export async function GET(
     }
 
     // Check if product has any stock available
-    const totalStock = product.variants.reduce((sum, v) => sum + v.quantity, 0);
+    const variantStock = product.variants.reduce((sum, v) => sum + v.quantity, 0);
+    const totalStock = product.fulfillmentMethod === 'ADMIN_STOCK' 
+      ? (product.currentStock || 0) 
+      : variantStock;
     if (totalStock <= 0) {
       return NextResponse.json(
         { success: false, message: "Product out of stock" },
@@ -78,10 +100,12 @@ export async function GET(
       );
     }
 
-    // Filter variants to only show those with quantity > 0
+    // Filter variants to only show those with quantity > 0 (for non-ADMIN_STOCK products)
     const productWithStock = {
       ...product,
-      variants: product.variants.filter(v => v.quantity > 0),
+      variants: product.fulfillmentMethod === 'ADMIN_STOCK' 
+        ? product.variants 
+        : product.variants.filter(v => v.quantity > 0),
     };
 
     // Increment view count
@@ -97,7 +121,15 @@ export async function GET(
         categoryId: product.categoryId,
         id: { not: product.id },
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        basePrice: true,
+        salePrice: true,
+        thumbnailUrl: true,
+        fulfillmentMethod: true,
+        currentStock: true,
         media: {
           where: { isPrimary: true },
           take: 1,
@@ -109,7 +141,10 @@ export async function GET(
 
     // Filter related products to only include those with stock
     const relatedProductsWithStock = relatedProducts.filter(p => {
-      const totalStock = p.variants.reduce((sum, v) => sum + v.quantity, 0);
+      const variantStock = p.variants.reduce((sum, v) => sum + v.quantity, 0);
+      const totalStock = p.fulfillmentMethod === 'ADMIN_STOCK' 
+        ? (p.currentStock || 0) 
+        : variantStock;
       return totalStock > 0;
     });
 

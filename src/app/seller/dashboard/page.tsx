@@ -771,6 +771,8 @@ export default function SellerDashboardPage() {
                 </div>
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
               </Link>
+
+
             </div>
           </div>
 
@@ -833,6 +835,20 @@ export default function SellerDashboardPage() {
                 </div>
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
               </Link>
+
+              <Link
+                href="/seller/disputes"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">⚠️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Disputes</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Handle buyer disputes</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
             </div>
           </div>
 
@@ -878,6 +894,124 @@ export default function SellerDashboardPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Upgrade Account</p>
                   <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Explore premium seller benefits</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Financial & Analytics Tools Section */}
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide px-2 mb-2 sm:mb-3">Financial & Analytics Tools</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <Link
+                href="/seller/analytics"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Analytics</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Detailed sales analytics</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/earnings"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Earnings</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Earnings summary</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/payments"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">💳</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Payments</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Payment history</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/payouts"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">🏦</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Payouts</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Payout requests</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/transfers"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">↔️</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Transfers</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Fund transfers</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/tax-info"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">📄</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Tax Info</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Tax documents</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/bank-accounts"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">🏪</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Bank Accounts</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Payment methods</p>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
+              </Link>
+
+              <Link
+                href="/seller/appeals"
+                className="flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">📞</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-base font-medium text-gray-900 line-clamp-2 sm:truncate">Appeals</p>
+                  <p className="text-[10px] sm:text-sm text-gray-500 hidden sm:block">Appeal restrictions</p>
                 </div>
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hidden sm:block" />
               </Link>

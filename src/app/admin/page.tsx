@@ -630,6 +630,104 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </Link>
+                    <Link
+                      href="/admin/featured-items"
+                      className="p-4 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-pink-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">✨</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Featured Items</p>
+                          <p className="text-xs text-gray-500">Manage homepage featured designs</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/audit-logs"
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🧾</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Audit Logs</p>
+                          <p className="text-xs text-gray-500">View system audit logs</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/shipping"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🚚</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Shipping</p>
+                          <p className="text-xs text-gray-500">Manage shipping settings</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/payments"
+                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">💳</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Payments</p>
+                          <p className="text-xs text-gray-500">Payment processors & settings</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/security"
+                      className="p-4 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-rose-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🔒</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Security</p>
+                          <p className="text-xs text-gray-500">Security settings & logs</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/seller-badges"
+                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🏅</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Seller Badges</p>
+                          <p className="text-xs text-gray-500">Manage seller tiers & badges</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/subscriptions"
+                      className="p-4 bg-sky-50 border border-sky-200 rounded-lg hover:bg-sky-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-sky-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">📦</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Subscriptions</p>
+                          <p className="text-xs text-gray-500">Manage seller subscriptions</p>
+                        </div>
+                      </div>
+                    </Link>
                     <button
                       onClick={() => setActiveTab('designs')}
                       className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors text-left"
@@ -707,6 +805,20 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </Link>
+                    <Link
+                      href="/admin/pod-management"
+                      className="p-4 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-teal-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">⚙️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">POD Management</p>
+                          <p className="text-xs text-gray-500">Manage POD provider integration</p>
+                        </div>
+                      </div>
+                    </Link>
                   </div>
                 </div>
 
@@ -739,6 +851,20 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Incoming Shipments</p>
                           <p className="text-xs text-gray-500">Verify seller shipments to warehouse</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/warehouse-inventory"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">🏭</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Warehouse Inventory</p>
+                          <p className="text-xs text-gray-500">Track all products in warehouse</p>
                         </div>
                       </div>
                     </Link>
@@ -890,20 +1016,6 @@ export default function AdminDashboard() {
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4 uppercase tracking-wide text-xs">Resources & Support</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                     <Link
-                      href="/admin/resources"
-                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Resources</p>
-                          <p className="text-xs text-gray-500">Manage learning resources</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
                       href="/admin/messages"
                       className="p-4 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
                     >
@@ -927,7 +1039,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Broadcasts</p>
-                          <p className="text-xs text-gray-500">View sent announcements</p>
+                          <p className="text-xs text-gray-500">Send system announcements</p>
                         </div>
                       </div>
                     </Link>
@@ -942,6 +1054,20 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">POD Webhooks</p>
                           <p className="text-xs text-gray-500">Configure Printful &amp; Printify webhooks</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/resources"
+                      className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Resources</p>
+                          <p className="text-xs text-gray-500">Manage learning resources</p>
                         </div>
                       </div>
                     </Link>
@@ -963,20 +1089,6 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Ownership Documents</p>
                           <p className="text-xs text-gray-500">Review &amp; approve ownership transfers</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/seller-badges"
-                      className="p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">🏆</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">Seller Badges</p>
-                          <p className="text-xs text-gray-500">Manage seller badges &amp; ratings</p>
                         </div>
                       </div>
                     </Link>
@@ -1384,13 +1496,6 @@ export default function AdminDashboard() {
                   <p className="text-[7px] sm:text-[8px] text-gray-500 mb-3 sm:mb-4 leading-tight">
                     Resources help users learn design fundamentals, color theory, technical drawing, and pattern making.
                   </p>
-                  <Link
-                    href="/admin/resources"
-                    className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-[8px] sm:text-xs"
-                  >
-                    <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    Resource Manager
-                  </Link>
                 </div>
               </div>
             )}

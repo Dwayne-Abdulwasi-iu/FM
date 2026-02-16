@@ -452,17 +452,28 @@ export default function ProductDetailPage() {
             <div className="relative aspect-[3/4] bg-gray-100 rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4">
               {allMedia[selectedMedia]?.type === 'VIDEO' ? (
                 <video
-                  src={allMedia[selectedMedia].url}
+                  src={allMedia[selectedMedia]?.url}
                   controls
                   className="w-full h-full object-contain"
                 />
-              ) : (
+              ) : allMedia[selectedMedia]?.url ? (
                 <Image
-                  src={allMedia[selectedMedia]?.url || product.thumbnailUrl}
+                  src={allMedia[selectedMedia].url}
                   alt={product.title}
                   fill
                   className="object-contain"
                 />
+              ) : product.thumbnailUrl ? (
+                <Image
+                  src={product.thumbnailUrl}
+                  alt={product.title}
+                  fill
+                  className="object-contain"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  No image available
+                </div>
               )}
 
               {/* Navigation Arrows */}
@@ -502,7 +513,7 @@ export default function ProductDetailPage() {
                       <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                         <Play className="w-6 h-6 text-white" />
                       </div>
-                    ) : (
+                    ) : media.url ? (
                       <Image
                         src={media.url}
                         alt={`Thumbnail ${index + 1}`}
@@ -510,6 +521,10 @@ export default function ProductDetailPage() {
                         height={80}
                         className="object-cover w-full h-full"
                       />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                        —
+                      </div>
                     )}
                   </button>
                 ))}

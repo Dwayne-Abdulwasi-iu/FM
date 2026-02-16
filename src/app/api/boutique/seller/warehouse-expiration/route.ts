@@ -11,12 +11,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all ADMIN_STOCK products that have been received by admin (regardless of status)
     const products = await prisma.boutiqueProduct.findMany({
       where: {
         sellerId: session.user.id,
         fulfillmentMethod: 'ADMIN_STOCK',
-        receivedByAdminAt: { not: null }, // Must have been received by admin
+        receivedByAdminAt: { not: null },
       },
       select: {
         id: true,
@@ -30,7 +29,6 @@ export async function GET(request: NextRequest) {
       orderBy: { receivedByAdminAt: 'desc' },
     })
 
-    // Fetch all pending reposts in ONE query (not N queries)
     const pendingReposts = await prisma.boutiqueRepostRequest.findMany({
       where: {
         productId: { in: products.map(p => p.id) },
@@ -53,11 +51,25 @@ export async function GET(request: NextRequest) {
 
     // Enrich products with warehouse info (no DB queries)
     const enrichedProducts = products.map(product => {
-      const daysInWarehouse = getDaysInWarehouse(product.receivedByAdminAt)
-      const cycleInfo = getCurrentCycleInfo(daysInWarehouse)
-      const inMonth5 = isInMonth5(daysInWarehouse)
-      const repostCheck = canRepost(daysInWarehouse)
-      const pendingRepost = repostMap.get(product.id)
+      // Ensure receivedByAdminAt is a Date
+      const receivedDate = product.receivedByAdminAt ? new Date(product.receivedByAdminAt) : null;
+      const daysInWarehouse = getDaysInWarehouse(receivedDate);
+      const cycleInfo = getCurrentCycleInfo(daysInWarehouse);
+      const inMonth5 = isInMonth5(daysInWarehouse);
+      const repostCheck = canRepost(daysInWarehouse);
+      const pendingRepost = repostMap.get(product.id);
+
+      // Debug log for each product
+      console.log('[DEBUG] Product:', {
+        id: product.id,
+        title: product.title,
+        receivedByAdminAt: product.receivedByAdminAt,
+        receivedDate,
+        daysInWarehouse,
+        inMonth5,
+        canRepost: repostCheck.can,
+        cycleInfo
+      });
 
       return {
         id: product.id,

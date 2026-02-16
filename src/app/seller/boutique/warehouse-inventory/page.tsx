@@ -30,6 +30,7 @@ interface Product {
   originalStock: number | null
   thumbnailUrl: string | null
   status: string
+  fullReturnEnabled: boolean
   returnStatus: string | null
   warehouseReceivedAt: string | null
   warehouseExpiresAt: string | null
@@ -610,11 +611,16 @@ export default function SellerWarehouseInventoryPage() {
 
                     <Link
                       href={
-                        ['IN_RETURN', 'RETURN_REQUESTED', 'RETURN_SHIPPED', 'RETURNED_TO_SELLER'].includes(expandedProduct.status)
+                        // Internal seller product details for:
+                        // - Return-related statuses (IN_RETURN, RETURNED, SHIPPED_BACK)
+                        // - Out of stock products
+                        // - Products in warehouse but not yet LIVE (RECEIVED_BY_ADMIN, VERIFICATION_PASSED, etc.)
+                        ['IN_RETURN', 'RETURNED', 'SHIPPED_BACK', 'RETURN_REQUESTED', 'RETURN_SHIPPED', 'RETURNED_TO_SELLER', 'RECEIVED_BY_ADMIN', 'VERIFICATION_PASSED', 'CONTENT_APPROVED', 'SHIPPED_TO_ADMIN', 'PENDING_CONTENT_REVIEW', 'DRAFT'].includes(expandedProduct.status)
                           ? `/seller/boutique/product-details/${expandedProduct.id}`
                           : expandedProduct.status === 'OUT_OF_STOCK'
                           ? `/seller/boutique/product-details/out-of-stock/${expandedProduct.id}`
-                          : `/boutique/${expandedProduct.slug}`
+                          : // Only go to public boutique for LIVE products (use slug if available, fallback to ID)
+                            `/boutique/${expandedProduct.slug || expandedProduct.id}`
                       }
                       className="text-primary-600 hover:text-primary-700 font-medium text-xs sm:text-sm flex items-center gap-1 mb-3"
                     >
@@ -693,15 +699,49 @@ export default function SellerWarehouseInventoryPage() {
                     {/* Return from Warehouse Button */}
                     {expandedProduct.warehouseReceivedAt && expandedProduct.status !== 'OUT_OF_STOCK' && (
                       <div className="mt-4 pt-4 border-t">
-                        <WarehouseReturnModal
-                          productId={expandedProduct?.id || ''}
-                          productTitle={expandedProduct?.title || ''}
-                          daysInWarehouse={expandedProduct?.daysInWarehouse || 0}
-                          onSuccess={handleProductRefresh}
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                          Request to return this product from the warehouse. Admin fee applies based on storage duration.
-                        </p>
+                        {expandedProduct.fullReturnEnabled || ['AWAITING_ADMIN_APPROVAL', 'RETURN_APPROVED', 'RETURN_IN_TRANSIT', 'RETURN_RECEIVED'].includes(expandedProduct.returnStatus || '') ? (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="text-xl">✓</div>
+                              <div>
+                                <p className="text-sm font-semibold text-blue-900">
+                                  {expandedProduct.returnStatus === 'AWAITING_ADMIN_APPROVAL'
+                                    ? 'Return Pending Admin Review'
+                                    : expandedProduct.returnStatus === 'RETURN_APPROVED'
+                                    ? 'Return Approved'
+                                    : expandedProduct.returnStatus === 'RETURN_IN_TRANSIT'
+                                    ? 'Return in Transit'
+                                    : expandedProduct.returnStatus === 'RETURN_RECEIVED'
+                                    ? 'Return Received'
+                                    : 'Return in Progress'}
+                                </p>
+                                <p className="text-xs text-blue-700 mt-1.5">
+                                  {expandedProduct.returnStatus === 'AWAITING_ADMIN_APPROVAL'
+                                    ? 'Your return request is pending admin review. You will be notified when a decision is made.'
+                                    : expandedProduct.returnStatus === 'RETURN_APPROVED'
+                                    ? 'Your return has been approved by admin. Please prepare the product for shipment.'
+                                    : expandedProduct.returnStatus === 'RETURN_IN_TRANSIT'
+                                    ? 'Your return is in transit. We will confirm receipt shortly.'
+                                    : expandedProduct.returnStatus === 'RETURN_RECEIVED'
+                                    ? 'Your return has been received and is being processed.'
+                                    : 'Your return request is being processed. You cannot submit another return request at this time.'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <WarehouseReturnModal
+                              productId={expandedProduct?.id || ''}
+                              productTitle={expandedProduct?.title || ''}
+                              daysInWarehouse={expandedProduct?.daysInWarehouse || 0}
+                              onSuccess={handleProductRefresh}
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              Request to return this product from the warehouse. Admin fee applies based on storage duration.
+                            </p>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

@@ -3,30 +3,16 @@
  * 
  * This service handles sending email notifications for various events.
  * Supports both SendGrid API and SMTP (Nodemailer) - SendGrid takes priority.
+ * 
+ * NOTE: This is a server-only module. Import only in server components and API routes.
  */
+
+// Import and re-export sync config functions
+export { isSendGridConfigured, isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+import { isSendGridConfigured, isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const nodemailer = require('nodemailer');
-
-// Check if SendGrid is configured (preferred)
-export function isSendGridConfigured(): boolean {
-  return !!(process.env.SENDGRID_API_KEY);
-}
-
-// Check if SMTP is configured (fallback)
-export function isSMTPConfigured(): boolean {
-  return !!(
-    process.env.SMTP_HOST &&
-    process.env.SMTP_PORT &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS
-  );
-}
-
-// Check if any email method is configured
-export function isEmailConfigured(): boolean {
-  return isSendGridConfigured() || isSMTPConfigured();
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Transporter = any;

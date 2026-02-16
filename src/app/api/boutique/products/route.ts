@@ -124,9 +124,10 @@ export async function GET(request: NextRequest) {
       prisma.boutiqueProduct.count({ where }),
     ]);
 
-    // Filter out products with no stock - fetch ALL variants and check total quantity
+    // Filter out products with no stock - check both variants AND currentStock
     const productsWithStock = await Promise.all(
       products.map(async (product) => {
+        // For products with variants, sum variant quantities
         const allVariants = await prisma.boutiqueProductVariant.findMany({
           where: { 
             productId: product.id,
@@ -134,7 +135,10 @@ export async function GET(request: NextRequest) {
           },
           select: { quantity: true },
         });
-        const totalStock = allVariants.reduce((sum, v) => sum + v.quantity, 0);
+        const variantStock = allVariants.reduce((sum, v) => sum + v.quantity, 0);
+        
+        // Use currentStock if no variants (ADMIN_STOCK products), otherwise use variant stock
+        const totalStock = allVariants.length > 0 ? variantStock : (product.currentStock || 0);
         return { product, totalStock };
       })
     );

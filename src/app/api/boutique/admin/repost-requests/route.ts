@@ -4,6 +4,17 @@ import { authOptions } from '@/lib/auth'
 import { approveRepostRequest, rejectRepostRequest } from '@/lib/boutique/warehouse'
 import prisma from '@/lib/prisma'
 
+// Simple in-memory cache for PENDING requests (5 second TTL)
+const cache = {
+  data: null as any,
+  timestamp: 0,
+  TTL: 5000 // 5 seconds
+}
+
+function isCacheValid() {
+  return cache.data && Date.now() - cache.timestamp < cache.TTL
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,12 +24,37 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || 'PENDING'
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Cap at 100
+    const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
+    const skip = (page - 1) * limit
 
+    // Check cache for PENDING requests on page 1
+    if (status === 'PENDING' && page === 1 && isCacheValid()) {
+      return NextResponse.json(
+        { success: true, requests: cache.data, cached: true },
+        { headers: { 'Cache-Control': 'private, max-age=5' } }
+      )
+    }
+
+    // Optimized query with pagination
     const requests = await prisma.boutiqueRepostRequest.findMany({
       where: {
         status: status as any,
       },
-      include: {
+      select: {
+        id: true,
+        productId: true,
+        sellerId: true,
+        reason: true,
+        notes: true,
+        originalStock: true,
+        requestedStock: true,
+        approvedStock: true,
+        status: true,
+        adminNotes: true,
+        reviewedAt: true,
+        daysInWarehouse: true,
+        createdAt: true,
         product: {
           select: {
             id: true,
@@ -37,9 +73,20 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: skip,
     })
 
-    return NextResponse.json({ success: true, requests })
+    // Update cache for PENDING status
+    if (status === 'PENDING' && page === 1) {
+      cache.data = requests
+      cache.timestamp = Date.now()
+    }
+
+    return NextResponse.json(
+      { success: true, requests, page, limit },
+      { headers: { 'Cache-Control': 'private, max-age=5' } }
+    )
   } catch (error) {
     console.error('Error fetching repost requests:', error)
     return NextResponse.json({ error: 'Failed to fetch requests' }, { status: 500 })
@@ -64,9 +111,15 @@ export async function PATCH(request: NextRequest) {
 
     if (action === 'APPROVE') {
       await approveRepostRequest(requestId, session.user.id, adminNotes)
+      // Invalidate cache after approval
+      cache.data = null
+      cache.timestamp = 0
       return NextResponse.json({ success: true, message: 'Repost approved' })
     } else if (action === 'REJECT') {
       await rejectRepostRequest(requestId, session.user.id, adminNotes)
+      // Invalidate cache after rejection
+      cache.data = null
+      cache.timestamp = 0
       return NextResponse.json({ success: true, message: 'Repost rejected' })
     }
 

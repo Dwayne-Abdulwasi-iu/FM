@@ -1,6 +1,6 @@
 'use client'
 
-import { DESIGNER_TIERS } from '@/lib/seller-promotion'
+import { DESIGNER_TIERS } from '@/lib/designer-tiers'
 
 interface DesignerBadgeProps {
   tier: string | null | undefined

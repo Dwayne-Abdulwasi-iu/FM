@@ -58,6 +58,7 @@ export function WarehouseReturnModal({
       <button
         onClick={() => setOpen(true)}
         className="px-4 py-2 border border-amber-200 bg-white hover:bg-amber-50 text-amber-600 font-medium rounded"
+        title="Request warehouse return"
       >
         Request Warehouse Return
       </button>

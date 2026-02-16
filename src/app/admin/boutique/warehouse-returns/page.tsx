@@ -30,6 +30,7 @@ interface ReturnRequest {
   shipment: Shipment
   daysInWarehouse: number
   adminFeePerVariant: number
+  isAutoReturn: boolean
 }
 
 export default function WarehouseReturnsPage() {
@@ -334,9 +335,16 @@ export default function WarehouseReturnsPage() {
                         {request.shipment.products.map(p => p.title).join(', ')}
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.shipment.status)}`}>
-                      {getStatusLabel(request.shipment.status)}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.shipment.status)}`}>
+                        {getStatusLabel(request.shipment.status)}
+                      </span>
+                      {request.isAutoReturn && (
+                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
+                          🏭 Warehouse Expiration
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-gray-800 mt-2">
                     Seller: {request.shipment.seller.name || 'Unknown'} ({request.shipment.seller.email})

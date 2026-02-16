@@ -218,6 +218,18 @@ export async function submitRepostRequest(
     throw new Error(canRepostCheck.reason || 'Cannot repost at this time')
   }
   
+  // Check if already has a pending repost request
+  const existingPendingRepost = await prisma.boutiqueRepostRequest.findFirst({
+    where: {
+      productId,
+      status: 'PENDING'
+    }
+  })
+  
+  if (existingPendingRepost) {
+    throw new Error('You already have a pending repost request for this product. Please wait for admin approval.')
+  }
+  
   // Check daily limit (count PENDING + APPROVED requests)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -234,17 +246,9 @@ export async function submitRepostRequest(
     throw new Error(`Maximum ${MAX_REPOSTS_PER_DAY} reposts per day. Try again tomorrow.`)
   }
   
-  // Calculate stock after deduction
-  const variants = await prisma.boutiqueProductVariant.findMany({
-    where: { productId }
-  })
+  // Validate minimum stock for repost (use currentStock from product)
+  const totalStock = product.currentStock || 0
   
-  let totalStock = 0
-  for (const variant of variants) {
-    totalStock += variant.quantity
-  }
-  
-  // Validate minimum stock for repost
   if (totalStock < 2) {
     throw new Error('Cannot repost: need at least 2 units. After 180 days, remaining items are deducted.')
   }
@@ -303,38 +307,32 @@ export async function approveRepostRequest(
   if (!request) throw new Error('Request not found')
   if (request.status !== 'PENDING') throw new Error('Request already processed')
   
-  // CRITICAL: Validate stock hasn't changed since request
+  // Use currentStock as the authoritative source for non-variant products
+  const currentStock = request.product.currentStock || 0
+  const hasVariants = request.product.variants && request.product.variants.length > 0
   const totalVariantStock = request.product.variants.reduce((sum, v) => sum + v.quantity, 0)
-  if (totalVariantStock <= 0) {
+  
+  // Validate stock exists
+  const actualStock = hasVariants ? totalVariantStock : currentStock
+  if (actualStock <= 0) {
     throw new Error('Product has no stock - repost cannot be approved')
   }
   
-  // CRITICAL: Verify original stock matches what was locked
-  if (request.originalStock !== request.product.currentStock) {
-    throw new Error(
-      `Stock mismatch detected: Original ${request.originalStock} but current is ${request.product.currentStock}. ` +
-      `Possible sale or concurrent modification. Rejecting repost.`
-    )
-  }
-  
-  // Deduct 1 unit from variant with most stock (distributed stock management)
-  const sortedVariants = [...request.product.variants]
-    .sort((a, b) => b.quantity - a.quantity)
-  
-  let totalDeducted = 0
-  for (const variant of sortedVariants) {
-    if (variant.quantity > 0) {
-      await prisma.boutiqueProductVariant.update({
-        where: { id: variant.id },
-        data: { quantity: Math.max(0, variant.quantity - 1) }
-      })
-      totalDeducted += 1
-      break // Only deduct 1 per repost approval
+  // Deduct 1 unit from stock (if variants exist, update variant; otherwise update currentStock)
+  if (hasVariants && totalVariantStock > 0) {
+    // Deduct from variant with most stock
+    const sortedVariants = [...request.product.variants]
+      .sort((a, b) => b.quantity - a.quantity)
+    
+    for (const variant of sortedVariants) {
+      if (variant.quantity > 0) {
+        await prisma.boutiqueProductVariant.update({
+          where: { id: variant.id },
+          data: { quantity: Math.max(0, variant.quantity - 1) }
+        })
+        break
+      }
     }
-  }
-  
-  if (totalDeducted === 0) {
-    throw new Error('Unable to deduct stock - all variants empty')
   }
   
   // Update product with approval details
@@ -353,7 +351,7 @@ export async function approveRepostRequest(
       repostCount: { increment: 1 },
       month5NotificationSent: false, // Reset notification for new cycle
     }
-  })
+  });
   
   // Update request with approval details
   await prisma.boutiqueRepostRequest.update({
@@ -746,14 +744,26 @@ export async function processWarehouseDeductions() {
           let totalReturning = 0
           const keepingPerVariant: Record<string, number> = {}
           
-          for (const variant of product.variants) {
-            // Keep 1 unit as liquidation fee, return the rest
-            const keeping = Math.min(1, variant.quantity) // Keep 1 if available
-            const returning = Math.max(0, variant.quantity - keeping)
+          // Handle both variant-based products and ADMIN_STOCK currentStock products
+          if (product.variants && product.variants.length > 0) {
+            // Variant-based product: keep 1 unit per variant as liquidation fee
+            for (const variant of product.variants) {
+              const keeping = Math.min(1, variant.quantity)
+              const returning = Math.max(0, variant.quantity - keeping)
+              
+              if (returning > 0) {
+                totalReturning += returning
+                keepingPerVariant[variant.id] = keeping
+              }
+            }
+          } else {
+            // ADMIN_STOCK product with currentStock: keep 1 unit, return the rest
+            const currentStock = product.currentStock || 0
+            const keeping = Math.min(1, currentStock)
+            const returning = Math.max(0, currentStock - keeping)
             
             if (returning > 0) {
-              totalReturning += returning
-              keepingPerVariant[variant.id] = keeping
+              totalReturning = returning
             }
           }
           
@@ -777,7 +787,7 @@ export async function processWarehouseDeductions() {
                     status: 'RETURN_SCHEDULED', // Standard return status matching rejected product returns
                     itemsExpected: totalReturning,
                     sellerNotes: `Auto-return triggered after ${daysInWarehouse} days in warehouse without repost.`,
-                    adminNotes: `Auto-return policy applied: Keeping ${product.variants.length} unit(s) as storage liquidation fee. Returning ${totalReturning} unit(s) to seller.`,
+                    adminNotes: `Auto-return policy applied: Keeping 1 unit as storage liquidation fee. Returning ${totalReturning} unit(s) to seller.`,
                     disputeNotes: `Auto-return initiated by system at day ${daysInWarehouse}. Product stayed unsold without repost requests.`
                   }
                 })

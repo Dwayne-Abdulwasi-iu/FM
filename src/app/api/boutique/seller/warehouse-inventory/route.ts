@@ -136,6 +136,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    console.log('[DEBUG WAREHOUSE-INVENTORY] Query where clause:', JSON.stringify(where, null, 2))
+
     // Fetch products - all warehouse products with their current status
     // Limit to 100 products per request to prevent performance issues
     const products = await prisma.boutiqueProduct.findMany({
@@ -151,6 +153,7 @@ export async function GET(request: NextRequest) {
         originalStock: true,
         thumbnailUrl: true,
         status: true,
+        fullReturnEnabled: true,
         warehouseReceivedAt: true,
         warehouseExpiresAt: true,
         outOfStockAt: true,
@@ -162,6 +165,17 @@ export async function GET(request: NextRequest) {
       orderBy: { warehouseReceivedAt: 'desc' },
       take: RESULT_LIMIT,
     })
+
+    console.log('[DEBUG WAREHOUSE-INVENTORY] Database query returned:', products.length, 'products')
+    if (products.length > 0) {
+      console.log('[DEBUG WAREHOUSE-INVENTORY] First product:', {
+        id: products[0].id,
+        title: products[0].title,
+        status: products[0].status,
+        warehouseReceivedAt: products[0].warehouseReceivedAt,
+        sellerId: 'HIDDEN'
+      })
+    }
 
     // Fetch all shipments in one query to avoid N+1
     const shipmentIds = products.map(p => p.shipmentId).filter(Boolean) as string[]
@@ -246,6 +260,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // Enrich with calculated data (no async sales fetch needed - already have data)
+    console.log('[DEBUG WAREHOUSE-INVENTORY] Starting enrichment of', productsWithShipment.length, 'products')
     const enrichedProducts = productsWithShipment.map((product) => {
         const STORAGE_CYCLE_DAYS = 181
         
@@ -310,6 +325,19 @@ export async function GET(request: NextRequest) {
         const productSalesHistory = salesByProductId.get(product.id) || []
         const totalSold = productSalesHistory.reduce((sum, item) => sum + (item.quantity || 0), 0)
 
+        // Debug log for each enriched product
+        if (product.title.includes('ADMIN TEST INVENTORY')) {
+          console.log('[DEBUG WAREHOUSE-INVENTORY] Enriched product:', {
+            title: product.title,
+            daysInWarehouse,
+            daysInCurrentCycle,
+            storageCycle,
+            isInMonth5,
+            warehouseReceivedAt: product.warehouseReceivedAt,
+            warehouseExpiresAt: product.warehouseExpiresAt
+          })
+        }
+
         return {
           ...product,
           daysInWarehouse,
@@ -341,7 +369,13 @@ export async function GET(request: NextRequest) {
           })
         }
       })
-
+    console.log('[DEBUG WAREHOUSE-INVENTORY] Final enrichedProducts count:', enrichedProducts.length)
+    const adminTestProducts = enrichedProducts.filter(p => p.title.includes('ADMIN TEST INVENTORY'))
+    if (adminTestProducts.length > 0) {
+      console.log('[DEBUG WAREHOUSE-INVENTORY] Found ADMIN TEST INVENTORY products:', adminTestProducts.map(p => ({ title: p.title, id: p.id })))
+    } else {
+      console.log('[DEBUG WAREHOUSE-INVENTORY] No ADMIN TEST INVENTORY products in final results')
+    }
     return NextResponse.json({
       products: enrichedProducts,
     })

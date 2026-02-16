@@ -42,11 +42,11 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 jest.mock('@/lib/email', () => ({
-  sendEmail: jest.fn().mockResolvedValue(true),
+  sendEmail: jest.fn() as jest.Mock,
 }))
 
 jest.mock('@/lib/cloudinary', () => ({
-  deleteFromCloudinary: jest.fn().mockResolvedValue(true),
+  deleteFromCloudinary: jest.fn() as jest.Mock,
 }))
 
 jest.mock('next/server', () => ({

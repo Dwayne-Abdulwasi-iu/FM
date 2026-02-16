@@ -130,51 +130,61 @@ export default function WarehouseReturnsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Warehouse Return Requests</h1>
-        <p className="text-gray-600 mt-2">Track your warehouse return requests</p>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <h1 className="text-4xl font-bold mb-2">Warehouse Return Requests</h1>
+          <p className="text-purple-100">Track and manage your warehouse return shipments</p>
+        </div>
       </div>
 
-      {/* Returns List */}
-      <div className="space-y-4">
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Returns List */}
+        <div className="space-y-4">
         {isLoading ? (
-          <div className="bg-white rounded-lg p-6 text-center text-gray-500">
-            Loading...
+          <div className="bg-white rounded-lg p-8 text-center text-gray-500 shadow-sm border border-gray-200">
+            <div className="inline-block">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+            <p className="mt-4">Loading...</p>
           </div>
         ) : returns.length === 0 ? (
-          <div className="bg-white rounded-lg p-6 text-center text-gray-500">
-            No warehouse return requests yet
+          <div className="bg-white rounded-lg p-12 text-center shadow-sm border border-gray-200">
+            <p className="text-lg text-gray-500">No warehouse return requests yet</p>
+            <p className="text-sm text-gray-400 mt-2">Return requests will appear here once initiated</p>
           </div>
         ) : (
           returns.map(ret => (
-            <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">{ret.productTitle}</h3>
-                  <p className="text-sm text-gray-600">
+            <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-100">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{ret.productTitle}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
                     Requested {formatDistanceToNow(new Date(ret.createdAt), { addSuffix: true })}
                   </p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ret.status)}`}>
+                <span className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-4 ${getStatusColor(ret.status)}`}>
                   {getStatusLabel(ret.status)}
                 </span>
               </div>
 
               {/* Fee Info */}
-              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-5 rounded-lg border border-amber-200 mb-4">
+                <p className="text-sm font-semibold text-gray-700 mb-3">Warehouse Details</p>
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Days in Warehouse</p>
-                    <p className="text-2xl font-bold text-amber-600">{ret.daysInWarehouse}</p>
+                  <div className="bg-white rounded p-3">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide">Days in Warehouse</p>
+                    <p className="text-3xl font-bold text-amber-600 mt-1">{ret.daysInWarehouse}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Admin Fee</p>
-                    <p className="text-2xl font-bold text-amber-600">{ret.adminFeePerVariant} units</p>
+                  <div className="bg-white rounded p-3">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide">Admin Fee</p>
+                    <p className="text-3xl font-bold text-amber-600 mt-1">{ret.adminFeePerVariant}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Period</p>
-                    <p className="text-lg font-bold text-amber-600">
+                  <div className="bg-white rounded p-3">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide">Period</p>
+                    <p className="text-lg font-bold text-amber-600 mt-1">
                       {ret.daysInWarehouse <= 119 ? '0-119 days' : '120-180 days'}
                     </p>
                   </div>
@@ -183,35 +193,35 @@ export default function WarehouseReturnsPage() {
 
               {/* Timeline */}
               {ret.status !== 'CANCELLED' && (
-              <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-3">Status Timeline</p>
-                <div className="flex gap-2">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm font-semibold text-gray-700 mb-4">Status Timeline</p>
+                <div className="flex gap-1">
                   {STEP_ORDER.map((step, index) => {
                     const currentIndex = getStepIndex(ret.status)
                     const isCompleted = index < currentIndex || (index === currentIndex && ret.status === 'COMPLETED')
                     const isCurrent = index === currentIndex
 
                     return (
-                      <div key={step} className="flex items-center">
+                      <div key={step} className="flex items-center flex-1">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all ${
                             isCompleted
-                              ? 'bg-green-600 text-white'
+                              ? 'bg-emerald-500 shadow-md'
                               : isCurrent
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-300 text-gray-600'
+                              ? 'bg-purple-600 shadow-lg scale-110'
+                              : 'bg-gray-300'
                           }`}
                         >
-                          {isCompleted ? <Check size={16} /> : index + 1}
+                          {isCompleted ? <Check size={18} /> : index + 1}
                         </div>
                         {index < STEP_ORDER.length - 1 && (
-                          <div className={`h-0.5 w-6 ${isCompleted ? 'bg-green-600' : 'bg-gray-300'}`} />
+                          <div className={`h-1 flex-1 mx-1 rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-gray-300'}`} />
                         )}
                       </div>
                     )
                   })}
                 </div>
-                <div className="mt-2 text-xs text-gray-600 flex justify-between">
+                <div className="mt-3 text-xs text-gray-600 flex justify-between font-medium">
                   <span>Pending</span>
                   <span>Approved</span>
                   <span>Shipped</span>
@@ -223,77 +233,77 @@ export default function WarehouseReturnsPage() {
 
               {/* Shipping Info */}
               {ret.status === 'SHIPPED_BY_ADMIN' && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                  <p className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <Truck size={16} />
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-5 rounded-lg border border-blue-200 mb-4">
+                  <p className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <Truck size={18} className="text-blue-600" />
                     Shipping Details
                   </p>
-                  <div className="space-y-1 text-sm text-blue-800">
-                    {ret.carrier && <p>Carrier: {ret.carrier}</p>}
-                    {ret.trackingNumber && <p>Tracking: {ret.trackingNumber}</p>}
+                  <div className="space-y-2 text-sm text-blue-800 font-medium">
+                    {ret.carrier && <p>📦 Carrier: <span className="font-semibold">{ret.carrier}</span></p>}
+                    {ret.trackingNumber && <p>🔗 Tracking: <span className="font-semibold">{ret.trackingNumber}</span></p>}
                     {ret.estimatedDelivery && (
-                      <p>Est. Delivery: {new Date(ret.estimatedDelivery).toLocaleDateString()}</p>
+                      <p>📅 Est. Delivery: <span className="font-semibold">{new Date(ret.estimatedDelivery).toLocaleDateString()}</span></p>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-3 pt-4">
                 {ret.status === 'PENDING_ADMIN_REVIEW' && (
                   cancelingId === ret.id ? (
-                    <div className="w-full bg-red-50 p-3 rounded-lg border border-red-200 flex gap-2 items-center">
-                      <span className="text-sm text-red-800 flex-1">Cancel this return request?</span>
+                    <div className="w-full bg-red-50 p-4 rounded-lg border border-red-200 flex gap-3 items-center">
+                      <span className="text-sm text-red-800 flex-1">Are you sure you want to cancel this return request?</span>
                       <button
                         onClick={() => setCancelingId(null)}
-                        className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                        className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded font-medium text-sm transition-colors"
                       >
                         No
                       </button>
                       <button
                         onClick={() => handleCancel(ret.id)}
                         disabled={canceling}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded text-sm"
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded font-medium text-sm transition-colors"
                       >
-                        {canceling ? 'Canceling...' : 'Yes'}
+                        {canceling ? 'Canceling...' : 'Yes, Cancel'}
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setCancelingId(ret.id)}
-                      className="flex-1 px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded font-medium text-sm flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 border-2 border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
                     >
-                      <X size={16} />
-                      Cancel Request
+                      <X size={18} />
+                      Cancel Return Request
                     </button>
                   )
                 )}
 
                 {ret.status === 'SHIPPED_BY_ADMIN' && (
                   receivingId === ret.id ? (
-                    <div className="w-full bg-purple-50 p-3 rounded-lg border border-purple-200 flex gap-2 items-center">
-                      <span className="text-sm text-purple-800 flex-1">Confirm you received this?</span>
+                    <div className="w-full bg-purple-50 p-4 rounded-lg border border-purple-200 flex gap-3 items-center">
+                      <span className="text-sm text-purple-800 flex-1">Confirm that you have received this return?</span>
                       <button
                         onClick={() => setReceivingId(null)}
-                        className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                        className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded font-medium text-sm transition-colors"
                       >
                         No
                       </button>
                       <button
                         onClick={() => handleMarkReceived(ret.id)}
                         disabled={receiving}
-                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white rounded text-sm"
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded font-medium text-sm transition-colors"
                       >
-                        {receiving ? 'Confirming...' : 'Yes'}
+                        {receiving ? 'Confirming...' : 'Yes, Received'}
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setReceivingId(ret.id)}
-                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium text-sm flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
                     >
-                      <Check size={16} />
-                      Mark Received
+                      <Check size={18} />
+                      Mark as Received
                     </button>
                   )
                 )}
@@ -301,6 +311,7 @@ export default function WarehouseReturnsPage() {
             </div>
           ))
         )}
+      </div>
       </div>
     </div>
   )

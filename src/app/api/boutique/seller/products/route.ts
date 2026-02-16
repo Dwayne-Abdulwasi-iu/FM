@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
           status: true,
           createdAt: true,
           shipmentId: true,
+          currentStock: true,
+          fulfillmentMethod: true,
           category: {
             select: { id: true, name: true, slug: true },
           },

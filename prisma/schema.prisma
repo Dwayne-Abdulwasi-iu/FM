@@ -2954,6 +2954,7 @@ model BoutiqueRepostRequest {
   @@index([sellerId])
   @@index([status])
   @@index([createdAt])
+  @@index([status, createdAt]) // Compound index for admin list queries
   @@map("boutique_repost_requests")
 }
 
