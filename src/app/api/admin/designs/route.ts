@@ -25,12 +25,25 @@ export async function GET(request: NextRequest) {
     const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
     const limit = Number.isNaN(limitParam) || limitParam < 1 ? DEFAULT_PAGE_SIZE : Math.min(limitParam, MAX_PAGE_SIZE)
     const skip = (page - 1) * limit
+    const search = searchParams.get('search') || ''
+    const onlyNotFeatured = searchParams.get('onlyNotFeatured') === 'true'
+
+    // Build filter
+    const where: any = {}
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { designer: { name: { contains: search, mode: 'insensitive' } } },
+        { designer: { email: { contains: search, mode: 'insensitive' } } }
+      ]
+    }
 
     // Parallel fetch: designs and total count
     const [designs, total] = await Promise.all([
       prisma.design.findMany({
         skip,
         take: limit,
+        where,
         orderBy: {
           createdAt: 'desc'
         },
@@ -51,17 +64,25 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.design.count()
+      prisma.design.count({ where })
     ])
 
-    // Map designs to include isFeatured flag
-    const designsWithFeatured = designs.map(design => ({
+    // Map designs to include isFeatured flag and filter if needed
+    let designsWithFeatured = designs.map(design => ({
       ...design,
       isFeatured: design.featuredInList.length > 0
     }))
 
+    if (onlyNotFeatured) {
+      designsWithFeatured = designsWithFeatured.filter(d => !d.isFeatured)
+    }
+
     return NextResponse.json({ 
       designs: designsWithFeatured.map(d => {
+        const { featuredInList, ...rest } = d
+        return rest
+      }),
+      items: designsWithFeatured.map(d => {
         const { featuredInList, ...rest } = d
         return rest
       }),

@@ -199,6 +199,15 @@ model User {
   // Variant Discrepancy Appeals
   sellerAppeals VariantDiscrepancyAppeal[] @relation("SellerDiscrepancyAppeals")
   appealResolutions VariantDiscrepancyAppeal[] @relation("AppealResolutions")
+  
+  // Dispute Appeals
+  disputeAppeals DisputeAppeal[] @relation("DisputeAppeals")
+  disputeAppealReviews DisputeAppeal[] @relation("AppealReviews")
+
+  // Essential indexes for user queries
+  @@index([role])
+  @@index([isVerified])
+  @@index([createdAt])
 
   @@map("users")
 }
@@ -332,6 +341,16 @@ model Design {
   // Featured designs (seller-managed, subject to subscription tier limits)
   featuredInList FeaturedDesign[]
 
+  // Critical indexes for design discovery and listing queries
+  @@index([designerId])
+  @@index([category])
+  @@index([approvalStatus])
+  @@index([isActive])
+  @@index([featured])
+  @@index([designerId, isActive])
+  @@index([category, approvalStatus, isActive])
+  @@index([createdAt])
+  
   @@map("designs")
 }
 
@@ -566,6 +585,8 @@ model CartItem {
   design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
 
   @@unique([userId, designId, purchaseType, podProductId])
+  @@index([userId])
+  @@index([userId, createdAt])
   @@map("cart_items")
 }
 
@@ -1088,6 +1109,10 @@ model Promotion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Fast lookup of active promotions by seller
+  @@index([sellerId])
+  @@index([sellerId, isActive])
+  @@index([sellerId, isActive, startDate, endDate])
   @@map("promotions")
 }
 
@@ -1469,6 +1494,12 @@ model CommissionRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // User lookup indexes - critical for unread message counts and dashboard queries
+  @@index([requesterId])
+  @@index([designerId])
+  @@index([requesterId, status])
+  @@index([designerId, status])
+  
   // Composite indexes for cron job performance
   @@index([status, payoutStatus])
   @@index([status, isDisputed, payoutInitiatedAt])
@@ -2911,6 +2942,11 @@ model AdminBroadcastRecipient {
   readAt      DateTime?
   
   createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([broadcastId])
 }
 
 // Boutique Product Repost Request (for warehouse storage)
@@ -3246,4 +3282,36 @@ model VariantDiscrepancyAppeal {
   @@index([sellerId])
   @@index([appealStatus])
   @@map("variant_discrepancy_appeals")
+}
+
+// ===== DISPUTE APPEAL SYSTEM =====
+// Allows sellers to appeal dispute decisions
+model DisputeAppeal {
+  id                    String   @id @default(cuid()) @map("_id")
+  
+  // Reference to the original dispute
+  originalDisputeNumber String   // Original dispute ID/number being appealed
+  
+  // Who is appealing
+  sellerId              String
+  seller                User     @relation("DisputeAppeals", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Appeal details
+  reason                String   // Why seller is appealing the decision
+  notes                 String?  // Additional notes from seller
+  status                String   @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, APPROVED, DENIED
+  
+  // Admin response
+  reviewedBy            String?  // Admin who reviewed appeal
+  admin                 User?    @relation("AppealReviews", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  adminResponse         String?  // Admin's response to appeal
+  
+  // Timestamps
+  submittedAt           DateTime @default(now())
+  reviewedAt            DateTime?
+  
+  @@index([sellerId])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("dispute_appeals")
 }

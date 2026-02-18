@@ -59,11 +59,24 @@ export async function GET(request: NextRequest) {
       prisma.design.count({ where: whereClause })
     ]);
 
+    // Get admin-featured status for these designs
+    const designIds = designs.map(d => d.id)
+    const adminFeaturedDesigns = await prisma.adminFeaturedItem.findMany({
+      where: {
+        itemType: 'DESIGN',
+        itemId: { in: designIds }
+      },
+      select: { itemId: true }
+    })
+    
+    const adminFeaturedIds = new Set(adminFeaturedDesigns.map(item => item.itemId))
+
     // Return designs with placeholder rating (reviews relation may not exist)
     const designsWithRating = designs.map(design => {
       return {
         ...design,
         avgRating: 0, // Reviews may not be available in this model
+        addedByAdmin: adminFeaturedIds.has(design.id)
       };
     });
 

@@ -49,41 +49,65 @@ export async function PUT(
       );
     }
 
-    // Get appeal and update
-    const appeal = await prisma.variantDiscrepancyAppeal.update({
-      where: { id: appealId },
-      data: {
-        appealStatus,
-        resolutionAction: appealStatus !== 'PENDING' ? resolutionAction : null,
-        resolutionNotes: resolutionNotes ? resolutionNotes.substring(0, 1000) : null,
-        resolvedBy: appealStatus !== 'PENDING' ? session.user.id : null,
-        resolvedAt: appealStatus !== 'PENDING' ? new Date() : null,
-      },
-      include: {
-        decision: {
-          include: {
-            discrepancy: {
-              include: {
-                shipment: {
-                  select: { id: true, sellerId: true, seller: { select: { name: true, email: true } } },
-                },
-                variant: {
-                  include: {
-                    product: { select: { title: true } },
+    // Try to update variant discrepancy appeal first
+    let appeal: any = null;
+    let isVariantAppeal = false;
+    
+    try {
+      appeal = await prisma.variantDiscrepancyAppeal.update({
+        where: { id: appealId },
+        data: {
+          appealStatus,
+          resolutionAction: appealStatus !== 'PENDING' ? resolutionAction : null,
+          resolutionNotes: resolutionNotes ? resolutionNotes.substring(0, 1000) : null,
+          resolvedBy: appealStatus !== 'PENDING' ? session.user.id : null,
+          resolvedAt: appealStatus !== 'PENDING' ? new Date() : null,
+        },
+        include: {
+          decision: {
+            include: {
+              discrepancy: {
+                include: {
+                  shipment: {
+                    select: { id: true, sellerId: true, seller: { select: { name: true, email: true } } },
+                  },
+                  variant: {
+                    include: {
+                      product: { select: { title: true } },
+                    },
                   },
                 },
               },
             },
           },
+          seller: { select: { name: true, email: true } },
         },
-        seller: { select: { name: true, email: true } },
-      },
-    });
+      });
+      isVariantAppeal = true;
+    } catch (variantError: any) {
+      // If not found, try dispute appeal
+      if (variantError?.code === 'P2025') {
+        appeal = await prisma.disputeAppeal.update({
+          where: { id: appealId },
+          data: {
+            status: appealStatus,
+            adminResponse: resolutionNotes ? resolutionNotes.substring(0, 1000) : null,
+            reviewedBy: appealStatus !== 'PENDING' ? session.user.id : null,
+            reviewedAt: appealStatus !== 'PENDING' ? new Date() : null,
+          },
+          include: {
+            seller: { select: { id: true, name: true, email: true } },
+          },
+        });
+        isVariantAppeal = false;
+      } else {
+        throw variantError;
+      }
+    }
 
     // Notify seller of resolution
     if (appealStatus !== 'PENDING') {
       try {
-        const productTitle = appeal.decision.discrepancy.variant.product.title;
         const statusMap: Record<string, string> = {
           APPROVED: '✅ Appeal Approved',
           REJECTED: '❌ Appeal Rejected',
@@ -98,11 +122,13 @@ export async function PUT(
         };
         const actionText = actionMap[resolutionAction] || 'Your appeal has been reviewed.';
 
-        await sendEmail({
-          to: appeal.seller.email,
-          subject: `${statusText}: ${productTitle}`,
-          text: `Your appeal for "${productTitle}" has been resolved.`,
-          html: `
+        let emailSubject = statusText;
+        let emailHtml = '';
+
+        if (isVariantAppeal) {
+          const productTitle = appeal.decision?.discrepancy?.variant?.product?.title || 'Unknown Product';
+          emailSubject = `${statusText}: ${productTitle}`;
+          emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background-color: ${appealStatus === 'APPROVED' ? '#D1FAE5' : '#FEE2E2'}; border-left: 4px solid ${appealStatus === 'APPROVED' ? '#059669' : '#DC2626'}; padding: 20px; border-radius: 4px;">
                 <p style="margin: 0; color: ${appealStatus === 'APPROVED' ? '#065F46' : '#7F1D1D'}; font-weight: bold;">${statusText}</p>
@@ -120,7 +146,33 @@ export async function PUT(
                 ` : ''}
               </div>
             </div>
-          `,
+          `;
+        } else {
+          // Dispute appeal
+          emailSubject = `${statusText}: Dispute Appeal`;
+          emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background-color: ${appealStatus === 'APPROVED' ? '#D1FAE5' : '#FEE2E2'}; border-left: 4px solid ${appealStatus === 'APPROVED' ? '#059669' : '#DC2626'}; padding: 20px; border-radius: 4px;">
+                <p style="margin: 0; color: ${appealStatus === 'APPROVED' ? '#065F46' : '#7F1D1D'}; font-weight: bold;">${statusText}</p>
+                <p style="color: ${appealStatus === 'APPROVED' ? '#065F46' : '#7F1D1D'}; margin: 10px 0 0 0;">
+                  ${actionText}
+                </p>
+                ${resolutionNotes ? `
+                  <p style="color: ${appealStatus === 'APPROVED' ? '#065F46' : '#7F1D1D'}; margin: 10px 0 0 0;">
+                    <strong>Admin Response:</strong><br/>
+                    ${resolutionNotes.replace(/\n/g, '<br/>')}
+                  </p>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        await sendEmail({
+          to: appeal.seller.email,
+          subject: emailSubject,
+          text: `Your appeal has been updated. Status: ${statusText}`,
+          html: emailHtml,
         });
       } catch (emailError) {
         console.error('Failed to notify seller of appeal resolution:', emailError);

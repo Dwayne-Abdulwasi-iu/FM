@@ -31,22 +31,22 @@ export default function WarehouseReturnsPage() {
   const [receivingId, setReceivingId] = useState<string | null>(null)
   const [receiving, setReceiving] = useState(false)
 
-  useEffect(() => {
-    const fetchReturns = async () => {
-      try {
-        setIsLoading(true)
-        const res = await fetch('/api/boutique/seller/warehouse-returns')
-        if (!res.ok) throw new Error('Failed to fetch returns')
-        const data = await res.json()
-        setReturns(data.returns || [])
-      } catch (error) {
-        console.error('Fetch error:', error)
-        toast.error('Failed to load warehouse returns')
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchReturns = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/boutique/seller/warehouse-returns')
+      if (!res.ok) throw new Error('Failed to fetch returns')
+      const data = await res.json()
+      setReturns(data.returns || [])
+    } catch (error) {
+      console.error('Fetch error:', error)
+      toast.error('Failed to load warehouse returns')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (session?.user) {
       fetchReturns()
     }
@@ -80,20 +80,34 @@ export default function WarehouseReturnsPage() {
       setReceiving(true)
       // Extract productId from composite id (format: shipmentId-productId)
       const productId = returnId.split('-').pop()
+      console.log('[handleMarkReceived] returnId:', returnId, '→ productId:', productId)
       if (!productId) throw new Error('Invalid return ID')
       
-      const res = await fetch(`/api/boutique/seller/returned/${productId}/received`, {
+      const url = `/api/boutique/seller/returned/${productId}/received`
+      console.log('[handleMarkReceived] Sending POST to:', url)
+      
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
-      if (!res.ok) throw new Error('Failed to mark as received')
+      
+      console.log('[handleMarkReceived] Response status:', res.status)
+      const resData = await res.json()
+      console.log('[handleMarkReceived] Response data:', resData)
+      
+      if (!res.ok) throw new Error(resData.message || 'Failed to mark as received')
       toast.success('Return marked as received')
       setReturns(
         returns.map(r =>
           r.id === returnId ? { ...r, status: 'RECEIVED_BY_SELLER' as const } : r
         )
       )
+      // Refetch returns after 500ms to show updated status
+      setTimeout(() => {
+        fetchReturns()
+      }, 500)
     } catch (error) {
+      console.error('[handleMarkReceived] ❌ Error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed')
     } finally {
       setReceiving(false)

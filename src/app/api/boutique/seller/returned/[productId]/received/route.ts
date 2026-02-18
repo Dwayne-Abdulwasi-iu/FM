@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { revalidatePath } from 'next/cache'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
@@ -21,6 +22,7 @@ export async function POST(
     }
 
     const { productId } = await context.params
+    console.log('[POST /api/boutique/seller/returned/[productId]/received] Received request for productId:', productId)
 
     if (!productId) {
       return NextResponse.json(
@@ -40,6 +42,8 @@ export async function POST(
       },
     })
 
+    console.log('[POST /api/boutique/seller/returned/[productId]/received] Product found:', { id: product?.id, status: product?.status, sellerId: product?.sellerId })
+
     if (!product) {
       return NextResponse.json(
         { success: false, message: 'Product not found' },
@@ -55,10 +59,11 @@ export async function POST(
       )
     }
 
-    // Product must be in RETURN_IN_PROGRESS status
-    if (product.status !== 'RETURN_IN_PROGRESS') {
+    // Product must be in SHIPPED_BACK status (admin shipped it back to seller)
+    if (!['RETURN_IN_PROGRESS', 'SHIPPED_BACK'].includes(product.status)) {
+      console.log('[POST /api/boutique/seller/returned/[productId]/received] ❌ Product status is', product.status, 'but expected RETURN_IN_PROGRESS or SHIPPED_BACK')
       return NextResponse.json(
-        { success: false, message: 'Product is not in return workflow' },
+        { success: false, message: `Product status is ${product.status}, expected SHIPPED_BACK or RETURN_IN_PROGRESS` },
         { status: 400 }
       )
     }
@@ -74,7 +79,10 @@ export async function POST(
       },
     })
 
+    console.log('[POST /api/boutique/seller/returned/[productId]/received] Shipment found:', { id: shipment?.id, status: shipment?.status })
+
     if (!shipment) {
+      console.log('[POST /api/boutique/seller/returned/[productId]/received] ❌ No shipment found')
       return NextResponse.json(
         { success: false, message: 'No shipped return found' },
         { status: 404 }
@@ -119,13 +127,19 @@ export async function POST(
       },
     })
 
+    console.log('[POST /api/boutique/seller/returned/[productId]/received] ✅ Successfully marked as received')
+
+    // Revalidate paths that might show this product
+    revalidatePath('/seller/boutique')
+    revalidatePath('/seller/boutique/warehouse-returns')
+
     return NextResponse.json({
       success: true,
       message: 'Product marked as received. Admin will verify next.',
       product: updatedProduct,
     })
   } catch (error) {
-    console.error('Error marking product received:', error)
+    console.error('[POST /api/boutique/seller/returned/[productId]/received] ❌ Error:', error)
     return NextResponse.json(
       { success: false, message: 'Failed to mark product received' },
       { status: 500 }

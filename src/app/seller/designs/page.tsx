@@ -110,7 +110,7 @@ export default function SellerDesignsPage() {
           const designsData = await designsRes.json()
           let designs = designsData.designs || []
           
-          // Load featured status if available
+          // Load featured status from seller-featured designs
           if (featuredRes.ok) {
             const featuredData = await featuredRes.json()
             interface FeaturedDesignItem {
@@ -124,7 +124,18 @@ export default function SellerDesignsPage() {
             designs = designs.map((design: Design) => ({
               ...design,
               featured: featuredMap.has(design.id),
-              addedByAdmin: featuredMap.get(design.id)?.addedByAdmin || false
+              // If in seller featured list, use that addedByAdmin status
+              // Otherwise use the addedByAdmin from designs API (admin-featured)
+              addedByAdmin: featuredMap.has(design.id) 
+                ? (featuredMap.get(design.id)?.addedByAdmin || false)
+                : (design.addedByAdmin || false)
+            }))
+          } else {
+            // If featured endpoint fails, just use addedByAdmin from designs
+            designs = designs.map((design: Design) => ({
+              ...design,
+              featured: design.addedByAdmin || false,
+              addedByAdmin: design.addedByAdmin || false
             }))
           }
           

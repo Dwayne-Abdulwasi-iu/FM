@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { Navbar } from '@/components/layout/navbar'
 import { SessionProvider } from 'next-auth/react'
 import { LanguageProvider } from '@/contexts/LanguageContext'
@@ -30,44 +30,44 @@ const MockSessionProvider = ({ children, session = null }: MockProps) => (
 
 describe('Navbar', () => {
   it('renders the navbar with logo', () => {
-    render(
+    const { getAllByText } = render(
       <MockSessionProvider>
         <Navbar />
       </MockSessionProvider>
     )
 
-    expect(screen.getAllByText('FM').length).toBeGreaterThan(0)
+    expect(getAllByText('FM').length).toBeGreaterThan(0)
   })
 
   it('shows sign in button when not authenticated', () => {
-    render(
+    const { getByText } = render(
       <MockSessionProvider session={null}>
         <Navbar />
       </MockSessionProvider>
     )
 
-    expect(screen.getByText('Sign In')).toBeInTheDocument()
+    expect(getByText('Sign In')).toBeInTheDocument()
   })
 
   it('shows upload link when authenticated', () => {
-    render(
+    const { getByText } = render(
       <MockSessionProvider session={mockSession}>
         <Navbar />
       </MockSessionProvider>
     )
 
-    expect(screen.getByText('Upload')).toBeInTheDocument()
-    expect(screen.getByText('Sign Out')).toBeInTheDocument()
+    expect(getByText('Upload')).toBeInTheDocument()
+    expect(getByText('Sign Out')).toBeInTheDocument()
   })
 
   it('has proper navigation links', () => {
-    render(
+    const { getByText, getByPlaceholderText } = render(
       <MockSessionProvider>
         <Navbar />
       </MockSessionProvider>
     )
 
-    expect(screen.getByText('Designs')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument()
+    expect(getByText('Designs')).toBeInTheDocument()
+    expect(getByPlaceholderText('Search...')).toBeInTheDocument()
   })
 })

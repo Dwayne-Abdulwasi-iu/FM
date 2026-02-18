@@ -180,42 +180,42 @@ export default function SellerFeaturedItemsPage() {
   const totalFeatured = designs.length + products.length
   const canAddMore = totalFeatured < maxFeatured
 
-  if (status === 'loading') return <div className="p-8">Loading...</div>
+  if (status === 'loading') return <div className="p-4 sm:p-8 text-center"><div className="inline-block">Loading...</div></div>
   if (status === 'unauthenticated') return null
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-3 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <Star className="h-8 w-8 text-yellow-500" />
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2">
+                <Star className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-yellow-500" />
                 Featured Items
               </h1>
-              <p className="text-gray-600 mt-1">Manage your featured designs and products</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Manage your featured designs and products</p>
             </div>
-            <div className={`rounded-lg p-4 ${tierInfo.color}`}>
-              <div className="text-sm font-medium">Your Plan: {tierInfo.name}</div>
-              <div className="text-2xl font-bold">{totalFeatured}/{maxFeatured}</div>
-              <div className="text-xs mt-1">Featured Items</div>
+            <div className={`rounded-lg p-2.5 sm:p-3 md:p-4 whitespace-nowrap ${tierInfo.color}`}>
+              <div className="text-xs sm:text-sm font-medium">Your Plan: {tierInfo.name}</div>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold">{totalFeatured}/{maxFeatured}</div>
+              <div className="text-[10px] sm:text-xs mt-0.5 sm:mt-1">Featured Items</div>
             </div>
           </div>
         </div>
 
         {/* Subscription Info */}
         {maxFeatured === 0 && (
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="mb-3 sm:mb-6 bg-blue-50 border border-blue-200 rounded-lg p-2.5 sm:p-4 flex items-start gap-2 sm:gap-3">
+            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-medium text-blue-900">No Featured Items Available</h3>
-              <p className="text-sm text-blue-800 mt-1">
+              <h3 className="text-sm sm:text-base font-medium text-blue-900">No Featured Items Available</h3>
+              <p className="text-xs sm:text-sm text-blue-800 mt-1">
                 Your current plan doesn't include featured items. Upgrade to Pro or VIP to feature up to 10 items on your storefront.
               </p>
               <button
                 onClick={() => router.push('/seller/upgrade')}
-                className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+                className="mt-1 sm:mt-2 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 underline"
               >
                 View upgrade plans →
               </button>
@@ -224,64 +224,77 @@ export default function SellerFeaturedItemsPage() {
         )}
 
         {/* Featured Designs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow mb-3 sm:mb-6">
+          <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <ImageIcon className="h-5 w-5 text-purple-600" />
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                 Featured Designs
               </h2>
-              <p className="text-sm text-gray-600 mt-1">{designs.length} designs featured</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">{designs.length} designs featured</p>
             </div>
           </div>
 
           {designs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No featured designs yet</p>
+            <div className="p-4 sm:p-8 md:p-12 text-center">
+              <ImageIcon className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto mb-2 sm:mb-4 opacity-20" />
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2">No Featured Designs Yet</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-6">Start featuring your designs to boost visibility on your storefront</p>
               {canAddMore && (
                 <button
-                  onClick={() => router.push('/seller/designs')}
-                  className="mt-3 text-sm font-medium text-purple-600 hover:text-purple-700"
+                  onClick={() => router.push('/seller/designs/featured')}
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-6 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-700 transition"
                 >
-                  Go to my designs →
+                  Manage Featured Designs →
+                </button>
+              )}
+              {!canAddMore && (
+                <button
+                  onClick={() => router.push('/seller/upgrade')}
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-6 py-1.5 sm:py-2 bg-gray-400 text-white rounded-lg text-xs sm:text-sm font-medium cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Upgrade to Feature
                 </button>
               )}
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
               {designs.map((design) => (
-                <div key={design.id} className="p-4 hover:bg-gray-50 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div key={design.id} className="p-2 sm:p-3 md:p-4 hover:bg-gray-50 flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                     {/* Position Badge */}
-                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-semibold text-xs sm:text-sm flex-shrink-0">
                       {design.position}
                     </div>
                     {design.imageUrl ? (
                       <img
                         src={design.imageUrl}
                         alt={design.title}
-                        className="h-12 w-12 rounded object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded object-cover"
                       />
                     ) : (
-                      <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">{design.title}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{design.title}</div>
+                      <div className="text-xs text-gray-600">
                         ${(typeof design.price === 'number' ? design.price : 0).toFixed(2)} • {typeof design.totalSales === 'number' ? design.totalSales : 0} sales
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                     {editingPositions[design.id] !== undefined ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 sm:gap-1">
                         <input
                           type="number"
                           min="1"
                           max={maxFeatured}
+                          placeholder="Pos"
+                          aria-label="Edit position"
                           value={editingPositions[design.id]}
                           onChange={(e) => {
                             const val = parseInt(e.target.value, 10)
@@ -289,18 +302,18 @@ export default function SellerFeaturedItemsPage() {
                               setEditingPositions(prev => ({ ...prev, [design.id]: val }))
                             }
                           }}
-                          className="w-12 px-2 py-1 border border-gray-300 rounded text-sm"
+                          className="w-10 px-1.5 py-0.5 border border-gray-300 rounded text-xs"
                         />
                         <button
                           onClick={() => handleUpdatePosition(design.id, 'DESIGN', editingPositions[design.id])}
                           disabled={updatingPositionId === design.id}
-                          className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+                          className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingPositions(prev => { const newEditing = { ...prev }; delete newEditing[design.id]; return newEditing })}
-                          className="px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
+                          className="px-1.5 py-0.5 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
                         >
                           Cancel
                         </button>
@@ -309,7 +322,7 @@ export default function SellerFeaturedItemsPage() {
                       <>
                         <button
                           onClick={() => setEditingPositions(prev => ({ ...prev, [design.id]: design.position }))}
-                          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 text-xs"
+                          className="p-1 hover:bg-gray-200 rounded text-gray-600 text-xs"
                           title="Edit position"
                         >
                           Reorder
@@ -317,9 +330,11 @@ export default function SellerFeaturedItemsPage() {
                         <button
                           onClick={() => handleRemove(design.id, 'DESIGN')}
                           disabled={deletingId === design.id}
-                          className="p-1.5 hover:bg-red-50 rounded text-red-600 disabled:opacity-50"
+                          title="Remove from featured"
+                          aria-label="Remove from featured"
+                          className="p-1 hover:bg-red-50 rounded text-red-600 disabled:opacity-50"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </>
                     )}
@@ -332,64 +347,77 @@ export default function SellerFeaturedItemsPage() {
 
         {/* Featured Boutique Products */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5 text-green-600" />
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 Featured Products
               </h2>
-              <p className="text-sm text-gray-600 mt-1">{products.length} products featured</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">{products.length} products featured</p>
             </div>
           </div>
 
           {products.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <ShoppingBag className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No featured products yet</p>
+            <div className="p-4 sm:p-8 md:p-12 text-center">
+              <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto mb-2 sm:mb-4 opacity-20" />
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2">No Featured Products Yet</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-6">Start featuring your products to increase sales and visibility</p>
               {canAddMore && (
                 <button
-                  onClick={() => router.push('/seller/boutique')}
-                  className="mt-3 text-sm font-medium text-green-600 hover:text-green-700"
+                  onClick={() => router.push('/seller/boutique/featured')}
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-6 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-green-700 transition"
                 >
-                  Go to my products →
+                  Manage Featured Products →
+                </button>
+              )}
+              {!canAddMore && (
+                <button
+                  onClick={() => router.push('/seller/upgrade')}
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-6 py-1.5 sm:py-2 bg-gray-400 text-white rounded-lg text-xs sm:text-sm font-medium cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Upgrade to Feature
                 </button>
               )}
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
               {products.map((product) => (
-                <div key={product.id} className="p-4 hover:bg-gray-50 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div key={product.id} className="p-2 sm:p-3 md:p-4 hover:bg-gray-50 flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                     {/* Position Badge */}
-                    <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold text-xs sm:text-sm flex-shrink-0">
                       {product.position}
                     </div>
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.title}
-                        className="h-12 w-12 rounded object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded object-cover"
                       />
                     ) : (
-                      <div className="h-12 w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag className="h-6 w-6 text-gray-400" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">{product.title}</div>
-                      <div className="text-sm text-gray-600 flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{product.title}</div>
+                      <div className="text-xs text-gray-600 flex items-center gap-0.5">
+                        <DollarSign className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {(typeof product.price === 'number' ? product.price : 0).toFixed(2)}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                     {editingPositions[product.id] !== undefined ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 sm:gap-1">
                         <input
                           type="number"
                           min="1"
                           max={maxFeatured}
+                          placeholder="Pos"
+                          aria-label="Edit position"
                           value={editingPositions[product.id]}
                           onChange={(e) => {
                             const val = parseInt(e.target.value, 10)
@@ -397,18 +425,18 @@ export default function SellerFeaturedItemsPage() {
                               setEditingPositions(prev => ({ ...prev, [product.id]: val }))
                             }
                           }}
-                          className="w-12 px-2 py-1 border border-gray-300 rounded text-sm"
+                          className="w-10 px-1.5 py-0.5 border border-gray-300 rounded text-xs"
                         />
                         <button
                           onClick={() => handleUpdatePosition(product.id, 'BOUTIQUE_PRODUCT', editingPositions[product.id])}
                           disabled={updatingPositionId === product.id}
-                          className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+                          className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingPositions(prev => { const newEditing = { ...prev }; delete newEditing[product.id]; return newEditing })}
-                          className="px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
+                          className="px-1.5 py-0.5 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
                         >
                           Cancel
                         </button>
@@ -417,7 +445,7 @@ export default function SellerFeaturedItemsPage() {
                       <>
                         <button
                           onClick={() => setEditingPositions(prev => ({ ...prev, [product.id]: product.position }))}
-                          className="p-1.5 hover:bg-gray-200 rounded text-gray-600 text-xs"
+                          className="p-1 hover:bg-gray-200 rounded text-gray-600 text-xs"
                           title="Edit position"
                         >
                           Reorder
@@ -425,9 +453,11 @@ export default function SellerFeaturedItemsPage() {
                         <button
                           onClick={() => handleRemove(product.id, 'BOUTIQUE_PRODUCT')}
                           disabled={deletingId === product.id}
-                          className="p-1.5 hover:bg-red-50 rounded text-red-600 disabled:opacity-50"
+                          title="Remove from featured"
+                          aria-label="Remove from featured"
+                          className="p-1 hover:bg-red-50 rounded text-red-600 disabled:opacity-50"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </>
                     )}
@@ -440,23 +470,23 @@ export default function SellerFeaturedItemsPage() {
 
         {/* Tier Comparison */}
         {maxFeatured > 0 && (
-          <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
-            <h3 className="font-semibold text-gray-900 mb-4">Featured Items Limit by Plan</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded p-3">
-                <div className="text-sm font-medium text-gray-700">Starter</div>
-                <div className="text-2xl font-bold text-gray-900 mt-1">0</div>
-                <div className="text-xs text-gray-600 mt-1">items</div>
+          <div className="mt-4 sm:mt-6 md:mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3 sm:p-4 md:p-6 border border-purple-200">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2.5 sm:mb-4">Featured Items Limit by Plan</h3>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+              <div className="bg-white rounded p-2 sm:p-3">
+                <div className="text-xs sm:text-sm font-medium text-gray-700">Starter</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-0.5 sm:mt-1">0</div>
+                <div className="text-xs text-gray-600 mt-0.5 sm:mt-1">items</div>
               </div>
-              <div className="bg-white rounded p-3 border-2 border-purple-600">
-                <div className="text-sm font-medium text-gray-700">Pro</div>
-                <div className="text-2xl font-bold text-purple-600 mt-1">6</div>
-                <div className="text-xs text-gray-600 mt-1">items</div>
+              <div className="bg-white rounded p-2 sm:p-3 border-2 border-purple-600">
+                <div className="text-xs sm:text-sm font-medium text-gray-700">Pro</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-purple-600 mt-0.5 sm:mt-1">6</div>
+                <div className="text-xs text-gray-600 mt-0.5 sm:mt-1">items</div>
               </div>
-              <div className="bg-white rounded p-3">
-                <div className="text-sm font-medium text-gray-700">VIP</div>
-                <div className="text-2xl font-bold text-amber-600 mt-1">10</div>
-                <div className="text-xs text-gray-600 mt-1">items</div>
+              <div className="bg-white rounded p-2 sm:p-3">
+                <div className="text-xs sm:text-sm font-medium text-gray-700">VIP</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-amber-600 mt-0.5 sm:mt-1">10</div>
+                <div className="text-xs text-gray-600 mt-0.5 sm:mt-1">items</div>
               </div>
             </div>
           </div>

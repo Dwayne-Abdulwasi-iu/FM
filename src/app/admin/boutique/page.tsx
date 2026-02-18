@@ -24,6 +24,7 @@ import {
   ShoppingBag,
   RotateCcw,
   TrendingDown,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { FULFILLMENT_METHOD, SELLER_TIER_CONFIG, type SellerTier } from '@/lib/boutique/constants';
@@ -408,6 +409,13 @@ export default function AdminBoutiquePage() {
               >
                 <Truck className="w-4 h-4" />
                 Shipments
+              </Link>
+              <Link
+                href="/admin/boutique/appeals"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm font-medium transition"
+              >
+                <AlertCircle className="w-4 h-4" />
+                Appeals
               </Link>
               <Link
                 href="/admin/boutique/out-of-stock"

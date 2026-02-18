@@ -50,7 +50,21 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ dispute })
+    // Fetch related user and order information
+    const [complainant, respondent, order] = await Promise.all([
+      prisma.user.findUnique({ where: { id: dispute.complainantId }, select: { name: true, email: true } }),
+      prisma.user.findUnique({ where: { id: dispute.respondentId }, select: { name: true, email: true } }),
+      dispute.orderId ? prisma.order.findUnique({ where: { id: dispute.orderId } }) : null,
+    ])
+
+    return NextResponse.json({ 
+      dispute: {
+        ...dispute,
+        complainant,
+        respondent,
+        order
+      }
+    })
 
   } catch (error) {
     console.error('Get dispute error:', error)

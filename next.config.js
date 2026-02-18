@@ -31,11 +31,6 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'production' ? false : true,
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
-  experimental: {
-    serverActions: {
-      allowedOrigins: ['*'],
-    },
-  },
   poweredByHeader: false,
 }
 

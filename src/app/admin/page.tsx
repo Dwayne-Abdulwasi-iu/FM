@@ -640,7 +640,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Featured Items</p>
-                          <p className="text-xs text-gray-500">Manage homepage featured designs</p>
+                          <p className="text-xs text-gray-500">Manage featured designs &amp; boutique products</p>
                         </div>
                       </div>
                     </Link>
@@ -956,6 +956,20 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-900 text-sm">Repost Approvals</p>
                           <p className="text-xs text-gray-500">Approve product reposts</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/boutique/appeals"
+                      className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-200 rounded-lg flex items-center justify-center">
+                          <span className="text-lg">📋</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Seller Appeals</p>
+                          <p className="text-xs text-gray-500">Review seller appeals & decisions</p>
                         </div>
                       </div>
                     </Link>

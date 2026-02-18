@@ -23,6 +23,7 @@ import {
   Settings,
   RotateCcw,
   TrendingDown,
+  Star,
 } from 'lucide-react';
 
 interface BoutiqueProduct {
@@ -358,6 +359,20 @@ export default function SellerBoutiquePage() {
               </Link>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white px-2 py-1 rounded text-[10px] whitespace-nowrap z-10 pointer-events-none">
                 View out of stock products
+              </div>
+            </div>
+            <div className="group relative">
+              <Link
+                href="/seller/boutique/featured"
+                className="flex flex-col items-center gap-0.5 bg-white/20 backdrop-blur text-white px-2 py-1.5 rounded text-xs font-medium hover:bg-white/30 transition whitespace-nowrap"
+                title="Manage featured products"
+              >
+                <Star className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Featured</span>
+                <span className="sm:hidden text-[7px] leading-none">Featured</span>
+              </Link>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white px-2 py-1 rounded text-[10px] whitespace-nowrap z-10 pointer-events-none">
+                Manage featured products
               </div>
             </div>
             <div className="group relative">

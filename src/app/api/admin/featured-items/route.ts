@@ -47,6 +47,14 @@ export async function GET(request: NextRequest) {
     let designFeatures: any[] = []
     let designCount = 0
 
+    // Get featured boutique products
+    let boutiqueFeatures: any[] = []
+    let boutiqueCount = 0
+
+    // Get admin featured items
+    let adminFeatures: any[] = []
+    let adminCount = 0
+
     if (!itemType || itemType === 'DESIGN') {
       const designs = await prisma.featuredDesign.findMany({
         include: {
@@ -111,10 +119,6 @@ export async function GET(request: NextRequest) {
           itemCreatedAt: f.design.createdAt.toISOString()
         }))
     }
-
-    // Get featured boutique products
-    let boutiqueFeatures: any[] = []
-    let boutiqueCount = 0
 
     if (!itemType || itemType === 'BOUTIQUE_PRODUCT') {
       const boutiques = await prisma.featuredBoutiqueProduct.findMany({
@@ -182,8 +186,115 @@ export async function GET(request: NextRequest) {
         }))
     }
 
+    if (!itemType || itemType === 'DESIGN' || itemType === 'BOUTIQUE_PRODUCT') {
+      const adminItems = await prisma.adminFeaturedItem.findMany({
+        orderBy: { addedAt: 'desc' }
+      })
+
+      // OPTIMIZATION: Batch fetch designs and products in one query each (eliminates N+1)
+      const designIds = adminItems.filter(i => i.itemType === 'DESIGN').map(i => i.itemId)
+      const productIds = adminItems.filter(i => i.itemType === 'BOUTIQUE_PRODUCT').map(i => i.itemId)
+
+      // Fetch all designs at once
+      const designsByIdMap = new Map<string, any>()
+      if (designIds.length > 0) {
+        const designs = await prisma.design.findMany({
+          where: { id: { in: designIds } },
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+            price: true,
+            createdAt: true,
+            designerId: true,
+            designer: { select: { id: true, name: true, email: true } }
+          }
+        })
+        designs.forEach(d => designsByIdMap.set(d.id, d))
+      }
+
+      // Fetch all products at once
+      const productsByIdMap = new Map<string, any>()
+      if (productIds.length > 0) {
+        const products = await prisma.boutiqueProduct.findMany({
+          where: { id: { in: productIds } },
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            thumbnailUrl: true,
+            basePrice: true,
+            salePrice: true,
+            status: true,
+            createdAt: true,
+            sellerId: true,
+            seller: { select: { id: true, name: true, email: true } }
+          }
+        })
+        products.forEach(p => productsByIdMap.set(p.id, p))
+      }
+
+      // Map admin items to their details
+      const adminWithDetails = adminItems
+        .map(item => {
+          if (item.itemType === 'DESIGN') {
+            const design = designsByIdMap.get(item.itemId)
+            if (design) {
+              return {
+                id: item.id,
+                itemType: 'DESIGN',
+                itemId: design.id,
+                title: design.title,
+                imageUrl: design.imageUrl,
+                price: design.price,
+                seller: {
+                  id: design.designer.id,
+                  name: design.designer.name,
+                  email: design.designer.email
+                },
+                position: 0,
+                addedAt: item.addedAt.toISOString(),
+                addedByAdmin: true,
+                itemCreatedAt: design.createdAt.toISOString()
+              }
+            }
+          } else if (item.itemType === 'BOUTIQUE_PRODUCT') {
+            const product = productsByIdMap.get(item.itemId)
+            if (product) {
+              return {
+                id: item.id,
+                itemType: 'BOUTIQUE_PRODUCT',
+                itemId: product.id,
+                slug: product.slug,
+                title: product.title,
+                imageUrl: product.thumbnailUrl,
+                price: product.salePrice || product.basePrice,
+                status: product.status,
+                seller: {
+                  id: product.seller.id,
+                  name: product.seller.name,
+                  email: product.seller.email
+                },
+                position: 0,
+                addedAt: item.addedAt.toISOString(),
+                addedByAdmin: true,
+                itemCreatedAt: product.createdAt.toISOString()
+              }
+            }
+          }
+          return null
+        })
+        .filter((item): item is any => item !== null)
+
+      adminFeatures = adminWithDetails
+      if (itemType) {
+        adminFeatures = adminFeatures.filter(f => f.itemType === itemType)
+      }
+      adminCount = adminFeatures.length
+    }
+
     // Combine and sort
-    let allFeatures = [...designFeatures, ...boutiqueFeatures]
+    let allFeatures = [...designFeatures, ...boutiqueFeatures, ...adminFeatures]
     
     // Apply ownership filter
     if (ownership) {
@@ -217,7 +328,7 @@ export async function GET(request: NextRequest) {
       return sortOrder === 'asc' ? -compareValue : compareValue
     })
 
-    const totalCount = designCount + boutiqueCount
+    const totalCount = designCount + boutiqueCount + adminCount
     const totalPages = Math.ceil(totalCount / limit)
     const pageItems = allFeatures.slice((itemType ? 0 : (page - 1) * limit), (itemType ? undefined : page * limit))
 
@@ -273,6 +384,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { itemType, itemId, position = 0, reason } = body
+    console.log('[POST /api/admin/featured-items] Body received:', { itemType, itemId, position, reason })
 
     if (!itemType || !itemId) {
       return NextResponse.json({ error: 'itemType and itemId required' }, { status: 400 })
@@ -306,6 +418,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    console.log('[POST /api/admin/featured-items] Successfully created:', featured.id)
     return NextResponse.json({
       success: true,
       featured,
@@ -345,6 +458,7 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     const itemType = searchParams.get('itemType')
+    const source = searchParams.get('source')
 
     if (!id) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
@@ -354,8 +468,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Item type required' }, { status: 400 })
     }
 
-    // Delete from the appropriate table based on itemType
-    if (itemType === 'DESIGN') {
+    // Delete from the appropriate table based on source
+    if (source === 'ADMIN_FEATURED') {
+      await prisma.adminFeaturedItem.delete({
+        where: { id }
+      })
+    } else if (itemType === 'DESIGN') {
       await prisma.featuredDesign.delete({
         where: { id }
       })

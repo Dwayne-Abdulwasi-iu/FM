@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'PENDING_CONTENT_REVIEW';
     const fulfillmentMethod = searchParams.get('fulfillmentMethod');
+    const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -43,12 +44,28 @@ export async function GET(request: NextRequest) {
       where.fulfillmentMethod = fulfillmentMethod;
     }
 
+    // Add search filter if specified
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' as const } },
+        { seller: { name: { contains: search, mode: 'insensitive' as const } } },
+        { seller: { email: { contains: search, mode: 'insensitive' as const } } }
+      ]
+    }
+
     // For status counts, count all statuses but respect fulfillment filter
     const whereForStatusCounts: Record<string, unknown> = {
       status: { not: 'DRAFT' },
     };
     if (fulfillmentMethod && fulfillmentMethod !== 'ALL') {
       whereForStatusCounts.fulfillmentMethod = fulfillmentMethod;
+    }
+    if (search) {
+      whereForStatusCounts.OR = [
+        { title: { contains: search, mode: 'insensitive' as const } },
+        { seller: { name: { contains: search, mode: 'insensitive' as const } } },
+        { seller: { email: { contains: search, mode: 'insensitive' as const } } }
+      ]
     }
 
     const [products, total, statusCounts] = await Promise.all([
