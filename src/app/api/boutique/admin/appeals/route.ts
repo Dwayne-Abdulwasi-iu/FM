@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
                 sellerEmail: a.seller?.email || '',
                 appealStatus: a.status,
                 createdAt: a.submittedAt,
-                resolutionNotes: a.notes, // Map notes to resolutionNotes for UI consistency
+                resolutionNotes: a.adminResponse || '', // Map adminResponse to resolutionNotes for UI consistency
               }))
             );
           })()
