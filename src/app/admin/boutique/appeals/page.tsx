@@ -397,7 +397,9 @@ export default function AdminAppealsPage() {
                     }
                     className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg bg-white text-black text-xs sm:text-sm"
                   >
-                    <option value="PENDING">Pending</option>
+                    <option value="PENDING" disabled={selectedAppeal.appealStatus !== 'PENDING' && selectedAppeal.status !== 'SUBMITTED' && selectedAppeal.status !== 'UNDER_REVIEW'}>
+                      Pending
+                    </option>
                     <option value="APPROVED">Approved</option>
                     <option value="REJECTED">Rejected</option>
                     <option value="RESOLVED">Resolved</option>
@@ -425,6 +427,14 @@ export default function AdminAppealsPage() {
                       <option value="UPHOLD_DECISION">Uphold Decision</option>
                       <option value="COMPENSATE_SELLER">Compensate Seller</option>
                     </select>
+                    {/* Action explanations */}
+                    {resolutionForm.resolutionAction && (
+                      <p className="text-xs text-black mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                        {resolutionForm.resolutionAction === 'OVERTURN_DECISION' && 'Reverse the original decision — if denied, approve it now; if approved, deny it now.'}
+                        {resolutionForm.resolutionAction === 'UPHOLD_DECISION' && 'Support the original decision — keep the original ruling as is.'}
+                        {resolutionForm.resolutionAction === 'COMPENSATE_SELLER' && 'Give compensation to seller without changing the original decision.'}
+                      </p>
+                    )}
                   </div>
                 )}
 

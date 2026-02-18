@@ -60,8 +60,9 @@ export async function GET(request: NextRequest) {
               } else if (status === 'APPROVED') {
                 whereCondition = { status: 'APPROVED' };
               } else if (status === 'REJECTED') {
-                whereCondition = { status: 'DENIED' };
-              }
+                whereCondition = { status: 'DENIED' };              } else if (status === 'RESOLVED') {
+                // RESOLVED disputes are marked as APPROVED or DENIED with reviewedAt timestamp
+                whereCondition = { reviewedAt: { not: null }, status: { in: ['APPROVED', 'DENIED'] } }              }
             }
             return prisma.disputeAppeal.findMany({
               where: whereCondition,

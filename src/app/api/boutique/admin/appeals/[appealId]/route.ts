@@ -26,11 +26,45 @@ export async function PUT(
     const { appealStatus, resolutionAction, resolutionNotes } = body;
 
     const validStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'RESOLVED'];
+    // Resolution action meanings:
+    // - OVERTURN_DECISION: Reverse the original decision (flip denial to approval or vice versa)
+    // - UPHOLD_DECISION: Keep the original decision as is (support admin's original ruling)
+    // - COMPENSATE_SELLER: Give seller compensation without changing the decision
     const validActions = ['OVERTURN_DECISION', 'UPHOLD_DECISION', 'COMPENSATE_SELLER'];
 
     if (!appealStatus || !validStatuses.includes(appealStatus)) {
       return NextResponse.json(
         { success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Prevent downgrading from a resolved state back to PENDING
+    // First, check current status to prevent backtracking
+    let currentAppeal: any = null;
+    try {
+      currentAppeal = await prisma.variantDiscrepancyAppeal.findUnique({
+        where: { id: appealId },
+        select: { appealStatus: true }
+      });
+    } catch (e) {
+      // Try dispute appeal if variant not found
+      try {
+        currentAppeal = await prisma.disputeAppeal.findUnique({
+          where: { id: appealId },
+          select: { status: true }
+        });
+        if (currentAppeal) {
+          currentAppeal.appealStatus = currentAppeal.status;
+        }
+      } catch (e2) {
+        // Will be caught by update operations below
+      }
+    }
+
+    if (currentAppeal && currentAppeal.appealStatus !== 'PENDING' && appealStatus === 'PENDING') {
+      return NextResponse.json(
+        { success: false, message: 'Cannot change a resolved appeal back to pending' },
         { status: 400 }
       );
     }
