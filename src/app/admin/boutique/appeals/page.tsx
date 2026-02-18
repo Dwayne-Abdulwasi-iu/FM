@@ -365,13 +365,18 @@ export default function AdminAppealsPage() {
                   <p className="text-black">
                     <span className="font-medium">Submitted:</span> {new Date(selectedAppeal.createdAt).toLocaleDateString()}
                   </p>
-                  {selectedAppeal.reason && (
-                    <p className="text-black line-clamp-2">
-                      <span className="font-medium">Reason:</span> {selectedAppeal.reason}
-                    </p>
-                  )}
                 </div>
               </div>
+
+              {/* Seller's Appeal Note */}
+              {selectedAppeal.reason && (
+                <div>
+                  <h3 className="font-semibold text-black text-sm sm:text-base mb-2">Seller's Appeal Note</h3>
+                  <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                    <p className="text-black text-xs sm:text-sm whitespace-pre-wrap">{selectedAppeal.reason}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Resolution Form */}
               <div className="space-y-3 sm:space-y-4">
