@@ -81,7 +81,7 @@ export default function AdminAppealsPage() {
       })
 
       const res = await fetch(`/api/boutique/admin/appeals?${queryParams}`, {
-        cache: 'force-cache',
+        cache: 'no-store',
       })
 
       if (res.ok) {
