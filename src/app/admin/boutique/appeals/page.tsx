@@ -190,31 +190,31 @@ export default function AdminAppealsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-8">
           <Link href="/admin/boutique" className="p-2 hover:bg-gray-200 rounded-lg">
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Seller Appeals</h1>
-            <p className="text-gray-600 mt-1">Review and resolve seller appeals for discrepancy decisions</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black">Seller Appeals</h1>
+            <p className="text-xs sm:text-sm text-black mt-1">Review and resolve seller appeals</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4">
             <div>
-              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="status-filter" className="block text-xs sm:text-sm font-medium text-black mb-1 sm:mb-2">
                 Filter by Status
               </label>
               <select
                 id="status-filter"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-lg bg-white text-black text-xs sm:text-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="PENDING">Pending</option>
@@ -225,14 +225,14 @@ export default function AdminAppealsPage() {
             </div>
 
             <div>
-              <label htmlFor="sort-by" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="sort-by" className="block text-xs sm:text-sm font-medium text-black mb-1 sm:mb-2">
                 Sort By
               </label>
               <select
                 id="sort-by"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-lg bg-white text-black text-xs sm:text-sm"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -243,7 +243,7 @@ export default function AdminAppealsPage() {
               <button
                 onClick={fetchAppeals}
                 disabled={loading}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="w-full px-3 sm:px-4 py-1 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-xs sm:text-sm font-medium"
               >
                 {loading ? 'Loading...' : 'Refresh'}
               </button>
@@ -266,40 +266,44 @@ export default function AdminAppealsPage() {
             {appeals.map((appeal) => (
               <div
                 key={appeal.id}
-                className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition"
+                className="bg-white rounded-lg shadow-sm p-2 sm:p-4 hover:shadow-md transition"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-4">
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-3 mb-2">
                       {getStatusIcon((appeal.appealStatus || appeal.status) ?? 'PENDING')}
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor((appeal.appealStatus || appeal.status) ?? 'PENDING')}`}>
+                      <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-medium ${getStatusColor((appeal.appealStatus || appeal.status) ?? 'PENDING')}`}>
                         {appeal.appealStatus || appeal.status || 'PENDING'}
                       </span>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                        {appeal.type === 'discrepancy' ? 'Warehouse Appeal' : 'Dispute Appeal'}
+                      <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-medium bg-gray-200 text-black">
+                        {appeal.type === 'discrepancy' ? 'Warehouse' : 'Dispute'}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {getDaysOld(appeal.createdAt)} days old
+                      <span className="text-xs text-black">
+                        {getDaysOld(appeal.createdAt)}d
                       </span>
                     </div>
 
-                    <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                    <h3 className="font-semibold text-black mb-1 text-sm sm:text-base truncate">
                       {appeal.appealTitle}
                     </h3>
 
-                    <p className="text-sm text-gray-600 mb-2">
-                      Seller: <span className="font-medium">{appeal.sellerName}</span> ({appeal.sellerEmail})
+                    <p className="text-xs sm:text-sm text-black mb-1 sm:mb-2 break-words">
+                      <span className="font-medium">Seller:</span> {appeal.sellerName}
+                    </p>
+
+                    <p className="text-xs text-black mb-1 truncate">
+                      {appeal.sellerEmail}
                     </p>
 
                     {appeal.reason && (
-                      <p className="text-sm text-gray-700 mb-3 line-clamp-2">
-                        <span className="font-medium">Appeal Reason:</span> {appeal.reason}
+                      <p className="text-xs sm:text-sm text-black mb-2 line-clamp-2">
+                        <span className="font-medium">Reason:</span> {appeal.reason}
                       </p>
                     )}
 
                     {appeal.resolutionNotes && (
-                      <p className="text-sm text-gray-600 mb-2">
-                        <span className="font-medium">Admin Notes:</span> {appeal.resolutionNotes}
+                      <p className="text-xs text-black mb-1 line-clamp-1">
+                        <span className="font-medium">Notes:</span> {appeal.resolutionNotes}
                       </p>
                     )}
                   </div>
@@ -313,7 +317,7 @@ export default function AdminAppealsPage() {
                         resolutionNotes: appeal.resolutionNotes || '',
                       })
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 whitespace-nowrap"
+                    className="px-2 sm:px-4 py-1 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 whitespace-nowrap text-xs sm:text-sm font-medium flex-shrink-0"
                   >
                     {appeal.appealStatus === 'PENDING' ? 'Review' : 'View'}
                   </button>
@@ -327,7 +331,7 @@ export default function AdminAppealsPage() {
       {/* Resolution Modal */}
       {selectedAppeal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-[95vw] sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base sm:text-xl font-bold text-black">Resolve Appeal</h2>
@@ -344,28 +348,26 @@ export default function AdminAppealsPage() {
               {/* Appeal Details */}
               <div>
                 <h3 className="font-semibold text-black text-sm sm:text-base mb-2">Appeal Details</h3>
-                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-1 text-xs sm:text-sm">
-                  <p>
-                    <span className="font-medium text-black">Type:</span>{' '}
-                    {selectedAppeal.type === 'discrepancy' ? 'Warehouse Discrepancy' : 'Dispute'}
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 space-y-1 text-xs sm:text-sm break-words">
+                  <p className="text-black">
+                    <span className="font-medium">Type:</span>{' '}
+                    {selectedAppeal.type === 'discrepancy' ? 'Warehouse' : 'Dispute'}
                   </p>
-                  <p>
-                    <span className="font-medium text-black">Title:</span>{' '}
-                    {selectedAppeal.appealTitle}
+                  <p className="text-black truncate">
+                    <span className="font-medium">Title:</span> {selectedAppeal.appealTitle}
                   </p>
-                  <p>
-                    <span className="font-medium text-black">Seller:</span> {selectedAppeal.sellerName}
+                  <p className="text-black">
+                    <span className="font-medium">Seller:</span> {selectedAppeal.sellerName}
                   </p>
-                  <p>
-                    <span className="font-medium text-black">Email:</span> {selectedAppeal.sellerEmail}
+                  <p className="text-black truncate">
+                    <span className="font-medium">Email:</span> {selectedAppeal.sellerEmail}
                   </p>
-                  <p>
-                    <span className="font-medium text-black">Submitted:</span>{' '}
-                    {new Date(selectedAppeal.createdAt).toLocaleDateString()}
+                  <p className="text-black">
+                    <span className="font-medium">Submitted:</span> {new Date(selectedAppeal.createdAt).toLocaleDateString()}
                   </p>
                   {selectedAppeal.reason && (
-                    <p>
-                      <span className="font-medium text-black">Reason:</span> {selectedAppeal.reason}
+                    <p className="text-black line-clamp-2">
+                      <span className="font-medium">Reason:</span> {selectedAppeal.reason}
                     </p>
                   )}
                 </div>
@@ -438,8 +440,8 @@ export default function AdminAppealsPage() {
                     rows={3}
                     className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg text-black text-xs sm:text-sm focus:ring-2 focus:ring-indigo-600"
                   />
-                  <p className="text-xs text-gray-600 mt-1">
-                    {resolutionForm.resolutionNotes.length}/1000 characters
+                  <p className="text-xs text-black mt-1">
+                    {resolutionForm.resolutionNotes.length}/1000
                   </p>
                 </div>
               </div>
