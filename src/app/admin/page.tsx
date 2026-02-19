@@ -1336,13 +1336,13 @@ export default function AdminDashboard() {
                           <p className="text-[9px] sm:text-[10px] text-gray-500 mb-1 truncate">{design.designer.name}</p>
                         )}
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm sm:text-base font-bold text-indigo-600">${design.price.toFixed(2)}</span>
+                          <span className="text-sm sm:text-base font-bold text-indigo-600">{formatPrice(design.price)}</span>
                           <span className="text-[10px] sm:text-xs text-gray-500">{design.totalSales}</span>
                         </div>
                         {design.buyingTypes === 'BOTH' && design.ownershipPrice && (
                           <div className="mb-1">
                             <span className="text-[8px] sm:text-xs text-purple-600 font-medium">
-                              Own: ${design.ownershipPrice.toFixed(2)}
+                              Own: {formatPrice(design.ownershipPrice)}
                             </span>
                           </div>
                         )}
@@ -1466,10 +1466,10 @@ export default function AdminDashboard() {
                             <div className="text-gray-500">{order.customer.email}</div>
                           </td>
                           <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-[8px] sm:text-xs font-medium text-gray-900">
-                            ${order.totalAmount.toFixed(2)}
+                            {formatPrice(order.totalAmount)}
                           </td>
                           <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-[8px] sm:text-xs text-green-600">
-                            ${order.platformFee.toFixed(2)}
+                            {formatPrice(order.platformFee)}
                           </td>
                           <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
                             <span className={`inline-flex px-1.5 py-0.5 text-[7px] sm:text-[8px] font-semibold rounded-full ${
