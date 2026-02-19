@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   Tag,
   Plus,
@@ -45,6 +46,7 @@ interface Promotion {
 export default function SellerPromotionsPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [loading, setLoading] = useState(true)
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [designs, setDesigns] = useState<any[]>([])
@@ -578,7 +580,7 @@ export default function SellerPromotionsPage() {
                                   </div>
                                 </div>
                                 <p className="text-xs sm:text-sm font-medium text-gray-900 mt-1 line-clamp-2">{design.title}</p>
-                                <p className="text-xs text-gray-500">${design.price.toFixed(2)}</p>
+                                <p className="text-xs text-gray-500">{formatPrice(design.price)}</p>
                               </Link>
                             ))}
                         </div>
@@ -612,7 +614,7 @@ export default function SellerPromotionsPage() {
                                   </div>
                                 </div>
                                 <p className="text-xs sm:text-sm font-medium text-gray-900 mt-1 line-clamp-2">{product.title}</p>
-                                <p className="text-xs text-gray-500">${product.basePrice.toFixed(2)}</p>
+                                <p className="text-xs text-gray-500">{formatPrice(product.basePrice)}</p>
                               </Link>
                             ))}
                         </div>

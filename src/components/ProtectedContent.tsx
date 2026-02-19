@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { Lock, ShoppingCart, Crown, Download, Share2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface ProtectedContentProps {
   designId: string
@@ -28,6 +29,7 @@ interface AccessCheck {
 export default function ProtectedContent({ designId, children, previewContent }: ProtectedContentProps) {
   const { data: session } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [accessCheck, setAccessCheck] = useState<AccessCheck | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -316,7 +318,7 @@ export default function ProtectedContent({ designId, children, previewContent }:
                       <p className="text-sm text-gray-600">Standard commercial use, multiple buyers allowed</p>
                     </div>
                     <span className="text-xl font-bold text-indigo-600">
-                      ${accessCheck.design.price.toFixed(2)}
+                      {formatPrice(accessCheck.design.price)}
                     </span>
                   </div>
                   <button
@@ -344,7 +346,7 @@ export default function ProtectedContent({ designId, children, previewContent }:
                       </p>
                     </div>
                     <span className="text-xl font-bold text-purple-600">
-                      ${accessCheck.design.ownershipPrice.toFixed(2)}
+                      {formatPrice(accessCheck.design.ownershipPrice)}
                     </span>
                   </div>
                   <button

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Package, Truck, XCircle, Clock, MessageSquare, ExternalLink } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface ReturnItem {
   id: string
@@ -29,6 +30,7 @@ interface ReturnItem {
 export default function BuyerReturnsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [returns, setReturns] = useState<ReturnItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
@@ -191,7 +193,7 @@ export default function BuyerReturnsPage() {
                 <div className="bg-gray-50 p-4 sm:p-6 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Refund Amount</p>
-                    <p className="text-2xl font-bold text-green-600">${returnItem.refundAmount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">{formatPrice(returnItem.refundAmount)}</p>
                   </div>
                   <div className="flex gap-2">
                     <Link
@@ -228,7 +230,7 @@ export default function BuyerReturnsPage() {
               <p className="text-xs text-gray-600 mt-1">Refunded</p>
             </div>
             <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-red-600">${returns.reduce((sum, r) => sum + r.refundAmount, 0).toFixed(2)}</p>
+              <p className="text-2xl font-bold text-red-600">{formatPrice(returns.reduce((sum, r) => sum + r.refundAmount, 0))}</p>
               <p className="text-xs text-gray-600 mt-1">Total Refunded</p>
             </div>
           </div>

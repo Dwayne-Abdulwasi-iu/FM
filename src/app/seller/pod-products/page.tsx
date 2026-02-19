@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useCurrency } from '@/components/CurrencyProvider';
 
 interface PODProduct {
   id: string;
@@ -69,6 +70,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 export default function PODProductSelector() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { formatPrice } = useCurrency();
   
   const [products, setProducts] = useState<PODProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
@@ -444,7 +446,7 @@ export default function PODProductSelector() {
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      Base: ${product.basePrice.toFixed(2)} • {product.variants.length} variants
+                      Base: {formatPrice(product.basePrice)} • {product.variants.length} variants
                     </p>
 
                     {/* Markup Control (when selected) */}
@@ -466,7 +468,7 @@ export default function PODProductSelector() {
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Customer pays: ${(product.basePrice * (1 + selectedData.markup / 100)).toFixed(2)}
+                          Customer pays: {formatPrice(product.basePrice * (1 + selectedData.markup / 100))}
                         </p>
                       </div>
                     )}

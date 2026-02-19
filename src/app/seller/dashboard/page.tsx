@@ -316,7 +316,7 @@ export default function SellerDashboardPage() {
             <p className="text-[10px] sm:text-sm text-gray-500">Total Earnings</p>
             {analytics.summary.totalCommissionEarnings && analytics.summary.totalCommissionEarnings > 0 && (
               <p className="text-[8px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">
-                Includes ${analytics.summary.totalCommissionEarnings.toFixed(2)} from commissions
+                Includes {formatPrice(analytics.summary.totalCommissionEarnings)} from commissions
               </p>
             )}
           </div>

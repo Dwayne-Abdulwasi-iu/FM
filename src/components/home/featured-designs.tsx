@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Design {
   id: string
@@ -22,6 +23,7 @@ interface Design {
 export function FeaturedDesigns() {
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
+  const { formatPrice } = useCurrency()
 
   useEffect(() => {
     fetchFeaturedDesigns()
@@ -144,7 +146,7 @@ export function FeaturedDesigns() {
                     by {design.designer.name || design.designer.email}
                   </p>
                   <div className="flex justify-between items-center gap-1">
-                    <span className="text-xs sm:text-sm font-bold text-gray-900">${design.price.toFixed(2)}</span>
+                    <span className="text-xs sm:text-sm font-bold text-gray-900">{formatPrice(design.price)}</span>
                     <Link 
                       href={`/designs/${design.id}`}
                       className="bg-indigo-700 hover:bg-indigo-800 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg transition-colors font-medium text-[8px] sm:text-xs whitespace-nowrap"

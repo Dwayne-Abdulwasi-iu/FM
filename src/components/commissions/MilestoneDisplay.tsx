@@ -1,6 +1,7 @@
 'use client'
 
 import { DollarSign, AlertCircle, Clock, CheckCircle } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface MilestoneDisplayProps {
   template: 'simple' | 'standard' | 'detailed' | null
@@ -19,6 +20,7 @@ export default function MilestoneDisplay({
   platformFeePercent = 10,
   compact = false
 }: MilestoneDisplayProps) {
+  const { formatPrice } = useCurrency()
   const MILESTONE_TEMPLATES = {
     simple: [
       { name: 'Deposit', percentage: 50, description: 'Released immediately when designer confirms start' },
@@ -88,7 +90,7 @@ export default function MilestoneDisplay({
                     {milestone.name}
                   </span>
                 </div>
-                <span className="font-bold text-gray-900 text-sm">${amount.toFixed(2)}</span>
+                <span className="font-bold text-gray-900 text-sm">{formatPrice(amount)}</span>
               </div>
               <p className="text-xs text-gray-600 ml-6">{milestone.description}</p>
               {idx === 0 && (
@@ -105,15 +107,15 @@ export default function MilestoneDisplay({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-700">Your Payment:</span>
-            <span className="font-bold text-gray-900">${totalAmount.toFixed(2)}</span>
+            <span className="font-bold text-gray-900">{formatPrice(totalAmount)}</span>
           </div>
           <div className="flex justify-between text-gray-600">
             <span>Platform Fee ({platformFeePercent}%):</span>
-            <span>${platformFee.toFixed(2)}</span>
+            <span>{formatPrice(platformFee)}</span>
           </div>
           <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between font-bold">
             <span className="text-gray-900">Designer Receives:</span>
-            <span className="text-green-600">${netDesignerEarnings.toFixed(2)}</span>
+            <span className="text-green-600">{formatPrice(netDesignerEarnings)}</span>
           </div>
         </div>
       </div>

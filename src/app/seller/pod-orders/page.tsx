@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCurrency } from '@/components/CurrencyProvider';
 
 interface PODOrder {
   id: string;
@@ -62,6 +63,7 @@ const STATUS_FILTERS = [
 
 export default function PODOrdersPage() {
   const { data: session, status } = useSession();
+  const { formatPrice } = useCurrency();
   const router = useRouter();
 
   const [orders, setOrders] = useState<PODOrder[]>([]);
@@ -252,7 +254,7 @@ export default function PODOrdersPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-gray-900">
-                        ${order.totalAmount.toFixed(2)}
+                        {formatPrice(order.totalAmount)}
                       </span>
                       <button
                         onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
@@ -343,7 +345,7 @@ export default function PODOrdersPage() {
                                 <span className="text-gray-600">
                                   {item.podProductName || item.design.title} × {item.quantity}
                                 </span>
-                                <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                               </div>
                             ))}
                           </div>

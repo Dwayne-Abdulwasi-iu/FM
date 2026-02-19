@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   Star,
   Trash2,
@@ -39,6 +40,7 @@ interface FeaturedItem {
 export default function AdminFeaturedItemsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
 
   const [items, setItems] = useState<FeaturedItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -590,7 +592,7 @@ export default function AdminFeaturedItemsPage() {
                         <td className="hidden md:table-cell px-2 sm:px-3 py-1.5 sm:py-2">
                           <div className="flex items-center gap-0.5">
                             <DollarSign className="h-3 w-3 text-gray-400" />
-                            <span className="font-medium text-[9px] sm:text-xs text-black">${item.price.toFixed(2)}</span>
+                            <span className="font-medium text-[9px] sm:text-xs text-black">{formatPrice(item.price)}</span>
                           </div>
                         </td>
                         <td className="hidden sm:table-cell px-2 sm:px-3 py-1.5 sm:py-2 text-[9px] sm:text-xs text-gray-600">
@@ -780,7 +782,7 @@ export default function AdminFeaturedItemsPage() {
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <p className="font-medium text-gray-900 truncate">{item.title}</p>
-                                    <p className="text-xs text-gray-600 mb-2">${item.price.toFixed(2)}</p>
+                                    <p className="text-xs text-gray-600 mb-2">{formatPrice(item.price)}</p>
                                     <div className="text-xs space-y-1">
                                       <p className="text-gray-700 font-medium">{item.seller.name}</p>
                                       <p className="text-gray-500">{item.seller.email}</p>
@@ -849,7 +851,7 @@ export default function AdminFeaturedItemsPage() {
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <p className="font-medium text-gray-900 truncate">{item.title}</p>
-                                    <p className="text-xs text-gray-600 mb-2">${item.price.toFixed(2)} • {addSearchType === 'BOUTIQUE_PRODUCT' ? `📦 ${item.sales} sales` : `⭐ ${(item.rating || 0).toFixed(1)}`}</p>
+                                    <p className="text-xs text-gray-600 mb-2">{formatPrice(item.price)} • {addSearchType === 'BOUTIQUE_PRODUCT' ? `📦 ${item.sales} sales` : `⭐ ${(item.rating || 0).toFixed(1)}`}</p>
                                     <div className="text-xs space-y-1">
                                       <p className="text-gray-700 font-medium">{item.seller.name}</p>
                                       <p className="text-gray-500">{item.seller.email}</p>

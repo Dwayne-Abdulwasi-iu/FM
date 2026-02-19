@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   DollarSign,
   TrendingUp,
@@ -44,6 +45,7 @@ interface QuickLink {
 export default function FinancesHub() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<FinancesSummary | null>(null)
@@ -186,11 +188,11 @@ export default function FinancesHub() {
             <div className="bg-white rounded-xl shadow-sm p-3 sm:p-6 border-t-4 border-green-500 hover:shadow-md transition">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Total Earnings (USD)</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Total Earnings</p>
                   <p className="text-xl sm:text-3xl font-bold text-gray-900">
-                    ${(summary.totalEarnings || 0).toFixed(2)}
+                    {formatPrice(summary.totalEarnings || 0)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1 sm:mt-2">This Month: ${(summary.thisMonthEarnings || 0).toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mt-1 sm:mt-2">This Month: {formatPrice(summary.thisMonthEarnings || 0)}</p>
                 </div>
                 <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 opacity-20 flex-shrink-0" />
               </div>
@@ -228,9 +230,9 @@ export default function FinancesHub() {
             <div className="bg-white rounded-xl shadow-sm p-3 sm:p-6 border-t-4 border-indigo-500 hover:shadow-md transition">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Total Transferred (USD)</p>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Total Transferred</p>
                   <p className="text-xl sm:text-3xl font-bold text-gray-900">
-                    ${(summary.totalAmountTransferred || 0).toFixed(2)}
+                    {formatPrice(summary.totalAmountTransferred || 0)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1 sm:mt-2">{summary.successfulTransfers} successful</p>
                 </div>

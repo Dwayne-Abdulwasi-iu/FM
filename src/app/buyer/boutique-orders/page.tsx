@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Package, Truck, CheckCircle, Clock, ExternalLink } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface BoutiqueOrderItem {
   id: string
@@ -39,6 +40,7 @@ interface BoutiqueOrder {
 export default function BoutiqueOrdersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [orders, setOrders] = useState<BoutiqueOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
@@ -217,7 +219,7 @@ export default function BoutiqueOrdersPage() {
                         </p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                          <span className="font-semibold text-indigo-600">${item.price.toFixed(2)}</span>
+                          <span className="font-semibold text-indigo-600">{formatPrice(item.price)}</span>
                         </div>
                       </div>
                     </div>

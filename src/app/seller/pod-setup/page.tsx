@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getCommissionRate } from '@/lib/commission-tiers';
+import { useCurrency } from '@/components/CurrencyProvider';
 
 interface Design {
   id: string;
@@ -33,6 +34,7 @@ const WIZARD_STEPS = [
 export default function PODSetupWizard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { formatPrice } = useCurrency();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [designs, setDesigns] = useState<Design[]>([]);
@@ -359,7 +361,7 @@ export default function PODSetupWizard() {
                     </div>
                     <div className="p-2 sm:p-3 bg-white">
                       <p className="text-[10px] sm:text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                      <p className="text-[10px] sm:text-sm text-gray-500">Base: ${product.basePrice.toFixed(2)}</p>
+                      <p className="text-[10px] sm:text-sm text-gray-500">Base: {formatPrice(product.basePrice)}</p>
                     </div>
                     {selectedProducts.includes(product.id) && (
                       <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 bg-purple-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[10px] sm:text-sm">

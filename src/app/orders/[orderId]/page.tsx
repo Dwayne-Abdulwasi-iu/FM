@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Download, Eye, Truck, CheckCircle, Clock, Package } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface OrderItem {
   id: string
@@ -43,6 +44,7 @@ export default function OrderDetailsPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const params = useParams()
+  const { formatPrice } = useCurrency()
   const orderNumber = params.orderNumber as string
 
   const [order, setOrder] = useState<Order | null>(null)
@@ -200,7 +202,7 @@ export default function OrderDetailsPage() {
                         Quantity: <span className="font-semibold">{item.quantity}</span>
                       </span>
                       <span className="text-sm text-gray-600">
-                        Price: <span className="font-semibold">${item.price.toFixed(2)}</span>
+                        Price: <span className="font-semibold">{formatPrice(item.price)}</span>
                       </span>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCurrency } from '@/components/CurrencyProvider';
 
 interface Design {
   id: string;
@@ -48,6 +49,7 @@ export default function DesignProductsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const { formatPrice } = useCurrency();
   const designId = params.id as string;
 
   const [design, setDesign] = useState<Design | null>(null);
@@ -458,11 +460,11 @@ export default function DesignProductsPage() {
                   <>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Product ({selectedProduct?.name})</span>
-                      <span>${selectedVariant.price.toFixed(2)}</span>
+                      <span>{formatPrice(selectedVariant.price)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Design License</span>
-                      <span>${design.price.toFixed(2)}</span>
+                      <span>{formatPrice(design.price)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Quantity</span>

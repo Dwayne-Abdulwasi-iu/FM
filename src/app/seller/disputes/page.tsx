@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, AlertCircle, MessageSquare, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Dispute {
   id: string
@@ -43,6 +44,7 @@ interface Dispute {
 export default function SellerDisputesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [disputes, setDisputes] = useState<Dispute[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('open')
@@ -190,7 +192,7 @@ export default function SellerDisputesPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 pb-4 border-b border-gray-200">
                     <div>
                       <p className="text-xs text-gray-600">Disputed Amount</p>
-                      <p className="font-bold text-lg text-red-600">${dispute.amount.toFixed(2)}</p>
+                      <p className="font-bold text-lg text-red-600">{formatPrice(dispute.amount)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600">Buyer</p>
@@ -212,7 +214,7 @@ export default function SellerDisputesPage() {
                       <p className="text-xs text-gray-600 mb-1">Resolution:</p>
                       <p className="text-sm font-medium text-gray-900">{dispute.resolution.type}</p>
                       {dispute.resolution.amount && (
-                        <p className="text-sm text-gray-600 mt-1">Amount: ${dispute.resolution.amount.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600 mt-1">Amount: {formatPrice(dispute.resolution.amount)}</p>
                       )}
                     </div>
                   )}
@@ -256,7 +258,7 @@ export default function SellerDisputesPage() {
               <p className="text-xs text-gray-600 mt-1">Resolved</p>
             </div>
             <div className="bg-white rounded-lg p-4 text-center shadow-sm">
-              <p className="text-2xl font-bold text-purple-600">${disputes.filter(d => d.status === 'OPEN').reduce((sum, d) => sum + d.amount, 0).toFixed(2)}</p>
+              <p className="text-2xl font-bold text-purple-600">{formatPrice(disputes.filter(d => d.status === 'OPEN').reduce((sum, d) => sum + d.amount, 0))}</p>
               <p className="text-xs text-gray-600 mt-1">At Risk</p>
             </div>
           </div>

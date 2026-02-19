@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle, Clock, TrendingUp, DollarSign, ArrowRight } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Transfer {
   id: string
@@ -36,6 +37,7 @@ export default function SellerTransfersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const { formatPrice } = useCurrency()
 
   useEffect(() => {
     if (status === 'loading') return
@@ -185,7 +187,7 @@ export default function SellerTransfersPage() {
                   ₦{stats.totalAmountNGN.toLocaleString()}
                 </p>
                 <p className="text-gray-500 text-[9px] sm:text-xs mt-0.5">
-                  ${stats.totalAmountUSD.toFixed(2)}
+                  {formatPrice(stats.totalAmountUSD)}
                 </p>
               </div>
               <DollarSign className="w-8 sm:w-10 h-8 sm:h-10 text-green-600 opacity-20" />
@@ -274,7 +276,7 @@ export default function SellerTransfersPage() {
                           ₦{transfer.amountNGN.toLocaleString()}
                         </div>
                         <div className="text-gray-500 text-xs">
-                          ${transfer.amountUSD.toFixed(2)}
+                          {formatPrice(transfer.amountUSD)}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm">

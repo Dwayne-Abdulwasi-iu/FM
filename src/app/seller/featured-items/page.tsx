@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   Star,
   Trash2,
@@ -31,6 +32,7 @@ interface FeaturedItem {
 export default function SellerFeaturedItemsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
 
   const [designs, setDesigns] = useState<FeaturedItem[]>([])
   const [products, setProducts] = useState<FeaturedItem[]>([])
@@ -282,7 +284,7 @@ export default function SellerFeaturedItemsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{design.title}</div>
                       <div className="text-xs text-gray-600">
-                        ${(typeof design.price === 'number' ? design.price : 0).toFixed(2)} • {typeof design.totalSales === 'number' ? design.totalSales : 0} sales
+                        {formatPrice(typeof design.price === 'number' ? design.price : 0)} • {typeof design.totalSales === 'number' ? design.totalSales : 0} sales
                       </div>
                     </div>
                   </div>
