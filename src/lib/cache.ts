@@ -73,12 +73,12 @@ export async function getCachedData<T>(
 /**
  * Invalidate a cache key
  */
-export async function invalidateCache(key: string) {
+export async function invalidateCache(key: string): Promise<void> {
   const redis = getRedisClient()
   if (!redis) return
 
   try {
-    await redis.del(key).catch((err: any) => {
+    await redis.del(key).catch((err: Error) => {
       console.warn(`Failed to delete cache key ${key}:`, err)
     })
   } catch (error) {
@@ -89,14 +89,14 @@ export async function invalidateCache(key: string) {
 /**
  * Invalidate multiple cache keys with a pattern
  */
-export async function invalidateCachePattern(pattern: string) {
+export async function invalidateCachePattern(pattern: string): Promise<void> {
   const redis = getRedisClient()
   if (!redis) return
 
   try {
     const keys = await redis.keys(pattern)
     if (keys.length > 0) {
-      await redis.del(...keys).catch((err: any) => {
+      await redis.del(...keys).catch((err: Error) => {
         console.warn(`Failed to delete pattern keys ${pattern}:`, err)
       })
     }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { getCachedData, invalidateCache, invalidateCachePattern, CACHE_TTL } from "@/lib/cache";
+import { getCachedData, invalidateCachePattern, CACHE_TTL } from "@/lib/cache";
 
 /**
  * GET - Get notifications for the current user with cursor-based pagination
