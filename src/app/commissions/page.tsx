@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCurrency } from '@/components/CurrencyProvider';
 
 interface Attachment {
   url: string;
@@ -54,6 +55,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }>
 
 export default function CommissionsPage() {
   const { data: session, status } = useSession();
+  const { formatPrice } = useCurrency();
   const [requests, setRequests] = useState<CommissionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'requester' | 'designer'>('requester');
@@ -370,7 +372,7 @@ export default function CommissionsPage() {
                           <span>
                             Budget:{' '}
                             <span className="font-medium text-gray-700">
-                              {request.budget}
+                              {formatPrice(parseFloat(request.budget))}
                             </span>
                           </span>
                         )}
@@ -379,7 +381,7 @@ export default function CommissionsPage() {
                           <span className="text-green-600">
                             Quote:{' '}
                             <span className="font-medium">
-                              ${request.designerQuote.toLocaleString()}
+                              {formatPrice(request.designerQuote)}
                             </span>
                           </span>
                         )}

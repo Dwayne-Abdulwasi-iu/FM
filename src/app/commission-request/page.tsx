@@ -1,10 +1,13 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCurrency } from '@/components/CurrencyProvider';
 import {
   Search,
   Upload,
@@ -53,6 +56,7 @@ interface ReferenceDesign {
 
 function CommissionRequestContent() {
   const { data: _session, status } = useSession();
+  const { formatPrice } = useCurrency();
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedDesignerId = searchParams.get('designer');
@@ -516,10 +520,10 @@ function CommissionRequestContent() {
                     {(selectedDesigner.commissionMinBudget || selectedDesigner.commissionMaxBudget) && (
                       <span className="inline-flex items-center gap-0.5 sm:gap-1 text-indigo-700 bg-indigo-100 px-1.5 sm:px-2 py-0.5 sm:py-0.5 rounded">
                         💰 {selectedDesigner.commissionMinBudget && selectedDesigner.commissionMaxBudget
-                          ? `$${selectedDesigner.commissionMinBudget}-$${selectedDesigner.commissionMaxBudget}`
+                          ? `${formatPrice(selectedDesigner.commissionMinBudget)}-${formatPrice(selectedDesigner.commissionMaxBudget)}`
                           : selectedDesigner.commissionMinBudget
-                            ? `Min $${selectedDesigner.commissionMinBudget}`
-                            : `Max $${selectedDesigner.commissionMaxBudget}`}
+                            ? `Min ${formatPrice(selectedDesigner.commissionMinBudget)}`
+                            : selectedDesigner.commissionMaxBudget ? `Max ${formatPrice(selectedDesigner.commissionMaxBudget)}` : ''}
                       </span>
                     )}
                     {selectedDesigner.commissionTurnaround && (
@@ -665,14 +669,16 @@ function CommissionRequestContent() {
                     type="text"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    placeholder={selectedDesigner.commissionMinBudget 
-                      ? `e.g., $${selectedDesigner.commissionMinBudget}-$${(selectedDesigner.commissionMaxBudget || selectedDesigner.commissionMinBudget * 3)}`
-                      : "e.g., $100-$300"}
+                    placeholder={selectedDesigner.commissionMinBudget && selectedDesigner.commissionMaxBudget
+                      ? `e.g., ${formatPrice(selectedDesigner.commissionMinBudget)}-${formatPrice(selectedDesigner.commissionMaxBudget || selectedDesigner.commissionMinBudget * 3)}`
+                      : selectedDesigner.commissionMinBudget
+                        ? `e.g., ${formatPrice(selectedDesigner.commissionMinBudget)}-${formatPrice(selectedDesigner.commissionMinBudget * 3)}`
+                        : "e.g., 100-300"}
                     className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-900 bg-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   {selectedDesigner.commissionMinBudget && (
                     <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-xs text-amber-600">
-                      ⚠️ This designer&apos;s minimum budget is ${selectedDesigner.commissionMinBudget}
+                      ⚠️ This designer's minimum budget is {formatPrice(selectedDesigner.commissionMinBudget)}
                     </p>
                   )}
                 </div>

@@ -1174,11 +1174,10 @@ export default function DesignPage() {
                           <p className="text-[10px] sm:text-xs text-amber-700 font-semibold">Budget range</p>
                           <span className="font-medium text-amber-900 text-xs sm:text-sm">
                             {design.designer.commissionMinBudget && design.designer.commissionMaxBudget
-                              ? `$${design.designer.commissionMinBudget} - $${design.designer.commissionMaxBudget}`
+                              ? `${formatPrice(design.designer.commissionMinBudget)} - ${formatPrice(design.designer.commissionMaxBudget)}`
                               : design.designer.commissionMinBudget
-                                ? `From $${design.designer.commissionMinBudget}`
-                                : `Up to $${design.designer.commissionMaxBudget}`
-                            }
+                                ? `From ${formatPrice(design.designer.commissionMinBudget)}`
+                                : design.designer.commissionMaxBudget ? `Up to ${formatPrice(design.designer.commissionMaxBudget)}` : ''}
                           </span>
                         </div>
                       </div>

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   Users,
   ShoppingBag,
@@ -118,6 +119,7 @@ interface ChatSession {
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
+  const { formatPrice } = useCurrency()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<AdminTabId>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -498,7 +500,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] sm:text-xs font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-base sm:text-lg font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                   <p className="text-[8px] sm:text-[10px] text-green-600">{stats.totalOrders} orders</p>
                 </div>
                 <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
@@ -509,7 +511,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] sm:text-xs font-medium text-gray-600">Platform Earnings</p>
-                  <p className="text-base sm:text-lg font-bold text-gray-900">${stats.platformEarnings.toFixed(2)}</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900">{formatPrice(stats.platformEarnings)}</p>
                   <p className="text-[8px] sm:text-[10px] text-purple-600">Commission</p>
                 </div>
                 <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
@@ -1123,7 +1125,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-3 sm:gap-4">
                           <div className="text-right">
-                            <p className="font-medium text-xs sm:text-sm text-gray-900">${order.totalAmount.toFixed(2)}</p>
+                            <p className="font-medium text-xs sm:text-sm text-gray-900">{formatPrice(order.totalAmount)}</p>
                             <p className="text-[8px] sm:text-[9px] text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -1521,18 +1523,18 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <div className="bg-green-50 rounded-lg p-3 sm:p-4">
                       <h4 className="text-xs sm:text-sm font-medium text-green-900 mb-1 sm:mb-2">Commission</h4>
-                      <p className="text-lg sm:text-2xl font-bold text-green-600">${stats.platformEarnings.toFixed(2)}</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-600">{formatPrice(stats.platformEarnings)}</p>
                       <p className="text-[8px] sm:text-xs text-green-700">5% of sales</p>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
                       <h4 className="text-xs sm:text-sm font-medium text-blue-900 mb-1 sm:mb-2">Total Volume</h4>
-                      <p className="text-lg sm:text-2xl font-bold text-blue-600">${stats.totalRevenue.toFixed(2)}</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-600">{formatPrice(stats.totalRevenue)}</p>
                       <p className="text-[8px] sm:text-xs text-blue-700">{stats.totalOrders} orders</p>
                     </div>
                     <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
                       <h4 className="text-xs sm:text-sm font-medium text-purple-900 mb-1 sm:mb-2">Avg Order</h4>
                       <p className="text-lg sm:text-2xl font-bold text-purple-600">
-                        ${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}
+                        {formatPrice(stats.totalOrders > 0 ? stats.totalRevenue / stats.totalOrders : 0)}
                       </p>
                       <p className="text-[8px] sm:text-xs text-purple-700">Per order</p>
                     </div>

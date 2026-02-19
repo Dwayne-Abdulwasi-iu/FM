@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Settings, Save, AlertCircle, CheckCircle, Loader2, Info, DollarSign, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface CommissionSettings {
   acceptsCommissions: boolean
@@ -31,6 +32,7 @@ const COMMISSION_TYPE_OPTIONS = [
 
 export default function CommissionSettingsPage() {
   const { data: session, status } = useSession()
+  const { currency } = useCurrency()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -275,7 +277,7 @@ export default function CommissionSettingsPage() {
           {/* Budget Range */}
           {settings.acceptsCommissions && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Budget Range (USD)</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Budget Range ({currency})</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Minimum</label>
