@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
+import { getCachedData, invalidateCache, CACHE_TTL } from '@/lib/cache'
 
 /**
  * GET /api/preferences - Get user display preferences
@@ -15,22 +16,33 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        preferredCurrency: true,
-        preferredLanguage: true,
-      },
-    })
+    const fetchPreferences = async () => {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          preferredCurrency: true,
+          preferredLanguage: true,
+        },
+      })
 
-    if (!user) {
+      if (!user) {
+        return null
+      }
+
+      return {
+        currency: user.preferredCurrency,
+        language: user.preferredLanguage,
+      }
+    }
+
+    const cacheKey = `preferences:${session.user.id}`
+    const prefs = await getCachedData(cacheKey, CACHE_TTL.PREFERENCES, fetchPreferences)
+
+    if (!prefs) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      currency: user.preferredCurrency,
-      language: user.preferredLanguage,
-    })
+    return NextResponse.json(prefs)
   } catch (error) {
     const prismaResp = prismaErrorResponse(error, 'Database temporarily unavailable')
     if (prismaResp) return prismaResp
@@ -79,6 +91,8 @@ export async function PUT(request: NextRequest) {
         preferredLanguage: true,
       },
     })
+
+    await invalidateCache(`preferences:${session.user.id}`)
 
     return NextResponse.json({
       success: true,

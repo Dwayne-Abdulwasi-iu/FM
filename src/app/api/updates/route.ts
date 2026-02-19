@@ -3,10 +3,12 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
+import { getCachedData, CACHE_TTL } from '@/lib/cache'
 
 /**
  * GET - Get updates/announcements for the current user
  * Returns broadcasts that were sent to the user's segment
+ * Cached per-user with 1 minute TTL
  */
 export async function GET(request: NextRequest) {
   try {
@@ -19,40 +21,52 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50)
     const cursor = searchParams.get('cursor')
+    
+    // Cache key includes userId and limit, but not cursor (pagination)
+    const cacheKey = `updates:${session.user.id}:${limit}`
 
-    // Get broadcasts where user is a recipient
-    const whereClause = {
-      userId: session.user.id,
-      broadcast: {
-        status: 'SENT',
+    const fetchUpdates = async () => {
+      // Get broadcasts where user is a recipient
+      const whereClause = {
+        userId: session.user.id,
+        broadcast: {
+          status: 'SENT',
+        }
       }
-    }
 
-    const includeClause = {
-      broadcast: {
-        select: {
-          id: true,
-          subject: true,
-          content: true,
-          targetType: true,
-          sentAt: true,
-          admin: {
-            select: {
-              name: true,
+      const includeClause = {
+        broadcast: {
+          select: {
+            id: true,
+            subject: true,
+            content: true,
+            targetType: true,
+            sentAt: true,
+            admin: {
+              select: {
+                name: true,
+              }
             }
           }
         }
       }
+
+      // Get user-specific broadcasts
+      const recipientRecords = await prisma.adminBroadcastRecipient.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' as const },
+        take: limit + 1,
+        include: includeClause,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      })
+
+      return recipientRecords
     }
 
-    // Get user-specific broadcasts
-    const recipientRecords = await prisma.adminBroadcastRecipient.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' as const },
-      take: limit + 1,
-      include: includeClause,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    })
+    // Use cache for initial request (no cursor), skip cache for paginated requests
+    const recipientRecords = cursor 
+      ? await fetchUpdates()
+      : await getCachedData(cacheKey, CACHE_TTL.UPDATES, fetchUpdates)
 
     // Determine pagination
     const hasMore = recipientRecords.length > limit

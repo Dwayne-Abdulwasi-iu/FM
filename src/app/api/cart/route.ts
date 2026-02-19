@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { getCachedData, invalidateCache, CACHE_TTL } from '@/lib/cache'
 
 export async function GET() {
   try {
@@ -14,50 +15,57 @@ export async function GET() {
       )
     }
 
-    // Optimized query: only fetch needed fields to reduce response time
-    const cartItems = await prisma.cartItem.findMany({
-      where: {
-        userId: session.user.id
-      },
-      select: {
-        id: true,
-        userId: true,
-        designId: true,
-        purchaseType: true,
-        quantity: true,
-        priceTestVariant: true,
-        priceTestPrice: true,
-        createdAt: true,
-        design: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            ownershipPrice: true,
-            designerId: true,
-            mediaFiles: {
-              select: {
-                fileUrl: true,
-                fileType: true
+    // Cache key for this user's cart
+    const cacheKey = `cart:${session.user.id}`
+
+    const fetchCart = async () => {
+      // Optimized query: only fetch needed fields to reduce response time
+      const cartItems = await prisma.cartItem.findMany({
+        where: {
+          userId: session.user.id
+        },
+        select: {
+          id: true,
+          userId: true,
+          designId: true,
+          purchaseType: true,
+          quantity: true,
+          priceTestVariant: true,
+          priceTestPrice: true,
+          createdAt: true,
+          design: {
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              ownershipPrice: true,
+              designerId: true,
+              mediaFiles: {
+                select: {
+                  fileUrl: true,
+                  fileType: true
+                },
+                take: 1
               },
-              take: 1
-            },
-            designer: {
-              select: {
-                id: true,
-                name: true,
-                image: true
+              designer: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true
+                }
               }
             }
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+      })
 
-    // Calculate total based on purchase type and A/B test prices
+      return cartItems
+    }
+
+    const cartItems = await getCachedData(cacheKey, CACHE_TTL.CART, fetchCart)
     type CartItemWithDesign = {
       id: string
       designId: string
@@ -351,6 +359,7 @@ export async function POST(request: NextRequest) {
         data: { quantity: existingItem.quantity + quantity }
       })
 
+      await invalidateCache(`cart:${session.user.id}`)
       return NextResponse.json({
         message: 'Cart updated successfully',
         itemId: existingItem.id,
@@ -380,6 +389,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    await invalidateCache(`cart:${session.user.id}`)
     return NextResponse.json({
       message: 'Item added to cart successfully',
       itemId: cartItem.id
@@ -416,6 +426,7 @@ export async function DELETE(request: NextRequest) {
         }
       })
       
+      await invalidateCache(`cart:${session.user.id}`)
       return NextResponse.json({
         message: 'Cart cleared successfully'
       })
@@ -436,6 +447,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    await invalidateCache(`cart:${session.user.id}`)
     return NextResponse.json({
       message: 'Item removed from cart successfully'
     })

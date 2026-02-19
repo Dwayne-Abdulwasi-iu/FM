@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getCachedData, invalidateCache, CACHE_TTL } from "@/lib/cache";
 
 /**
  * GET - Get notifications for the current user with cursor-based pagination
@@ -19,50 +20,62 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
     const cursor = searchParams.get("cursor"); // ID of the last notification from previous page
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = { userId: session.user.id, isDeleted: false };
-    if (unreadOnly) {
-      where.isRead = false;
+    const fetchNotifications = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const where: any = { userId: session.user.id, isDeleted: false };
+      if (unreadOnly) {
+        where.isRead = false;
+      }
+      
+      // Cursor-based pagination query
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const queryOptions: any = {
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit + 1, // Fetch one extra to determine if there are more
+      };
+      
+      if (cursor) {
+        queryOptions.cursor = { id: cursor };
+        queryOptions.skip = 1; // Skip the cursor item itself
+      }
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const [notificationsRaw, unreadCount, totalCount] = await Promise.all([
+        (prisma as any).notification.findMany(queryOptions),
+        (prisma as any).notification.count({
+          where: { userId: session.user.id, isRead: false, isDeleted: false },
+        }),
+        (prisma as any).notification.count({
+          where: { userId: session.user.id, isDeleted: false },
+        }),
+      ]);
+      
+      // Determine if there's a next page
+      const hasMore = notificationsRaw.length > limit;
+      const notifications = hasMore ? notificationsRaw.slice(0, limit) : notificationsRaw;
+      const nextCursor = hasMore ? notifications[notifications.length - 1]?.id : null;
+      
+      return {
+        notifications,
+        unreadCount,
+        totalCount,
+        pagination: {
+          hasMore,
+          nextCursor,
+        },
+      };
     }
-    
-    // Cursor-based pagination query
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const queryOptions: any = {
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limit + 1, // Fetch one extra to determine if there are more
-    };
-    
+
+    // Skip cache when using cursor (pagination) for fresh data
     if (cursor) {
-      queryOptions.cursor = { id: cursor };
-      queryOptions.skip = 1; // Skip the cursor item itself
+      return NextResponse.json(await fetchNotifications());
     }
+
+    const cacheKey = `notifications:${session.user.id}:${unreadOnly}:${limit}`;
+    const result = await getCachedData(cacheKey, CACHE_TTL.NOTIFICATIONS, fetchNotifications);
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [notificationsRaw, unreadCount, totalCount] = await Promise.all([
-      (prisma as any).notification.findMany(queryOptions),
-      (prisma as any).notification.count({
-        where: { userId: session.user.id, isRead: false, isDeleted: false },
-      }),
-      (prisma as any).notification.count({
-        where: { userId: session.user.id, isDeleted: false },
-      }),
-    ]);
-    
-    // Determine if there's a next page
-    const hasMore = notificationsRaw.length > limit;
-    const notifications = hasMore ? notificationsRaw.slice(0, limit) : notificationsRaw;
-    const nextCursor = hasMore ? notifications[notifications.length - 1]?.id : null;
-    
-    return NextResponse.json({
-      notifications,
-      unreadCount,
-      totalCount,
-      pagination: {
-        hasMore,
-        nextCursor,
-      },
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching notifications:", error);
     return NextResponse.json(
@@ -94,6 +107,7 @@ export async function PATCH(request: NextRequest) {
         data: { isRead: true, readAt: new Date() },
       });
       
+      await invalidateCache(`notifications:${session.user.id}:*`);
       return NextResponse.json({ success: true, message: "All notifications marked as read" });
     }
     
@@ -121,6 +135,7 @@ export async function PATCH(request: NextRequest) {
       data: { isRead: true, readAt: new Date() },
     });
     
+    await invalidateCache(`notifications:${session.user.id}:*`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating notification:", error);
@@ -170,6 +185,7 @@ export async function DELETE(request: NextRequest) {
       data: { isDeleted: true, deletedAt: new Date() },
     });
     
+    await invalidateCache(`notifications:${session.user.id}:*`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting notification:", error);
