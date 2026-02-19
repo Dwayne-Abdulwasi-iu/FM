@@ -1,33 +1,27 @@
 // GET /api/cron/process-payouts - Process scheduled seller payouts (1-2 days after delivery)
-import { NextRequest, NextResponse } from 'next/server';
-import { processScheduledPayouts } from '@/lib/boutique/payout';
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
+import { processScheduledPayouts } from '@/lib/boutique/payout'
 
 /**
- * Cron job to process scheduled payouts
- * Should be called daily from external cron service (e.g., EasyCron, GitHub Actions)
+ * Cron job to process scheduled seller payouts
+ * Should be called daily from external cron service (e.g., EasyCron, GitHub Actions, Render)
  * 
- * Expected header:
  * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+ *   http://localhost:3000/api/cron/process-payouts
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
-    const cronSecret = request.headers.get('authorization')?.replace('Bearer ', '');
-    const expectedSecret = process.env.CRON_SECRET;
-
-    if (!expectedSecret) {
-      console.warn('CRON_SECRET not configured - skipping payout processing');
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
       return NextResponse.json(
-        { success: false, message: 'CRON_SECRET not configured' },
-        { status: 400 }
-      );
-    }
-
-    if (cronSecret !== expectedSecret) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { error: auth.reason },
         { status: 401 }
-      );
+      )
     }
 
     // Process all scheduled payouts

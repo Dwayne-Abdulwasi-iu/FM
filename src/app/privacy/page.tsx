@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
           </div>
           
           <p className="text-[8px] sm:text-sm text-gray-600">
-            Last updated: October 27, 2025
+            Last updated: February 19, 2026
           </p>
         </div>
 

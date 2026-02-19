@@ -1,29 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import { runAutoResolutionBatch, getDisputeStats } from '@/lib/dispute-resolution'
 
 /**
- * Cron endpoint for automated dispute resolution
+ * POST /api/cron/dispute-resolution
  * 
- * Should be called every hour to check pending disputes and apply
- * auto-resolution rules where applicable.
+ * Automated dispute resolution cron job 
+ * Runs every hour to check pending disputes and apply auto-resolution rules
  * 
- * Example: Set up a cron job to call this endpoint hourly
- * 0 * * * * curl -X POST https://yourdomain.com/api/cron/dispute-resolution
+ * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -X POST https://yourdomain.com/api/cron/dispute-resolution \
+ *   -H "Authorization: Bearer YOUR_CRON_SECRET"
  */
-
-// Verify cron secret to prevent unauthorized access
-const CRON_SECRET = process.env.CRON_SECRET
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authorization
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = authHeader?.replace('Bearer ', '')
-    
-    // Allow if cron secret matches OR if no secret is configured (dev mode)
-    if (CRON_SECRET && cronSecret !== CRON_SECRET) {
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: auth.reason },
         { status: 401 }
       )
     }
@@ -57,17 +55,19 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET endpoint to retrieve dispute statistics
+ * GET /api/cron/dispute-resolution
+ * 
+ * Retrieve dispute statistics for monitoring
+ * 
+ * Authorization: Bearer <CRON_SECRET>
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify authorization for stats access
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = authHeader?.replace('Bearer ', '')
-    
-    if (CRON_SECRET && cronSecret !== CRON_SECRET) {
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: auth.reason },
         { status: 401 }
       )
     }

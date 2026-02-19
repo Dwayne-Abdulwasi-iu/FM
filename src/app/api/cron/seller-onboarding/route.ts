@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import prisma from '@/lib/prisma'
 import { sendSellerOnboardingEmail } from '@/lib/seller-onboarding-emails'
 import { prismaErrorResponse } from '@/lib/prismaError'
@@ -7,20 +8,27 @@ import { prismaErrorResponse } from '@/lib/prismaError'
 const ONBOARDING_DAYS = [1, 2, 3, 5, 7]
 
 /**
- * Cron job to send seller onboarding emails
+ * GET /api/cron/seller-onboarding
  * 
- * This should be called daily by a cron service (e.g., Render cron, Vercel cron)
+ * Cron job to send seller onboarding emails to new sellers
+ * Sends on days 1, 2, 3, 5, 7 after signup
  * 
- * Endpoint: GET /api/cron/seller-onboarding
- * Authorization: Bearer token in CRON_SECRET env var
+ * Should be called daily by a cron service (e.g., Render cron, Vercel cron)
+ * 
+ * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+ *   http://localhost:3000/api/cron/seller-onboarding
  */
 export async function GET(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Verify cron secret using unified auth
+  const auth = await verifyCronSecret(request)
+  if (!auth.valid) {
+    return NextResponse.json(
+      { error: auth.reason },
+      { status: 401 }
+    )
   }
 
   try {

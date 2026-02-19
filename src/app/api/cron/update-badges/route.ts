@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import { updateAllSellerBadges } from '@/lib/badge-service'
 
 /**
  * POST /api/cron/update-badges
- * Cron job to update all seller badges and tiers
- * Should be called daily (e.g., via Vercel Cron or external scheduler)
+ * 
+ * Cron job to update all seller badges and tiers based on sales metrics
+ * Should be called daily (e.g., via Vercel Cron, Render Cron, or external scheduler)
+ * 
+ * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" \
+ *   http://localhost:3000/api/cron/update-badges
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret for security
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: auth.reason },
         { status: 401 }
       )
     }

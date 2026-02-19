@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import prisma from '@/lib/prisma'
 import { initiateCommissionTransfer, createTransferNotification } from '@/lib/transfer-service'
 import { processStripeRefund, processPaystackRefund } from '@/lib/refund-service'
@@ -30,24 +31,30 @@ interface ProcessingResult {
 }
 
 /**
- * Commission monitoring cron job
- * Run daily to handle:
+ * GET /api/cron/commission-monitor
+ * 
+ * Commission monitoring cron job - runs daily
+ * 
+ * Handles:
  * 1. Auto-release: Complete commissions after 14 days of delivery if no client response
  * 2. Deadline warnings: Notify designers of approaching/passed deadlines
  * 3. Abandonment protection: Warn/refund if designer doesn't progress after payment
+ * 
+ * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+ *   http://localhost:3000/api/cron/commission-monitor
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret (supports both x-cron-secret header and Bearer token)
-    const cronSecretHeader = request.headers.get('x-cron-secret')
-    const authHeader = request.headers.get('authorization')
-    const expectedSecret = process.env.CRON_SECRET
-
-    const isValidCronSecret = cronSecretHeader === expectedSecret
-    const isValidBearerToken = authHeader === `Bearer ${expectedSecret}`
-
-    if (!expectedSecret || (!isValidCronSecret && !isValidBearerToken)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
+      return NextResponse.json(
+        { error: auth.reason },
+        { status: 401 }
+      )
     }
 
     console.log('[Commission Monitor] Starting job')

@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import { retryFailedTransfers } from '@/lib/transfer-service'
 
 /**
- * Background job to retry failed transfers
+ * GET /api/cron/retry-transfers
+ * 
+ * Background job to retry failed seller payout transfers
  * Call this endpoint periodically (e.g., every 5 minutes via external cron service)
- * Protected by CRON_SECRET environment variable
+ * 
+ * Authorization: Bearer <CRON_SECRET>
+ * 
+ * Example:
+ * curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+ *   http://localhost:3000/api/cron/retry-transfers
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret (supports both x-cron-secret header and Bearer token)
-    const cronSecretHeader = request.headers.get('x-cron-secret')
-    const authHeader = request.headers.get('authorization')
-    const expectedSecret = process.env.CRON_SECRET
-
-    const isValidCronSecret = cronSecretHeader === expectedSecret
-    const isValidBearer = authHeader === `Bearer ${expectedSecret}`
-
-    if (!expectedSecret || (!isValidCronSecret && !isValidBearer)) {
+    // Verify cron secret using unified auth
+    const auth = await verifyCronSecret(request)
+    if (!auth.valid) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: auth.reason },
         { status: 401 }
       )
     }

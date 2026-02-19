@@ -25,7 +25,7 @@ export default function TermsOfServicePage() {
           </div>
           
           <p className="text-[8px] sm:text-sm text-gray-600">
-            Last updated: February 8, 2026
+            Last updated: February 19, 2026
           </p>
         </div>
 
