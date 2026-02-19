@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
       // Check for active promotions and apply if applicable
       let promotionId: string | null = null
       let promotionType: string | null = null
-      let originalPrice = price
+      const originalPrice = price
       let discountAmount = 0
 
       // Only apply promotions to regular digital designs (not POD or ownership)
