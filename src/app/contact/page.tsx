@@ -75,7 +75,7 @@ export default function ContactPage() {
                   <Mail className="h-3 h-3 sm:h-5 sm:w-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-gray-900 text-[10px] sm:text-sm">Email</p>
-                    <p className="text-gray-600 text-[9px] sm:text-xs break-all">fashiondwayne@gmail.com</p>
+                    <p className="text-gray-600 text-[9px] sm:text-xs break-all">support@fashionmarketplace.store</p>
                   </div>
                 </div>
                 

@@ -166,7 +166,7 @@ export default function TermsOfServicePage() {
               <div className="text-[10px] sm:text-base text-gray-700">
                 <p className="mb-2">Questions?</p>
                 <ul className="space-y-0.5">
-                  <li><strong>Email:</strong> fashiondwayne@gmail.com</li>
+                  <li><strong>Email:</strong> support@fashionmarketplace.store</li>
                   <li><strong>Phone:</strong> +234-810-4912-270</li>
                   <li><strong>WhatsApp:</strong> +234-810-4912-270</li>
                   <li><strong>Address:</strong> Lagos, Nigeria</li>

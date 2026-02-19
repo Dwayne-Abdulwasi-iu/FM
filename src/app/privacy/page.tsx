@@ -267,7 +267,7 @@ export default function PrivacyPolicyPage() {
                 <p className="mb-2 sm:mb-3">If you have any questions about this Privacy Policy or our privacy practices, please contact us:</p>
                 <div className="bg-gray-50 p-2 sm:p-4 rounded-lg">
                   <ul className="space-y-1 sm:space-y-2">
-                    <li><strong>Email:</strong> fashiondwayne@gmail.com</li>
+                    <li><strong>Email:</strong> support@fashionmarketplace.store</li>
                     <li><strong>Phone:</strong> 08104912270</li>
                     <li><strong>WhatsApp:</strong> 08104912270</li>
                     <li><strong>Address:</strong> Lagos, Nigeria</li>
