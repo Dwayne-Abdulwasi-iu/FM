@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { useCurrency } from '@/components/CurrencyProvider'
 import { SubscriptionRequiredModal } from '@/components/SubscriptionRequiredModal'
 import { FeaturedItemsConfirmationModal } from '@/components/FeaturedItemsConfirmationModal'
 import { 
@@ -42,13 +43,6 @@ interface Design {
   addedByAdmin?: boolean
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount)
-}
-
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -60,6 +54,7 @@ function formatDate(dateString: string): string {
 export default function SellerDesignsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [designs, setDesigns] = useState<Design[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -425,7 +420,7 @@ export default function SellerDesignsPage() {
                 <span className="text-indigo-600 font-bold text-xs sm:text-base">$</span>
               </div>
               <div className="min-w-0">
-                <p className="text-sm sm:text-lg font-bold text-gray-900 truncate">{formatCurrency(totalRevenue)}</p>
+                <p className="text-sm sm:text-lg font-bold text-gray-900 truncate">{formatPrice(totalRevenue)}</p>
                 <p className="text-xs sm:text-sm text-gray-500">Revenue</p>
               </div>
             </div>
@@ -581,7 +576,7 @@ export default function SellerDesignsPage() {
                     </span>
                   </div>
                   <p className="text-sm sm:text-lg font-bold text-indigo-600 mt-1">
-                    {formatCurrency(design.price)}
+                    {formatPrice(design.price)}
                   </p>
                   
                   {/* Stats */}
@@ -610,7 +605,7 @@ export default function SellerDesignsPage() {
                   {design.totalRevenue > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <p className="text-sm text-gray-500">
-                        Revenue: <span className="font-semibold text-green-600">{formatCurrency(design.totalRevenue)}</span>
+                        Revenue: <span className="font-semibold text-green-600">{formatPrice(design.totalRevenue)}</span>
                       </p>
                     </div>
                   )}

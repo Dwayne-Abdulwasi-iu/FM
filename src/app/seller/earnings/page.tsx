@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   DollarSign,
   TrendingUp,
@@ -43,6 +44,7 @@ interface Transaction {
 export default function SellerEarningsPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<EarningsStats | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -105,13 +107,6 @@ export default function SellerEarningsPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
   }
 
   const formatDate = (dateString: string) => {
@@ -216,7 +211,7 @@ export default function SellerEarningsPage() {
               <div>
                 <p className="text-sm text-gray-500">Total Earnings</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(stats?.totalEarnings || 0)}
+                  {formatPrice(stats?.totalEarnings || 0)}
                 </p>
               </div>
             </div>
@@ -231,7 +226,7 @@ export default function SellerEarningsPage() {
               <div>
                 <p className="text-sm text-gray-500">Available Balance</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(stats?.availableBalance || 0)}
+                  {formatPrice(stats?.availableBalance || 0)}
                 </p>
               </div>
             </div>
@@ -246,7 +241,7 @@ export default function SellerEarningsPage() {
               <div>
                 <p className="text-sm text-gray-500">Pending Payout</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(stats?.pendingPayout || 0)}
+                  {formatPrice(stats?.pendingPayout || 0)}
                 </p>
               </div>
             </div>
@@ -261,11 +256,11 @@ export default function SellerEarningsPage() {
               <div>
                 <p className="text-sm text-gray-500">This Month</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(stats?.thisMonthEarnings || 0)}
+                  {formatPrice(stats?.thisMonthEarnings || 0)}
                 </p>
                 {stats?.lastMonthEarnings !== undefined && (
                   <p className="text-xs text-gray-400">
-                    Last month: {formatCurrency(stats.lastMonthEarnings)}
+                    Last month: {formatPrice(stats.lastMonthEarnings)}
                   </p>
                 )}
               </div>
@@ -380,7 +375,7 @@ export default function SellerEarningsPage() {
                           }`}
                         >
                           {tx.type === 'EARNING' ? '+' : tx.type === 'REFUND' ? '-' : ''}
-                          {formatCurrency(tx.amount)}
+                          {formatPrice(tx.amount)}
                         </p>
                         {getStatusBadge(tx.status)}
                       </div>

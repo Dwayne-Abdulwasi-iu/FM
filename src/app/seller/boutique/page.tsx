@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import { useCurrency } from '@/components/CurrencyProvider';
 import {
   Package,
   Plus,
@@ -81,6 +82,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 export default function SellerBoutiquePage() {
   const { data: _session, status: authStatus } = useSession();
   const router = useRouter();
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<BoutiqueProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -524,7 +526,7 @@ export default function SellerBoutiquePage() {
                     <div className="flex-1 min-w-0 sm:hidden">
                       <h3 className="font-semibold text-gray-900 text-xs truncate">{product.title}</h3>
                       <p className="text-[10px] text-gray-500">{product.category.name}</p>
-                      <span className="text-sm font-bold text-gray-900">₦{product.basePrice.toLocaleString()}</span>
+                      <span className="text-sm font-bold text-gray-900">{formatPrice(product.basePrice)}</span>
                     </div>
                   </div>
 
@@ -534,7 +536,7 @@ export default function SellerBoutiquePage() {
                     <p className="text-sm text-gray-500">{product.category.name}</p>
                     <div className="flex items-center gap-4 mt-1">
                       <span className="text-lg font-bold text-gray-900">
-                        ₦{product.basePrice.toLocaleString()}
+                        {formatPrice(product.basePrice)}
                       </span>
                       {product.variants.length > 0 && (
                         <span className="text-sm text-gray-500">

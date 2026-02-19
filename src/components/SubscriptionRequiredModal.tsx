@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Check } from 'lucide-react'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface SubscriptionRequiredModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export function SubscriptionRequiredModal({
   errorCode = 'NO_FEATURED_ACCESS',
   itemType = 'DESIGN'
 }: SubscriptionRequiredModalProps) {
+  const { formatPrice } = useCurrency()
   const [selectedTier, setSelectedTier] = useState<'STARTER' | 'PRO' | 'VIP'>('PRO')
 
   if (!isOpen) return null
@@ -30,13 +32,13 @@ export function SubscriptionRequiredModal({
     FREE: {
       name: 'Free',
       featured: 0,
-      price: '$0',
+      price: formatPrice(0),
       color: 'bg-gray-100 border-gray-300'
     },
     STARTER: {
       name: 'Starter',
       featured: 2,
-      price: '$2.99',
+      price: formatPrice(2.99),
       period: '/month',
       color: 'bg-blue-50 border-blue-300',
       highlight: true
@@ -44,7 +46,7 @@ export function SubscriptionRequiredModal({
     PRO: {
       name: 'Pro',
       featured: 6,
-      price: '$4.99',
+      price: formatPrice(4.99),
       period: '/month',
       color: 'bg-purple-50 border-purple-300',
       highlight: true
@@ -52,7 +54,7 @@ export function SubscriptionRequiredModal({
     VIP: {
       name: 'VIP',
       featured: 10,
-      price: '$9.99',
+      price: formatPrice(9.99),
       period: '/month',
       color: 'bg-amber-50 border-amber-300',
       highlight: true

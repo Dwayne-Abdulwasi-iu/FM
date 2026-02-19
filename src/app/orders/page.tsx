@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
+import { useCurrency } from '@/components/CurrencyProvider'
 import {
   Package,
   Download,
@@ -82,6 +83,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 export default function OrdersPage() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
 
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -182,13 +184,6 @@ export default function OrdersPage() {
       hour12: true,
     })
     return `${dateStr} at ${timeStr}`
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
   }
 
   if (authStatus === 'loading' || loading) {
@@ -319,7 +314,7 @@ export default function OrdersPage() {
                           <span className="hidden sm:inline">{statusConfig.label}</span>
                         </span>
                         <span className="font-semibold text-[10px] sm:text-sm text-gray-900">
-                          {formatCurrency(order.totalAmount)}
+                          {formatPrice(order.totalAmount)}
                         </span>
                       </div>
                       <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-90' : ''}`} />
@@ -367,7 +362,7 @@ export default function OrdersPage() {
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-semibold text-[10px] sm:text-xs text-gray-900">{formatCurrency(item.price)}</p>
+                            <p className="font-semibold text-[10px] sm:text-xs text-gray-900">{formatPrice(item.price)}</p>
                             <p className="text-[9px] sm:text-[10px] text-gray-500">Qty: {item.quantity}</p>
                           </div>
                         </div>

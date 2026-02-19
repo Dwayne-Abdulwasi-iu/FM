@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { useCurrency } from '@/components/CurrencyProvider'
 import { SubscriptionRequiredModal } from '@/components/SubscriptionRequiredModal'
 import { FeaturedItemsConfirmationModal } from '@/components/FeaturedItemsConfirmationModal'
 import { 
@@ -44,13 +45,6 @@ interface BoutiqueProduct {
   addedByAdmin?: boolean
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount)
-}
-
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -62,6 +56,7 @@ function formatDate(dateString: string): string {
 export default function SellerBoutiqueFeaturedPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [products, setProducts] = useState<BoutiqueProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -629,7 +624,7 @@ export default function SellerBoutiqueFeaturedPage() {
                   
                   {/* Price */}
                   <div className="text-lg font-bold text-purple-600 mb-3">
-                    {formatCurrency(product.salePrice || product.basePrice)}
+                    {formatPrice(product.salePrice || product.basePrice)}
                   </div>
 
                   {/* Stats */}
@@ -639,7 +634,7 @@ export default function SellerBoutiqueFeaturedPage() {
                       <div>Sales</div>
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">{formatCurrency(product.totalRevenue || 0)}</div>
+                      <div className="font-semibold text-gray-900">{formatPrice(product.totalRevenue || 0)}</div>
                       <div>Revenue</div>
                     </div>
                     <div>

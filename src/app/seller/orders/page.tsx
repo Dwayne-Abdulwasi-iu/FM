@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 import { 
   ArrowLeft, 
   Package, 
@@ -82,13 +83,6 @@ const podStatusConfig: Record<string, { label: string; color: string; descriptio
   delivery_failed: { label: 'Delivery Failed', color: 'bg-orange-100 text-orange-700', description: 'Delivery attempt failed' },
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount)
-}
-
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -102,6 +96,7 @@ function formatDate(dateString: string): string {
 export default function SellerOrdersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -262,7 +257,7 @@ export default function SellerOrdersPage() {
                         {status.icon}
                         <span className="hidden sm:inline">{status.label}</span>
                       </span>
-                      <p className="font-bold text-sm sm:text-base text-gray-900">{formatCurrency(orderTotal)}</p>
+                      <p className="font-bold text-sm sm:text-base text-gray-900">{formatPrice(orderTotal)}</p>
                     </div>
                   </div>
 
@@ -350,7 +345,7 @@ export default function SellerOrdersPage() {
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                           </div>
                           <p className="font-semibold text-gray-900">
-                            {formatCurrency(item.price * item.quantity)}
+                            {formatPrice(item.price * item.quantity)}
                           </p>
                         </Link>
                       ))}

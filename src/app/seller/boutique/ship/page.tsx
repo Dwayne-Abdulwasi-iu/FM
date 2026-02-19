@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCurrency } from '@/components/CurrencyProvider'
 import { Package, Truck, Clock, CheckCircle, AlertTriangle, ChevronRight, Plus, Search } from 'lucide-react'
 
 interface Product {
@@ -45,6 +46,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 export default function SellerShipmentIndexPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { formatPrice } = useCurrency()
   const [products, setProducts] = useState<ProductWithShipment[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('CONTENT_APPROVED')
@@ -73,14 +75,6 @@ export default function SellerShipmentIndexPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const formatDate = (date: string) => {
@@ -234,7 +228,7 @@ export default function SellerShipmentIndexPage() {
                             {product.title}
                           </h3>
                           <p className="text-purple-600 font-medium text-xs sm:text-sm">
-                            {formatCurrency(product.basePrice)}
+                            {formatPrice(product.basePrice)}
                           </p>
                         </div>
                         <span className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>

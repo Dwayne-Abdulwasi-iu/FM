@@ -15,7 +15,7 @@ import {
   CheckCircle,
   ArrowRight
 } from 'lucide-react'
-import { formatPrice } from '@/lib/currency'
+import { useCurrency } from '@/components/CurrencyProvider'
 
 interface PriceTestDesign {
   id: string
@@ -46,6 +46,7 @@ export function PriceTestWidget({
   onTestStop,
   className = '' 
 }: PriceTestWidgetProps) {
+  const { formatPrice, currency } = useCurrency()
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null)
   const [testDuration, setTestDuration] = useState(14)
@@ -380,6 +381,7 @@ export function PriceTestResults({
   winner,
   className = '',
 }: PriceTestResultsProps) {
+  const { formatPrice } = useCurrency()
   const controlCR = results.control.views > 0 
     ? (results.control.sales / results.control.views * 100).toFixed(2) 
     : '0'
