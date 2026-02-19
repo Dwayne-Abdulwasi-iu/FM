@@ -1,17 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Download, FileText, Eye, Copy, Check } from 'lucide-react'
+import { Download, FileText, Eye, Copy, Check, Plus, Trash2, Archive, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface DocumentInfo {
-  id: 'moa' | 'aoa'
+  id: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract'
   title: string
   description: string
   longDescription: string
   icon: React.ReactNode
   importance: 'critical' | 'important' | 'reference'
+}
+
+interface DocumentVersion {
+  id: string
+  documentType: string
+  documentName: string
+  versionNumber: number
+  status: string
+  approvalStatus: string
+  createdAt: string
+  createdBy: { id: string; email: string; name: string | null }
+  approvedAt?: string | null
+  downloads: number
+  lastAccessedAt?: string | null
 }
 
 const DOCUMENTS: DocumentInfo[] = [
@@ -30,14 +44,117 @@ const DOCUMENTS: DocumentInfo[] = [
     longDescription: 'The Articles of Association (AOA) is the internal constitution of your company. It covers share capital, member rights, general meetings, board of directors, staff employment, financial management, and operational procedures. This document provides the framework for how your company operates.',
     icon: <FileText className="w-6 h-6" />,
     importance: 'critical'
+  },
+  {
+    id: 'shareholder_agreement',
+    title: 'Shareholder Agreement',
+    description: 'Governs share transfers, investor protections, and dispute resolution',
+    longDescription: 'The Shareholder Agreement is a comprehensive contract between shareholders covering share transfers, voting rights, drag-along/tag-along rights, deadlock resolution, valuation mechanisms, and future partnerships. Essential for protecting shareholder interests and managing ownership transitions.',
+    icon: <FileText className="w-6 h-6" />,
+    importance: 'important'
+  },
+  {
+    id: 'employment_contract',
+    title: 'Employment Contract Template',
+    description: 'Template for employment agreements with all legal requirements',
+    longDescription: 'Professional employment contract template covering compensation, benefits, working hours, leave entitlements, confidentiality, intellectual property, termination procedures, and statutory compliance. Customizable for different employee roles and requirements.',
+    icon: <FileText className="w-6 h-6" />,
+    importance: 'important'
   }
 ]
 
 export default function DocumentsPage() {
   const [copied, setCopied] = useState<string | null>(null)
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [versions, setVersions] = useState<DocumentVersion[]>([])
+  const [loadingVersions, setLoadingVersions] = useState(false)
+  const [selectedDocType, setSelectedDocType] = useState<string | null>(null)
 
-  const handleDownload = async (type: 'moa' | 'aoa', format: 'txt' | 'json' | 'html') => {
+  // Fetch document versions on component mount
+  useEffect(() => {
+    fetchVersions()
+  }, [])
+
+  const fetchVersions = async () => {
+    setLoadingVersions(true)
+    try {
+      const response = await fetch('/api/admin/documents')
+      if (response.ok) {
+        const data = await response.json()
+        setVersions(data.versions || [])
+      }
+    } catch (error) {
+      console.error('Error fetching versions:', error)
+    } finally {
+      setLoadingVersions(false)
+    }
+  }
+
+  const createNewVersion = async (docType: string) => {
+    try {
+      const response = await fetch('/api/admin/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentType: docType,
+          notes: `Created new version of ${docType}`
+        })
+      })
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message)
+        fetchVersions()
+      } else {
+        toast.error('Failed to create version')
+      }
+    } catch (error) {
+      console.error('Error creating version:', error)
+      toast.error('Error creating version')
+    }
+  }
+
+  const approveVersion = async (versionId: string) => {
+    try {
+      const response = await fetch('/api/admin/documents', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          versionId,
+          action: 'approve'
+        })
+      })
+      if (response.ok) {
+        toast.success('Version approved')
+        fetchVersions()
+      } else {
+        toast.error('Failed to approve version')
+      }
+    } catch (error) {
+      console.error('Error approving version:', error)
+      toast.error('Error approving version')
+    }
+  }
+
+  const archiveVersion = async (versionId: string) => {
+    try {
+      const response = await fetch('/api/admin/documents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: versionId })
+      })
+      if (response.ok) {
+        toast.success('Version archived')
+        fetchVersions()
+      } else {
+        toast.error('Failed to archive version')
+      }
+    } catch (error) {
+      console.error('Error archiving version:', error)
+      toast.error('Error archiving version')
+    }
+  }
+
+  const handleDownload = async (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract', format: 'txt' | 'json' | 'html') => {
     setDownloading(`${type}-${format}`)
     try {
       const response = await fetch(`/api/documents/download?type=${type}&format=${format}`)
@@ -51,11 +168,15 @@ export default function DocumentsPage() {
       const a = document.createElement('a')
       a.href = url
       
-      const fileName = type === 'moa' 
-        ? `Memorandum_of_Association_${new Date().toISOString().split('T')[0]}`
-        : `Articles_of_Association_${new Date().toISOString().split('T')[0]}`
+      const fileNames: Record<string, string> = {
+        'moa': 'Memorandum_of_Association',
+        'aoa': 'Articles_of_Association',
+        'shareholder_agreement': 'Shareholder_Agreement',
+        'employment_contract': 'Employment_Contract'
+      }
       
-      a.download = `${fileName}.${format}`
+      const fileName = fileNames[type] || 'Document'
+      a.download = `${fileName}_${new Date().toISOString().split('T')[0]}.${format}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -70,7 +191,7 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleView = (type: 'moa' | 'aoa') => {
+  const handleView = (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract') => {
     window.open(`/api/documents/download?type=${type}&format=html`, '_blank')
   }
 
@@ -279,6 +400,90 @@ export default function DocumentsPage() {
               <li>Shareholder agreement provisions</li>
             </ul>
           </div>
+        </div>
+
+        {/* Document Versioning Section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-semibold text-gray-900">Document Versions & Management</h3>
+            <div className="flex gap-2">
+              {['MOA', 'AOA', 'SHAREHOLDER_AGREEMENT', 'EMPLOYMENT_CONTRACT'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => createNewVersion(type)}
+                  className="inline-flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  {type.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loadingVersions ? (
+            <div className="text-center py-8 text-gray-500">
+              Loading versions...
+            </div>
+          ) : versions.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-600">No document versions yet. Create one to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {versions.map((version) => (
+                <div key={version.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{version.documentName}</h4>
+                      <p className="text-sm text-gray-600">Version {version.versionNumber} • Created {new Date(version.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        version.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                        version.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {version.status}
+                      </span>
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        version.approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                        version.approvalStatus === 'PENDING' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {version.approvalStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-gray-600 mb-4">
+                    <p>Created by: {version.createdBy.name || version.createdBy.email}</p>
+                    {version.approvedAt && <p>Approved: {new Date(version.approvedAt).toLocaleDateString()}</p>}
+                    <p>Downloads: {version.downloads} • Last accessed: {version.lastAccessedAt ? new Date(version.lastAccessedAt).toLocaleDateString() : 'Never'}</p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {version.approvalStatus === 'PENDING' && (
+                      <button
+                        onClick={() => approveVersion(version.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Approve
+                      </button>
+                    )}
+                    <button
+                      onClick={() => archiveVersion(version.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm font-medium"
+                    >
+                      <Archive className="w-4 h-4" />
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Additional Resources */}

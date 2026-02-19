@@ -21,7 +21,8 @@ import {
   MessageCircle,
   BookOpen,
   Megaphone,
-  MessageSquare
+  MessageSquare,
+  FileText
 } from 'lucide-react'
 
 interface User {
@@ -86,7 +87,7 @@ interface Design {
   }
 }
 
-type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings'
+type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings' | 'documents'
 
 // Minimal types for admin lists to reduce `any` usage in state
 interface ContactMessage {
@@ -533,7 +534,8 @@ export default function AdminDashboard() {
                   { id: 'resources' as AdminTabId, label: 'Resources', icon: BookOpen },
                   { id: 'contact' as AdminTabId, label: 'Messages', icon: Mail },
                   { id: 'chat' as AdminTabId, label: 'Support', icon: MessageCircle },
-                  { id: 'earnings' as AdminTabId, label: 'Earnings', icon: DollarSign }
+                  { id: 'earnings' as AdminTabId, label: 'Earnings', icon: DollarSign },
+                  { id: 'documents' as AdminTabId, label: 'Documents', icon: FileText }
                 ] as { id: AdminTabId; label: string; icon: ElementType }[]
               ).map((tab) => (
                 <button
@@ -1829,6 +1831,60 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'documents' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-900">Company Legal Documents</h3>
+                  <Link
+                    href="/admin/documents"
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Manage Documents
+                  </Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { type: 'MOA', name: 'Memorandum of Association', color: 'red' },
+                    { type: 'AOA', name: 'Articles of Association', color: 'blue' },
+                    { type: 'SHAREHOLDER_AGREEMENT', name: 'Shareholder Agreement', color: 'purple' },
+                    { type: 'EMPLOYMENT_CONTRACT', name: 'Employment Contract', color: 'green' }
+                  ].map((doc) => (
+                    <div key={doc.type} className={`p-4 rounded-lg border border-gray-200 bg-gradient-to-br from-${doc.color}-50 to-white`}>
+                      <div className={`inline-flex items-center gap-2 px-2 py-1 rounded bg-${doc.color}-100 text-${doc.color}-800 text-xs font-medium mb-2`}>
+                        <FileText className="w-3 h-3" />
+                        {doc.type}
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-1">{doc.name}</h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {doc.type === 'MOA' && 'Business objects and shareholder structure'}
+                        {doc.type === 'AOA' && 'Management, governance, and staff provisions'}
+                        {doc.type === 'SHAREHOLDER_AGREEMENT' && 'Share transfers and investor protections'}
+                        {doc.type === 'EMPLOYMENT_CONTRACT' && 'Employment terms and conditions'}
+                      </p>
+                      <Link
+                        href={`/admin/documents?type=${doc.type}`}
+                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                      >
+                        Edit & Version →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                  <h4 className="font-semibold text-blue-900 mb-2">Document Management</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Create and approve new versions of all documents</li>
+                    <li>• Track usage and employee access to documents</li>
+                    <li>• Manage document status (Draft, Active, Archived)</li>
+                    <li>• View version history and changes</li>
+                  </ul>
+                </div>
               </div>
             )}
           </div>

@@ -204,6 +204,11 @@ model User {
   disputeAppeals DisputeAppeal[] @relation("DisputeAppeals")
   disputeAppealReviews DisputeAppeal[] @relation("AppealReviews")
 
+  // Document Versioning
+  documentVersionsCreated DocumentVersion[] @relation("DocumentVersionCreated")
+  documentVersionsApproved DocumentVersion[] @relation("DocumentVersionApproved")
+  documentUsageRecords DocumentUsage[] @relation("DocumentUsage")
+
   // Essential indexes for user queries
   @@index([role])
   @@index([isVerified])
@@ -3314,4 +3319,89 @@ model DisputeAppeal {
   @@index([status])
   @@index([submittedAt])
   @@map("dispute_appeals")
+}
+
+// ===== DOCUMENT VERSIONING SYSTEM =====
+// Tracks versions of company legal documents
+model DocumentVersion {
+  id                  String   @id @default(cuid()) @map("_id")
+  
+  // Document metadata
+  documentType        String   // MOA, AOA, SHAREHOLDER_AGREEMENT, EMPLOYMENT_CONTRACT
+  documentName        String   // Full name of the document
+  versionNumber       Int      // Version number (1, 2, 3, ...)
+  
+  // Content
+  content             String   // Full document content
+  checksum            String   // SHA256 hash of content for integrity checking
+  
+  // Version control
+  status              String   @default("DRAFT") // DRAFT, APPROVED, ACTIVE, ARCHIVED, SUPERSEDED
+  approvalStatus      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  notes               String?  // Change notes for this version
+  
+  // Tracking
+  createdBy           String   // User ID of creator
+  creator             User     @relation("DocumentVersionCreated", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  
+  // Approval tracking
+  approvedBy          String?  // User ID of approver
+  approver            User?    @relation("DocumentVersionApproved", fields: [approvedBy], references: [id], onDelete: SetNull)
+  approvedAt          DateTime?
+  
+  // Publication tracking
+  publishedAt         DateTime?
+  
+  // Usage tracking
+  downloads           Int      @default(0) // Number of downloads
+  usedInContracts     Int      @default(0) // Number of employment contracts using this version
+  lastAccessedAt      DateTime?
+  
+  // Previous version reference
+  previousVersionId   String?  // ID of the previous version if this is an update
+  
+  // Usage records
+  usageRecords        DocumentUsage[] // Track all accesses to this version
+  
+  @@unique([documentType, versionNumber])
+  @@index([documentType])
+  @@index([status])
+  @@index([approvalStatus])
+  @@index([createdAt])
+  @@index([publishedAt])
+  @@map("document_versions")
+}
+
+// Document Usage Tracking
+model DocumentUsage {
+  id                  String   @id @default(cuid()) @map("_id")
+  
+  // Document version reference
+  versionId           String
+  version             DocumentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  
+  // Context of usage
+  usageType           String   // VIEWED, DOWNLOADED, PRINTED, SIGNED
+  format              String   // TXT, HTML, JSON, PDF
+  
+  // User who accessed it
+  userId              String?
+  user                User?    @relation("DocumentUsage", fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Device/IP info
+  userAgent           String?  // Browser user agent
+  ipAddress           String?  // IP address of accessor
+  
+  // Tracking
+  accessedAt          DateTime @default(now())
+  
+  // Optional details
+  notes               String?  // Any notes about the usage
+  
+  @@index([versionId])
+  @@index([userId])
+  @@index([usageType])
+  @@index([accessedAt])
+  @@map("document_usage")
 }
