@@ -44,30 +44,29 @@ export async function GET(request: NextRequest) {
     
     const [disputes, total] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).commissionRequest.findMany({
+      prisma.commissionRequest.findMany({
         where,
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true
-            }
-          },
-          designer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              sellerAccount: {
-                select: {
-                  businessName: true
-                }
-              }
-            }
-          }
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          designerQuote: true,
+          isDisputed: true,
+          disputeReason: true,
+          disputedAt: true,
+          disputeResolvedAt: true,
+          disputeResolution: true,
+          paymentMethod: true,
+          paymentReference: true,
+          paidAt: true,
+          createdAt: true,
+          requesterId: true,
+          requesterName: true,
+          requesterEmail: true,
+          designerId: true,
+          designerName: true,
+          designerEmail: true,
         },
         orderBy: [
           { disputeResolvedAt: "asc" }, // Unresolved first (null first)
@@ -76,12 +75,23 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit
       }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).commissionRequest.count({ where })
+      prisma.commissionRequest.count({ where })
     ]);
     
     return NextResponse.json({
-      disputes,
+      disputes: disputes.map(d => ({
+        ...d,
+        requester: {
+          id: d.requesterId,
+          name: d.requesterName,
+          email: d.requesterEmail,
+        },
+        designer: {
+          id: d.designerId,
+          name: d.designerName,
+          email: d.designerEmail,
+        }
+      })),
       pagination: {
         page,
         limit,
