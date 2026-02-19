@@ -32,14 +32,29 @@ export async function getCachedData<T>(
     // Try to get from cache
     const cached = await redis.get(key)
     if (cached) {
-      return JSON.parse(cached)
+      try {
+        return JSON.parse(cached)
+      } catch (parseError) {
+        console.error(`Failed to parse cached data for key ${key}:`, parseError)
+        // Fall back to fresh fetch if JSON is corrupted
+        const data = await fetcher()
+        // Re-cache the fresh data
+        if (data !== null && data !== undefined) {
+          await redis
+            .setex(key, ttl, JSON.stringify(data))
+            .catch(() => {
+              // Silent fail - cache errors shouldn't break the app
+            })
+        }
+        return data
+      }
     }
 
     // Cache miss - fetch fresh data
     const data = await fetcher()
 
-    // Store in cache
-    if (data) {
+    // Store in cache (check for null/undefined explicitly, not just falsy)
+    if (data !== null && data !== undefined) {
       await redis
         .setex(key, ttl, JSON.stringify(data))
         .catch(() => {
@@ -63,7 +78,9 @@ export async function invalidateCache(key: string) {
   if (!redis) return
 
   try {
-    await redis.del(key)
+    await redis.del(key).catch((err: any) => {
+      console.warn(`Failed to delete cache key ${key}:`, err)
+    })
   } catch (error) {
     console.error(`Failed to invalidate cache key ${key}:`, error)
   }
@@ -79,7 +96,9 @@ export async function invalidateCachePattern(pattern: string) {
   try {
     const keys = await redis.keys(pattern)
     if (keys.length > 0) {
-      await redis.del(...keys)
+      await redis.del(...keys).catch((err: any) => {
+        console.warn(`Failed to delete pattern keys ${pattern}:`, err)
+      })
     }
   } catch (error) {
     console.error(`Failed to invalidate cache pattern ${pattern}:`, error)

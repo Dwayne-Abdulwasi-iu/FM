@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { getCachedData, invalidateCache, CACHE_TTL } from "@/lib/cache";
+import { getCachedData, invalidateCache, invalidateCachePattern, CACHE_TTL } from "@/lib/cache";
 
 /**
  * GET - Get notifications for the current user with cursor-based pagination
@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
         data: { isRead: true, readAt: new Date() },
       });
       
-      await invalidateCache(`notifications:${session.user.id}:*`);
+      await invalidateCachePattern(`notifications:${session.user.id}:*`);
       return NextResponse.json({ success: true, message: "All notifications marked as read" });
     }
     
@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest) {
       data: { isRead: true, readAt: new Date() },
     });
     
-    await invalidateCache(`notifications:${session.user.id}:*`);
+    await invalidateCachePattern(`notifications:${session.user.id}:*`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating notification:", error);
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest) {
       data: { isDeleted: true, deletedAt: new Date() },
     });
     
-    await invalidateCache(`notifications:${session.user.id}:*`);
+    await invalidateCachePattern(`notifications:${session.user.id}:*`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting notification:", error);
