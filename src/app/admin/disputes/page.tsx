@@ -147,7 +147,7 @@ export default function AdminDisputesPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-0">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6 px-4 sm:px-6 lg:px-8">
       <Link
         href="/admin"
         className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 sm:gap-2"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { prismaErrorResponse } from "@/lib/prismaError";
 
 // GET - List all disputed commissions for admin
 export async function GET(request: NextRequest) {
@@ -90,6 +91,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching disputes:", error);
+    const prismaResp = prismaErrorResponse(error, "Database temporarily unavailable");
+    if (prismaResp) return prismaResp;
+    
     return NextResponse.json(
       { error: "Failed to fetch disputes" },
       { status: 500 }
