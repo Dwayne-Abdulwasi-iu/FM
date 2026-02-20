@@ -8,8 +8,8 @@
  */
 
 // Import and re-export sync config functions
-export { isSendGridConfigured, isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
-import { isSendGridConfigured, isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+export { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+import { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const nodemailer = require('nodemailer');
@@ -26,22 +26,7 @@ function getTransporter(): Transporter | null {
     return transporter;
   }
 
-  // Try SendGrid first (preferred)
-  if (isSendGridConfigured()) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'apikey', // SendGrid requires 'apikey' as username
-        pass: process.env.SENDGRID_API_KEY,
-      },
-    });
-    console.log('[Email] Using SendGrid SMTP transport');
-    return transporter;
-  }
-
-  // Fall back to custom SMTP
+  // Use SMTP (SendGrid via SMTP or custom SMTP)
   if (isSMTPConfigured()) {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -52,7 +37,7 @@ function getTransporter(): Transporter | null {
         pass: process.env.SMTP_PASS,
       },
     });
-    console.log('[Email] Using custom SMTP transport');
+    console.log('[Email] Using SMTP transport');
     return transporter;
   }
 
@@ -62,6 +47,49 @@ function getTransporter(): Transporter | null {
 const FROM_EMAIL = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@fashionmarketplace.com';
 const APP_NAME = 'Fashion Marketplace';
 const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+// ============================================
+// Email Utility: Branded Email Wrapper
+// ============================================
+
+/**
+ * Wraps email content in a branded HTML template with header, footer, and consistent styling
+ */
+export function wrapBrandedEmail(subject: string, content: string): string {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>${subject}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+      body { background: #f4f4f8; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+      .email-container { max-width: 480px; margin: 32px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 32px 24px; }
+      .logo { text-align: center; margin-bottom: 24px; }
+      .logo img { max-width: 120px; }
+      h2 { color: #1e293b; }
+      .cta-btn { display: inline-block; padding: 14px 28px; background: #4F46E5; color: #fff !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 24px 0; }
+      .note, .security { background: #f1f5f9; padding: 14px; border-radius: 8px; margin: 18px 0; font-size: 15px; color: #334155; }
+      .footer { color: #64748b; font-size: 13px; text-align: center; margin-top: 32px; }
+      @media (max-width: 600px) {
+        .email-container { padding: 16px 4vw; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="logo">
+        <img src="https://fashionmarketplace.store/logo.png" alt="Fashion Marketplace Logo" />
+      </div>
+      ${content}
+      <div class="footer">
+        Need help? <a href="mailto:support@fashionmarketplace.store" style="color:#4F46E5;">Contact support</a><br/>
+        &copy; 2026 Fashion Marketplace
+      </div>
+    </div>
+  </body>
+</html>`;
+}
 
 interface EmailOptions {
   to: string;
@@ -893,32 +921,32 @@ export async function sendPasswordResetEmail(
   resetToken: string
 ): Promise<boolean> {
   const resetUrl = `${BASE_URL}/auth/reset-password?token=${resetToken}`;
+  const subject = '🔐 Reset Your Password - Fashion Marketplace';
+  const content = `
+    <h2>Reset Your Password</h2>
+    <p>Hello ${userName || 'there'},</p>
+    <p>You requested to reset your password. Click the button below to set a new password:</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetUrl}" class="cta-btn">Reset Password</a>
+    </div>
+    
+    <div style="background: #FEF3C7; padding: 16px; border-radius: 8px; border-left: 4px solid #F59E0B;">
+      <strong>⚠️ Important:</strong> This link will expire in <strong>1 hour</strong>.
+    </div>
+    
+    <p style="color: #666; font-size: 14px;">If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
+    
+    <p style="color: #999; font-size: 12px; margin-top: 20px;">
+      If the button doesn't work, copy and paste this link:<br>
+      <a href="${resetUrl}" style="color: #4F46E5;">${resetUrl}</a>
+    </p>
+  `;
   
   return sendEmail({
     to: email,
-    subject: '🔐 Reset Your Password - Fashion Marketplace',
-    html: `
-      <h2>Reset Your Password</h2>
-      <p>Hello ${userName || 'there'},</p>
-      <p>You requested to reset your password. Click the button below to set a new password:</p>
-      
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-          Reset Password
-        </a>
-      </p>
-      
-      <p style="background: #FEF3C7; padding: 16px; border-radius: 8px; border-left: 4px solid #F59E0B;">
-        <strong>⚠️ Important:</strong> This link will expire in <strong>1 hour</strong>.
-      </p>
-      
-      <p style="color: #666; font-size: 14px;">If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
-      
-      <p style="color: #999; font-size: 12px; margin-top: 20px;">
-        If the button doesn't work, copy and paste this link:<br>
-        <a href="${resetUrl}" style="color: #4F46E5;">${resetUrl}</a>
-      </p>
-    `,
+    subject,
+    html: wrapBrandedEmail(subject, content),
   });
 }
 
@@ -931,37 +959,37 @@ export async function sendVerificationEmail(
   verifyToken: string
 ): Promise<boolean> {
   const verifyUrl = `${BASE_URL}/auth/verify-email?token=${verifyToken}`;
+  const subject = '✉️ Verify Your Email - Fashion Marketplace';
+  const content = `
+    <h2>Verify Your Email Address</h2>
+    <p>Hello ${userName || 'there'},</p>
+    <p>Welcome to Fashion Marketplace! Please verify your email address to unlock all features:</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${verifyUrl}" class="cta-btn">Verify Email</a>
+    </div>
+    
+    <div style="background: #E0F2FE; padding: 16px; border-radius: 8px; border-left: 4px solid #0EA5E9;">
+      <strong>ℹ️ Note:</strong> This link will expire in <strong>24 hours</strong>.
+    </div>
+    
+    <p style="color: #666; font-size: 14px;">Once verified, you'll be able to:</p>
+    <ul style="color: #666;">
+      <li>Purchase designs and access downloads</li>
+      <li>Leave reviews on purchases</li>
+      <li>Become a seller and upload designs</li>
+    </ul>
+    
+    <p style="color: #999; font-size: 12px; margin-top: 20px;">
+      If the button doesn't work, copy and paste this link:<br>
+      <a href="${verifyUrl}" style="color: #0EA5E9;">${verifyUrl}</a>
+    </p>
+  `;
   
   return sendEmail({
     to: email,
-    subject: '✉️ Verify Your Email - Fashion Marketplace',
-    html: `
-      <h2>Verify Your Email Address</h2>
-      <p>Hello ${userName || 'there'},</p>
-      <p>Welcome to Fashion Marketplace! Please verify your email address to unlock all features:</p>
-      
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${verifyUrl}" style="display: inline-block; padding: 14px 28px; background-color: #10B981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-          Verify Email
-        </a>
-      </p>
-      
-      <p style="background: #E0F2FE; padding: 16px; border-radius: 8px; border-left: 4px solid #0EA5E9;">
-        <strong>ℹ️ Note:</strong> This link will expire in <strong>24 hours</strong>.
-      </p>
-      
-      <p style="color: #666; font-size: 14px;">Once verified, you'll be able to:</p>
-      <ul style="color: #666;">
-        <li>Purchase designs and access downloads</li>
-        <li>Leave reviews on purchases</li>
-        <li>Become a seller and upload designs</li>
-      </ul>
-      
-      <p style="color: #999; font-size: 12px; margin-top: 20px;">
-        If the button doesn't work, copy and paste this link:<br>
-        <a href="${verifyUrl}" style="color: #10B981;">${verifyUrl}</a>
-      </p>
-    `,
+    subject,
+    html: wrapBrandedEmail(subject, content),
   });
 }
 
@@ -977,6 +1005,7 @@ export async function sendOrderConfirmationEmail(
   items: Array<{ title: string; price: number; purchaseType: string }>
 ): Promise<boolean> {
   const orderUrl = `${BASE_URL}/orders`;
+  const subject = `🎉 Order Confirmed - #${orderNumber}`;
   
   const itemsHtml = items.map(item => `
     <tr>
@@ -986,43 +1015,43 @@ export async function sendOrderConfirmationEmail(
     </tr>
   `).join('');
   
+  const content = `
+    <h2>Thank You for Your Order!</h2>
+    <p>Hello ${userName || 'there'},</p>
+    <p>Your order has been confirmed and your designs are ready to download.</p>
+    
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0;"><strong>Order Number:</strong> ${orderNumber}</p>
+      <p style="margin: 10px 0 0;"><strong>Total:</strong> $${totalAmount.toFixed(2)}</p>
+    </div>
+    
+    <h3>Order Items</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f0f0f0;">
+          <th style="padding: 10px; text-align: left;">Design</th>
+          <th style="padding: 10px; text-align: left;">Type</th>
+          <th style="padding: 10px; text-align: right;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${orderUrl}" class="cta-btn">View Your Orders</a>
+    </div>
+    
+    <p style="color: #666; font-size: 14px;">
+      You can download your purchased designs from your order history at any time.
+    </p>
+  `;
+  
   return sendEmail({
     to: email,
-    subject: `🎉 Order Confirmed - #${orderNumber}`,
-    html: `
-      <h2>Thank You for Your Order!</h2>
-      <p>Hello ${userName || 'there'},</p>
-      <p>Your order has been confirmed and your designs are ready to download.</p>
-      
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0;"><strong>Order Number:</strong> ${orderNumber}</p>
-        <p style="margin: 10px 0 0;"><strong>Total:</strong> $${totalAmount.toFixed(2)}</p>
-      </div>
-      
-      <h3>Order Items</h3>
-      <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr style="background: #f0f0f0;">
-            <th style="padding: 10px; text-align: left;">Design</th>
-            <th style="padding: 10px; text-align: left;">Type</th>
-            <th style="padding: 10px; text-align: right;">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-        </tbody>
-      </table>
-      
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${orderUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-          View Your Orders
-        </a>
-      </p>
-      
-      <p style="color: #666; font-size: 14px;">
-        You can download your purchased designs from your order history at any time.
-      </p>
-    `,
+    subject,
+    html: wrapBrandedEmail(subject, content),
   });
 }
 
@@ -1038,32 +1067,32 @@ export async function sendSaleNotificationEmail(
   purchaseType: string
 ): Promise<boolean> {
   const dashboardUrl = `${BASE_URL}/seller/dashboard`;
+  const subject = `💰 You Made a Sale! - ${designTitle}`;
+  const content = `
+    <h2>🎉 Congratulations on Your Sale!</h2>
+    <p>Hello ${sellerName || 'Designer'},</p>
+    <p>Great news! Someone just purchased your design.</p>
+    
+    <div style="background: #ECFDF5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
+      <p style="margin: 0;"><strong>Design:</strong> ${designTitle}</p>
+      <p style="margin: 10px 0 0;"><strong>Purchase Type:</strong> ${purchaseType}</p>
+      <p style="margin: 10px 0 0;"><strong>Sale Amount:</strong> $${saleAmount.toFixed(2)}</p>
+      <p style="margin: 10px 0 0; font-size: 18px; color: #10B981;"><strong>Your Earnings:</strong> $${sellerEarnings.toFixed(2)}</p>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${dashboardUrl}" class="cta-btn">View Dashboard</a>
+    </div>
+    
+    <p style="color: #666; font-size: 14px;">
+      Keep up the great work! Your earnings will be transferred according to your payout schedule.
+    </p>
+  `;
   
   return sendEmail({
     to: sellerEmail,
-    subject: `💰 You Made a Sale! - ${designTitle}`,
-    html: `
-      <h2>🎉 Congratulations on Your Sale!</h2>
-      <p>Hello ${sellerName || 'Designer'},</p>
-      <p>Great news! Someone just purchased your design.</p>
-      
-      <div style="background: #ECFDF5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
-        <p style="margin: 0;"><strong>Design:</strong> ${designTitle}</p>
-        <p style="margin: 10px 0 0;"><strong>Purchase Type:</strong> ${purchaseType}</p>
-        <p style="margin: 10px 0 0;"><strong>Sale Amount:</strong> $${saleAmount.toFixed(2)}</p>
-        <p style="margin: 10px 0 0; font-size: 18px; color: #10B981;"><strong>Your Earnings:</strong> $${sellerEarnings.toFixed(2)}</p>
-      </div>
-      
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-          View Dashboard
-        </a>
-      </p>
-      
-      <p style="color: #666; font-size: 14px;">
-        Keep up the great work! Your earnings will be transferred according to your payout schedule.
-      </p>
-    `,
+    subject,
+    html: wrapBrandedEmail(subject, content),
   });
 }
 
