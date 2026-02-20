@@ -143,6 +143,7 @@ function BoutiqueShopContent() {
   };
 
   const clearFilters = () => {
+    setSelectedParentCategory(null);
     setSelectedCategory('');
     setSelectedGender('');
     setSelectedStyle('');
