@@ -46,3 +46,83 @@ services:
           name: fashion-marketplace
           type: web
           envVarKey: CRON_SECRET
+
+  # **CRITICAL** Cron job for releasing scheduled seller payouts (1-2 days after delivery)
+  - type: cron
+    name: process-payouts-cron
+    runtime: node
+    schedule: "0 0 * * *"  # Daily at midnight UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/process-payouts \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
+
+  # Cron job for auto-confirming deliveries after 14 days of shipping
+  - type: cron
+    name: boutique-auto-delivery-cron
+    runtime: node
+    schedule: "0 1 * * *"  # Daily at 1 AM UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/boutique-auto-delivery \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
+
+  # Cron job for checking overdue seller-direct order deadlines (48-hour shipping requirement)
+  - type: cron
+    name: boutique-deadlines-cron
+    runtime: node
+    schedule: "0 2 * * *"  # Daily at 2 AM UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/boutique-deadlines \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
+
+  # Cron job for auto-canceling boutique products if shipment not received in time
+  - type: cron
+    name: boutique-shipment-deadlines-cron
+    runtime: node
+    schedule: "0 3 * * *"  # Daily at 3 AM UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/boutique-shipment-deadlines \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
+
+  # Cron job for calculating and accruing storage fees on unsold inventory
+  - type: cron
+    name: boutique-storage-fees-cron
+    runtime: node
+    schedule: "0 4 * * *"  # Daily at 4 AM UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/boutique-storage-fees \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET
