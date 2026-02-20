@@ -96,7 +96,7 @@ function BoutiqueShopContent() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/boutique/categories?parentOnly=true');
+      const response = await fetch('/api/boutique/categories');
       const data = await response.json();
       if (data.success) {
         setCategories(data.categories);
@@ -239,7 +239,19 @@ function BoutiqueShopContent() {
               >
                 <option value="" className="text-gray-900">All Categories</option>
                 {categories.map(cat => (
-                  <option key={cat.id} value={cat.slug} className="text-gray-900">{cat.name}</option>
+                  <optgroup key={cat.id} label={cat.name}>
+                    {cat.children && cat.children.length > 0 ? (
+                      cat.children.map(child => (
+                        <option key={child.id} value={child.slug} className="text-gray-900">
+                          {child.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={cat.slug} className="text-gray-900">
+                        All {cat.name}
+                      </option>
+                    )}
+                  </optgroup>
                 ))}
               </select>
 

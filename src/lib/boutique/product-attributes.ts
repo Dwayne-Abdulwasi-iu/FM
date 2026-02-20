@@ -1195,7 +1195,7 @@ export const PRODUCT_ATTRIBUTES: ProductAttributeConfig = {
       },
     ],
   },
-
+};
 
 /**
  * Get attributes for a specific category slug
