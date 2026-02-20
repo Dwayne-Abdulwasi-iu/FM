@@ -74,6 +74,7 @@ function BoutiqueShopContent() {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
+  const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(null);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -327,9 +328,9 @@ function BoutiqueShopContent() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2">
             <button
-              onClick={() => { setSelectedCategory(''); setPage(1); }}
+              onClick={() => { setSelectedParentCategory(null); setSelectedCategory(''); setPage(1); }}
               className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
-                !selectedCategory ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                !selectedParentCategory ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               All
@@ -337,9 +338,9 @@ function BoutiqueShopContent() {
             {categories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => { setSelectedCategory(cat.slug); setPage(1); }}
+                onClick={() => { setSelectedParentCategory(cat.slug); setSelectedCategory(''); setPage(1); }}
                 className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
-                  selectedCategory === cat.slug ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  selectedParentCategory === cat.slug ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {cat.name}
@@ -349,8 +350,49 @@ function BoutiqueShopContent() {
         </div>
       </div>
 
-      {/* Products Grid */}
+      {/* Products Grid with Sidebar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* Left Sidebar - Subcategories */}
+          {selectedParentCategory && (
+            <div className="w-full lg:w-48 flex-shrink-0">
+              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-24 lg:top-20">
+                <h3 className="text-sm font-bold text-gray-900 mb-2 sm:mb-3 uppercase tracking-wide">
+                  {categories.find(c => c.slug === selectedParentCategory)?.name}
+                </h3>
+                <div className="space-y-1 sm:space-y-2">
+                  <button
+                    onClick={() => { setSelectedCategory(''); setPage(1); }}
+                    className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-xs sm:text-sm transition-colors ${
+                      !selectedCategory 
+                        ? 'bg-purple-100 text-purple-700 font-medium' 
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    View All
+                  </button>
+                  {categories
+                    .find(c => c.slug === selectedParentCategory)
+                    ?.children?.map(child => (
+                      <button
+                        key={child.id}
+                        onClick={() => { setSelectedCategory(child.slug); setPage(1); }}
+                        className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-xs sm:text-sm transition-colors ${
+                          selectedCategory === child.slug 
+                            ? 'bg-purple-100 text-purple-700 font-medium' 
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {child.name}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Products Area */}
+          <div className="flex-1">
         {loading ? (
           <div className="flex items-center justify-center py-12 sm:py-20">
             <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600"></div>
@@ -556,6 +598,8 @@ function BoutiqueShopContent() {
             )}
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
