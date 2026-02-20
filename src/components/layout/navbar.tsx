@@ -178,41 +178,41 @@ export function Navbar() {
                 <span className="hidden lg:inline">Help</span>
                 <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               </button>
-              <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <div className="absolute left-0 mt-2 w-48 bg-black rounded-lg shadow-lg border border-gray-800 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <Link
                   href="/contests"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-indigo-300"
                 >
-                  <Trophy className="w-4 h-4" />
+                  <Trophy className="w-4 h-4 text-yellow-400" />
                   Contests
                 </Link>
                 <Link
                   href="/forum"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-blue-300"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4 text-blue-400" />
                   Forum
                 </Link>
                 <Link
                   href="/commissions"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-purple-300"
                 >
-                  <Palette className="w-4 h-4" />
+                  <Palette className="w-4 h-4 text-purple-400" />
                   Commissions
                 </Link>
                 <Link
                   href="/designers"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-green-300"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-4 h-4 text-green-400" />
                   Designers
                 </Link>
-                <div className="border-t border-gray-100 my-2"></div>
+                <div className="border-t border-gray-700 my-2"></div>
                 <Link
                   href="/contact"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-pink-300"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4 text-pink-400" />
                   Contact
                 </Link>
               </div>
@@ -239,10 +239,10 @@ export function Navbar() {
                   <span className="hidden lg:inline">Dashboard</span>
                   <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                 </button>
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="absolute left-0 mt-2 w-48 bg-black rounded-lg shadow-lg border border-gray-800 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   <Link
                     href="/seller/dashboard"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-indigo-300"
                   >
                     <LayoutDashboard className="w-4 h-4" />
                     Seller Dashboard
@@ -250,7 +250,7 @@ export function Navbar() {
                   {session.user?.role === 'ADMIN' && (
                     <Link
                       href="/admin"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-purple-300"
                     >
                       <Shield className="w-4 h-4" />
                       Admin Dashboard
@@ -272,24 +272,24 @@ export function Navbar() {
                   <span className="hidden lg:inline">Saved</span>
                   <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                 </button>
-                <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="absolute right-0 mt-2 w-40 bg-black rounded-lg shadow-lg border border-gray-800 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   <Link 
                     href="/wishlist"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-red-300"
                   >
-                    <Heart className="w-4 h-4 text-red-600" />
+                    <Heart className="w-4 h-4 text-red-500" />
                     Design Wishlist
                   </Link>
                   <Link 
                     href="/boutique/favorites"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-pink-300"
                   >
-                    <Heart className="w-4 h-4 text-pink-600" />
+                    <Heart className="w-4 h-4 text-pink-500" />
                     Favorites
                   </Link>
                   <Link 
                     href="/orders"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-indigo-300"
                   >
                     <Receipt className="w-4 h-4" />
                     My Orders
@@ -313,25 +313,25 @@ export function Navbar() {
                 )}
                 <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               </button>
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-black rounded-lg shadow-lg border border-gray-800 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <Link
                   href="/cart"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-indigo-300"
                 >
-                  <Download className="w-4 h-4 text-indigo-600" />
+                  <Download className="w-4 h-4 text-indigo-400" />
                   <div className="flex-1">
                     <p className="font-medium">Design Downloads</p>
-                    <p className="text-xs text-gray-500">{cartCount} item{cartCount !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-gray-400">{cartCount} item{cartCount !== 1 ? 's' : ''}</p>
                   </div>
                 </Link>
                 <Link
                   href="/boutique/cart"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-gray-800 hover:text-purple-300"
                 >
-                  <Package className="w-4 h-4 text-purple-600" />
+                  <Package className="w-4 h-4 text-purple-400" />
                   <div className="flex-1">
                     <p className="font-medium">Physical Items</p>
-                    <p className="text-xs text-gray-500">{boutiqueCartCount} item{boutiqueCartCount !== 1 ? 's' : ''}</p>
+                    <p className="text-xs text-gray-400">{boutiqueCartCount} item{boutiqueCartCount !== 1 ? 's' : ''}</p>
                   </div>
                 </Link>
               </div>
@@ -364,7 +364,7 @@ export function Navbar() {
             className="md:hidden p-2 rounded-lg hover:bg-gray-100" 
             aria-label="Open menu"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-6 h-6 text-black" />
           </button>
         </div>
 
