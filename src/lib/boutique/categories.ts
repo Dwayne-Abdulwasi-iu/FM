@@ -160,6 +160,21 @@ export const BOUTIQUE_CATEGORIES: BoutiqueCategoryDefinition[] = [
       { name: 'Bath & Body', slug: 'bath-body', icon: '🛁', description: 'Body lotion, soap, and bath products' },
     ]
   },
+  {
+    name: 'Hair',
+    slug: 'hair',
+    icon: '💇',
+    description: 'Hair care products and treatments',
+    subcategories: [
+      { name: 'Shampoo', slug: 'shampoo', icon: '🧴', description: 'Hair cleansing shampoos for all hair types' },
+      { name: 'Conditioner', slug: 'conditioner', icon: '🧴', description: 'Hair conditioning products' },
+      { name: 'Hair Treatments', slug: 'hair-treatments', icon: '✨', description: 'Masks, serums, and deep treatments' },
+      { name: 'Hair Oils', slug: 'hair-oils', icon: '💧', description: 'Oils and scalp treatments' },
+      { name: 'Hair Styling', slug: 'hair-styling', icon: '💈', description: 'Gels, sprays, and styling products' },
+      { name: 'Hair Color', slug: 'hair-color', icon: '🎨', description: 'Hair dyes and color treatments' },
+      { name: 'Hair Extensions', slug: 'hair-extensions', icon: '📍', description: 'Weaves, wigs, and extensions' },
+    ]
+  },
 ];
 
 // Flatten categories for easy lookup

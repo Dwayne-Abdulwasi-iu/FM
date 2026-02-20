@@ -349,6 +349,344 @@ export const PRODUCT_ATTRIBUTES: ProductAttributeConfig = {
       },
     ],
   },
+
+  shampoo: {
+    label: 'Shampoo Details',
+    icon: '🧴',
+    fields: [
+      {
+        key: 'volume',
+        label: 'Volume (ml)',
+        type: 'number',
+        placeholder: '250',
+        required: true,
+        min: 50,
+        max: 1000,
+      },
+      {
+        key: 'hairType',
+        label: 'Best For Hair Type',
+        type: 'multiline',
+        placeholder: 'e.g., All types, Oily, Dry, Curly, Damaged',
+        helpText: 'Select applicable hair types',
+      },
+      {
+        key: 'ingredients',
+        label: 'Key Ingredients',
+        type: 'comma-separated',
+        placeholder: 'e.g., Argan oil, Keratin, Biotin, Tea tree',
+        helpText: 'Comma-separated list of main ingredients',
+      },
+      {
+        key: 'fragrance',
+        label: 'Scent',
+        type: 'text',
+        placeholder: 'e.g., Floral, Fruity, Minty, Coconut',
+      },
+      {
+        key: 'benefits',
+        label: 'Benefits',
+        type: 'comma-separated',
+        placeholder: 'e.g., Strengthening, Anti-dandruff, Moisturizing, Volumizing',
+        helpText: 'What the shampoo helps with',
+      },
+      {
+        key: 'sulfateFree',
+        label: 'Sulfate Free',
+        type: 'select',
+        options: [
+          { label: 'Yes', value: 'Yes' },
+          { label: 'No', value: 'No' },
+          { label: 'Mild Sulfates', value: 'Mild' },
+        ],
+      },
+      {
+        key: 'parabenfree',
+        label: 'Paraben Free',
+        type: 'select',
+        options: [
+          { label: 'Yes', value: 'Yes' },
+          { label: 'No', value: 'No' },
+        ],
+      },
+    ],
+  },
+
+  conditioner: {
+    label: 'Conditioner Details',
+    icon: '🧴',
+    fields: [
+      {
+        key: 'volume',
+        label: 'Volume (ml)',
+        type: 'number',
+        placeholder: '250',
+        required: true,
+        min: 50,
+        max: 1000,
+      },
+      {
+        key: 'hairType',
+        label: 'Best For Hair Type',
+        type: 'multiline',
+        placeholder: 'e.g., All types, Oily, Dry, Curly, Straight',
+      },
+      {
+        key: 'ingredients',
+        label: 'Key Ingredients',
+        type: 'comma-separated',
+        placeholder: 'e.g., Argan oil, Keratin, Conditioning agents, Hydrolyzed silk',
+        helpText: 'Main conditioning ingredients',
+      },
+      {
+        key: 'benefits',
+        label: 'Benefits',
+        type: 'comma-separated',
+        placeholder: 'e.g., Moisturizing, Smoothing, Frizz control, Shine-enhancing',
+      },
+      {
+        key: 'leaveInType',
+        label: 'Type',
+        type: 'select',
+        options: [
+          { label: 'Rinse-Off', value: 'RinseOff' },
+          { label: 'Leave-In', value: 'LeaveIn' },
+          { label: 'Both', value: 'Both' },
+        ],
+      },
+    ],
+  },
+
+  'hair-treatments': {
+    label: 'Hair Treatment Details',
+    icon: '✨',
+    fields: [
+      {
+        key: 'volume',
+        label: 'Volume (ml)',
+        type: 'number',
+        placeholder: '200',
+        required: true,
+        min: 50,
+        max: 500,
+      },
+      {
+        key: 'treatmentType',
+        label: 'Treatment Type',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Hair Mask', value: 'Mask' },
+          { label: 'Deep Conditioning', value: 'DeepConditioning' },
+          { label: 'Protein Treatment', value: 'ProteinTreatment' },
+          { label: 'Scalp Treatment', value: 'ScalpTreatment' },
+          { label: 'Intensive Serum', value: 'Serum' },
+          { label: 'Repair Treatment', value: 'RepairTreatment' },
+        ],
+      },
+      {
+        key: 'ingredients',
+        label: 'Key Ingredients',
+        type: 'comma-separated',
+        placeholder: 'e.g., Keratin, Collagen, Hydrolyzed wheat protein, Argan oil',
+      },
+      {
+        key: 'benefits',
+        label: 'Target Concerns',
+        type: 'comma-separated',
+        placeholder: 'e.g., Breakage, Dryness, Damage repair, Frizz, Color protection',
+      },
+      {
+        key: 'applicationMethod',
+        label: 'How to Apply',
+        type: 'text',
+        placeholder: 'e.g., Apply to damp hair, leave for 10-20 minutes',
+      },
+      {
+        key: 'usageFrequency',
+        label: 'Usage Frequency',
+        type: 'select',
+        options: [
+          { label: 'Weekly', value: 'Weekly' },
+          { label: 'Bi-weekly', value: 'BiWeekly' },
+          { label: 'Monthly', value: 'Monthly' },
+          { label: 'As needed', value: 'AsNeeded' },
+        ],
+      },
+    ],
+  },
+
+  'hair-oils': {
+    label: 'Hair Oil Details',
+    icon: '💧',
+    fields: [
+      {
+        key: 'volume',
+        label: 'Volume (ml)',
+        type: 'number',
+        placeholder: '100',
+        required: true,
+        min: 20,
+        max: 500,
+      },
+      {
+        key: 'oilType',
+        label: 'Oil Type',
+        type: 'select',
+        options: [
+          { label: 'Coconut Oil', value: 'Coconut' },
+          { label: 'Argan Oil', value: 'Argan' },
+          { label: 'Jojoba Oil', value: 'Jojoba' },
+          { label: 'Castor Oil', value: 'Castor' },
+          { label: 'Olive Oil', value: 'Olive' },
+          { label: 'Mustard Oil', value: 'Mustard' },
+          { label: 'Blend', value: 'Blend' },
+        ],
+      },
+      {
+        key: 'ingredients',
+        label: 'Oil Blend Components',
+        type: 'comma-separated',
+        placeholder: 'e.g., Coconut oil, Almond oil, Hibiscus extract',
+      },
+      {
+        key: 'benefits',
+        label: 'Benefits',
+        type: 'comma-separated',
+        placeholder: 'e.g., Scalp nourishment, Hair growth, Conditioning, Shine',
+      },
+      {
+        key: 'bestFor',
+        label: 'Best For',
+        type: 'text',
+        placeholder: 'e.g., Dry scalp, Thinning hair, Color-treated hair',
+      },
+      {
+        key: 'pureOil',
+        label: 'Pure/100% Oil',
+        type: 'select',
+        options: [
+          { label: 'Pure (100%)', value: 'Pure' },
+          { label: 'Infused', value: 'Infused' },
+          { label: 'Blend', value: 'Blend' },
+        ],
+      },
+    ],
+  },
+
+  'hair-styling': {
+    label: 'Hair Styling Product Details',
+    icon: '💈',
+    fields: [
+      {
+        key: 'volume',
+        label: 'Volume (ml/oz)',
+        type: 'number',
+        placeholder: '150',
+        required: true,
+      },
+      {
+        key: 'productType',
+        label: 'Product Type',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Hair Gel', value: 'Gel' },
+          { label: 'Hair Spray', value: 'Spray' },
+          { label: 'Pomade', value: 'Pomade' },
+          { label: 'Mousse', value: 'Mousse' },
+          { label: 'Hair Wax', value: 'Wax' },
+          { label: 'Hair Paste', value: 'Paste' },
+          { label: 'Styling Cream', value: 'Cream' },
+        ],
+      },
+      {
+        key: 'holdStrength',
+        label: 'Hold Strength',
+        type: 'select',
+        options: [
+          { label: 'Light', value: 'Light' },
+          { label: 'Medium', value: 'Medium' },
+          { label: 'Strong', value: 'Strong' },
+          { label: 'Extra Strong', value: 'ExtraStrong' },
+        ],
+      },
+      {
+        key: 'finish',
+        label: 'Finish Type',
+        type: 'select',
+        options: [
+          { label: 'Matte', value: 'Matte' },
+          { label: 'Shiny', value: 'Shiny' },
+          { label: 'Natural', value: 'Natural' },
+          { label: 'Wet Look', value: 'WetLook' },
+        ],
+      },
+      {
+        key: 'washability',
+        label: 'Washability',
+        type: 'select',
+        options: [
+          { label: 'Easily washes out', value: 'Easy' },
+          { label: 'Washes with shampoo', value: 'Shampoo' },
+          { label: 'Water-soluble', value: 'WaterSoluble' },
+        ],
+      },
+    ],
+  },
+
+  'hair-color': {
+    label: 'Hair Color Product Details',
+    icon: '🎨',
+    fields: [
+      {
+        key: 'colorType',
+        label: 'Color Type',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Permanent', value: 'Permanent' },
+          { label: 'Semi-permanent', value: 'SemiPermanent' },
+          { label: 'Temporary', value: 'Temporary' },
+          { label: 'Demi-permanent', value: 'DemiPermanent' },
+          { label: 'Hair Chalk', value: 'Chalk' },
+          { label: 'Spray-on', value: 'Spray' },
+        ],
+      },
+      {
+        key: 'color',
+        label: 'Color(s) Available',
+        type: 'comma-separated',
+        placeholder: 'e.g., Black, Brown, Blonde, Red, Burgundy, Ash',
+        required: true,
+      },
+      {
+        key: 'ammoniafree',
+        label: 'Ammonia Free',
+        type: 'select',
+        options: [
+          { label: 'Yes', value: 'Yes' },
+          { label: 'No', value: 'No' },
+        ],
+      },
+      {
+        key: 'coverage',
+        label: 'Gray Coverage',
+        type: 'select',
+        options: [
+          { label: 'Partial', value: 'Partial' },
+          { label: 'Full', value: 'Full' },
+          { label: 'N/A (Fashion color)', value: 'NA' },
+        ],
+      },
+      {
+        key: 'instructions',
+        label: 'Key Instructions',
+        type: 'text',
+        placeholder: 'e.g., Best for previously colored hair, 30-45 min processing time',
+      },
+    ],
+  },
 };
 
 /**

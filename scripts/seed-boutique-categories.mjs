@@ -118,6 +118,22 @@ const BOUTIQUE_CATEGORIES = [
       { name: 'Bath & Body', slug: 'bath-body', icon: '🛁', description: 'Bath products, body oils, and soaps', sortOrder: 7 },
     ],
   },
+  {
+    name: 'Hair',
+    slug: 'hair',
+    icon: '💇',
+    description: 'Hair care products and treatments',
+    sortOrder: 7,
+    children: [
+      { name: 'Shampoo', slug: 'shampoo', icon: '🧴', description: 'Hair cleansing shampoos for all hair types', sortOrder: 1 },
+      { name: 'Conditioner', slug: 'conditioner', icon: '🧴', description: 'Hair conditioning products', sortOrder: 2 },
+      { name: 'Hair Treatments', slug: 'hair-treatments', icon: '✨', description: 'Masks, serums, and deep treatments', sortOrder: 3 },
+      { name: 'Hair Oils', slug: 'hair-oils', icon: '💧', description: 'Oils and scalp treatments', sortOrder: 4 },
+      { name: 'Hair Styling', slug: 'hair-styling', icon: '💈', description: 'Gels, sprays, and styling products', sortOrder: 5 },
+      { name: 'Hair Color', slug: 'hair-color', icon: '🎨', description: 'Hair dyes and color treatments', sortOrder: 6 },
+      { name: 'Hair Extensions', slug: 'hair-extensions', icon: '📍', description: 'Weaves, wigs, and extensions', sortOrder: 7 },
+    ],
+  },
 ];
 
 async function seedCategories() {
