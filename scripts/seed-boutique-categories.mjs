@@ -7,147 +7,156 @@ const prisma = new PrismaClient();
 
 const BOUTIQUE_CATEGORIES = [
   {
-    name: 'Dresses',
-    slug: 'dresses',
-    icon: '👗',
-    description: 'Beautiful dresses for every occasion',
+    name: 'Clothing',
+    slug: 'clothing',
+    icon: '👔',
+    description: 'All types of garments and apparel',
     sortOrder: 1,
     children: [
-      { name: 'Casual Dresses', slug: 'casual-dresses', sortOrder: 1 },
-      { name: 'Evening Dresses', slug: 'evening-dresses', sortOrder: 2 },
-      { name: 'Maxi Dresses', slug: 'maxi-dresses', sortOrder: 3 },
-      { name: 'Mini Dresses', slug: 'mini-dresses', sortOrder: 4 },
-      { name: 'Midi Dresses', slug: 'midi-dresses', sortOrder: 5 },
+      { name: 'Dresses', slug: 'dresses', icon: '👗', description: 'Gowns, midi, maxi, and casual dresses', sortOrder: 1 },
+      { name: 'Tops & Blouses', slug: 'tops-blouses', icon: '👚', description: 'Shirts, blouses, crop tops, and tank tops', sortOrder: 2 },
+      { name: 'Pants & Trousers', slug: 'pants-trousers', icon: '👖', description: 'Jeans, slacks, palazzo, and cargo pants', sortOrder: 3 },
+      { name: 'Skirts', slug: 'skirts', icon: '🩱', description: 'Mini, midi, maxi, and pencil skirts', sortOrder: 4 },
+      { name: 'Suits & Blazers', slug: 'suits-blazers', icon: '🤵', description: 'Business suits, blazers, and formal wear', sortOrder: 5 },
+      { name: 'Jackets & Coats', slug: 'jackets-coats', icon: '🧥', description: 'Jackets, coats, and outerwear', sortOrder: 6 },
+      { name: 'Jumpsuits & Rompers', slug: 'jumpsuits-rompers', icon: '🩲', description: 'One-piece outfits', sortOrder: 7 },
+      { name: 'Shorts', slug: 'shorts', icon: '🩳', description: 'Casual and formal shorts', sortOrder: 8 },
+      { name: 'Swimwear', slug: 'swimwear', icon: '👙', description: 'Bikinis, swimsuits, and cover-ups', sortOrder: 9 },
+      { name: 'Activewear', slug: 'activewear', icon: '🏃', description: 'Sports and workout clothing', sortOrder: 10 },
+      { name: 'Sleepwear', slug: 'sleepwear', icon: '🛏️', description: 'Pajamas, nightgowns, and robes', sortOrder: 11 },
+      { name: 'Maternity', slug: 'maternity', icon: '🤰', description: 'Clothing for expecting mothers', sortOrder: 12 },
     ],
   },
   {
-    name: 'Tops',
-    slug: 'tops',
-    icon: '👚',
-    description: 'Stylish tops and blouses',
+    name: 'Traditional & Native Wear',
+    slug: 'traditional-native',
+    icon: '🪘',
+    description: 'Traditional African and cultural attire',
     sortOrder: 2,
     children: [
-      { name: 'Blouses', slug: 'blouses', sortOrder: 1 },
-      { name: 'T-Shirts', slug: 't-shirts', sortOrder: 2 },
-      { name: 'Tank Tops', slug: 'tank-tops', sortOrder: 3 },
-      { name: 'Crop Tops', slug: 'crop-tops', sortOrder: 4 },
-      { name: 'Bodysuits', slug: 'bodysuits', sortOrder: 5 },
+      { name: 'Ankara', slug: 'ankara', icon: '🇳🇬', description: 'Ankara print dresses, tops, and more', sortOrder: 1 },
+      { name: 'Aso-Oke', slug: 'aso-oke', icon: '👘', description: 'Traditional Yoruba woven fabric attire', sortOrder: 2 },
+      { name: 'Kente', slug: 'kente', icon: '🇬🇭', description: 'Ghanaian kente cloth and designs', sortOrder: 3 },
+      { name: 'Adire', slug: 'adire', icon: '🎨', description: 'Tie-dye and batik traditional wear', sortOrder: 4 },
+      { name: 'Agbada', slug: 'agbada', icon: '👔', description: 'Traditional flowing robes for men', sortOrder: 5 },
+      { name: 'Kaftan', slug: 'kaftan', icon: '🧕', description: 'Long, flowing robes and gowns', sortOrder: 6 },
+      { name: 'Dashiki', slug: 'dashiki', icon: '✨', description: 'Colorful embroidered shirts', sortOrder: 7 },
+      { name: 'Boubou', slug: 'boubou', icon: '🌍', description: 'Wide-sleeved flowing robes', sortOrder: 8 },
+      { name: 'George Wrapper', slug: 'george-wrapper', icon: '🎀', description: 'Indian George fabric outfits', sortOrder: 9 },
+      { name: 'Lace Native', slug: 'lace-native', icon: '🪡', description: 'Lace fabric traditional wear', sortOrder: 10 },
+      { name: 'Buba & Iro', slug: 'buba-iro', icon: '👩', description: 'Traditional Yoruba women\'s wear', sortOrder: 11 },
+      { name: 'Senator Style', slug: 'senator', icon: '🎖️', description: 'Nigerian senator/native suits', sortOrder: 12 },
     ],
   },
   {
-    name: 'Bottoms',
-    slug: 'bottoms',
-    icon: '👖',
-    description: 'Pants, skirts, and shorts',
+    name: 'Footwear',
+    slug: 'footwear',
+    icon: '👟',
+    description: 'Shoes and all types of footwear',
     sortOrder: 3,
     children: [
-      { name: 'Jeans', slug: 'jeans', sortOrder: 1 },
-      { name: 'Trousers', slug: 'trousers', sortOrder: 2 },
-      { name: 'Skirts', slug: 'skirts', sortOrder: 3 },
-      { name: 'Shorts', slug: 'shorts', sortOrder: 4 },
-      { name: 'Leggings', slug: 'leggings', sortOrder: 5 },
-    ],
-  },
-  {
-    name: 'Outerwear',
-    slug: 'outerwear',
-    icon: '🧥',
-    description: 'Jackets, coats, and blazers',
-    sortOrder: 4,
-    children: [
-      { name: 'Jackets', slug: 'jackets', sortOrder: 1 },
-      { name: 'Coats', slug: 'coats', sortOrder: 2 },
-      { name: 'Blazers', slug: 'blazers', sortOrder: 3 },
-      { name: 'Cardigans', slug: 'cardigans', sortOrder: 4 },
-      { name: 'Vests', slug: 'vests', sortOrder: 5 },
-    ],
-  },
-  {
-    name: 'Shoes',
-    slug: 'shoes',
-    icon: '👠',
-    description: 'Footwear for every style',
-    sortOrder: 5,
-    children: [
-      { name: 'Heels', slug: 'heels', sortOrder: 1 },
-      { name: 'Flats', slug: 'flats', sortOrder: 2 },
-      { name: 'Sneakers', slug: 'sneakers', sortOrder: 3 },
-      { name: 'Boots', slug: 'boots', sortOrder: 4 },
-      { name: 'Sandals', slug: 'sandals', sortOrder: 5 },
+      { name: 'Heels', slug: 'heels', icon: '👠', description: 'High heels, stilettos, and pumps', sortOrder: 1 },
+      { name: 'Flats', slug: 'flats', icon: '🥿', description: 'Ballet flats, loafers, and slip-ons', sortOrder: 2 },
+      { name: 'Sneakers', slug: 'sneakers', icon: '👟', description: 'Athletic and casual sneakers', sortOrder: 3 },
+      { name: 'Sandals', slug: 'sandals', icon: '🩴', description: 'Open-toe sandals and slides', sortOrder: 4 },
+      { name: 'Boots', slug: 'boots', icon: '👢', description: 'Ankle boots, knee-high, and more', sortOrder: 5 },
+      { name: 'Wedges', slug: 'wedges', icon: '⛳', description: 'Platform and wedge heels', sortOrder: 6 },
+      { name: 'Formal Shoes', slug: 'formal-shoes', icon: '👞', description: 'Oxford, derby, and dress shoes', sortOrder: 7 },
+      { name: 'Slippers', slug: 'slippers', icon: '🥾', description: 'Indoor and outdoor slippers', sortOrder: 8 },
+      { name: 'Traditional Footwear', slug: 'traditional-footwear', icon: '🦶', description: 'Beaded sandals and native shoes', sortOrder: 9 },
     ],
   },
   {
     name: 'Bags',
     slug: 'bags',
     icon: '👜',
-    description: 'Handbags and accessories',
-    sortOrder: 6,
+    description: 'Handbags, travel bags, and accessories',
+    sortOrder: 4,
     children: [
-      { name: 'Handbags', slug: 'handbags', sortOrder: 1 },
-      { name: 'Shoulder Bags', slug: 'shoulder-bags', sortOrder: 2 },
-      { name: 'Clutches', slug: 'clutches', sortOrder: 3 },
-      { name: 'Backpacks', slug: 'backpacks', sortOrder: 4 },
-      { name: 'Tote Bags', slug: 'tote-bags', sortOrder: 5 },
+      { name: 'Handbags', slug: 'handbags', icon: '👜', description: 'Tote, satchel, and everyday bags', sortOrder: 1 },
+      { name: 'Clutches', slug: 'clutches', icon: '💼', description: 'Evening clutches and pouches', sortOrder: 2 },
+      { name: 'Backpacks', slug: 'backpacks', icon: '🎒', description: 'Fashion and casual backpacks', sortOrder: 3 },
+      { name: 'Crossbody Bags', slug: 'crossbody-bags', icon: '👛', description: 'Shoulder and crossbody styles', sortOrder: 4 },
+      { name: 'Travel Bags', slug: 'travel-bags', icon: '🧳', description: 'Luggage, duffels, and weekenders', sortOrder: 5 },
+      { name: 'Laptop Bags', slug: 'laptop-bags', icon: '💻', description: 'Professional laptop carriers', sortOrder: 6 },
+      { name: 'Wallets & Purses', slug: 'wallets-purses', icon: '💰', description: 'Wallets, card holders, and coin purses', sortOrder: 7 },
+      { name: 'Traditional Bags', slug: 'traditional-bags', icon: '🪺', description: 'Beaded bags, raffia, and native styles', sortOrder: 8 },
     ],
   },
   {
     name: 'Accessories',
     slug: 'accessories',
-    icon: '💍',
-    description: 'Jewelry and fashion accessories',
-    sortOrder: 7,
+    icon: '💎',
+    description: 'Jewelry, watches, and fashion accessories',
+    sortOrder: 5,
     children: [
-      { name: 'Jewelry', slug: 'jewelry', sortOrder: 1 },
-      { name: 'Scarves', slug: 'scarves', sortOrder: 2 },
-      { name: 'Belts', slug: 'belts', sortOrder: 3 },
-      { name: 'Hats', slug: 'hats', sortOrder: 4 },
-      { name: 'Sunglasses', slug: 'sunglasses', sortOrder: 5 },
+      { name: 'Watches', slug: 'watches', icon: '⌚', description: 'Wristwatches and smart watches', sortOrder: 1 },
+      { name: 'Jewelry', slug: 'jewelry', icon: '💍', description: 'Necklaces, earrings, rings, and bracelets', sortOrder: 2 },
+      { name: 'Beads & Beaded Jewelry', slug: 'beads', icon: '📿', description: 'Traditional beaded accessories', sortOrder: 3 },
+      { name: 'Belts', slug: 'belts', icon: '🪢', description: 'Fashion and formal belts', sortOrder: 4 },
+      { name: 'Sunglasses', slug: 'sunglasses', icon: '🕶️', description: 'Designer and fashion sunglasses', sortOrder: 5 },
+      { name: 'Scarves & Wraps', slug: 'scarves-wraps', icon: '🧣', description: 'Silk scarves, shawls, and wraps', sortOrder: 6 },
+      { name: 'Hats & Caps', slug: 'hats-caps', icon: '🧢', description: 'Fashion hats, caps, and headwear', sortOrder: 7 },
+      { name: 'Hair Accessories', slug: 'hair-accessories', icon: '🎀', description: 'Hair clips, bands, and accessories', sortOrder: 8 },
+      { name: 'Ties & Bow Ties', slug: 'ties', icon: '👔', description: 'Neckties and bow ties', sortOrder: 9 },
+      { name: 'Cufflinks', slug: 'cufflinks', icon: '🔘', description: 'Formal cufflinks and accessories', sortOrder: 10 },
     ],
   },
   {
-    name: 'Traditional',
-    slug: 'traditional',
-    icon: '🪭',
-    description: 'Traditional and cultural attire',
-    sortOrder: 8,
+    name: 'Beauty & Fragrance',
+    slug: 'beauty-fragrance',
+    icon: '💄',
+    description: 'Perfumes, cosmetics, skincare, and beauty products',
+    sortOrder: 6,
     children: [
-      { name: 'Ankara', slug: 'ankara', sortOrder: 1 },
-      { name: 'Aso-Oke', slug: 'aso-oke', sortOrder: 2 },
-      { name: 'Agbada', slug: 'agbada', sortOrder: 3 },
-      { name: 'Kaftans', slug: 'kaftans', sortOrder: 4 },
-      { name: 'Lace', slug: 'lace', sortOrder: 5 },
-    ],
-  },
-  {
-    name: 'Activewear',
-    slug: 'activewear',
-    icon: '🏃',
-    description: 'Sports and fitness clothing',
-    sortOrder: 9,
-    children: [
-      { name: 'Sports Bras', slug: 'sports-bras', sortOrder: 1 },
-      { name: 'Yoga Pants', slug: 'yoga-pants', sortOrder: 2 },
-      { name: 'Athletic Tops', slug: 'athletic-tops', sortOrder: 3 },
-      { name: 'Tracksuits', slug: 'tracksuits', sortOrder: 4 },
-      { name: 'Gym Shorts', slug: 'gym-shorts', sortOrder: 5 },
-    ],
-  },
-  {
-    name: 'Swimwear',
-    slug: 'swimwear',
-    icon: '👙',
-    description: 'Beach and pool attire',
-    sortOrder: 10,
-    children: [
-      { name: 'Bikinis', slug: 'bikinis', sortOrder: 1 },
-      { name: 'One-Pieces', slug: 'one-pieces', sortOrder: 2 },
-      { name: 'Cover-Ups', slug: 'cover-ups', sortOrder: 3 },
+      { name: 'Perfumes', slug: 'perfumes', icon: '🌸', description: 'Eau de parfum and fragrances', sortOrder: 1 },
+      { name: 'Body Mists', slug: 'body-mists', icon: '💨', description: 'Light fragrance sprays', sortOrder: 2 },
+      { name: 'Colognes', slug: 'colognes', icon: '👨', description: 'Men\'s colognes and aftershaves', sortOrder: 3 },
+      { name: 'Cosmetics', slug: 'cosmetics', icon: '💄', description: 'Makeup, lipsticks, and foundations', sortOrder: 4 },
+      { name: 'Skincare', slug: 'skincare', icon: '🧴', description: 'Serums, moisturizers, and cleansers', sortOrder: 5 },
+      { name: 'Hair Care', slug: 'haircare', icon: '🧴', description: 'Shampoos, conditioners, and treatments', sortOrder: 6 },
+      { name: 'Bath & Body', slug: 'bath-body', icon: '🛁', description: 'Bath products, body oils, and soaps', sortOrder: 7 },
     ],
   },
 ];
 
 async function seedCategories() {
   console.log('🌱 Seeding boutique categories...\n');
+
+  // First, clear any orphaned categories (old ones no longer in use)
+  console.log('Cleaning up old categories...');
+  const validSlugs = [];
+  for (const category of BOUTIQUE_CATEGORIES) {
+    validSlugs.push(category.slug);
+    if (category.children) {
+      for (const child of category.children) {
+        validSlugs.push(child.slug);
+      }
+    }
+  }
+
+  const toDelete = await prisma.boutiqueCategory.findMany({
+    where: {
+      slug: {
+        notIn: validSlugs,
+      },
+    },
+  });
+
+  for (const cat of toDelete) {
+    // Delete children first
+    await prisma.boutiqueCategory.deleteMany({
+      where: { parentId: cat.id },
+    });
+    // Then delete parent
+    await prisma.boutiqueCategory.delete({
+      where: { id: cat.id },
+    });
+  }
+
+  if (toDelete.length > 0) {
+    console.log(`Deleted ${toDelete.length} old categories\n`);
+  }
 
   let created = 0;
   let skipped = 0;
