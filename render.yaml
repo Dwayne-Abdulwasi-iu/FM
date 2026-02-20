@@ -126,3 +126,19 @@ services:
           name: fashion-marketplace
           type: web
           envVarKey: CRON_SECRET
+
+  # Cron job for recalculating boutique product ratings
+  - type: cron
+    name: boutique-rating-aggregation-cron
+    runtime: node
+    schedule: "0 5 * * *"  # Daily at 5 AM UTC
+    buildCommand: npm install
+    startCommand: |
+      curl -X GET https://fm-wtit.onrender.com/api/cron/boutique-rating-aggregation \
+        -H "Authorization: Bearer $CRON_SECRET"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: fashion-marketplace
+          type: web
+          envVarKey: CRON_SECRET

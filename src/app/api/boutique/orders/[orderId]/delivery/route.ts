@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { releaseSellerPayout } from '@/lib/boutique/payout';
+import { updateProductRating } from '@/lib/boutique/rating';
 import { sendEmail } from '@/lib/email';
 
 // Auto-delivery period in days after shipping
@@ -85,18 +86,8 @@ export async function POST(
         },
       });
 
-      // Update product average rating
-      const avgRating = await prisma.boutiqueReview.aggregate({
-        where: { productId: order.productId },
-        _avg: { rating: true },
-      });
-
-      if (avgRating._avg.rating) {
-        await prisma.boutiqueProduct.update({
-          where: { id: order.productId },
-          data: { avgRating: avgRating._avg.rating },
-        });
-      }
+      // Update product average rating cache
+      await updateProductRating(order.productId);
     }
 
     // Notify seller
