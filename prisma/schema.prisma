@@ -2021,6 +2021,9 @@ model BoutiqueProduct {
   occasion    String?  // Wedding, Casual, Office, Party, etc.
   gender      String?  // Men, Women, Unisex, Kids
   
+  // Custom attributes (category-specific data: perfume volume, ring size, hat size, etc.)
+  customAttributes Json?  // { perfume: { volume, fragranceType, topNotes, ... }, jewelry: { ringSize, metalType, ... }, etc. }
+  
   // Seller Info
   sellerId    String
   seller      User     @relation("BoutiqueSeller", fields: [sellerId], references: [id])

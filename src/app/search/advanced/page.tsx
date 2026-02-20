@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import ClickableAvatar from '@/components/ClickableAvatar'
 import { 
   Search, 
   Grid, 
@@ -491,15 +492,12 @@ function AdvancedSearchContent() {
                 <div className="p-3">
                   <h3 className="font-medium text-gray-900 truncate text-sm">{design.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    {design.designer.image && (
-                      <Image
-                        src={design.designer.image}
-                        alt={design.designer.displayName || design.designer.name || ''}
-                        width={16}
-                        height={16}
-                        className="rounded-full"
-                      />
-                    )}
+                    <ClickableAvatar
+                      imageUrl={design.designer.image}
+                      name={design.designer.displayName || design.designer.name}
+                      sizeClass="w-4 h-4"
+                      textClass="text-[10px]"
+                    />
                     <span className="text-xs text-gray-500 truncate flex items-center gap-1">
                       {design.designer.displayName || design.designer.name}
                       {design.designer.isVerified && (
@@ -540,15 +538,12 @@ function AdvancedSearchContent() {
                   <div>
                     <h3 className="font-semibold text-xs sm:text-sm text-black line-clamp-1">{design.title}</h3>
                     <div className="flex items-center gap-1 mt-1">
-                      {design.designer.image && (
-                        <Image
-                          src={design.designer.image}
-                          alt=""
-                          width={16}
-                          height={16}
-                          className="rounded-full flex-shrink-0"
-                        />
-                      )}
+                      <ClickableAvatar
+                        imageUrl={design.designer.image}
+                        name={design.designer.displayName || design.designer.name}
+                        sizeClass="w-4 h-4 flex-shrink-0"
+                        textClass="text-[10px]"
+                      />
                       <span className="text-xs text-gray-600 line-clamp-1">
                         {design.designer.displayName || design.designer.name}
                       </span>

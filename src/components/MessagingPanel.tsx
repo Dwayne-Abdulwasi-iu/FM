@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import Image from 'next/image'
+import ClickableAvatar from '@/components/ClickableAvatar'
 
 interface Message {
   id: string
@@ -166,21 +166,11 @@ export function MessagingPanel() {
               >
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    {conv.user.image ? (
-                      <Image
-                        src={conv.user.image}
-                        alt={conv.user.name || ''}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">
-                          {conv.user.name?.charAt(0) || '?'}
-                        </span>
-                      </div>
-                    )}
+                    <ClickableAvatar
+                      imageUrl={conv.user.image}
+                      name={conv.user.name}
+                      sizeClass="w-10 h-10"
+                    />
                     {conv.unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                         {conv.unreadCount}

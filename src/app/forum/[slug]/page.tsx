@@ -2,10 +2,10 @@
 
 import { useState, useEffect, use } from 'react';
 import { useSession } from 'next-auth/react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { VerificationBadge } from '@/components/VerificationBadges';
+import ClickableAvatar from '@/components/ClickableAvatar';
 
 interface Comment {
   id: string;
@@ -492,21 +492,14 @@ export default function ForumPostPage({ params }: { params: Promise<{ slug: stri
             {/* Author Sidebar */}
             <div className="hidden md:block md:w-40 lg:w-48 bg-gray-50 p-3 md:p-4 border-b md:border-b-0 md:border-r">
               <div className="text-center">
-                {post.author.image ? (
-                  <Image
-                    src={post.author.image}
-                    alt={post.author.displayName || post.author.name}
-                    width={56}
-                    height={56}
-                    className="rounded-full mx-auto mb-2 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16"
+                <div className="mx-auto mb-2 w-fit">
+                  <ClickableAvatar
+                    imageUrl={post.author.image}
+                    name={post.author.displayName || post.author.name}
+                    sizeClass="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16"
+                    textClass="text-sm md:text-base lg:text-xl"
                   />
-                ) : (
-                  <div className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-purple-600 font-bold text-sm md:text-base lg:text-xl">
-                      {(post.author.displayName || post.author.name)?.charAt(0)}
-                    </span>
-                  </div>
-                )}
+                </div>
                 <Link
                   href={`/designers/${post.author.id}`}
                   className="font-medium text-xs md:text-sm text-gray-900 hover:text-purple-600"
@@ -600,21 +593,12 @@ export default function ForumPostPage({ params }: { params: Promise<{ slug: stri
                     <div className="flex gap-2 sm:gap-3 md:gap-4">
                       {/* Comment Author Avatar */}
                       <div className="flex-shrink-0">
-                        {comment.author.image ? (
-                          <Image
-                            src={comment.author.image}
-                            alt={comment.author.displayName || comment.author.name}
-                            width={40}
-                            height={40}
-                            className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span className="text-gray-600 font-medium text-xs sm:text-sm">
-                              {(comment.author.displayName || comment.author.name)?.charAt(0)}
-                            </span>
-                          </div>
-                        )}
+                        <ClickableAvatar
+                          imageUrl={comment.author.image}
+                          name={comment.author.displayName || comment.author.name}
+                          sizeClass="w-8 h-8 sm:w-10 sm:h-10"
+                          textClass="text-xs sm:text-sm"
+                        />
                       </div>
 
                       {/* Comment Content */}
@@ -773,21 +757,12 @@ export default function ForumPostPage({ params }: { params: Promise<{ slug: stri
                               <div key={reply.id}>
                                 <div className="flex gap-2 sm:gap-3">
                                   <div className="flex-shrink-0">
-                                    {reply.author.image ? (
-                                      <Image
-                                        src={reply.author.image}
-                                        alt={reply.author.displayName || reply.author.name}
-                                        width={32}
-                                        height={32}
-                                        className="rounded-full w-6 h-6 sm:w-8 sm:h-8"
-                                      />
-                                    ) : (
-                                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <span className="text-gray-600 text-[10px] sm:text-xs font-medium">
-                                          {(reply.author.displayName || reply.author.name)?.charAt(0)}
-                                        </span>
-                                      </div>
-                                    )}
+                                    <ClickableAvatar
+                                      imageUrl={reply.author.image}
+                                      name={reply.author.displayName || reply.author.name}
+                                      sizeClass="w-6 h-6 sm:w-8 sm:h-8"
+                                      textClass="text-[10px] sm:text-xs"
+                                    />
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1 mb-0.5 flex-wrap">

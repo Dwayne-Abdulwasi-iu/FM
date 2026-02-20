@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import ClickableAvatar from '@/components/ClickableAvatar';
 
 interface ContestEntry {
   id: string;
@@ -333,21 +334,12 @@ export default function ContestDetailPage({ params }: { params: Promise<{ id: st
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Hosted By</h3>
               <div className="flex items-center gap-3">
-                {contest.creator.image ? (
-                  <Image
-                    src={contest.creator.image}
-                    alt={contest.creator.displayName || contest.creator.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-lg">
-                      {(contest.creator.displayName || contest.creator.name)?.charAt(0)}
-                    </span>
-                  </div>
-                )}
+                <ClickableAvatar
+                  imageUrl={contest.creator.image}
+                  name={contest.creator.displayName || contest.creator.name}
+                  sizeClass="w-12 h-12"
+                  textClass="text-lg"
+                />
                 <div>
                   <div className="font-medium text-gray-900">
                     {contest.creator.displayName || contest.creator.name}

@@ -10,6 +10,7 @@ import { DesignerProfileBadge } from '@/components/DesignerBadge'
 import SubscriptionTierBadge from '@/components/SubscriptionTierBadge'
 import { convertFromUSD } from '@/lib/currency'
 import JSZip from 'jszip'
+import ProfileImageModal from '@/components/ProfileImageModal'
 
 interface UserProfile {
   id: string
@@ -19,6 +20,7 @@ interface UserProfile {
   bio: string | null
   website: string | null
   location: string | null
+  image: string | null
   role: string
   createdAt: string
   isVerified: boolean
@@ -155,8 +157,12 @@ export default function ProfilePage() {
     displayName: '',
     bio: '',
     website: '',
-    location: ''
+    location: '',
+    image: ''
   })
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageModalOpen, setImageModalOpen] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -188,8 +194,12 @@ export default function ProfilePage() {
           displayName: profileData.user.displayName || '',
           bio: profileData.user.bio || '',
           website: profileData.user.website || '',
-          location: profileData.user.location || ''
+          location: profileData.user.location || '',
+          image: profileData.user.image || ''
         })
+        if (profileData.user.image) {
+          setPreviewImage(profileData.user.image)
+        }
       }
 
       if (prefsRes.ok) {
@@ -230,6 +240,42 @@ export default function ProfilePage() {
       setErrorMessage('Failed to load profile')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadProfileImage(file)
+  }
+
+  const uploadProfileImage = async (file: File) => {
+    try {
+      setUploadingImage(true)
+      setErrorMessage(null)
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (uploadRes.ok) {
+        const { url } = await uploadRes.json()
+        setProfileForm(prev => ({ ...prev, image: url }))
+        setPreviewImage(url)
+        setSuccessMessage('Profile picture uploaded!')
+        setTimeout(() => setSuccessMessage(null), 2000)
+      } else {
+        setErrorMessage('Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      setErrorMessage('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -514,8 +560,26 @@ export default function ProfilePage() {
         <div className="bg-white rounded shadow-sm p-3 mb-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              <div 
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity relative group"
+                onClick={() => setImageModalOpen(true)}
+              >
+                {profile?.image ? (
+                  <Image
+                    src={profile.image}
+                    alt="Profile"
+                    width={64}
+                    height={64}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  </div>
+                )}
+                <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                  <span className="text-white text-[10px] sm:text-xs font-medium opacity-0 group-hover:opacity-100">Click to view</span>
+                </div>
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="text-sm sm:text-xl font-bold text-black truncate">{profile.displayName || profile.name || 'Anonymous User'}</h1>
@@ -714,8 +778,10 @@ export default function ProfilePage() {
                             displayName: profile?.displayName || '',
                             bio: profile?.bio || '',
                             website: profile?.website || '',
-                            location: profile?.location || ''
+                            location: profile?.location || '',
+                            image: profile?.image || ''
                           })
+                          setPreviewImage(profile?.image || null)
                         }}
                         className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-200 text-[9px] sm:text-xs"
                       >
@@ -1351,6 +1417,16 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      <ProfileImageModal
+        isOpen={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        imageUrl={profile?.image || null}
+        userName={profile?.displayName || profile?.name || 'User'}
+        isOwnProfile={true}
+        onImageUpload={uploadProfileImage}
+        isUploading={uploadingImage}
+      />
     </div>
   )
 }
@@ -1674,5 +1750,6 @@ function SellerAccountTab() {
         </div>
       )}
     </div>
-  )
+)
+
 }

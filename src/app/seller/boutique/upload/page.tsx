@@ -17,6 +17,11 @@ import {
   CheckCircle,
   Info,
 } from 'lucide-react';
+import { ProductAttributesForm } from '@/components/boutique/product-attributes-form';
+import {
+  getAttributesForCategory,
+  hasCustomAttributes,
+} from '@/lib/boutique/product-attributes';
 import { 
   STANDARD_SIZES, 
   GENDER_OPTIONS, 
@@ -123,26 +128,8 @@ function BoutiqueUploadContent() {
   const [sellerShippingTime, setSellerShippingTime] = useState('2-3 business days');
   const [sellerReturnPolicy, setSellerReturnPolicy] = useState('7-day return policy');
 
-  // Fragrance-specific fields (for perfumes)
-  const [fragranceData, setFragranceData] = useState({
-    volume: 100,
-    volumeUnit: 'ml',
-    fragranceFamily: '',
-    fragranceType: 'EdP', // Eau de Parfum
-    topNotes: '',
-    middleNotes: '',
-    baseNotes: '',
-    sillage: 'Moderate',
-    longevity: '6-8 hours',
-    seasonality: 'Year-round',
-    gender: '',
-    occasion: '',
-    ageGroup: 'Adult',
-    concentration: '20',
-    sprays: 12,
-    bottleType: 'Glass',
-    atomizer: 'Spray',
-  });
+  // Custom product attributes (category-specific: perfume, jewelry, headwear, etc.)
+  const [customAttributes, setCustomAttributes] = useState<Record<string, any>>({});
 
   // Selected parent category for subcategory dropdown
   const [selectedParentCategory, setSelectedParentCategory] = useState<Category | null>(null);
@@ -385,20 +372,9 @@ function BoutiqueUploadContent() {
         sellerShippingLocations: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingLocations : [],
         sellerShippingTime: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingTime : null,
         sellerReturnPolicy: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerReturnPolicy : null,
+        // Custom attributes (only if category has them and they're not empty)
+        customAttributes: Object.keys(customAttributes).length > 0 ? customAttributes : null,
       };
-
-      // Add fragrance data if this is a perfume product
-      const selectedCategory = categories.find(c => c.id === categoryId);
-      const isPerfume = selectedCategory?.slug === 'beauty-fragrance' || 
-                       selectedParentCategory?.slug === 'beauty-fragrance';
-      
-      if (isPerfume) {
-        productData.fragranceData = {
-          ...fragranceData,
-          volume: parseInt(fragranceData.volume.toString()),
-          sprays: parseInt(fragranceData.sprays.toString()),
-        };
-      }
 
       const url = editId 
         ? `/api/boutique/products/${editId}`
@@ -949,143 +925,18 @@ function BoutiqueUploadContent() {
               </div>
             </div>
 
-            {/* Fragrance-Specific Fields (conditional) */}
-            {selectedParentCategory?.slug === 'beauty-fragrance' && (
+            {/* Custom Product Attributes Section (conditional by category) */}
+            {categoryId && hasCustomAttributes(selectedParentCategory?.slug || '') && (
               <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">💐 Fragrance Details</h3>
-                
-                {/* Volume */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
-                      Volume (ml)
-                    </label>
-                    <input
-                      type="number"
-                      value={fragranceData.volume}
-                      onChange={(e) => setFragranceData({...fragranceData, volume: parseInt(e.target.value) || 0})}
-                      placeholder="100"
-                      min="1"
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Fragrance Type</label>
-                    <select
-                      value={fragranceData.fragranceType}
-                      onChange={(e) => setFragranceData({...fragranceData, fragranceType: e.target.value})}
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
-                    >
-                      <option value="EdP">Eau de Parfum</option>
-                      <option value="EdT">Eau de Toilette</option>
-                      <option value="EdC">Eau de Cologne</option>
-                      <option value="EauFraiche">Eau Fraiche</option>
-                      <option value="Mist">Body Mist</option>
-                      <option value="Solid">Solid Fragrance</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Scent Notes */}
-                <div className="mb-4 sm:mb-6">
-                  <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
-                    Top Notes (Opening scents)
-                  </label>
-                  <input
-                    type="text"
-                    value={fragranceData.topNotes}
-                    onChange={(e) => setFragranceData({...fragranceData, topNotes: e.target.value})}
-                    placeholder="e.g., Bergamot, Lemon, Grapefruit"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                  />
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Comma-separated list</p>
-                </div>
-
-                <div className="mb-4 sm:mb-6">
-                  <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
-                    Middle Notes (Heart of fragrance)
-                  </label>
-                  <input
-                    type="text"
-                    value={fragranceData.middleNotes}
-                    onChange={(e) => setFragranceData({...fragranceData, middleNotes: e.target.value})}
-                    placeholder="e.g., Rose, Jasmine, Vanilla"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                  />
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Comma-separated list</p>
-                </div>
-
-                <div className="mb-4 sm:mb-6">
-                  <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">
-                    Base Notes (Lasting scents)
-                  </label>
-                  <input
-                    type="text"
-                    value={fragranceData.baseNotes}
-                    onChange={(e) => setFragranceData({...fragranceData, baseNotes: e.target.value})}
-                    placeholder="e.g., Musk, Sandalwood, Amber"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                  />
-                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Comma-separated list</p>
-                </div>
-
-                {/* Performance */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Sillage</label>
-                    <select
-                      value={fragranceData.sillage}
-                      onChange={(e) => setFragranceData({...fragranceData, sillage: e.target.value})}
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
-                    >
-                      <option value="Soft">Soft</option>
-                      <option value="Moderate">Moderate</option>
-                      <option value="Strong">Strong</option>
-                      <option value="Very Strong">Very Strong</option>
-                    </select>
-                    <p className="text-[10px] sm:text-xs text-gray-500 mt-1">How far the scent projects</p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Longevity</label>
-                    <input
-                      type="text"
-                      value={fragranceData.longevity}
-                      onChange={(e) => setFragranceData({...fragranceData, longevity: e.target.value})}
-                      placeholder="e.g., 6-8 hours"
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Other Details */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Seasonality</label>
-                    <select
-                      value={fragranceData.seasonality}
-                      onChange={(e) => setFragranceData({...fragranceData, seasonality: e.target.value})}
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
-                    >
-                      <option value="Spring">Spring</option>
-                      <option value="Summer">Summer</option>
-                      <option value="Fall">Fall</option>
-                      <option value="Winter">Winter</option>
-                      <option value="Year-round">Year-round</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Concentration (%)</label>
-                    <input
-                      type="number"
-                      value={fragranceData.concentration}
-                      onChange={(e) => setFragranceData({...fragranceData, concentration: e.target.value})}
-                      placeholder="20"
-                      min="0"
-                      max="100"
-                      className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">
+                  {getAttributesForCategory(selectedParentCategory?.slug || '')?.icon}{' '}
+                  {getAttributesForCategory(selectedParentCategory?.slug || '')?.label}
+                </h3>
+                <ProductAttributesForm
+                  fields={getAttributesForCategory(selectedParentCategory?.slug || '')?.fields || []}
+                  values={customAttributes}
+                  onChange={(key, value) => setCustomAttributes({...customAttributes, [key]: value})}
+                />
               </div>
             )}
           </div>

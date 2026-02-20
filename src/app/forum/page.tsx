@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import Image from 'next/image';
+import ClickableAvatar from '@/components/ClickableAvatar';
 
 interface Category {
   id: string;
@@ -231,21 +231,12 @@ export default function ForumPage() {
                       <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
                         {/* Author Avatar */}
                         <div className="flex-shrink-0">
-                          {post.author.image ? (
-                            <Image
-                              src={post.author.image}
-                              alt={post.author.displayName || post.author.name}
-                              width={32}
-                              height={32}
-                              className="rounded-full w-8 h-8 sm:w-10 sm:h-10"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center text-xs sm:text-sm">
-                              <span className="text-purple-600 font-bold">
-                                {(post.author.displayName || post.author.name)?.charAt(0)}
-                              </span>
-                            </div>
-                          )}
+                          <ClickableAvatar
+                            imageUrl={post.author.image}
+                            name={post.author.displayName || post.author.name}
+                            sizeClass="w-8 h-8 sm:w-10 sm:h-10"
+                            textClass="text-xs sm:text-sm"
+                          />
                         </div>
 
                         {/* Post Content */}

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import DesignerBadge from '@/components/DesignerBadge';
 import { VerificationBadge } from '@/components/VerificationBadges';
+import ClickableAvatar from '@/components/ClickableAvatar';
 
 interface Designer {
   id: string;
@@ -106,20 +106,12 @@ export default function DesignersPage() {
               >
                 {/* Avatar */}
                 <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-2 sm:mb-3 md:mb-4">
-                  {designer.image ? (
-                    <Image
-                      src={designer.image}
-                      alt={designer.displayName || designer.name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-lg sm:text-xl md:text-2xl font-bold">
-                        {(designer.displayName || designer.name)?.charAt(0)}
-                      </span>
-                    </div>
-                  )}
+                  <ClickableAvatar
+                    imageUrl={designer.image}
+                    name={designer.displayName || designer.name}
+                    sizeClass="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20"
+                    textClass="text-lg sm:text-xl md:text-2xl"
+                  />
                   {designer.isVerified && (
                     <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
                       <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-white" fill="currentColor" viewBox="0 0 20 20">

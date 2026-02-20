@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
+import ClickableAvatar from '@/components/ClickableAvatar'
 import {
   Eye,
   ShoppingBag,
@@ -605,15 +606,12 @@ export default function SellerDashboardPage() {
             {analytics.recentReviews.map((review) => (
               <div key={review.id} className="p-2.5 sm:p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                    {review.user.image ? (
-                      <Image src={review.user.image} alt="" width={32} height={32} />
-                    ) : (
-                      <span className="text-[10px] sm:text-sm font-medium text-gray-600">
-                        {(review.user.name || 'U')[0]}
-                      </span>
-                    )}
-                  </div>
+                  <ClickableAvatar
+                    imageUrl={review.user.image}
+                    name={review.user.name}
+                    sizeClass="w-6 h-6 sm:w-8 sm:h-8"
+                    textClass="text-[10px] sm:text-sm"
+                  />
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-gray-900">{review.user.name || 'Anonymous'}</p>
                     <div className="flex items-center gap-0.5 sm:gap-1">

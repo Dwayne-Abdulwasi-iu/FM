@@ -15,15 +15,96 @@ export default function SignUpPage() {
     password: '',
     confirmPassword: ''
   })
+  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState<'details' | 'otp' | 'password'>('details')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [infoMessage, setInfoMessage] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async () => {
+    setLoading(true)
+    setError('')
+    setInfoMessage('')
+
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError('Name, email, and phone are required')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'send-otp',
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setInfoMessage(data.message || 'OTP sent to your email.')
+        setStep('otp')
+      } else {
+        setError(data.error || 'Failed to send OTP')
+      }
+    } catch (_error) {
+      setError('An error occurred. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    setLoading(true)
+    setError('')
+    setInfoMessage('')
+
+    if (!otp || otp.length < 6) {
+      setError('Please enter the 6-digit OTP code')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify-otp',
+          email: formData.email,
+          otp,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setInfoMessage(data.message || 'OTP verified. Set your password to continue.')
+        setStep('password')
+      } else {
+        setError(data.error || 'Invalid OTP')
+      }
+    } catch {
+      setError('An error occurred. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setInfoMessage('')
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
@@ -37,22 +118,13 @@ export default function SignUpPage() {
       return
     }
 
-    if (!formData.phone) {
-      setError('Phone number is required')
-      setLoading(false)
-      return
-    }
-
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
+          action: 'complete-registration',
           email: formData.email,
-          phone: formData.phone,
           password: formData.password,
         }),
       })
@@ -64,7 +136,7 @@ export default function SignUpPage() {
       } else {
         setError(data.error || 'Failed to create account')
       }
-    } catch (_error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -99,10 +171,16 @@ export default function SignUpPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleCreateAccount}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                 {error}
+              </div>
+            )}
+
+            {infoMessage && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                {infoMessage}
               </div>
             )}
 
@@ -117,6 +195,7 @@ export default function SignUpPage() {
                   type="text"
                   autoComplete="name"
                   required
+                  disabled={step !== 'details'}
                   value={formData.name}
                   onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -137,6 +216,7 @@ export default function SignUpPage() {
                   type="email"
                   autoComplete="email"
                   required
+                  disabled={step !== 'details'}
                   value={formData.email}
                   onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -157,6 +237,7 @@ export default function SignUpPage() {
                   type="tel"
                   autoComplete="tel"
                   required
+                  disabled={step !== 'details'}
                   value={formData.phone}
                   onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -169,6 +250,64 @@ export default function SignUpPage() {
               </p>
             </div>
 
+            {step === 'details' && (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Sending OTP...' : 'Send OTP to Email'}
+                </button>
+              </div>
+            )}
+
+            {step === 'otp' && (
+              <>
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
+                    Email OTP
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="otp"
+                      name="otp"
+                      type="text"
+                      required
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Enter 6-digit code"
+                      maxLength={6}
+                    />
+                    <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={loading}
+                    className="py-2 px-4 text-sm font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50"
+                  >
+                    {loading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={loading}
+                    className="py-2 px-4 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 'password' && (
+              <>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -232,6 +371,8 @@ export default function SignUpPage() {
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
             </div>
+              </>
+            )}
 
             <p className="text-xs text-center text-gray-500">
               By creating an account, you agree to our{' '}

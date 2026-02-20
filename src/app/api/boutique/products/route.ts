@@ -290,8 +290,8 @@ export async function POST(request: NextRequest) {
       sellerShippingLocations, // For seller direct
       sellerShippingTime,
       sellerReturnPolicy,
-      // NEW: Fragrance-specific fields
-      fragranceData,
+      // NEW: Custom attributes (category-specific data)
+      customAttributes,
     } = body;
 
     // Validation
@@ -467,6 +467,8 @@ export async function POST(request: NextRequest) {
         sellerShippingLocations: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingLocations : [],
         sellerShippingTime: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingTime : null,
         sellerReturnPolicy: validatedFulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerReturnPolicy : null,
+        // Custom attributes (category-specific data)
+        customAttributes: customAttributes || null,
         // Create variants at the same time
         variants: variants && variants.length > 0 ? {
           create: variants.map((v: { size?: string; color?: string; colorHex?: string; priceAdjustment?: number; quantity?: number; sku?: string }) => ({
@@ -481,32 +483,6 @@ export async function POST(request: NextRequest) {
       },
       include: { variants: true },
     });
-
-    // Create fragrance details if provided (for perfume products)
-    if (fragranceData) {
-      await prisma.boutiqueProductFragrance.create({
-        data: {
-          productId: product.id,
-          volume: fragranceData.volume,
-          volumeUnit: fragranceData.volumeUnit || 'ml',
-          fragranceFamily: fragranceData.fragranceFamily,
-          fragranceType: fragranceData.fragranceType,
-          topNotes: fragranceData.topNotes,
-          middleNotes: fragranceData.middleNotes,
-          baseNotes: fragranceData.baseNotes,
-          sillage: fragranceData.sillage,
-          longevity: fragranceData.longevity,
-          seasonality: fragranceData.seasonality,
-          gender: fragranceData.gender,
-          occasion: fragranceData.occasion,
-          ageGroup: fragranceData.ageGroup,
-          concentration: fragranceData.concentration,
-          sprays: fragranceData.sprays,
-          bottleType: fragranceData.bottleType,
-          atomizer: fragranceData.atomizer,
-        },
-      });
-    }
 
     // Fetch the complete product with relations
     const completeProduct = await prisma.boutiqueProduct.findUnique({
