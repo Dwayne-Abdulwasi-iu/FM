@@ -172,7 +172,20 @@ export const BOUTIQUE_CATEGORIES: BoutiqueCategoryDefinition[] = [
       { name: 'Hair Oils', slug: 'hair-oils', icon: '💧', description: 'Oils and scalp treatments' },
       { name: 'Hair Styling', slug: 'hair-styling', icon: '💈', description: 'Gels, sprays, and styling products' },
       { name: 'Hair Color', slug: 'hair-color', icon: '🎨', description: 'Hair dyes and color treatments' },
-      { name: 'Hair Extensions', slug: 'hair-extensions', icon: '📍', description: 'Weaves, wigs, and extensions' },
+    ]
+  },
+  {
+    name: 'Hair Extensions & Wigs',
+    slug: 'hair-extensions-wigs',
+    icon: '💁',
+    description: 'Hair bundles, wigs, closures, and hair pieces',
+    subcategories: [
+      { name: 'Hair Bundles', slug: 'hair-bundles', icon: '📦', description: 'Virgin hair bundles in various textures' },
+      { name: 'Wigs', slug: 'wigs', icon: '👩', description: 'Full wigs, lace fronts, and lacefront wigs' },
+      { name: 'Closures', slug: 'closures', icon: '📍', description: '3x4, 4x4, and 5x5 closures' },
+      { name: 'Frontals', slug: 'frontals', icon: '👱', description: 'Full frontal closures and 360 frontals' },
+      { name: 'Hair Pieces', slug: 'hair-pieces', icon: '💫', description: 'Braids, ponytails, and other pieces' },
+      { name: 'Tape-In Extensions', slug: 'tape-in', icon: '📌', description: 'Tape-in hair extensions' },
     ]
   },
 ];

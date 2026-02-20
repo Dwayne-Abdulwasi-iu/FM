@@ -131,7 +131,21 @@ const BOUTIQUE_CATEGORIES = [
       { name: 'Hair Oils', slug: 'hair-oils', icon: '💧', description: 'Oils and scalp treatments', sortOrder: 4 },
       { name: 'Hair Styling', slug: 'hair-styling', icon: '💈', description: 'Gels, sprays, and styling products', sortOrder: 5 },
       { name: 'Hair Color', slug: 'hair-color', icon: '🎨', description: 'Hair dyes and color treatments', sortOrder: 6 },
-      { name: 'Hair Extensions', slug: 'hair-extensions', icon: '📍', description: 'Weaves, wigs, and extensions', sortOrder: 7 },
+    ],
+  },
+  {
+    name: 'Hair Extensions & Wigs',
+    slug: 'hair-extensions-wigs',
+    icon: '💁',
+    description: 'Hair bundles, wigs, closures, and hair pieces',
+    sortOrder: 8,
+    children: [
+      { name: 'Hair Bundles', slug: 'hair-bundles', icon: '📦', description: 'Virgin hair bundles in various textures', sortOrder: 1 },
+      { name: 'Wigs', slug: 'wigs', icon: '👩', description: 'Full wigs, lace fronts, and lacefront wigs', sortOrder: 2 },
+      { name: 'Closures', slug: 'closures', icon: '📍', description: '3x4, 4x4, and 5x5 closures', sortOrder: 3 },
+      { name: 'Frontals', slug: 'frontals', icon: '👱', description: 'Full frontal closures and 360 frontals', sortOrder: 4 },
+      { name: 'Hair Pieces', slug: 'hair-pieces', icon: '💫', description: 'Braids, ponytails, and other pieces', sortOrder: 5 },
+      { name: 'Tape-In Extensions', slug: 'tape-in', icon: '📌', description: 'Tape-in hair extensions', sortOrder: 6 },
     ],
   },
 ];
