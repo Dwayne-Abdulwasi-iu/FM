@@ -2177,6 +2177,7 @@ model BoutiqueProduct {
   // Relations
   media       BoutiqueProductMedia[]
   variants    BoutiqueProductVariant[]
+  fragrance   BoutiqueProductFragrance?  // Fragrance details (if product is perfume)
   orders      BoutiqueOrder[]
   orderItems  BoutiqueOrderItem[]
   favorites   BoutiqueFavorite[]
@@ -2270,6 +2271,50 @@ model BoutiqueProductVariant {
   
   @@index([productId])
   @@map("boutique_product_variants")
+}
+
+// Fragrance-Specific Product Details (for Perfumes, Colognes, Body Mists)
+model BoutiqueProductFragrance {
+  id          String   @id @default(cuid()) @map("_id")
+  
+  productId   String   @unique
+  product     BoutiqueProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // Volume/Size Information
+  volume      Int      // in milliliters (ml)
+  volumeUnit  String   @default("ml")
+  
+  // Fragrance Classification
+  fragranceFamily String?  // Floral, Oriental, Woody, Fresh, Chypre, Fougère, etc.
+  fragranceType   String?  // EdP (Eau de Parfum), EdT (Eau de Toilette), EdC (Eau de Cologne), Mist, etc.
+  
+  // Scent Profile
+  topNotes    String?    // Opening scent notes (comma-separated)
+  middleNotes String?    // Heart notes
+  baseNotes   String?    // Lasting notes
+  
+  // Performance & Longevity
+  sillage     String?    // Soft, Moderate, Strong, Very Strong
+  longevity   String?    // Hours fragrance lasts (e.g., "6-8 hours", "8+ hours")
+  seasonality String?    // Spring, Summer, Fall, Winter, Year-round
+  
+  // Intended Wear
+  gender      String?    // Men, Women, Unisex
+  occasion    String?    // Daily, Evening, Formal, Casual, Sports, etc.
+  ageGroup    String?    // Youth, Adult, All Ages, etc.
+  
+  // Additional Details
+  concentration String?  // Percentage of fragrance oil (percentage)
+  sprays      Int?       // Number of sprays per ml (typical: 10-12 sprays/ml)
+  
+  // Bottling Info
+  bottleType  String?    // Glass, Plastic, Metal
+  atomizer    String?    // Spray, Dabber, Roller Ball
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("boutique_product_fragrances")
 }
 
 // Seller to Admin Shipment Tracking

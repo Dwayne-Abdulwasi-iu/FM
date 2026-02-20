@@ -290,6 +290,8 @@ export async function POST(request: NextRequest) {
       sellerShippingLocations, // For seller direct
       sellerShippingTime,
       sellerReturnPolicy,
+      // NEW: Fragrance-specific fields
+      fragranceData,
     } = body;
 
     // Validation
@@ -479,6 +481,32 @@ export async function POST(request: NextRequest) {
       },
       include: { variants: true },
     });
+
+    // Create fragrance details if provided (for perfume products)
+    if (fragranceData) {
+      await prisma.boutiqueProductFragrance.create({
+        data: {
+          productId: product.id,
+          volume: fragranceData.volume,
+          volumeUnit: fragranceData.volumeUnit || 'ml',
+          fragranceFamily: fragranceData.fragranceFamily,
+          fragranceType: fragranceData.fragranceType,
+          topNotes: fragranceData.topNotes,
+          middleNotes: fragranceData.middleNotes,
+          baseNotes: fragranceData.baseNotes,
+          sillage: fragranceData.sillage,
+          longevity: fragranceData.longevity,
+          seasonality: fragranceData.seasonality,
+          gender: fragranceData.gender,
+          occasion: fragranceData.occasion,
+          ageGroup: fragranceData.ageGroup,
+          concentration: fragranceData.concentration,
+          sprays: fragranceData.sprays,
+          bottleType: fragranceData.bottleType,
+          atomizer: fragranceData.atomizer,
+        },
+      });
+    }
 
     // Fetch the complete product with relations
     const completeProduct = await prisma.boutiqueProduct.findUnique({

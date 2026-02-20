@@ -145,6 +145,21 @@ export const BOUTIQUE_CATEGORIES: BoutiqueCategoryDefinition[] = [
       { name: 'Kids Native Wear', slug: 'kids-native', icon: '🇳🇬', description: 'Traditional outfits for children' },
     ]
   },
+  {
+    name: 'Beauty & Fragrance',
+    slug: 'beauty-fragrance',
+    icon: '💐',
+    description: 'Perfumes, cosmetics, and beauty products',
+    subcategories: [
+      { name: 'Perfumes', slug: 'perfumes', icon: '💐', description: 'Eau de Parfum, Eau de Toilette, and fragrances' },
+      { name: 'Body Mists', slug: 'body-mists', icon: '💨', description: 'Light fragrance mists and sprays' },
+      { name: 'Colognes', slug: 'colognes', icon: '🧴', description: 'Men\'s and unisex colognes' },
+      { name: 'Cosmetics', slug: 'cosmetics', icon: '💄', description: 'Makeup, lipstick, and face cosmetics' },
+      { name: 'Skincare', slug: 'skincare', icon: '🧴', description: 'Face creams, serums, and skincare products' },
+      { name: 'Hair Care', slug: 'hair-care', icon: '💆', description: 'Shampoo, conditioner, and hair treatments' },
+      { name: 'Bath & Body', slug: 'bath-body', icon: '🛁', description: 'Body lotion, soap, and bath products' },
+    ]
+  },
 ];
 
 // Flatten categories for easy lookup
