@@ -39,6 +39,9 @@ const nextConfig = {
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   poweredByHeader: false,
+  staticPageGenerationTimeout: 120,
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
 }
 
 module.exports = nextConfig

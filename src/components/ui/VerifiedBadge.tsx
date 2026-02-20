@@ -67,6 +67,7 @@ export function VerifiedCheckmark({
       className={`w-5 h-5 text-blue-600 flex-shrink-0 ${className}`}
       fill="currentColor"
       viewBox="0 0 20 20"
+      // @ts-expect-error - title is valid SVG attribute
       title="Verified Seller"
     >
       <path

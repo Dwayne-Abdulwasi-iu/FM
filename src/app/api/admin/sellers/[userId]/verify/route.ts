@@ -70,11 +70,13 @@ export async function PATCH(
     try {
       await prisma.auditLog.create({
         data: {
-          userId: session.user.id,
+          actorId: session.user.id,
+          actorType: 'ADMIN',
           action: isVerified ? 'SELLER_VERIFIED' : 'SELLER_VERIFICATION_REVOKED',
+          category: 'STATUS_CHANGE',
           targetType: 'USER',
           targetId: userId,
-          details: {
+          metadata: {
             sellerName: user.name || user.email,
             totalSales: user.totalSales,
             action: isVerified ? 'Verified' : 'Verification revoked',

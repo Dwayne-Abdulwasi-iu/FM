@@ -1,5 +1,8 @@
 'use client'
 
+// Disable static generation for this page - uses dynamic router
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
