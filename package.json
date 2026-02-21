@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint",
     "test:mongo": "node scripts/check-mongo-env.js && node src/test-mongo.js",
@@ -32,6 +33,7 @@
     "lucide-react": "^0.303.0",
     "next": "^16.1.4",
     "next-auth": "^4.24.0",
+    "next-sitemap": "^4.2.3",
     "nodemailer": "^7.0.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
