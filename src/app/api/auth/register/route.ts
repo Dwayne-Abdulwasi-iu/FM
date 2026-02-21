@@ -69,24 +69,25 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // --- Rate limiting: 5 OTP requests per hour per email ---
-      const rateLimitKey = `otp:register:${email}`;
-      const rateLimit = await checkRateLimit(rateLimitKey, 5, 60 * 60 * 1000); // 5 per hour
-      if (!rateLimit.allowed) {
-        return NextResponse.json(
-          { error: `Too many OTP requests. Please wait and try again in ${Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 60000)} minutes.` },
-          { status: 429 }
-        );
-      }
+      // --- Rate limiting (disabled in development) ---
+      if (process.env.NODE_ENV === 'production') {
+        const rateLimitKey = `otp:register:${email}`;
+        const rateLimit = await checkRateLimit(rateLimitKey, 5, 60 * 60 * 1000); // 5 per hour
+        if (!rateLimit.allowed) {
+          return NextResponse.json(
+            { error: `Too many OTP requests. Please wait and try again in ${Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 60000)} minutes.` },
+            { status: 429 }
+          );
+        }
 
-      // --- Resend cooldown: 60 seconds per email ---
-      const cooldownKey = `otp:register:cooldown:${email}`;
-      const cooldown = await checkRateLimit(cooldownKey, 1, 60 * 1000); // 1 per 60s
-      if (!cooldown.allowed) {
-        return NextResponse.json(
-          { error: `Please wait ${Math.ceil((cooldown.resetAt.getTime() - Date.now()) / 1000)} seconds before requesting another OTP.` },
-          { status: 429 }
-        );
+        const cooldownKey = `otp:register:cooldown:${email}`;
+        const cooldown = await checkRateLimit(cooldownKey, 1, 60 * 1000); // 1 per 60s
+        if (!cooldown.allowed) {
+          return NextResponse.json(
+            { error: `Please wait ${Math.ceil((cooldown.resetAt.getTime() - Date.now()) / 1000)} seconds before requesting another OTP.` },
+            { status: 429 }
+          );
+        }
       }
 
       const phoneValidation = validatePhoneNumber(phone)
@@ -152,18 +153,27 @@ export async function POST(request: NextRequest) {
         `,
       })
 
-      // Log OTP to console if email service isn't configured (development only)
-      if (!emailSent) {
-        console.log(`[DEV - OTP for ${email}] ${otpCode}`);
+      // In development, always allow OTP even if email fails
+      if (process.env.NODE_ENV === 'development') {
+        if (!emailSent) {
+          console.log(`[DEV - OTP for ${email}] ${otpCode}`);
+        }
+        return NextResponse.json({ 
+          success: true, 
+          message: 'OTP generated. Check the page or console for code.',
+          otp: otpCode // Return OTP in dev mode
+        });
       }
 
-      return NextResponse.json({ 
-        success: true, 
-        message: emailSent 
-          ? 'OTP sent to your email.' 
-          : 'OTP generated. Check console for code (development mode).',
-        ...(process.env.NODE_ENV === 'development' && !emailSent ? { otp: otpCode } : {})
-      })
+      // In production, email must succeed
+      if (!emailSent) {
+        return NextResponse.json(
+          { error: 'Unable to send OTP email right now. Please try again shortly.' },
+          { status: 503 }
+        );
+      }
+
+      return NextResponse.json({ success: true, message: 'OTP sent to your email.' })
     }
 
     if (action === 'verify-otp') {

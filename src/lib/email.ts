@@ -28,16 +28,22 @@ function getTransporter(): Transporter | null {
 
   // Use SMTP (SendGrid via SMTP or custom SMTP)
   if (isSMTPConfigured()) {
+    // Support both SMTP_* and EMAIL_SERVER_* env variable names
+    const host = process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST;
+    const port = process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '587';
+    const user = process.env.SMTP_USER || process.env.EMAIL_SERVER_USER;
+    const pass = process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD;
+
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host,
+      port: parseInt(port),
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user,
+        pass,
       },
     });
-    console.log('[Email] Using SMTP transport');
+    console.log(`[Email] Using SMTP transport (host: ${host})`);
     return transporter;
   }
 

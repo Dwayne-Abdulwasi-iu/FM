@@ -52,9 +52,10 @@ export default function SignUpPage() {
 
       if (response.ok) {
         let message = data.message || 'OTP sent to your email.'
-        // In development mode without email, show the OTP directly
+        // In development mode, show the OTP directly
         if (data.otp) {
-          message = `Your OTP code is: ${data.otp} (shown because email is not configured)`
+          setOtp(data.otp) // Auto-fill the OTP field
+          message = `OTP Code: ${data.otp} — Copy it to the field below to verify`
         }
         setInfoMessage(message)
         setStep('otp')
