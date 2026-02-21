@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { CategorySidebar } from '@/components/ui/CategorySidebar';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +24,7 @@ import {
   PRODUCT_CONDITION,
   FULFILLMENT_METHOD,
 } from '@/lib/boutique/constants';
+import '@/app/color-swatch.css';
 
 interface Product {
   id: string;
@@ -73,12 +75,14 @@ function BoutiqueShopContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showFilters, setShowFilters] = useState(false);
+  const [showCategorySidebar, setShowCategorySidebar] = useState(false);
+  const [expandedParentCategory, setExpandedParentCategory] = useState<string | null>(null);
+  const [categoryOnSidebarOpen, setCategoryOnSidebarOpen] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
-  const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(null);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category') || null);
   const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || '');
   const [selectedStyle, setSelectedStyle] = useState(searchParams.get('style') || '');
   const [selectedCondition, setSelectedCondition] = useState(searchParams.get('condition') || '');
@@ -97,6 +101,7 @@ function BoutiqueShopContent() {
 
   const fetchCategories = async () => {
     try {
+      // Fetch categories with parent-child relationships
       const response = await fetch('/api/boutique/categories');
       const data = await response.json();
       if (data.success) {
@@ -143,17 +148,19 @@ function BoutiqueShopContent() {
   };
 
   const clearFilters = () => {
-    setSelectedParentCategory(null);
-    setSelectedCategory('');
+    setSelectedCategory(null);
     setSelectedGender('');
     setSelectedStyle('');
     setSelectedCondition('');
     setMinPrice('');
     setMaxPrice('');
     setPage(1);
+    setExpandedParentCategory(null);
+    setCategoryOnSidebarOpen(null);
   };
 
   const hasActiveFilters = selectedCategory || selectedGender || selectedStyle || selectedCondition || minPrice || maxPrice;
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -184,10 +191,10 @@ function BoutiqueShopContent() {
             </form>
 
             {/* Sort & View */}
-            <div className="flex items-center gap-2 sm:gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-1 sm:gap-3 w-full md:w-auto">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-xs sm:text-sm ${
+                className={`flex items-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-[10px] sm:text-sm ${
                   hasActiveFilters ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-gray-200 text-gray-900'
                 }`}
               >
@@ -200,10 +207,41 @@ function BoutiqueShopContent() {
                 )}
               </button>
 
+              {/* Categories Button (Mobile) */}
+              <button
+                onClick={() => {
+                  setCategoryOnSidebarOpen(selectedCategory);
+                  setShowCategorySidebar(!showCategorySidebar);
+                }}
+                className={`lg:hidden flex items-center gap-1 px-2 sm:px-3 py-1.5 border rounded-lg text-[10px] sm:text-xs transition-all ${
+                  selectedCategory 
+                    ? 'border-purple-500 text-purple-600 bg-purple-50' 
+                    : 'border-gray-200 text-gray-900 hover:border-purple-500'
+                }`}
+              >
+                <span className="font-semibold truncate max-w-[80px] sm:max-w-[120px]">
+                  {selectedCategory 
+                    ? (() => {
+                        // Find the selected category name
+                        for (const parent of categories) {
+                          if (parent.slug === selectedCategory) return parent.name;
+                          if (parent.children) {
+                            for (const child of parent.children) {
+                              if (child.slug === selectedCategory) return child.name;
+                            }
+                          }
+                        }
+                        return 'Categories';
+                      })()
+                    : 'Categories'
+                  }
+                </span>
+              </button>
+
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 text-xs sm:text-sm"
+                className="px-1.5 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 text-[11px] sm:text-sm"
                 aria-label="Sort products by"
               >
                 {SORT_OPTIONS.map(opt => (
@@ -234,26 +272,16 @@ function BoutiqueShopContent() {
           {showFilters && (
             <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t grid grid-cols-2 md:grid-cols-6 gap-2 sm:gap-4">
               <select
-                value={selectedCategory}
-                onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+                value={selectedCategory || ''}
+                onChange={(e) => { setSelectedCategory(e.target.value || null); setPage(1); }}
                 className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
                 aria-label="Filter by category"
               >
                 <option value="" className="text-gray-900">All Categories</option>
                 {categories.map(cat => (
-                  <optgroup key={cat.id} label={cat.name}>
-                    {cat.children && cat.children.length > 0 ? (
-                      cat.children.map(child => (
-                        <option key={child.id} value={child.slug} className="text-gray-900">
-                          {child.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value={cat.slug} className="text-gray-900">
-                        All {cat.name}
-                      </option>
-                    )}
-                  </optgroup>
+                  <option key={cat.id} value={cat.slug} className="text-gray-900">
+                    {cat.name}
+                  </option>
                 ))}
               </select>
 
@@ -324,282 +352,254 @@ function BoutiqueShopContent() {
         </div>
       </div>
 
-      {/* Category Pills */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => { setSelectedParentCategory(null); setSelectedCategory(''); setPage(1); }}
-              className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
-                !selectedParentCategory ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => { setSelectedParentCategory(cat.slug); setSelectedCategory(''); setPage(1); }}
-                className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap ${
-                  selectedParentCategory === cat.slug ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Products Grid with Sidebar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Left Sidebar - Subcategories */}
-          {selectedParentCategory && (
-            <div className="w-full lg:w-48 flex-shrink-0">
-              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-24 lg:top-20">
-                <h3 className="text-sm font-bold text-gray-900 mb-2 sm:mb-3 uppercase tracking-wide">
-                  {categories.find(c => c.slug === selectedParentCategory)?.name}
-                </h3>
-                <div className="space-y-1 sm:space-y-2">
-                  <button
-                    onClick={() => { setSelectedCategory(''); setPage(1); }}
-                    className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-xs sm:text-sm transition-colors ${
-                      !selectedCategory 
-                        ? 'bg-purple-100 text-purple-700 font-medium' 
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    View All
-                  </button>
-                  {categories
-                    .find(c => c.slug === selectedParentCategory)
-                    ?.children?.map(child => (
-                      <button
-                        key={child.id}
-                        onClick={() => { setSelectedCategory(child.slug); setPage(1); }}
-                        className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded text-xs sm:text-sm transition-colors ${
-                          selectedCategory === child.slug 
-                            ? 'bg-purple-100 text-purple-700 font-medium' 
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {child.name}
-                      </button>
-                    ))}
-                </div>
-              </div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex flex-col lg:flex-row gap-4 sm:gap-6 relative">
+        {/* Sidebar - Left overlay on mobile, visible on desktop */}
+        {showCategorySidebar && (
+          <div 
+            className="fixed inset-0 bg-black/40 z-30 lg:hidden" 
+            onClick={() => {
+              // If a parent is expanded and no child was selected (selected category unchanged from sidebar open), select the parent
+              if (expandedParentCategory && selectedCategory === categoryOnSidebarOpen) {
+                setSelectedCategory(expandedParentCategory);
+                setPage(1);
+              }
+              setShowCategorySidebar(false);
+              setExpandedParentCategory(null);
+              setCategoryOnSidebarOpen(null);
+            }} 
+          />
+        )}
+        
+        <div className={`${
+          showCategorySidebar 
+            ? 'fixed left-0 top-0 h-full w-80 z-40 lg:relative lg:inset-auto lg:top-auto lg:h-auto lg:w-56 shadow-2xl lg:shadow-sm' 
+            : 'hidden lg:block'
+        } flex-shrink-0 overflow-y-auto lg:overflow-visible`}>
+          <CategorySidebar
+            categories={categories}
+            selected={selectedCategory}
+            onSelect={slug => {
+              setSelectedCategory(slug);
+              setPage(1);
+              setShowCategorySidebar(false);
+              setExpandedParentCategory(null);
+              setCategoryOnSidebarOpen(null);
+            }}
+            onParentExpanded={(parentSlug) => {
+              setExpandedParentCategory(parentSlug);
+            }}
+            isOverlay={showCategorySidebar}
+          />
+        </div>
+
+        {/* Products Area */}
+        <div className="flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-12 sm:py-20">
+              <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600"></div>
             </div>
-          )}
-
-          {/* Products Area */}
-          <div className="flex-1">
-        {loading ? (
-          <div className="flex items-center justify-center py-12 sm:py-20">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-purple-600"></div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12 sm:py-20">
-            <ShoppingBag className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-xl font-semibold text-gray-900">No Products Found</h3>
-            <p className="text-xs sm:text-base text-gray-500 mt-1 sm:mt-2">Try adjusting your filters or search terms</p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-3 sm:mt-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg text-sm"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-4">
-              Showing {products.length} of {pagination.total} products
-            </p>
-
-            <div className={`grid gap-2 sm:gap-3 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
-                : 'grid-cols-1 md:grid-cols-2'
-            }`}>
-              {products.map(product => (
-                <Link
-                  key={product.id}
-                  href={`/boutique/${product.slug}`}
-                  className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+          ) : products.length === 0 ? (
+            <div className="text-center py-12 sm:py-20">
+              <ShoppingBag className="w-10 h-10 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-xl font-semibold text-gray-900">No Products Found</h3>
+              <p className="text-xs sm:text-base text-gray-500 mt-1 sm:mt-2">Try adjusting your filters or search terms</p>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-3 sm:mt-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg text-sm"
                 >
-                  {/* Image */}
-                  <div className={`relative ${viewMode === 'grid' ? 'aspect-square' : 'aspect-[4/3]'} bg-gray-100`}>
-                    {product.thumbnailUrl ? (
-                      <Image
-                        src={product.thumbnailUrl}
-                        alt={product.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300" />
-                      </div>
-                    )}
-                    
-                    {/* Sale Badge */}
-                    {product.salePrice && (
-                      <div className="absolute top-1.5 sm:top-3 left-1.5 sm:left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                        SALE
-                      </div>
-                    )}
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-4">
+                Showing {products.length} of {pagination.total} products
+              </p>
 
-                    {/* Wishlist Button */}
-                    <button
-                      onClick={(e) => { e.preventDefault(); }}
-                      className="absolute top-1.5 sm:top-3 right-1.5 sm:right-3 p-1.5 sm:p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label="Add to wishlist"
-                    >
-                      <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
-                    </button>
-
-                    {/* Available Colors */}
-                    {product.availableColors.length > 0 && (
-                      <div className="absolute bottom-1.5 sm:bottom-3 left-1.5 sm:left-3 flex gap-0.5 sm:gap-1">
-                        {product.availableColors.slice(0, 4).map((c, i) => (
-                          <div
-                            key={i}
-                            className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow"
-                            style={{ backgroundColor: c.hex || '#ccc' }}
-                            title={c.color}
-                          />
-                        ))}
-                        {product.availableColors.length > 4 && (
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-200 border-2 border-white shadow flex items-center justify-center text-[6px] sm:text-[8px] text-gray-600">
-                            +{product.availableColors.length - 4}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-2 sm:p-3">
-                    <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5">{product.category.name}</p>
-                    <h3 className="font-semibold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 sm:mb-2">{product.title}</h3>
-                    
-                    {/* Fulfillment Badge */}
-                    {product.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && (
-                      <div className="flex items-center gap-1 mb-1 sm:mb-2">
-                        <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700">
-                          <Rocket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          Seller Direct
-                        </span>
-                        {product.sellerShippingTime && (
-                          <span className="text-[10px] sm:text-xs text-gray-500">
-                            • {product.sellerShippingTime}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Price */}
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <span className="text-sm sm:text-lg font-bold text-purple-600">
-                        ₦{(product.salePrice || product.basePrice).toLocaleString()}
-                      </span>
+              <div className={`grid gap-2 sm:gap-3 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
+                  : 'grid-cols-1 md:grid-cols-2'
+              }`}>
+                {products.map(product => (
+                  <Link
+                    key={product.id}
+                    href={`/boutique/${product.slug}`}
+                    className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+                  >
+                    {/* Image */}
+                    <div className={`relative ${viewMode === 'grid' ? 'aspect-square' : 'aspect-[4/3]'} bg-gray-100`}>
+                      {product.thumbnailUrl ? (
+                        <Image
+                          src={product.thumbnailUrl}
+                          alt={product.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300" />
+                        </div>
+                      )}
+                      
+                      {/* Sale Badge */}
                       {product.salePrice && (
-                        <span className="text-[10px] sm:text-sm text-gray-400 line-through">
-                          ₦{product.basePrice.toLocaleString()}
-                        </span>
+                        <div className="absolute top-1.5 sm:top-3 left-1.5 sm:left-3 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+                          SALE
+                        </div>
+                      )}
+
+                      {/* Wishlist Button */}
+                      <button
+                        onClick={(e) => { e.preventDefault(); }}
+                        className="absolute top-1.5 sm:top-3 right-1.5 sm:right-3 p-1.5 sm:p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Add to wishlist"
+                      >
+                        <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
+                      </button>
+
+                      {/* Available Colors */}
+                      {product.availableColors.length > 0 && (
+                        <div className="absolute bottom-1.5 sm:bottom-3 left-1.5 sm:left-3 flex gap-0.5 sm:gap-1">
+                          {product.availableColors.slice(0, 4).map((c, i) => (
+                            <div
+                              key={i}
+                              className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow color-swatch"
+                              data-color={c.hex || '#ccc'}
+                              title={c.color}
+                            />
+                          ))}
+                          {product.availableColors.length > 4 && (
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-200 border-2 border-white shadow flex items-center justify-center text-[6px] sm:text-[8px] text-gray-600">
+                              +{product.availableColors.length - 4}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
 
-                    {/* Rating */}
-                    {product.reviewCount > 0 && (
-                      <div className="flex items-center gap-0.5 sm:gap-1 mt-1 sm:mt-2">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="text-[10px] sm:text-sm text-gray-600">
-                          {product.avgRating?.toFixed(1)} ({product.reviewCount})
+                    {/* Info */}
+                    <div className="p-2 sm:p-3">
+                      <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5">{product.category.name}</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 sm:mb-2">{product.title}</h3>
+                      
+                      {/* Fulfillment Badge */}
+                      {product.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && (
+                        <div className="flex items-center gap-1 mb-1 sm:mb-2">
+                          <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700">
+                            <Rocket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            Seller Direct
+                          </span>
+                          {product.sellerShippingTime && (
+                            <span className="text-[10px] sm:text-xs text-gray-500">
+                              • {product.sellerShippingTime}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Price */}
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-sm sm:text-lg font-bold text-purple-600">
+                          ₦{(product.salePrice || product.basePrice).toLocaleString()}
                         </span>
+                        {product.salePrice && (
+                          <span className="text-[10px] sm:text-sm text-gray-400 line-through">
+                            ₦{product.basePrice.toLocaleString()}
+                          </span>
+                        )}
                       </div>
-                    )}
 
-                    {/* Sizes */}
-                    {product.availableSizes.length > 0 && (
-                      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 sm:mt-2">
-                        Sizes: {product.availableSizes.slice(0, 4).join(', ')}
-                        {product.availableSizes.length > 4 && '...'}
-                      </p>
-                    )}
+                      {/* Rating */}
+                      {product.reviewCount > 0 && (
+                        <div className="flex items-center gap-0.5 sm:gap-1 mt-1 sm:mt-2">
+                          <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-yellow-400" />
+                          <span className="text-[10px] sm:text-sm text-gray-600">
+                            {product.avgRating?.toFixed(1)} ({product.reviewCount})
+                          </span>
+                        </div>
+                      )}
 
-                    {/* Add to Cart Button */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/boutique/${product.slug}`;
-                      }}
-                      className="w-full mt-2 sm:mt-3 py-1.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-[11px] sm:text-sm flex items-center justify-center gap-1 sm:gap-2"
-                    >
-                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Add to Cart
-                    </button>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                      {/* Sizes */}
+                      {product.availableSizes.length > 0 && (
+                        <p className="text-[10px] sm:text-xs text-gray-500 mt-1 sm:mt-2">
+                          Sizes: {product.availableSizes.slice(0, 4).join(', ')}
+                          {product.availableSizes.length > 4 && '...'}
+                        </p>
+                      )}
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 sm:gap-4 mt-6 sm:mt-12">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Previous</span>
-                </button>
-                
-                <div className="flex items-center gap-1 sm:gap-2">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (pagination.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (page <= 3) {
-                      pageNum = i + 1;
-                    } else if (page >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
-                    
-                    return (
+                      {/* Add to Cart Button */}
                       <button
-                        key={pageNum}
-                        onClick={() => setPage(pageNum)}
-                        className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg text-xs sm:text-sm ${
-                          page === pageNum
-                            ? 'bg-purple-600 text-white'
-                            : 'hover:bg-gray-100'
-                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.location.href = `/boutique/${product.slug}`;
+                        }}
+                        className="w-full mt-2 sm:mt-3 py-1.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-[11px] sm:text-sm flex items-center justify-center gap-1 sm:gap-2"
                       >
-                        {pageNum}
+                        <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Add to Cart
                       </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                  disabled={page === pagination.totalPages}
-                  className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </button>
+                    </div>
+                  </Link>
+                ))}
               </div>
-            )}
-          </>
-        )}
-          </div>
+
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 sm:gap-4 mt-6 sm:mt-12">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+                  
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (page <= 3) {
+                        pageNum = i + 1;
+                      } else if (page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = page - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPage(pageNum)}
+                          className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg text-xs sm:text-sm ${
+                            page === pageNum
+                              ? 'bg-purple-600 text-white'
+                              : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                    disabled={page === pagination.totalPages}
+                    className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

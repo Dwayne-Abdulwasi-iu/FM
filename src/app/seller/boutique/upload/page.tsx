@@ -111,6 +111,7 @@ function BoutiqueUploadContent() {
   const [gender, setGender] = useState('');
   const [condition, setCondition] = useState('NEW');
   const [weight, setWeight] = useState('');
+  const [pattern, setPattern] = useState('');
 
   // Media
   const [media, setMedia] = useState<MediaFile[]>([]);
@@ -129,7 +130,7 @@ function BoutiqueUploadContent() {
   const [sellerReturnPolicy, setSellerReturnPolicy] = useState('7-day return policy');
 
   // Custom product attributes (category-specific: perfume, jewelry, headwear, etc.)
-  const [customAttributes, setCustomAttributes] = useState<Record<string, any>>({});
+  const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
 
   // Selected parent category for subcategory dropdown
   const [selectedParentCategory, setSelectedParentCategory] = useState<Category | null>(null);
@@ -319,27 +320,30 @@ function BoutiqueUploadContent() {
 
   const validateForm = (): string[] => {
     const errs: string[] = [];
-    
     if (!title || title.length < 10) errs.push('Title must be at least 10 characters');
     if (!description || description.length < 50) errs.push('Description must be at least 50 characters');
     if (!categoryId) errs.push('Category is required');
+    if (selectedParentCategory?.children && selectedParentCategory.children.length > 0 && !subcategory) errs.push('Subcategory is required');
+    if (!condition) errs.push('Condition is required');
+    if (!gender) errs.push('Gender is required');
+    if (!style) errs.push('Style is required');
+    if (!occasion) errs.push('Occasion is required');
     if (!basePrice || parseFloat(basePrice) <= 0) errs.push('Valid price is required');
-    
     const images = media.filter(m => m.type === 'IMAGE');
     const videos = media.filter(m => m.type === 'VIDEO');
-    
     if (images.length < BOUTIQUE_DEFAULTS.minImages) {
       errs.push(`Minimum ${BOUTIQUE_DEFAULTS.minImages} images required (you have ${images.length})`);
     }
     if (videos.length < BOUTIQUE_DEFAULTS.minVideos) {
       errs.push(`Minimum ${BOUTIQUE_DEFAULTS.minVideos} videos required (you have ${videos.length})`);
     }
-    
-    const validVariants = variants.filter(v => v.size || v.color);
-    if (validVariants.length === 0) {
-      errs.push('At least one size or color variant is required');
-    }
-    
+    // All variants must have size and color selected
+    variants.forEach((v, i) => {
+      if (!v.size) errs.push(`Variant ${i + 1}: Size is required`);
+      if (!v.color) errs.push(`Variant ${i + 1}: Color is required`);
+    });
+    if (!material) errs.push('Material is required');
+    if (!pattern) errs.push('Pattern is required');
     return errs;
   };
 
@@ -461,6 +465,12 @@ function BoutiqueUploadContent() {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (pattern) {
+      console.log('Pattern updated:', pattern);
+    }
+  }, [pattern]);
 
   if (authStatus === 'loading' || loading) {
     return (
@@ -873,6 +883,7 @@ function BoutiqueUploadContent() {
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
                   aria-label="Select product category"
+                  required
                 >
                   <option value="" className="text-gray-900">Select category</option>
                   {categories.map(cat => (
@@ -889,6 +900,7 @@ function BoutiqueUploadContent() {
                     onChange={(e) => setSubcategory(e.target.value)}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
                     aria-label="Select product subcategory"
+                    required
                   >
                     <option value="" className="text-gray-900">Select subcategory</option>
                     {selectedParentCategory.children.map(sub => (
@@ -917,6 +929,7 @@ function BoutiqueUploadContent() {
                   onChange={(e) => setCondition(e.target.value)}
                   className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
                   aria-label="Select product condition"
+                  required
                 >
                   {Object.entries(PRODUCT_CONDITION).map(([key, label]) => (
                     <option key={key} value={key} className="text-gray-900">{label}</option>
@@ -1086,6 +1099,7 @@ function BoutiqueUploadContent() {
                 onChange={(e) => setGender(e.target.value)}
                 className="w-full px-2 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
                 aria-label="Select target gender"
+                required
               >
                 <option value="" className="text-gray-900">Select</option>
                 {GENDER_OPTIONS.map(g => (
@@ -1101,6 +1115,7 @@ function BoutiqueUploadContent() {
                 onChange={(e) => setStyle(e.target.value)}
                 className="w-full px-2 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900"
                 aria-label="Select product style"
+                required
               >
                 <option value="" className="text-gray-900">Select</option>
                 {STYLES.map(s => (
@@ -1132,6 +1147,18 @@ function BoutiqueUploadContent() {
                 onChange={(e) => setMaterial(e.target.value)}
                 placeholder="e.g., 100% Cotton"
                 className="w-full px-2 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] sm:text-sm font-medium text-gray-700 mb-1">Pattern</label>
+              <input
+                type="text"
+                value={pattern}
+                onChange={(e) => setPattern(e.target.value)}
+                placeholder="e.g., Striped, Floral"
+                className="w-full px-2 sm:px-4 py-2 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-900 placeholder:text-gray-400"
+                required
               />
             </div>
           </div>

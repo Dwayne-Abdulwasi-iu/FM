@@ -8,10 +8,8 @@ import prisma from '@/lib/prisma';
 import { 
   PRODUCT_STATUS, 
   FULFILLMENT_METHOD, 
-  canUseDirectShipping,
   needsSampleVerification,
-  type FulfillmentMethod,
-  type SellerTier
+  type FulfillmentMethod
 } from '@/lib/boutique/constants';
 
 // GET - List products (public)
@@ -258,14 +256,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is a seller
-    if (session.user.role !== 'SELLER' && session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, message: 'Seller account required' },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     const {
       title,
@@ -352,29 +342,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get seller info for tier check
-    const seller = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { designerTier: true },
-    });
-
     // Validate fulfillment method
     let validatedFulfillmentMethod: FulfillmentMethod = FULFILLMENT_METHOD.ADMIN_STOCK;
     let requiresSampleVerification = false;
     
     if (fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
-      // Check if seller is eligible for direct shipping
-      const sellerTier = seller?.designerTier as SellerTier | null;
-      if (!canUseDirectShipping(sellerTier)) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Seller Direct shipping requires VIP Designer tier or higher. Continue building your reputation to unlock this feature!' 
-          },
-          { status: 403 }
-        );
-      }
-      
       validatedFulfillmentMethod = FULFILLMENT_METHOD.SELLER_DIRECT;
       
       // Check if this seller needs sample verification for first few direct products
