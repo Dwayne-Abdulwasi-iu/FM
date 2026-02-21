@@ -1,0 +1,14 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /seller/dashboard
+Disallow: /api
+Disallow: /auth/signup
+Disallow: /auth/login
+
+# Host
+Host: https://fashionmarketplace.store
+
+# Sitemaps
+Sitemap: https://fashionmarketplace.store/sitemap.xml
