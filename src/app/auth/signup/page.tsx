@@ -51,7 +51,12 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setInfoMessage(data.message || 'OTP sent to your email.')
+        let message = data.message || 'OTP sent to your email.'
+        // In development mode without email, show the OTP directly
+        if (data.otp) {
+          message = `Your OTP code is: ${data.otp} (shown because email is not configured)`
+        }
+        setInfoMessage(message)
         setStep('otp')
       } else {
         setError(data.error || 'Failed to send OTP')

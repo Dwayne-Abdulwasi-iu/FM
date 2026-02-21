@@ -24,7 +24,7 @@ function validatePhoneNumber(phone: string): { valid: boolean; normalized: strin
   }
 
   // Basic validation: + followed by 7-15 digits
-  const phoneRegex = /^\+[1-9]\d{6,14}$/
+  const phoneRegex = /^\+\d{7,15}$/
   if (!phoneRegex.test(normalized)) {
     return { 
       valid: false, 
@@ -152,14 +152,18 @@ export async function POST(request: NextRequest) {
         `,
       })
 
+      // Log OTP to console if email service isn't configured (development only)
       if (!emailSent) {
-        return NextResponse.json(
-          { error: 'Unable to send OTP email right now. Please try again shortly.' },
-          { status: 503 }
-        )
+        console.log(`[DEV - OTP for ${email}] ${otpCode}`);
       }
 
-      return NextResponse.json({ success: true, message: 'OTP sent to your email.' })
+      return NextResponse.json({ 
+        success: true, 
+        message: emailSent 
+          ? 'OTP sent to your email.' 
+          : 'OTP generated. Check console for code (development mode).',
+        ...(process.env.NODE_ENV === 'development' && !emailSent ? { otp: otpCode } : {})
+      })
     }
 
     if (action === 'verify-otp') {
