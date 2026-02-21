@@ -2,7 +2,7 @@
  * Email Service for Fashion Marketplace Notifications
  * 
  * This service handles sending email notifications for various events.
- * Supports both SendGrid API and SMTP (Nodemailer) - SendGrid takes priority.
+ * Supports SendGrid API (primary) and SMTP (fallback) - SendGrid takes priority.
  * 
  * NOTE: This is a server-only module. Import only in server components and API routes.
  */
@@ -26,24 +26,25 @@ function getTransporter(): Transporter | null {
     return transporter;
   }
 
-  // Use SMTP (SendGrid via SMTP or custom SMTP)
+  // Use SMTP (SendGrid via SMTP or custom SMTP) as fallback
   if (isSMTPConfigured()) {
     // Support both SMTP_* and EMAIL_SERVER_* env variable names
     const host = process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST;
-    const port = process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '587';
+    const port = process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '465';
     const user = process.env.SMTP_USER || process.env.EMAIL_SERVER_USER;
     const pass = process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD;
+    const secure = process.env.SMTP_SECURE !== 'false'; // Default to true for port 465
 
     transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
-      secure: process.env.SMTP_SECURE === 'true',
+      secure,
       auth: {
         user,
         pass,
       },
     });
-    console.log(`[Email] Using SMTP transport (host: ${host})`);
+    console.log(`[Email] Using SMTP transport (host: ${host}, port: ${port}, secure: ${secure})`);
     return transporter;
   }
 
@@ -105,6 +106,33 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  // Try SendGrid API first (most reliable, no SMTP port issues)
+  if (process.env.SENDGRID_API_KEY) {
+    try {
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      
+      await sgMail.send({
+        to: options.to,
+        from: FROM_EMAIL,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      });
+      console.log(`[Email - SENT via SendGrid] To: ${options.to}, Subject: ${options.subject}`);
+      return true;
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err: any = error;
+      console.error(`[Email - SendGrid ERROR] Failed to send to ${options.to}:`, error);
+      if (err.response?.body) {
+        console.error('[Email - SendGrid Response]:', JSON.stringify(err.response.body));
+      }
+      // Fall through to SMTP fallback
+    }
+  }
+
+  // Fallback to SMTP if SendGrid not configured or fails
   const transport = getTransporter();
   
   if (!transport) {
@@ -121,10 +149,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
       text: options.text,
     });
-    console.log(`[Email - SENT] To: ${options.to}, Subject: ${options.subject}`);
+    console.log(`[Email - SENT via SMTP] To: ${options.to}, Subject: ${options.subject}`);
     return true;
   } catch (error) {
-    console.error(`[Email - ERROR] Failed to send to ${options.to}:`, error);
+    console.error(`[Email - SMTP ERROR] Failed to send to ${options.to}:`, error);
     return false;
   }
 }
