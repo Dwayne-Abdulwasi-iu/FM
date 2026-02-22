@@ -385,7 +385,7 @@ export default function EnhancedUploadPage() {
                   </p>
                   <div className="flex gap-2 sm:gap-3">
                     <button
-                      onClick={() => router.push('/profile#bank-account')}
+                      onClick={() => router.push('/profile?tab=account&action=add-bank#bank-account')}
                       className="bg-yellow-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-yellow-700 font-medium transition-colors text-xs sm:text-sm"
                     >
                       Add Bank Account

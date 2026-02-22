@@ -22,7 +22,19 @@ export function Providers({ children }: ProvidersProps) {
         <CurrencyProvider>
           {children}
           <OnboardingTour />
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                fontSize: "0.82rem",
+                lineHeight: 1.25,
+                maxWidth: "280px",
+                width: "min(280px, 88vw)",
+                padding: "8px 10px",
+                borderRadius: "10px",
+              },
+            }}
+          />
         </CurrencyProvider>
       </LanguageProvider>
     </SessionProvider>

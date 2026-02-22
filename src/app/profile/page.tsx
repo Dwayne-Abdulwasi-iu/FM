@@ -172,6 +172,7 @@ export default function ProfilePage() {
   })
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageModalOpen, setImageModalOpen] = useState(false)
+  const [openBankFormOnLoad, setOpenBankFormOnLoad] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -181,6 +182,24 @@ export default function ProfilePage() {
     }
     fetchProfile()
   }, [session, status, router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hash = window.location.hash
+    const searchParams = new URLSearchParams(window.location.search)
+    const tabParam = searchParams.get('tab')
+    const actionParam = searchParams.get('action')
+
+    if (hash === '#bank-account' || tabParam === 'account' || tabParam === 'bank-account') {
+      setActiveTab('account')
+    }
+
+    if (hash === '#add-bank' || actionParam === 'add-bank') {
+      setActiveTab('account')
+      setOpenBankFormOnLoad(true)
+    }
+  }, [])
 
   const fetchProfile = async () => {
     try {
@@ -1384,7 +1403,7 @@ export default function ProfilePage() {
             )}
 
             {activeTab === 'account' && (
-              <SellerAccountTab />
+              <SellerAccountTab openFormByDefault={openBankFormOnLoad} />
             )}
           </div>
         </div>
@@ -1430,7 +1449,7 @@ export default function ProfilePage() {
 }
 
 // Seller Account Management Component
-function SellerAccountTab() {
+function SellerAccountTab({ openFormByDefault = false }: { openFormByDefault?: boolean }) {
     // Minimal types for seller account and banks to avoid `any`
     interface SellerAccount {
       userId?: string
@@ -1453,13 +1472,19 @@ function SellerAccountTab() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [verifying, setVerifying] = useState(false)
-  const [showForm, setShowForm] = useState(false)
+    const [showForm, setShowForm] = useState(openFormByDefault)
   const [formData, setFormData] = useState({
     accountNumber: '',
     accountName: '',
     bankCode: '',
     bankName: ''
   })
+
+    useEffect(() => {
+      if (openFormByDefault) {
+        setShowForm(true)
+      }
+    }, [openFormByDefault])
 
   useEffect(() => {
     fetchSellerAccount()

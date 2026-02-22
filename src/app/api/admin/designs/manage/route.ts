@@ -49,6 +49,17 @@ export async function POST(request: NextRequest) {
         })
 
         if (design) {
+          // Prevent hard delete if tied to past orders (referential integrity)
+          const orderItemCount = await prisma.orderItem.count({ where: { designId } })
+          if (orderItemCount > 0) {
+            return NextResponse.json(
+              {
+                error: 'Design is linked to orders—deactivate instead of deleting.'
+              },
+              { status: 400 }
+            )
+          }
+
           // Delete associated records first
           await prisma.cartItem.deleteMany({ where: { designId } })
           await prisma.favorite.deleteMany({ where: { designId } })
