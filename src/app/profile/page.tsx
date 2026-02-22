@@ -77,6 +77,16 @@ interface PurchasedDesign {
   }
 }
 
+type DesignMediaFile = {
+  id: string
+  fileUrl: string
+  fileName: string
+  fileType: string
+  createdAt?: string
+  mimeType?: string
+  sortOrder?: number
+}
+
 interface OrderItem {
   id: string
   quantity: number
@@ -161,7 +171,6 @@ export default function ProfilePage() {
     image: ''
   })
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [imageModalOpen, setImageModalOpen] = useState(false)
 
   useEffect(() => {
@@ -197,9 +206,6 @@ export default function ProfilePage() {
           location: profileData.user.location || '',
           image: profileData.user.image || ''
         })
-        if (profileData.user.image) {
-          setPreviewImage(profileData.user.image)
-        }
       }
 
       if (prefsRes.ok) {
@@ -243,12 +249,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    await uploadProfileImage(file)
-  }
-
   const uploadProfileImage = async (file: File) => {
     try {
       setUploadingImage(true)
@@ -265,7 +265,6 @@ export default function ProfilePage() {
       if (uploadRes.ok) {
         const { url } = await uploadRes.json()
         setProfileForm(prev => ({ ...prev, image: url }))
-        setPreviewImage(url)
         setSuccessMessage('Profile picture uploaded!')
         setTimeout(() => setSuccessMessage(null), 2000)
       } else {
@@ -414,7 +413,7 @@ export default function ProfilePage() {
     }
   }
 
-  const handleDownloadOrderDesign = async (designTitle: string, mediaFiles: any[]) => {
+  const handleDownloadOrderDesign = async (designTitle: string, mediaFiles: DesignMediaFile[]) => {
     try {
       if (!mediaFiles || mediaFiles.length === 0) {
         setErrorMessage('No files available for download')
@@ -781,7 +780,6 @@ export default function ProfilePage() {
                             location: profile?.location || '',
                             image: profile?.image || ''
                           })
-                          setPreviewImage(profile?.image || null)
                         }}
                         className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-200 text-[9px] sm:text-xs"
                       >
@@ -1670,6 +1668,25 @@ function SellerAccountTab() {
                     'Verify Account'
                   )}
                 </button>
+              </div>
+            </div>
+          )}
+          
+          {sellerAccount.isVerified && (
+            <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 bg-purple-50 border border-purple-200 rounded\">
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] sm:text-xs text-purple-800 font-medium\">Complete Paystack KYC Verification</p>
+                <p className="text-[8px] sm:text-[10px] text-purple-700\">
+                  Your subaccount has been created in Paystack but needs KYC verification before you can receive split payments. Click the link below to complete verification in your Paystack dashboard.
+                </p>
+                <a
+                  href="https://dashboard.paystack.com/subaccounts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[8px] sm:text-[10px] text-purple-600 hover:text-purple-800 underline inline-flex items-center gap-1 w-fit"
+                >
+                  Go to Paystack Subaccounts →
+                </a>
               </div>
             </div>
           )}

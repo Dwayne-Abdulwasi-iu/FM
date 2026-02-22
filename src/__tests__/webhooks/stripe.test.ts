@@ -19,8 +19,18 @@ jest.mock('next/server', () => ({
 const { POST } = require('@/app/api/webhooks/stripe/route')
 
 describe('Stripe webhook handler', () => {
+  let consoleErrorSpy: jest.SpyInstance
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore()
   })
 
   it('returns 400 when signature verification fails', async () => {

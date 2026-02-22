@@ -383,13 +383,19 @@ export default function CartPage() {
                     }`}
                   >
                     <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 relative">
-                      <Image
-                        src={item.design.thumbnailUrl || item.design.imageUrl}
-                        alt={item.design.title}
-                        width={56}
-                        height={56}
-                        className="w-full h-full object-cover rounded"
-                      />
+                      {(item.design.thumbnailUrl || item.design.imageUrl) ? (
+                        <Image
+                          src={item.design.thumbnailUrl || item.design.imageUrl}
+                          alt={item.design.title}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                          <Package className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
                       {item.purchaseType === 'POD' && (
                         <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5">
                           <Package className="h-2.5 w-2.5" />

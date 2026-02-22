@@ -46,7 +46,7 @@ export default function ClickableAvatar({
         className={`${sizeClass} ${className} rounded-full overflow-hidden flex items-center justify-center bg-gray-100 hover:opacity-85 transition-opacity`}
         aria-label={`View ${name || 'user'} profile image`}
       >
-        {imageUrl ? (
+        {imageUrl && imageUrl.trim() ? (
           <div className="relative w-full h-full">
             <Image src={imageUrl} alt={name || 'User'} fill className="object-cover" />
           </div>

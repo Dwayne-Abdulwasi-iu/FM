@@ -40,13 +40,8 @@ export async function GET() {
               price: true,
               ownershipPrice: true,
               designerId: true,
-              mediaFiles: {
-                select: {
-                  fileUrl: true,
-                  fileType: true
-                },
-                take: 1
-              },
+              imageUrl: true,
+              thumbnailUrl: true,
               designer: {
                 select: {
                   id: true,

@@ -171,25 +171,25 @@ export async function POST(request: NextRequest) {
       isVerified = false
     }
 
-    // Create transfer recipient on Paystack
-    let recipientCode = null
+    // Create subaccount on Paystack for commission splits
+    let subaccountCode = null
     if (isVerified) {
       try {
-        const recipient = await paystack.transfer_recipient.create({
-          type: 'nuban',
-          name: verifiedAccountName,
+        const subaccount = await paystack.subaccount.create({
+          business_name: verifiedAccountName,
+          settlement_bank: bankCode,
           account_number: accountNumber,
-          bank_code: bankCode,
-          currency: 'NGN'
+          percentage_charge: 0,
+          description: `Marketplace seller account for ${verifiedAccountName}`
         })
 
-        if (recipient.status) {
-          recipientCode = recipient.data.recipient_code
-          console.log('Recipient created successfully:', recipientCode)
+        if (subaccount.status) {
+          subaccountCode = subaccount.data.subaccount_code
+          console.log('Subaccount created successfully:', subaccountCode)
         }
-      } catch (recipientError) {
-        console.error('Recipient creation error:', recipientError)
-        // Continue without recipient code, can be created later
+      } catch (subaccountError) {
+        console.error('Subaccount creation error:', subaccountError)
+        // Continue without subaccount code, can be created later
       }
     }
 
@@ -201,8 +201,8 @@ export async function POST(request: NextRequest) {
         accountName: verifiedAccountName,
         bankName,
         bankCode,
-        recipientCode,
-        isVerified: isVerified && !!recipientCode,
+        subaccountCode,
+        isVerified: isVerified && !!subaccountCode,
         isActive: true
       },
       create: {
@@ -211,8 +211,8 @@ export async function POST(request: NextRequest) {
         accountName: verifiedAccountName,
         bankName,
         bankCode,
-        recipientCode,
-        isVerified: isVerified && !!recipientCode,
+        subaccountCode,
+        isVerified: isVerified && !!subaccountCode,
         isActive: true
       }
     })

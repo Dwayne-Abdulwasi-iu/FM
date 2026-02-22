@@ -141,13 +141,15 @@ export default function SimilarDesigns({
             className="group block"
           >
             <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 mb-2">
-              <Image
-                src={design.thumbnailUrl || design.imageUrl}
-                alt={design.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 768px) 50vw, 25vw"
-              />
+              {(design.thumbnailUrl || design.imageUrl) && (
+                <Image
+                  src={design.thumbnailUrl || design.imageUrl}
+                  alt={design.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              )}
               {design.recommendationScore && design.recommendationScore > 0.8 && (
                 <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />

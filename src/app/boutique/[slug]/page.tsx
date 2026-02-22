@@ -619,25 +619,34 @@ export default function ProductDetailPage() {
                   Color: <span className="font-normal text-black">{selectedColor}</span>
                 </h3>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
-                  {availableColors.map((c, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedColor(c.color)}
-                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
-                        selectedColor === c.color
-                          ? 'border-purple-600 ring-2 ring-purple-200'
-                          : 'border-gray-200'
-                      }`}
-                      style={{ backgroundColor: c.hex || '#ccc' }}
-                      title={c.color}
-                    >
-                      {selectedColor === c.color && (
-                        <Check className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto ${
-                          c.hex === '#FFFFFF' || c.hex === '#FFF' ? 'text-gray-900' : 'text-white'
-                        }`} />
-                      )}
-                    </button>
-                  ))}
+                  {availableColors.map((c, i) => {
+                    const swatchClass = `color-swatch-${i}`
+                    return (
+                      <div key={i} className="inline-flex">
+                        <button
+                          onClick={() => setSelectedColor(c.color)}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
+                            selectedColor === c.color
+                              ? 'border-purple-600 ring-2 ring-purple-200'
+                              : 'border-gray-200'
+                          } ${swatchClass}`}
+                          aria-label={`Select color ${c.color}`}
+                          title={c.color}
+                        >
+                          {selectedColor === c.color && (
+                            <Check className={`w-4 h-4 sm:w-5 sm:h-5 mx-auto ${
+                              c.hex === '#FFFFFF' || c.hex === '#FFF' ? 'text-gray-900' : 'text-white'
+                            }`} />
+                          )}
+                        </button>
+                        <style jsx>{`
+                          .${swatchClass} {
+                            background:${c.hex || '#ccc'};
+                          }
+                        `}</style>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -869,6 +878,7 @@ export default function ProductDetailPage() {
                         key={i}
                         onClick={() => setReviewRating(i)}
                         className="transition-transform hover:scale-110"
+                        aria-label={`Rate ${i} star${i > 1 ? 's' : ''}`}
                       >
                         <Star
                           className={`w-6 h-6 sm:w-8 sm:h-8 ${

@@ -41,7 +41,7 @@ const nextConfig = {
   poweredByHeader: false,
   staticPageGenerationTimeout: 120,
   skipTrailingSlashRedirect: true,
-  skipMiddlewareUrlNormalize: true,
+  skipProxyUrlNormalize: true,
 }
 
 module.exports = nextConfig

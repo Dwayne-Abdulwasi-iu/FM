@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
 import { Plus, Trash2, AlertCircle, CheckCircle, DollarSign } from 'lucide-react'
 
 interface BankAccount {
@@ -21,7 +20,7 @@ interface BankAccount {
 }
 
 export default function SellerBankAccountsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [loading, setLoading] = useState(true)
@@ -309,6 +308,7 @@ export default function SellerBankAccountsPage() {
                   <button
                     onClick={() => handleDeleteAccount(account.id)}
                     className="p-2 hover:bg-red-50 rounded-lg transition"
+                    aria-label="Delete bank account"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </button>

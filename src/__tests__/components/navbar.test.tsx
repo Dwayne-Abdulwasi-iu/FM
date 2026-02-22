@@ -29,6 +29,16 @@ const MockSessionProvider = ({ children, session = null }: MockProps) => (
 )
 
 describe('Navbar', () => {
+  let consoleErrorSpy: jest.SpyInstance
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore()
+  })
+
   it('renders the navbar with logo', () => {
     const { getAllByText } = render(
       <MockSessionProvider>

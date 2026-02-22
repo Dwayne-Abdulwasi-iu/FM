@@ -10,6 +10,7 @@
 // Import and re-export sync config functions
 export { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
 import { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+import sgMail from '@sendgrid/mail'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const nodemailer = require('nodemailer');
@@ -109,7 +110,6 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try SendGrid API first (most reliable, no SMTP port issues)
   if (process.env.SENDGRID_API_KEY) {
     try {
-      const sgMail = require('@sendgrid/mail');
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
       
       await sgMail.send({

@@ -22,9 +22,19 @@ const nodeCrypto = require('crypto')
 const { POST: postHandler } = require('@/app/api/webhooks/paystack/route')
 
 describe('Paystack webhook handler', () => {
+  let consoleErrorSpy: jest.SpyInstance
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
     process.env.PAYSTACK_SECRET_KEY = 'test_secret'
+  })
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore()
   })
 
   it('returns 400 when no signature provided', async () => {

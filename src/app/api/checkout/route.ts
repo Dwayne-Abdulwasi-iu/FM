@@ -513,6 +513,19 @@ export async function POST(request: NextRequest) {
       const totalPlatformFee = subaccounts.reduce((sum, s) => {
         return sum + (s.designerTotal * s.commissionRate)
       }, 0)
+
+      // Add platform subaccount to split array for multi-seller orders
+      const platformSubaccountCode = process.env.PAYSTACK_PLATFORM_SUBACCOUNT
+      if (platformSubaccountCode && subaccounts.length > 1 && totalPlatformFee > 0) {
+        // Convert platform fee to NGN and kobo
+        const platformFeeNGN = await convertUSDToNGN(totalPlatformFee)
+        subaccounts.push({
+          subaccount: platformSubaccountCode,
+          share: Math.round(platformFeeNGN * 100), // Platform commission in kobo
+          commissionRate: 0,
+          designerTotal: 0,
+        })
+      }
       
       const paymentReference = `fashion_${Date.now()}_${session.user.id}`
       

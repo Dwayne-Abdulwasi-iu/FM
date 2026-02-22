@@ -93,41 +93,41 @@ export async function POST(request: NextRequest) {
           )
         }
 
-  // Use transaction to ensure all deletions happen together
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // Use transaction to ensure all deletions happen together
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           // Delete order items for orders placed by this user
           const userOrders = await tx.order.findMany({
             where: { customerId: userId },
             select: { id: true }
           })
           
-          for (const order of userOrders) {
-            await tx.orderItem.deleteMany({ where: { orderId: order.id } })
-          }
+          await Promise.all(userOrders.map(order => tx.orderItem.deleteMany({ where: { orderId: order.id } })));
 
           // Delete user's designs and all related data
-          for (const design of userToDelete.designs) {
-            await tx.orderItem.deleteMany({ where: { designId: design.id } })
-            await tx.cartItem.deleteMany({ where: { designId: design.id } })
-            await tx.favorite.deleteMany({ where: { designId: design.id } })
-            await tx.review.deleteMany({ where: { designId: design.id } })
-            await tx.sellerEarning.deleteMany({ where: { designId: design.id } })
-          }
+          await Promise.all(userToDelete.designs.map(design => Promise.all([
+            tx.orderItem.deleteMany({ where: { designId: design.id } }),
+            tx.cartItem.deleteMany({ where: { designId: design.id } }),
+            tx.favorite.deleteMany({ where: { designId: design.id } }),
+            tx.review.deleteMany({ where: { designId: design.id } }),
+            tx.sellerEarning.deleteMany({ where: { designId: design.id } })
+          ])));
 
           // Delete all user-related data
-          await tx.cartItem.deleteMany({ where: { userId } })
-          await tx.favorite.deleteMany({ where: { userId } })
-          await tx.review.deleteMany({ where: { userId } })
-          await tx.sellerEarning.deleteMany({ where: { sellerId: userId } })
-          await tx.order.deleteMany({ where: { customerId: userId } })
-          await tx.design.deleteMany({ where: { designerId: userId } })
-          await tx.sellerAccount.deleteMany({ where: { userId } })
-          await tx.account.deleteMany({ where: { userId } })
-          await tx.session.deleteMany({ where: { userId } })
-          
+          await Promise.all([
+            tx.cartItem.deleteMany({ where: { userId } }),
+            tx.favorite.deleteMany({ where: { userId } }),
+            tx.review.deleteMany({ where: { userId } }),
+            tx.sellerEarning.deleteMany({ where: { sellerId: userId } }),
+            tx.order.deleteMany({ where: { customerId: userId } }),
+            tx.design.deleteMany({ where: { designerId: userId } }),
+            tx.sellerAccount.deleteMany({ where: { userId } }),
+            tx.account.deleteMany({ where: { userId } }),
+            tx.session.deleteMany({ where: { userId } })
+          ]);
+
           // Finally delete the user
           await tx.user.delete({ where: { id: userId } })
-        })
+        }, { timeout: 20000 })
 
         return NextResponse.json({ 
           message: 'User account deleted successfully',
