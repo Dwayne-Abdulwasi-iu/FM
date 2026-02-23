@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { role: true }
     })
 
-    if (!user?.isAdmin) {
+    if (user?.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         duration: duration || null,
         rating: 0,
         views: 0,
-        featured: featured || false,
+        featured: featured === true || featured === 'true',
         tags: typeof tags === 'string' ? tags : (Array.isArray(tags) ? tags.join(', ') : ''),
         createdById: session.user.id
       }
@@ -141,10 +141,10 @@ export async function PUT(request: NextRequest) {
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { role: true }
     })
 
-    if (!user?.isAdmin) {
+    if (user?.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -152,7 +152,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, tags, ...updateData } = body
+    const { id, tags, featured, ...updateData } = body
 
     if (!id) {
       return NextResponse.json(
@@ -163,6 +163,7 @@ export async function PUT(request: NextRequest) {
 
     const processedData = {
       ...updateData,
+      featured: featured === true || featured === 'true',
       tags: typeof tags === 'string' ? tags : (Array.isArray(tags) ? tags.join(', ') : updateData.tags)
     }
 
@@ -196,10 +197,10 @@ export async function DELETE(request: NextRequest) {
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { role: true }
     })
 
-    if (!user?.isAdmin) {
+    if (user?.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
