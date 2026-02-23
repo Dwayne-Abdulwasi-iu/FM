@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
+import { getPaystackCommissionForSeller } from '@/lib/paystack-commission'
 import prisma from '@/lib/prisma'
-import { getCommissionRate } from '@/lib/commission-tiers'
 
 export async function POST() {
   try {
@@ -87,23 +87,16 @@ export async function POST() {
         let subaccountCode = sellerAccount.subaccountCode
         if (!subaccountCode) {
           try {
-            // Get seller's tier info for commission rate
-            const seller = await prisma.user.findUnique({
-              where: { id: session.user.id },
-              select: { totalEarnings: true, designerTier: true }
-            })
-            const totalEarnings = seller?.totalEarnings ?? 0
-            const isProSubscriber = seller?.designerTier === 'VIP_DESIGNER' || seller?.designerTier === 'VVIP_DESIGNER'
-            const commissionRate = getCommissionRate(totalEarnings, isProSubscriber)
-            // Convert rate to Paystack percentage (e.g., 0.10 -> 10, 0.001 -> 0.1)
-            const paystackPercentage = Math.round(commissionRate * 100 * 10) / 10
+            // Get seller's commission rate based on earnings and tier
+            const commissionInfo = await getPaystackCommissionForSeller(session.user.id)
             
-            console.log(`Creating Paystack subaccount with ${paystackPercentage}% platform fee (${totalEarnings < 100 ? 'STARTER' : 'tiered'} rate)`)
+            console.log(`Creating Paystack subaccount with ${commissionInfo.paystackPercentage}% platform fee (${commissionInfo.tier} tier based on $${commissionInfo.totalEarnings} earnings)`)
+            
             const subaccount = await paystack.subaccount.create({
               business_name: `${verifiedAccountName} - Fashion Designer`,
               settlement_bank: sellerAccount.bankCode,
               account_number: sellerAccount.accountNumber,
-              percentage_charge: paystackPercentage, // Tiered: 0.1% for new sellers, up to 10%
+              percentage_charge: commissionInfo.paystackPercentage,
               description: `Subaccount for fashion designer: ${verifiedAccountName}`
             })
 

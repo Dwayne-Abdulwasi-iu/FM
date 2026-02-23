@@ -50,8 +50,8 @@ The objects for which the Company is to be established are:
 3.2 To facilitate the purchase and sale of physical and digital fashion products 
     through an e-commerce marketplace.
 
-3.3 To provide payment processing services, financial transaction management, and 
-    escrow services between buyers and sellers.
+3.3 To process and facilitate transactions between buyers and sellers through secure 
+    payment systems.
 
 3.4 To engage in digital content creation, curation, distribution, and licensing 
     of fashion-related intellectual property.
@@ -70,9 +70,7 @@ The objects for which the Company is to be established are:
 3.9 To acquire, hold, and dispose of real and personal property as necessary for 
     business operations.
 
-3.10 To borrow money and raise capital as required for business operations and expansion.
-
-3.11 To undertake any activity which may seem to the Company to be conducive to the 
+3.10 To undertake any activity which may seem to the Company to be conducive to the 
      attainment of any of the above objects or any of them.
 
 ═══════════════════════════════════════════════════════════════════════════════

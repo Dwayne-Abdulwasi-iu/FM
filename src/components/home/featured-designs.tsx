@@ -31,8 +31,8 @@ export function FeaturedDesigns() {
 
   const fetchFeaturedDesigns = async () => {
     try {
-      // Fetch from admin featured items API for designs only
-      const response = await fetch('/api/admin/featured-items?itemType=DESIGN&limit=6')
+      // Fetch from public featured items API for designs only
+      const response = await fetch('/api/featured-items?itemType=DESIGN&limit=6')
       if (response.ok) {
         const data = await response.json()
         // Map the API response to Design interface
@@ -43,14 +43,15 @@ export function FeaturedDesigns() {
           price: item.price || 0,
           imageUrl: item.imageUrl || '',
           category: item.category || 'Design',
-          totalSales: 0,
+          totalSales: item.totalSales || 0,
           designer: {
-            name: item.seller?.displayName || item.seller?.name,
+            name: item.seller?.name,
             email: item.seller?.email || '',
             role: 'seller'
           }
         })) || [])
       } else {
+        console.warn('Failed to fetch featured designs, falling back...')
         // Fallback to regular featured designs from old API
         const fallbackResponse = await fetch('/api/designs?featured=true&limit=6')
         if (fallbackResponse.ok) {

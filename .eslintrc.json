@@ -15,7 +15,7 @@
   },
   "overrides": [
     {
-      "files": ["scripts/**/*.js", "scripts/**/*.ts", "test-mongo.js", "src/test-mongo.js", "src/**/test-*.js"],
+      "files": ["scripts/**/*.js", "scripts/**/*.ts", "test-mongo.js", "src/test-mongo.js", "src/**/test-*.js", "check-*.js", "verify-*.js"],
       "env": { "node": true },
       "rules": {
         "@typescript-eslint/no-require-imports": "off"

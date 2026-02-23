@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
+import { getCommissionRate } from '@/lib/commission-tiers'
+import { getPaystackCommissionForSeller } from '@/lib/paystack-commission'
 import prisma from '@/lib/prisma'
 
 // Helper function to calculate string similarity
@@ -175,11 +177,16 @@ export async function POST(request: NextRequest) {
     let subaccountCode = null
     if (isVerified) {
       try {
+        // Get seller's commission rate based on earnings and tier
+        const commissionInfo = await getPaystackCommissionForSeller(session.user.id)
+        
+        console.log(`Creating Paystack subaccount with ${commissionInfo.paystackPercentage}% platform fee (${commissionInfo.tier} tier based on $${commissionInfo.totalEarnings} earnings)`)
+
         const subaccount = await paystack.subaccount.create({
           business_name: verifiedAccountName,
           settlement_bank: bankCode,
           account_number: accountNumber,
-          percentage_charge: 0,
+          percentage_charge: commissionInfo.paystackPercentage,
           description: `Marketplace seller account for ${verifiedAccountName}`
         })
 

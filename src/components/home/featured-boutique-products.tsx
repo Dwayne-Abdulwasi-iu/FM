@@ -36,12 +36,13 @@ export function FeaturedBoutiqueProducts() {
 
   const fetchFeaturedProducts = async () => {
     try {
-      // Fetch from admin featured items API for boutique products only
-      const response = await fetch('/api/admin/featured-items?itemType=BOUTIQUE_PRODUCT&limit=6')
+      // Fetch from public featured items API for boutique products only
+      const response = await fetch('/api/featured-items?itemType=BOUTIQUE_PRODUCT&limit=6')
       if (response.ok) {
         const data = await response.json()
         setProducts(data.items?.slice(0, 6) || [])
       } else {
+        console.warn('Failed to fetch featured products, falling back...')
         // Fallback to regular boutique products if no featured available
         const fallbackResponse = await fetch('/api/boutique/products?status=LIVE&limit=6')
         if (fallbackResponse.ok) {
