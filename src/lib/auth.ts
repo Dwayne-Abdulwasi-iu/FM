@@ -17,10 +17,13 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+        
+        // SECURITY: Always normalize email before database queries
+        const normalizedEmail = credentials.email.toLowerCase().trim();
 
         const user = await prisma.user.findUnique({
           where: {
-            email: credentials.email
+            email: normalizedEmail
           }
         });
 

@@ -453,6 +453,44 @@ model AdminFeaturedItem {
   @@map("admin_featured_items")
 }
 
+// Coming Soon Email Signup
+model ComingSoonEmail {
+  id           String   @id @default(cuid()) @map("_id")
+  email        String   @unique
+  firstName    String?
+  lastName     String?
+  country      String?
+  source       String   @default("coming-soon-page") // Tracking where signup came from
+  status       String   @default("ACTIVE") // ACTIVE, NOTIFIED (sent launch email), UNSUBSCRIBED, BOUNCED
+  referralCode String?  // Unique code for referrals (enforce uniqueness at app level)
+  referredById String? // Who referred this user (their referral code)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([createdAt])
+  @@index([status])
+  @@index([referralCode])
+  @@map("coming_soon_emails")
+}
+
+// Coming Soon Analytics
+model ComingSoonAnalytics {
+  id        String   @id @default(cuid()) @map("_id")
+  email     String?  // Email if user subscribed, null if just viewed
+  userAgent String?  // Browser/device info
+  ipAddress String?  // IP for location tracking
+  referrer  String?  // Where they came from (direct, social, etc)
+  referralCode String? // If they came from a referral link
+  action    String   // "view", "subscribe", "share"
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([action])
+  @@index([referralCode])
+  @@index([createdAt])
+  @@map("coming_soon_analytics")
+}
+
 model Order {
   id            String   @id @default(cuid()) @map("_id")
   orderNumber   String   @unique
@@ -1665,6 +1703,20 @@ model ProcessedWebhookEvent {
   @@index([provider])
   @@index([processedAt])
   @@map("processed_webhook_events")
+}
+
+// Idempotency Key Store - prevents duplicate request processing
+model IdempotencyKey {
+  key          String   @id @map("_id") // The idempotency key from request header
+  userId       String   // User making the request
+  responseData Json     // Cached response to return for duplicate requests
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  expiresAt    DateTime // When this cache entry expires
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
 }
 
 // Coupon/Discount System

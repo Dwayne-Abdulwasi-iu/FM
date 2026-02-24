@@ -119,7 +119,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('Webhook error:', error instanceof Error ? error.message : 'Unknown error')
+    // SECURITY: Do NOT log full error or request body which may contain sensitive data
     
     // Handle JSON parsing errors
     if (error instanceof SyntaxError) {

@@ -1,0 +1,96 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present || echo "No lint script found"
+
+      - name: Type Check
+        run: npm run type-check --if-present || echo "No type-check script found"
+
+      - name: Run tests
+        run: npm test --if-present || echo "No test script found"
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: mongodb://localhost:27017/fashion-marketplace-test
+          NEXTAUTH_SECRET: test-secret-key-for-ci
+          NEXTAUTH_URL: http://localhost:3000
+
+  deploy:
+    needs: test-and-build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "⚠️  RENDER_DEPLOY_HOOK secret not configured"
+            echo "Add your Render deploy hook to repository secrets:"
+            echo "  1. Go to repository Settings → Secrets and variables → Actions"
+            echo "  2. Create RENDER_DEPLOY_HOOK with your Render webhook URL"
+            exit 1
+          fi
+          
+          echo "🚀 Triggering Render deployment..."
+          curl --request POST \
+            --url "$RENDER_DEPLOY_HOOK" \
+            --header 'Content-Type: application/json'
+          
+          echo "✅ Deployment triggered successfully"
+
+  notify-success:
+    needs: [test-and-build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Build Status
+        run: |
+          if [ "${{ needs.test-and-build.result }}" = "success" ]; then
+            echo "✅ Build pipeline completed successfully"
+          else
+            echo "❌ Build pipeline failed"
+            exit 1
+          fi

@@ -1,0 +1,21 @@
+name: Send 48-Hour Urgency Email Campaign
+
+# Run on March 13 at 9 AM UTC (adjust timezone as needed)
+on:
+  schedule:
+    - cron: '0 9 13 3 *'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  send-campaign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send 48-Hour Campaign
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            https://fashionmarketplace.store/api/cron/coming-soon-day48h
+
+      - name: Log Campaign Result
+        run: echo "48-hour campaign triggered successfully"

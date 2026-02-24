@@ -71,6 +71,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calculate actual customer payment (after discounts/promotions)
+    let refundAmount = order.totalAmount;
+    
+    // Sum all discounts applied to this order from order items
+    const orderItems = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: { discountAmount: true, quantity: true }
+    });
+    
+    let totalDiscounts = 0;
+    for (const item of orderItems) {
+      totalDiscounts += (item.discountAmount || 0) * item.quantity;
+    }
+    
+    // Refund amount is actual customer payment (total - discounts)
+    refundAmount = Math.max(0.01, order.totalAmount - totalDiscounts);
+
     const refundRequest = await prisma.refundRequest.create({
       data: {
         orderId,
@@ -79,7 +96,7 @@ export async function POST(request: NextRequest) {
         description,
         evidence: evidence || [],
         status: 'PENDING',
-        refundAmount: order.totalAmount,
+        refundAmount: refundAmount,
       },
     });
 

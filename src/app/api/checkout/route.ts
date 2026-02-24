@@ -9,6 +9,7 @@ import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
 import { fetchExchangeRates, convertFromUSD } from '@/lib/currency'
 import { getPromotionForDesign, incrementPromotionUsage } from '@/lib/promotion-engine'
+import { getIdempotencyKey, checkIdempotencyKey, storeIdempotentResponse } from '@/lib/idempotency'
 
 /**
  * Get the effective price for a design, considering A/B price tests
@@ -73,6 +74,15 @@ export async function POST(request: NextRequest) {
         { message: 'Authentication required' },
         { status: 401 }
       )
+    }
+
+    // IDEMPOTENCY: Check if this request has been processed before
+    const idempotencyKey = getIdempotencyKey(request.headers)
+    if (idempotencyKey) {
+      const cachedResponse = await checkIdempotencyKey(idempotencyKey)
+      if (cachedResponse) {
+        return NextResponse.json(cachedResponse)
+      }
     }
 
     console.log('[CHECKOUT] POST /api/checkout called', { userId: session.user.id })
@@ -204,14 +214,16 @@ export async function POST(request: NextRequest) {
     for (const item of cartItems) {
       if (!item.designId || typeof item.designId !== 'string') {
         return NextResponse.json(
-          { message: 'Invalid design ID in cart' },
+          { message: 'Invalid item in cart' },
           { status: 400 }
         )
       }
 
-      if (!item.quantity || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+      // Strict quantity validation: must be positive integer
+      const qty = parseInt(String(item.quantity), 10);
+      if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QUANTITY_PER_ITEM) {
         return NextResponse.json(
-          { message: `Invalid quantity for design (must be between 1 and ${MAX_QUANTITY_PER_ITEM})` },
+          { message: `Invalid quantity (must be between 1 and ${MAX_QUANTITY_PER_ITEM})` },
           { status: 400 }
         )
       }
@@ -282,6 +294,9 @@ export async function POST(request: NextRequest) {
       } else {
         // Check for A/B price test
         // The cart item may include a 'variant' field indicating which price the user saw
+        // SECURITY: Do NOT trust variant from cart item
+        // Variant assignment should be server-side only
+        // Always pass undefined to force recalculation based on test validity
         const effectivePrice = getEffectivePrice(
           {
             price: design.price,
@@ -289,7 +304,7 @@ export async function POST(request: NextRequest) {
             priceTestVariant: design.priceTestVariant,
             priceTestEndsAt: design.priceTestEndsAt,
           },
-          item.variant as 'A' | 'B' | undefined
+          undefined // Force server-side calculation; ignore cart variant
         )
         price = effectivePrice.price
         priceTestVariant = effectivePrice.variant
@@ -334,10 +349,10 @@ export async function POST(request: NextRequest) {
           price = promotion.discountedPrice
           discountAmount = promotion.discountAmount
           
-          // Safety check: final price should never exceed original price
-          if (price > originalPrice) {
-            console.error(`[CHECKOUT] ALERT: Promotion resulted in price increase! Original: ${originalPrice}, After: ${price}`)
-            price = originalPrice
+          // Safety check: final price should never exceed original price or go below $0.01
+          if (price < 0.01 || price > originalPrice) {
+            console.warn(`[CHECKOUT] ALERT: Invalid promotion price! Original: ${originalPrice}, Calculated: ${price}`)
+            price = Math.max(0.01, originalPrice) // Fallback to original price
             promotionId = null
             promotionType = null
             discountAmount = 0
@@ -420,11 +435,11 @@ export async function POST(request: NextRequest) {
       orderItems.push(orderItem)
     }
 
-    // Validate total amount doesn't exceed reasonable limit
+    // Validate total amount: must be positive, finite, and within limits
     const MAX_CART_TOTAL = 1000000; // $1M maximum per checkout
-    if (totalAmount <= 0 || totalAmount > MAX_CART_TOTAL) {
+    if (!isFinite(totalAmount) || totalAmount < 0.01 || totalAmount > MAX_CART_TOTAL) {
       return NextResponse.json(
-        { message: `Invalid cart total: $${totalAmount.toFixed(2)} (must be between $0.01 and $${MAX_CART_TOTAL})` },
+        { message: 'Invalid cart total' },
         { status: 400 }
       )
     }
@@ -460,11 +475,18 @@ export async function POST(request: NextRequest) {
         metadata: sessionMetadata
       })
 
-      return NextResponse.json({
+      const stripeResponse = {
         sessionId: checkoutSession.id,
         url: checkoutSession.url,
         paymentMethod: 'stripe'
-      })
+      }
+
+      // IDEMPOTENCY: Cache the response for this request
+      if (idempotencyKey) {
+        await storeIdempotentResponse(idempotencyKey, session.user.id, stripeResponse)
+      }
+
+      return NextResponse.json(stripeResponse)
     } else if (paymentMethod === 'paystack') {
       console.log('[CHECKOUT] Processing Paystack payment')
       // Convert USD to NGN for Paystack
@@ -628,14 +650,21 @@ export async function POST(request: NextRequest) {
         throw new Error('Failed to initialize Paystack transaction')
       }
 
-      return NextResponse.json({
+      const paystackResponse = {
         orderId: paystackOrder.id,
         reference: transaction.data.reference,
         url: transaction.data.authorization_url,
         paymentMethod: 'paystack',
         splitPaymentEnabled: subaccounts.length > 0,
         designersWithSubaccounts: subaccounts.length
-      })
+      }
+
+      // IDEMPOTENCY: Cache the response for this request
+      if (idempotencyKey) {
+        await storeIdempotentResponse(idempotencyKey, session.user.id, paystackResponse)
+      }
+
+      return NextResponse.json(paystackResponse)
     } else if (paymentMethod === 'flutterwave') {
       // Flutterwave for pan-African payments
       const supportedCountries = getSupportedCountries()
@@ -718,14 +747,21 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        return NextResponse.json({
+        const flutterwaveResponse = {
           orderId: order.id,
           reference: order.id,
           url: flwResult.data.link,
           paymentMethod: 'flutterwave',
           currency: currency,
           amount: amountLocal
-        })
+        }
+
+        // IDEMPOTENCY: Cache the response for this request
+        if (idempotencyKey) {
+          await storeIdempotentResponse(idempotencyKey, session.user.id, flutterwaveResponse)
+        }
+
+        return NextResponse.json(flutterwaveResponse)
       } catch (flwError) {
         // Rollback order if Flutterwave fails
         await prisma.order.delete({ where: { id: order.id } })

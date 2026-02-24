@@ -29,9 +29,9 @@ export async function POST() {
     }
 
     console.log('Attempting to verify account:', {
-      accountNumber: sellerAccount.accountNumber,
       bankCode: sellerAccount.bankCode,
       bankName: sellerAccount.bankName
+      // SECURITY: Never log account number, email, or other PII
     })
 
     // Verify bank account with Paystack
@@ -39,11 +39,8 @@ export async function POST() {
     let recipientCode = sellerAccount.recipientCode
 
     try {
-      console.log('Attempting verification with:', {
-        account_number: sellerAccount.accountNumber,
-        bank_code: sellerAccount.bankCode,
-        bank_name: sellerAccount.bankName
-      })
+      console.log('Attempting verification with bank info')
+      // SECURITY: Never log actual account details
 
       const verification = await paystack.misc.resolve_account_number({
         account_number: sellerAccount.accountNumber,
