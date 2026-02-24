@@ -26,8 +26,11 @@ export default function PWAInstallPrompt() {
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window)
     setIsIOS(isIOSDevice)
 
-    // Do not show the banner
-    setShowBanner(false)
+    // Ensure the banner is not shown for the coming-soon page
+    if (window.location.pathname === '/coming-soon') {
+      setShowBanner(false)
+      return
+    }
 
     // Remove event listener for install prompt
     const handleBeforeInstall = (e: Event) => {
