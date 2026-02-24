@@ -20,7 +20,7 @@ export function RootLayoutContent({ children }: { children: React.ReactNode }) {
       </main>
       {!isComingSoon && <Footer />}
       <PWARegister />
-      <PWAInstallPrompt />
+      {!isComingSoon && <PWAInstallPrompt />}
     </div>
   )
 }
