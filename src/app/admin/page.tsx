@@ -87,7 +87,7 @@ interface Design {
   }
 }
 
-type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings' | 'documents'
+type AdminTabId = 'overview' | 'users' | 'designs' | 'orders' | 'resources' | 'contact' | 'chat' | 'earnings' | 'documents' | 'coming-soon'
 
 // Minimal types for admin lists to reduce `any` usage in state
 interface ContactMessage {
@@ -542,7 +542,8 @@ export default function AdminDashboard() {
                   { id: 'contact' as AdminTabId, label: 'Messages', icon: Mail },
                   { id: 'chat' as AdminTabId, label: 'Support', icon: MessageCircle },
                   { id: 'earnings' as AdminTabId, label: 'Earnings', icon: DollarSign },
-                  { id: 'documents' as AdminTabId, label: 'Documents', icon: FileText }
+                  { id: 'documents' as AdminTabId, label: 'Documents', icon: FileText },
+                  { id: 'coming-soon' as AdminTabId, label: 'Coming Soon', icon: Eye }
                 ] as { id: AdminTabId; label: string; icon: ElementType }[]
               ).map((tab) => (
                 <button
@@ -1891,6 +1892,50 @@ export default function AdminDashboard() {
                     <li>• Manage document status (Draft, Active, Archived)</li>
                     <li>• View version history and changes</li>
                   </ul>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'coming-soon' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-900">Coming Soon Features</h3>
+                  <Link
+                    href="/admin/coming-soon"
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Full Page
+                  </Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border border-gray-200 bg-gradient-to-br from-indigo-50 to-white">
+                    <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-indigo-100 text-indigo-800 text-xs font-medium mb-2">
+                      <span className="text-lg">⏰</span>
+                      Coming Soon
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Upcoming Features</h4>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Manage and preview features that are coming soon to the platform
+                    </p>
+                    <Link
+                      href="/admin/coming-soon"
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                    >
+                      Go to Coming Soon →
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6">
+                  <h4 className="font-semibold text-amber-900 mb-2">Coming Soon Management</h4>
+                  <p className="text-sm text-amber-800 mb-2">
+                    This section is dedicated to managing features and updates that are coming soon to the platform.
+                  </p>
+                  <p className="text-sm text-amber-800">
+                    Click the "View Full Page" button above to access the complete coming soon management interface.
+                  </p>
                 </div>
               </div>
             )}
