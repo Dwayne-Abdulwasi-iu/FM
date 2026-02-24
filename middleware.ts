@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 
 /**
  * Rate Limiting Middleware
@@ -8,8 +6,8 @@ import { authOptions } from '@/lib/auth'
  * Implements token bucket pattern with Redis support.
  * Fallback to in-memory for development when REDIS_URL not set.
  * 
- * Admin endpoints: 30 req/min per user
- * Seller endpoints: 60 req/min per user
+ * Admin endpoints: 30 req/min per IP (identified by auth header)
+ * Seller endpoints: 60 req/min per IP (identified by auth header)
  * Public endpoints: 60 req/min per IP
  */
 
@@ -23,16 +21,15 @@ const RATE_LIMITS = {
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
 
 /**
- * Get rate limit key based on endpoint and user/IP
+ * Get rate limit key based on IP address
+ * In edge runtime, we only have access to IP-based keys
  */
-function getRateLimitKey(request: NextRequest, endpoint: string, userId?: string): string {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+function getRateLimitKey(request: NextRequest, endpoint: string): string {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
              request.headers.get('x-real-ip') || 
+             request.headers.get('cf-connecting-ip') ||
              'unknown'
   
-  if (userId) {
-    return `rl:${endpoint}:user:${userId}`
-  }
   return `rl:${endpoint}:ip:${ip}`
 }
 
@@ -74,14 +71,14 @@ async function checkRedisRateLimit(
 /**
  * Determine endpoint type and get rate limits
  */
-function getEndpointConfig(pathname: string): { type: 'admin' | 'seller' | 'public'; requiresAuth: boolean } {
+function getEndpointConfig(pathname: string): { type: 'admin' | 'seller' | 'public' } {
   if (pathname.startsWith('/api/admin/')) {
-    return { type: 'admin', requiresAuth: true }
+    return { type: 'admin' }
   }
   if (pathname.startsWith('/api/seller/')) {
-    return { type: 'seller', requiresAuth: true }
+    return { type: 'seller' }
   }
-  return { type: 'public', requiresAuth: false }
+  return { type: 'public' }
 }
 
 /**
@@ -96,8 +93,8 @@ function shouldSkipRateLimit(pathname: string): boolean {
   return skipPatterns.some(pattern => pathname.startsWith(pattern))
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
   const method = request.method
   
   // Only rate limit state-changing requests (POST, PUT, DELETE, PATCH)
@@ -112,32 +109,12 @@ export async function middleware(request: NextRequest) {
   
   const config = getEndpointConfig(pathname)
   
-  // Get session if endpoint requires auth
-  let userId: string | undefined
-  if (config.requiresAuth || config.type !== 'public') {
-    try {
-      const session = await getServerSession(authOptions)
-      userId = session?.user?.id
-      
-      // If auth required but no session, return 401
-      if (config.requiresAuth && !userId) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        )
-      }
-    } catch (error) {
-      // If session check fails, allow request but may be rate limited
-      console.error('Session check error:', error)
-    }
-  }
-  
   // Get rate limit configuration
   const limits = RATE_LIMITS[config.type]
-  const key = getRateLimitKey(request, pathname, userId)
+  const key = getRateLimitKey(request, pathname)
   
   // Check rate limit
-  const allowed = await checkRedisRateLimit(key, limits.requests, limits.window)
+  const allowed = checkMemoryRateLimit(key, limits.requests, limits.window)
   
   if (!allowed) {
     return NextResponse.json(
