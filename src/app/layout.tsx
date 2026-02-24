@@ -2,10 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
-import { PWARegister } from "@/components/pwa-register";
-import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
+import { RootLayoutContent } from "@/components/layout/root-layout-content";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -59,15 +56,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <Providers>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <PWARegister />
-          <PWAInstallPrompt />
+          <RootLayoutContent>
+            {children}
+          </RootLayoutContent>
         </Providers>
       </body>
     </html>

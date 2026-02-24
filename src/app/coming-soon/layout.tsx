@@ -1,13 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Providers } from '@/components/providers';
-import '../globals.css';
-
-const inter = Inter({ 
-  subsets: ["latin"],
-  display: 'swap',
-  preload: true,
-});
 
 export const metadata: Metadata = {
   title: 'Coming Soon - Fashion Marketplace',
@@ -42,16 +33,5 @@ export default function ComingSoonLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={`${inter.className} antialiased`}>
-        <Providers>
-          {/* No Navbar or Footer - standalone page only */}
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </Providers>
-      </body>
-    </html>
-  );
+  return <>{children}</>;
 }
