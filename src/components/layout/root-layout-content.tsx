@@ -3,8 +3,6 @@
 import { usePathname } from 'next/navigation'
 import { Navbar } from './navbar'
 import { Footer } from './footer'
-import { PWARegister } from '@/components/pwa-register'
-import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt'
 
 export function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -19,8 +17,6 @@ export function RootLayoutContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       {!isComingSoon && <Footer />}
-      <PWARegister />
-      {!isComingSoon && <PWAInstallPrompt />}
     </div>
   )
 }
