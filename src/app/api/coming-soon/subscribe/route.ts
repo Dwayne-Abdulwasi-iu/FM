@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (analyticsError) {
-      console.warn('Failed to track analytics:', analyticsError);
+      // Error tracking silently discarded
     }
 
     // Send confirmation email via SendGrid
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       );
       
       if (!emailSent) {
-        console.warn(`Failed to send confirmation email to ${normalizedEmail}, but subscription was saved`);
+        // Email delivery failed but subscription was saved
       }
     } catch (emailError) {
       console.error('Email sending failed:', emailError);

@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'ADMIN') {
-      console.log('Unauthorized access attempt')
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -17,10 +16,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId, action } = await request.json()
-    console.log('User management request:', { userId, action, adminUser: session.user.email })
 
     if (!userId || !action) {
-      console.log('Missing userId or action')
       return NextResponse.json(
         { error: 'Missing userId or action' },
         { status: 400 }

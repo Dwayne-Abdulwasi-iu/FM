@@ -26,7 +26,6 @@ export async function sendEmail({
 }: EmailParams) {
   try {
     if (!sendgridApiKey) {
-      console.warn('SendGrid API key not configured');
       return false;
     }
 

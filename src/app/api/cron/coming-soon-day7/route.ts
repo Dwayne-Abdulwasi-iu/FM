@@ -48,8 +48,6 @@ export async function POST(req: Request) {
     const successCount = results.filter((r: any) => r.status === 'fulfilled').length
     const failureCount = results.filter((r: any) => r.status === 'rejected').length
 
-    console.log(`[Day 7 Campaign] Sent: ${successCount}, Failed: ${failureCount}`)
-
     return NextResponse.json({
       message: 'Day 7 campaign executed',
       sent: successCount,
