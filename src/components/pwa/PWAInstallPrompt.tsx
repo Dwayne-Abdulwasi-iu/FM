@@ -26,35 +26,15 @@ export default function PWAInstallPrompt() {
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window)
     setIsIOS(isIOSDevice)
 
-    // Check if user dismissed before
-    const dismissed = localStorage.getItem('pwa-install-dismissed')
-    const dismissedTime = dismissed ? parseInt(dismissed) : 0
-    const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24)
-    
-    // Show again after 7 days
-    if (daysSinceDismissed < 7) {
-      return
-    }
+    // Do not show the banner
+    setShowBanner(false)
 
-    // Listen for install prompt (Chrome, Edge, etc.)
+    // Remove event listener for install prompt
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      
-      // Show banner after 30 seconds on site
-      setTimeout(() => {
-        setShowBanner(true)
-      }, 30000)
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall)
-
-    // For iOS, show after 30 seconds
-    if (isIOSDevice) {
-      setTimeout(() => {
-        setShowBanner(true)
-      }, 30000)
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
