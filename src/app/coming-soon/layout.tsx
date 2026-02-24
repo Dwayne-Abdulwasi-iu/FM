@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Providers } from '@/components/providers';
+import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'Coming Soon - Fashion Marketplace',
@@ -33,5 +35,16 @@ export default function ComingSoonLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <html lang="en">
+      <body className="antialiased">
+        <Providers>
+          {/* No Navbar or Footer - standalone page only */}
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </Providers>
+      </body>
+    </html>
+  );
 }
