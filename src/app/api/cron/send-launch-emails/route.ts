@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { sendLaunchNotification } from '@/lib/sendgrid';
 
 // Launch date - Update this when you're ready to launch
-const LAUNCH_DATE = new Date('2026-03-15');
+const LAUNCH_DATE = new Date('2026-03-31');
 
 export async function GET(request: NextRequest) {
   try {

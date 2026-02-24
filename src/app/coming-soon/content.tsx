@@ -40,7 +40,7 @@ export default function ComingSoonContent() {
 
   // Calculate countdown (you can adjust the target date)
   useEffect(() => {
-    const targetDate = new Date('2026-03-15').getTime()
+    const targetDate = new Date('2026-03-31').getTime()
     
     const interval = setInterval(() => {
       const now = new Date().getTime()
