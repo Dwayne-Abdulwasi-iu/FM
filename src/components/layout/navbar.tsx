@@ -7,6 +7,8 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import Image from 'next/image';
+import logo from '/public/logo.png';
 
 export function Navbar() {
   const { data: session } = useSession();
