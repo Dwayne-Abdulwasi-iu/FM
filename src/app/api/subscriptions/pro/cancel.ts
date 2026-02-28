@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * Cancelled subscriptions are not supported
  * Pro subscriptions are permanent once purchased
  */
-export async function DELETE(req: NextRequest) {
+export async function DELETE(_req: NextRequest) {
   return NextResponse.json(
     { 
       error: 'Subscriptions cannot be cancelled. Pro subscriptions are permanent once purchased.' 

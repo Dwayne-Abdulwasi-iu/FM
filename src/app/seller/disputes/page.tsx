@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, AlertCircle, MessageSquare, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
+import { ArrowLeft, AlertCircle, MessageSquare, Clock, CheckCircle, _XCircle, ExternalLink } from 'lucide-react'
 import { useCurrency } from '@/components/CurrencyProvider'
 
 interface Dispute {

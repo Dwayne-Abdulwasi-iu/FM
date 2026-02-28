@@ -8,13 +8,13 @@ import Link from 'next/link'
 import {
   ChevronLeft,
   Package,
-  Truck,
+  _Truck,
   User,
   Calendar,
   AlertTriangle,
   CheckCircle,
-  ImageIcon,
-  Trash2,
+  _ImageIcon,
+  _Trash2,
   XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'

@@ -13,8 +13,8 @@ import {
   Info, 
   Star,
   Lock,
-  PieChart,
-  Calendar,
+  _PieChart,
+  _Calendar,
   DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
@@ -143,7 +143,7 @@ export default function CommissionMilestonesPage() {
         const error = await response.json()
         setMessage({ type: 'error', text: error.error || 'Failed to save milestone template' })
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'An error occurred while saving' })
     } finally {
       setSaving(false)
@@ -172,7 +172,7 @@ export default function CommissionMilestonesPage() {
   }
 
   const selected = getTemplate(selectedTemplate)
-  const isLocked = !canUseTemplate(selectedTemplate) && selectedTemplate === 'simple'
+  const _isLocked = !canUseTemplate(selectedTemplate) && selectedTemplate === 'simple'
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

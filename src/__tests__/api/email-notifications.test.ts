@@ -65,7 +65,7 @@ describe('Email Notification Endpoints', () => {
     },
   }
 
-  const mockAdminSession = {
+  const _mockAdminSession = {
     user: {
       id: 'admin-123',
       email: 'admin@test.com',

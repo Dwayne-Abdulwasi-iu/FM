@@ -51,7 +51,7 @@ describe('Flaw 1: Negative Price Handling', () => {
 describe('Flaw 2: Price Test Variant Trust', () => {
   const getEffectivePrice = (
     design: { price: number; priceTestActive: boolean; priceTestVariant: number | null; priceTestEndsAt: Date | null },
-    variant: 'A' | 'B' | undefined // FIXED: variant from cart is IGNORED
+    _variant: 'A' | 'B' | undefined // FIXED: variant from cart is IGNORED
   ) => {
     // SECURITY: Always ignore untrusted variant from cart
     const isTestActive = design.priceTestActive &&

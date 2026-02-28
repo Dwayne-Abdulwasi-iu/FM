@@ -386,7 +386,7 @@ export default function AdminDashboard() {
         try {
           const data = await response.json()
           serverMessage = typeof data?.error === 'string' ? data.error : ''
-        } catch (err) {
+        } catch (_err) {
           // ignore parse errors; fall back to generic message
         }
         showNotification('error', serverMessage || `Failed to ${action} design`)

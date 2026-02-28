@@ -19,7 +19,7 @@ const VIP_TIERS = ['VIP_DESIGNER', 'VVIP_DESIGNER']
  * GET /api/seller/price-test
  * List all price tests for the seller
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

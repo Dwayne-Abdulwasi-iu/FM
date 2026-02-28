@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update shipment to SHIPPED_BY_ADMIN (idempotent - safe to call multiple times)
-    const updatedShipment = await prisma.sellerToAdminShipment.update({
+    const _updatedShipment = await prisma.sellerToAdminShipment.update({
       where: { id: shipment.id },
       data: {
         status: 'SHIPPED_BY_ADMIN',

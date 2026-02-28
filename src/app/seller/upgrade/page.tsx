@@ -14,7 +14,7 @@ import {
   Star,
   Palette,
   Clock,
-  Shield,
+  _Shield,
   X,
   AlertCircle,
   Gift

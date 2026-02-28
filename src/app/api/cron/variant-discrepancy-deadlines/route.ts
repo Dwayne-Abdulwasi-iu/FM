@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const now = new Date();
     const warningThreshold = new Date(now.getTime() - WARNING_DAYS * 24 * 60 * 60 * 1000);
-    const deadlineThreshold = new Date(now.getTime() - DEADLINE_DAYS * 24 * 60 * 60 * 1000);
+    const _deadlineThreshold = new Date(now.getTime() - DEADLINE_DAYS * 24 * 60 * 60 * 1000);
 
     // Get PENDING discrepancies that are approaching deadline
     const pendingDiscrepancies = await prisma.variantDiscrepancy.findMany({

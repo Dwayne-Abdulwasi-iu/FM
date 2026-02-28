@@ -259,7 +259,7 @@ export async function sendComingSoonDigest(
  * Send drip email sequence (Day 1, 7, 30 before launch)
  */
 export async function sendDripEmail1Welcome(email: string, firstName?: string) {
-  const name = firstName || 'Fashion Enthusiast';
+  const _name = firstName || 'Fashion Enthusiast';
   return sendComingSoonConfirmation(email, firstName);
 }
 

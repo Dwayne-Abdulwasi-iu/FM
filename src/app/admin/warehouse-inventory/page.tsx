@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import {
   Search,
   Package,
-  TrendingDown,
+  _TrendingDown,
   Filter,
   Calendar,
   Loader,

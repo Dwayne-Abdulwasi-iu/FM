@@ -134,7 +134,7 @@ export default function AdminReturnsPage() {
         const data = await res.json()
         toast.error(data.message || 'Failed to update return')
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update return')
     } finally {
       setProcessing(false)

@@ -114,7 +114,7 @@ export async function POST(
     })
 
     // Count how many are now SELLER_RECEIVED (including this one we just updated)
-    const receivedCount = allProductsInShipment.filter(p => 
+    const _receivedCount = allProductsInShipment.filter(p => 
       p.status === 'SELLER_RECEIVED' || p.id === productId
     ).length
 

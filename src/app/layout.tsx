@@ -18,6 +18,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://fashionmarketplace.store'),
   title: "Fashion Marketplace - Sell & Buy Fashion Designs",
   description: "A marketplace for fashion designers to showcase and sell their illustrations, sketches, and designs.",
   manifest: '/manifest.json',
@@ -39,11 +40,20 @@ export const metadata: Metadata = {
     siteName: 'Fashion Marketplace',
     title: 'Fashion Marketplace - Sell & Buy Fashion Designs',
     description: 'Discover unique fashion designs from talented designers worldwide.',
+    images: [
+      {
+        url: '/favicon.svg',
+        width: 1200,
+        height: 630,
+        alt: 'Fashion Marketplace - Star Logo',
+      }
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Fashion Marketplace',
+    title: 'Fashion Marketplace - Sell & Buy Fashion Designs',
     description: 'Discover unique fashion designs from talented designers worldwide.',
+    images: ['/favicon.svg'],
   },
 };
 

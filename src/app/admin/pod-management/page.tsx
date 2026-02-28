@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Package, Truck, CheckCircle, AlertCircle, RefreshCw, Download } from 'lucide-react'
+import { ArrowLeft, Package, Truck, CheckCircle, AlertCircle, RefreshCw, _Download } from 'lucide-react'
 
 interface PODOrder {
   id: string

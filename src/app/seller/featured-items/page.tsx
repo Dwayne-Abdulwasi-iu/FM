@@ -13,8 +13,8 @@ import {
   DollarSign,
   AlertCircle,
   Lock,
-  ArrowUp,
-  ArrowDown,
+  _ArrowUp,
+  _ArrowDown,
 } from 'lucide-react'
 
 interface FeaturedItem {

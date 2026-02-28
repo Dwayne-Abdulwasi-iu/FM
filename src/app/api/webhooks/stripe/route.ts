@@ -9,7 +9,7 @@ import { fulfillPODOrder } from '@/lib/pod-service'
 import { queueFailedNotification } from '@/lib/notification-queue'
 import { createOwnershipContract } from '@/lib/ownership-documents'
 import { validateDesignOwnershipState } from '@/lib/ownership-validation'
-import { incrementPromotionUsage } from '@/lib/promotion-engine'
+import { _incrementPromotionUsage } from '@/lib/promotion-engine'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -752,7 +752,7 @@ async function handleChargeRefunded(charge: unknown) {
     }
 
     // Update commission request to REFUNDED status
-    const updatedRequest = await prisma.commissionRequest.update({
+    const _updatedRequest = await prisma.commissionRequest.update({
       where: { id: commissionRequest.id },
       data: {
         status: 'REFUNDED',

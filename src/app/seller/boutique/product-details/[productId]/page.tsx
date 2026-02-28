@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Calendar, Truck, AlertCircle, Play, X } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, _Calendar, _Truck, AlertCircle, Play, _X } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 

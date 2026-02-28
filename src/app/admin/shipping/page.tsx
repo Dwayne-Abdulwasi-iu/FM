@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Plus, Edit, Trash2, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { ArrowLeft, Plus, Edit, Trash2, AlertCircle, _CheckCircle, _X } from 'lucide-react'
 
 interface ShippingZone {
   id: string

@@ -10,7 +10,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   ChevronDown,
-  AlertCircle,
+  _AlertCircle,
   CheckCircle,
   Clock,
   User,

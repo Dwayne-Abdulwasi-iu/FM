@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get top referrers using aggregation pipeline (efficient for large datasets)
-    const topReferrersAgg = await prisma.comingSoonEmail.aggregate({
+    const _topReferrersAgg = await prisma.comingSoonEmail.aggregate({
       _count: {
         referredById: true,
       },

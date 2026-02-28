@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     for (const product of productsToReturn) {
       try {
         // Mark as ready for return
-        const updatedProduct = await prisma.boutiqueProduct.update({
+        const _updatedProduct = await prisma.boutiqueProduct.update({
           where: { id: product.id },
           data: {
             fullReturnEnabled: true,

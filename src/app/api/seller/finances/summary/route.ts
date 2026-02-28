@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(

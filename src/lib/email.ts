@@ -9,7 +9,7 @@
 
 // Import and re-export sync config functions
 export { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
-import { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+import { isSMTPConfigured, _isEmailConfigured } from '@/lib/email-config'
 import sgMail from '@sendgrid/mail'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -1463,7 +1463,7 @@ interface WarehouseMonth5NotificationData {
 export async function sendMonth5WarehouseNotification(
   data: WarehouseMonth5NotificationData
 ): Promise<boolean> {
-  const productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
+  const _productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
   const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
 
   return sendEmail({
@@ -1617,7 +1617,7 @@ interface WarehouseDeductionConfirmationData {
 export async function sendWarehouseDeductionConfirmation(
   data: WarehouseDeductionConfirmationData
 ): Promise<boolean> {
-  const productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
+  const _productUrl = `${BASE_URL}/seller/boutique/${data.productId}`;
   const warehouseUrl = `${BASE_URL}/seller/boutique/warehouse-expiration`;
 
   return sendEmail({

@@ -8,7 +8,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary'
  * FLAW FIX #5: Validate preview content for inappropriate material
  * Checks Cloudinary's content moderation API
  */
-async function validatePreviewContent(fileUrl: string): Promise<boolean> {
+async function _validatePreviewContent(_fileUrl: string): Promise<boolean> {
   try {
     // Use Cloudinary's built-in content moderation
     // When uploading with moderation: true, Cloudinary flags inappropriate content

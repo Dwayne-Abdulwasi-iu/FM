@@ -3,7 +3,7 @@
  * Handles rate limiting, duplicate prevention, and audit logging
  */
 
-interface RateLimitKey {
+interface _RateLimitKey {
   userId: string
   endpoint: 'featured-designs' | 'featured-boutique-products'
   action: 'POST' | 'DELETE'

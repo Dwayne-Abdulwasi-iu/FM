@@ -235,7 +235,7 @@ export function getMaxFeaturedListings(subscriptionTier: string | null): number 
  */
 export async function getRemainingFeaturedSlots(
   userId: string,
-  itemType: 'DESIGN' | 'BOUTIQUE'
+  _itemType: 'DESIGN' | 'BOUTIQUE'
 ): Promise<{
   max: number
   current: number

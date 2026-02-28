@@ -10,10 +10,10 @@ import {
   Search,
   Clock,
   DollarSign,
-  Crown,
+  _Crown,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
+  _MoreVertical,
   X,
   Zap,
 } from 'lucide-react'

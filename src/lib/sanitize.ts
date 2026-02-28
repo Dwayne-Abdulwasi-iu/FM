@@ -9,7 +9,7 @@
  */
 
 // Allowed tags and their allowed attributes
-const ALLOWED_TAGS: Record<string, string[]> = {
+const _ALLOWED_TAGS: Record<string, string[]> = {
   // Text formatting
   'b': [],
   'i': [],

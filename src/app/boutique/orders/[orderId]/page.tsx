@@ -130,7 +130,7 @@ export default function BoutiqueOrderDetailPage() {
       } else {
         toast.error(data.message || 'Failed to confirm delivery');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to confirm delivery');
     } finally {
       setConfirming(false);
@@ -161,7 +161,7 @@ export default function BoutiqueOrderDetailPage() {
       } else {
         toast.error(data.message || 'Failed to submit return request');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to submit return request');
     } finally {
       setConfirming(false);

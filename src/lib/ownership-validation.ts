@@ -78,7 +78,7 @@ export async function repairDesignOwnershipState(designId: string): Promise<{
 
   // Fix the inconsistency
   const expectedOwned = validation.activeContracts > 0
-  const updated = await prisma.design.update({
+  const _updated = await prisma.design.update({
     where: { id: designId },
     data: { isOwned: expectedOwned }
   })
@@ -221,7 +221,7 @@ export async function atomicallyCancelPurchase(purchaseId: string, buyerId: stri
   error?: string
 }> {
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const _result = await prisma.$transaction(async (tx) => {
       // Lock the purchase record
       const purchase = await tx.purchase.findUnique({
         where: { id: purchaseId }

@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, ShoppingCart, Users, Eye, BarChart3, Calendar, Download } from 'lucide-react'
+import { ArrowLeft, TrendingUp, ShoppingCart, _Users, Eye, BarChart3, Calendar, Download } from 'lucide-react'
 
 interface AnalyticsData {
   summary: {

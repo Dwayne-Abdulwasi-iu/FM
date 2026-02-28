@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Send, Clock, CheckCircle, AlertCircle, FileText, MessageSquare } from 'lucide-react'
+import { Send, Clock, CheckCircle, _AlertCircle, FileText, MessageSquare } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Force dynamic rendering for this page
@@ -201,7 +201,7 @@ export default function DisputeDetailPage() {
 
   const canRespond = dispute.status === 'OPEN' || dispute.status === 'UNDER_REVIEW'
   const otherParty = session?.user?.id === dispute.complainantId ? dispute.respondent : dispute.complainant
-  const orderItemCount = dispute.order?.items?.length || 0
+  const _orderItemCount = dispute.order?.items?.length || 0
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">

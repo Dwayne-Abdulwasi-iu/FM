@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
         
         if (totalAvailable === 0) {
           // Track original quantity if not already set
-          const originalQty = product?.originalQuantity || 0;
+          const _originalQty = product?.originalQuantity || 0;
           
           // Mark as out of stock
           await prisma.boutiqueProduct.update({

@@ -9,7 +9,7 @@ import { isMainAdmin } from '@/lib/admin'
  * GET - Get overview of all admins and their messaging activity
  * Main admin only - regular admins just see their own stats
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     

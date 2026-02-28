@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Lock, Smartphone, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Lock, Smartphone, _AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 
 interface Session {
   id: string

@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingBag, Star, Heart, Filter, Grid, List, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Star, Heart, _Filter, Grid, List, _ChevronDown } from 'lucide-react'
 import { convertFromUSD } from '@/lib/currency'
 
 interface Product {
@@ -30,7 +30,7 @@ interface Product {
 }
 
 export default function ShopPhysicalContent() {
-  const searchParams = useSearchParams()
+  const _searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

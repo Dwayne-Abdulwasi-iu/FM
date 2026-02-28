@@ -4,7 +4,7 @@
  */
 
 import { Server } from 'socket.io'
-import { IncomingMessage } from 'http'
+import { _IncomingMessage } from 'http'
 import type { Socket as ServerSocket } from 'socket.io'
 
 let io: Server | null = null

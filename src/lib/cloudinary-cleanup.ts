@@ -46,7 +46,7 @@ export async function deleteFromCloudinaryWithRetry(
       const resourceType = isVideo ? 'video' : 'image'
 
       // Attempt deletion
-      const result = await cloudinary.api.delete_resources([publicId], {
+      const _result = await cloudinary.api.delete_resources([publicId], {
         resource_type: resourceType,
         type: 'upload'
       })

@@ -89,7 +89,7 @@ export default function ComingSoonContent() {
       }
       setEmail('')
       setTimeout(() => setSubscribed(false), 5000)
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)

@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   Search,
   Filter,
-  Trash2,
+  _Trash2,
   Star,
   BarChart3,
   TrendingUp,
@@ -45,7 +45,7 @@ interface BoutiqueProduct {
   addedByAdmin?: boolean
 }
 
-function formatDate(dateString: string): string {
+function _formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -346,7 +346,7 @@ export default function SellerBoutiqueFeaturedPage() {
       })
       if (!res.ok) throw new Error('Failed to update position')
       toast.success('Product order updated')
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to save order')
       fetchProducts() // Revert
     }
@@ -379,7 +379,7 @@ export default function SellerBoutiqueFeaturedPage() {
     setSelectedProducts(newSelected)
   }
 
-  const toggleSelectAll = () => {
+  const _toggleSelectAll = () => {
     if (selectedProducts.size === products.length) {
       setSelectedProducts(new Set())
     } else {

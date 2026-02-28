@@ -47,7 +47,7 @@ export async function PUT(
         where: { id: appealId },
         select: { appealStatus: true }
       });
-    } catch (e) {
+    } catch (_e) {
       // Try dispute appeal if variant not found
       try {
         currentAppeal = await prisma.disputeAppeal.findUnique({
@@ -57,7 +57,7 @@ export async function PUT(
         if (currentAppeal) {
           currentAppeal.appealStatus = currentAppeal.status;
         }
-      } catch (e2) {
+      } catch (_e2) {
         // Will be caught by update operations below
       }
     }

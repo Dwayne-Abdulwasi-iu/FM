@@ -7,7 +7,7 @@ import { getDesignsInEscrow } from '@/lib/ownership-escrow'
  * GET /api/ownership/escrow
  * Get all designs the buyer has in escrow (within 7-day inspection period)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

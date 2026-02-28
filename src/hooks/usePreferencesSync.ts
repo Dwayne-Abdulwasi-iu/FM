@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, _useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface PreferencesData {

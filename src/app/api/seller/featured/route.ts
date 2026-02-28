@@ -10,7 +10,7 @@ import { prismaErrorResponse } from '@/lib/prismaError'
  * GET /api/seller/featured
  * Get seller's featured designs and their remaining slots
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

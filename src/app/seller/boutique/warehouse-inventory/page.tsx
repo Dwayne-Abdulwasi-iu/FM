@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import {
   Search,
-  AlertCircle,
+  _AlertCircle,
   Package,
-  TrendingDown,
+  _TrendingDown,
   Filter,
   Calendar,
   Eye,
@@ -16,7 +16,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { WarehouseReturnModal } from '@/components/boutique/warehouse-return-modal'
-import { getDaysInWarehouse } from '@/lib/boutique/warehouse'
+import { _getDaysInWarehouse } from '@/lib/boutique/warehouse'
 
 interface Product {
   id: string

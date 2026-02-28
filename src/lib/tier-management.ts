@@ -427,13 +427,13 @@ export async function activateProSubscription(
     // Update Paystack subaccount if exists
     if (seller.sellerAccount?.subaccountCode) {
       const naturalTier = getCommissionTier(seller.totalEarnings)
-      const effectiveTier = getEffectiveTier(naturalTier, true)
+      const _effectiveTier = getEffectiveTier(naturalTier, true)
       // Get the rate WITH Pro subscription discount already applied (-1%)
       const newRate = getCommissionRate(seller.totalEarnings, true)
       const paystackPercentage = rateToPaystackPercentage(Math.max(newRate, 0.06))
 
       try {
-        const result = await paystack.subaccount.update(seller.sellerAccount.subaccountCode, {
+        const _result = await paystack.subaccount.update(seller.sellerAccount.subaccountCode, {
           percentage_charge: paystackPercentage
         })
         console.log(`[Pro Subscription] Updated ${seller.name}'s subaccount to ${paystackPercentage}%`)
@@ -503,7 +503,7 @@ export async function cancelProSubscription(
       const paystackPercentage = rateToPaystackPercentage(naturalRate)
 
       try {
-        const result = await paystack.subaccount.update(seller.sellerAccount.subaccountCode, {
+        const _result = await paystack.subaccount.update(seller.sellerAccount.subaccountCode, {
           percentage_charge: paystackPercentage
         })
         console.log(`[Cancel Subscription] Restored ${seller.name}'s rate to ${paystackPercentage}% (${naturalTier})`)
@@ -687,7 +687,7 @@ export async function expireAndRestoreSubscriptions(): Promise<{
 
   // Send 1-day warning emails for trials expiring soon
   try {
-    const now = new Date()
+    const _now = new Date()
     const tomorrowAtMidnight = new Date()
     tomorrowAtMidnight.setDate(tomorrowAtMidnight.getDate() + 1)
     tomorrowAtMidnight.setHours(0, 0, 0, 0)

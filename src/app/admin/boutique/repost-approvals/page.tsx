@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, _AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 
 interface RepostRequest {

@@ -7,7 +7,7 @@ import { getDaysInWarehouse } from '@/lib/boutique/warehouse'
 
 // GET /api/boutique/admin/warehouse-returns-pending
 // Admin endpoint to fetch all pending warehouse returns
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

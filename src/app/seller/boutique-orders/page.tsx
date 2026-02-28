@@ -3,9 +3,9 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
+import _Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Filter, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Package, Clock, CheckCircle, XCircle, _Filter, ExternalLink } from 'lucide-react'
 
 interface BoutiqueOrder {
   id: string

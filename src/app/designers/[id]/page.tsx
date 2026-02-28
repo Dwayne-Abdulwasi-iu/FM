@@ -137,7 +137,7 @@ export default function DesignerProfilePage() {
     }).format(price)
   }
 
-  const getBadgeIcon = (badge: string | null) => {
+  const _getBadgeIcon = (badge: string | null) => {
     switch (badge) {
       case 'TOP_SELLER':
         return <Award className="w-5 h-5 text-yellow-500" />

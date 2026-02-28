@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 /**
  * GET /api/seller/promotions/active-designs - Get designs with active promotions for seller
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 

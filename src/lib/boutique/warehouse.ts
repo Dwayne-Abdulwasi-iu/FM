@@ -90,7 +90,7 @@ export function needsAttention(daysInWarehouse: number): boolean {
  */
 export function canRepost(daysInWarehouse: number): { can: boolean; reason?: string } {
   const daysInCurrentCycle = daysInWarehouse % WAREHOUSE_CYCLE_DAYS
-  const cycleNumber = Math.floor(daysInWarehouse / WAREHOUSE_CYCLE_DAYS)
+  const _cycleNumber = Math.floor(daysInWarehouse / WAREHOUSE_CYCLE_DAYS)
   
   if (daysInCurrentCycle < MONTH_5_START_DAY) {
     const daysUntilMonth5 = MONTH_5_START_DAY - daysInCurrentCycle
@@ -337,7 +337,7 @@ export async function approveRepostRequest(
   
   // Update product with approval details
   const newStock = request.requestedStock
-  const daysInWarehouse = getDaysInWarehouse(request.product.receivedByAdminAt)
+  const _daysInWarehouse = getDaysInWarehouse(request.product.receivedByAdminAt)
   
   await prisma.boutiqueProduct.update({
     where: { id: request.productId },
@@ -584,7 +584,7 @@ export async function approveWarehouseReturn(
     select: { id: true, quantity: true }
   })
 
-  for (const variant of variants) {
+  for (const _variant of variants) {
     // Create -2 variant (admin fee lock)
     await prisma.boutiqueProductVariant.create({
       data: {
@@ -992,7 +992,7 @@ export function validateLockedStock(
 export function getDeductionSchedule(
   daysInWarehouse: number,
   currentStock: number,
-  variantCount: number
+  _variantCount: number
 ): Array<{ 
   cycle: number
   cycleDay: number
@@ -1005,7 +1005,7 @@ export function getDeductionSchedule(
   
   // Show next 3 cycles
   for (let i = 0; i < 3; i++) {
-    const futureDay = daysInCurrentCycle + (i * WAREHOUSE_CYCLE_DAYS) + (i > 0 ? 1 : 0)
+    const _futureDay = daysInCurrentCycle + (i * WAREHOUSE_CYCLE_DAYS) + (i > 0 ? 1 : 0)
     const projectedStock = Math.max(0, currentStock - i)
     
     schedule.push({

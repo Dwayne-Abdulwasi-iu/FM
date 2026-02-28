@@ -143,7 +143,7 @@ export async function PUT(
 
       // Update associated products to RECEIVED_BY_ADMIN
       if (shipment.productIds && shipment.productIds.length > 0) {
-        const products = await prisma.boutiqueProduct.findMany({
+        const _products = await prisma.boutiqueProduct.findMany({
           where: { id: { in: shipment.productIds } },
           select: {
             id: true,

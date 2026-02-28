@@ -204,7 +204,7 @@ async function initiateManualSignatureRequest(request: SignatureRequest): Promis
 export async function completeSignature(
   requestId: string,
   signatureName: string,
-  signedAt: Date = new Date()
+  _signedAt: Date = new Date()
 ): Promise<{
   success: boolean
   message: string

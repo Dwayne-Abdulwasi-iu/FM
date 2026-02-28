@@ -282,7 +282,7 @@ export async function completeEscrowPeriod(purchaseId: string): Promise<{
 }> {
   try {
     // FLAW FIX #15: Atomic transaction prevents simultaneous cancel
-    const result = await prisma.$transaction(async (tx) => {
+    const _result = await prisma.$transaction(async (tx) => {
       const purchase = await tx.purchase.findUnique({
         where: { id: purchaseId },
         select: {

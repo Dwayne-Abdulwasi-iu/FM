@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       // Set cooldown for 1 hour
       await redis.setex('cron:subscriptions:expire:last_run', 3600, 'running')
     }
-  } catch (err) {
+  } catch (_err) {
     console.warn('[Cron] Redis rate limit check failed, continuing anyway')
   }
 

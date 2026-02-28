@@ -15,7 +15,7 @@ export function StorageOptionSelector({
   productId,
   productTitle,
   expiresAt,
-  daysInWarehouse,
+  _daysInWarehouse,
   onSuccess,
 }: StorageOptionSelectorProps) {
   const [selected, setSelected] = useState<string | null>(null)

@@ -12,7 +12,7 @@ import crypto from 'crypto'
  * GET /api/subscriptions/pro-trial/status
  * Get current user's pro trial status
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, _useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   TestTube2, 
@@ -9,7 +9,7 @@ import {
   DollarSign, 
   BarChart3, 
   Play, 
-  Pause, 
+  _Pause, 
   StopCircle,
   HelpCircle,
   CheckCircle,

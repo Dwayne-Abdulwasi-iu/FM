@@ -53,7 +53,7 @@ export default async function SellerPayoutsPage() {
 
   // Calculate statistics
   const totalEarnings = user.earnings.reduce((sum: number, e) => sum + (e.sellerAmount || 0), 0)
-  const totalCommissions = user.earnings.reduce((sum: number, e) => sum + (e.platformCommission || 0), 0)
+  const _totalCommissions = user.earnings.reduce((sum: number, e) => sum + (e.platformCommission || 0), 0)
   // Note: Paid out earnings should be tracked separately in the database
   const paidOutEarnings = 0
   const pendingEarnings = totalEarnings - paidOutEarnings
@@ -105,7 +105,7 @@ export default async function SellerPayoutsPage() {
 
   // Get next payout date (1st of next month)
   const today = new Date()
-  const nextPayoutDate = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+  const _nextPayoutDate = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
   return (
     <div className="min-h-screen bg-gray-50">

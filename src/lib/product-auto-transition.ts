@@ -65,7 +65,7 @@ export async function autoTransitionProductStatus(shipmentId: string, productId:
     }
 
     // Update product status
-    const product = await prisma.boutiqueProduct.update({
+    const _product = await prisma.boutiqueProduct.update({
       where: { id: productId },
       data: {
         status: newStatus,

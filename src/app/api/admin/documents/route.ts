@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const checksum = calculateChecksum(docInfo.content)
 
     // Check if this content already exists
-    const existingVersion = await prisma.documentVersion.findFirst({
+    const _existingVersion = await prisma.documentVersion.findFirst({
       where: { checksum },
       orderBy: { versionNumber: 'desc' },
     })

@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create record with default status
-    const record = await prisma.comingSoonEmail.create({
+    const _record = await prisma.comingSoonEmail.create({
       data: {
         email: normalizedEmail,
         firstName: trimmedFirstName,
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
           referralCode: trackingReferralCode,
         },
       });
-    } catch (analyticsError) {
+    } catch (_analyticsError) {
       // Error tracking silently discarded
     }
 

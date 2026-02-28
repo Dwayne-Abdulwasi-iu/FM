@@ -7,7 +7,7 @@ import { getDaysInWarehouse } from '@/lib/boutique/warehouse'
 
 // GET /api/boutique/seller/warehouse-returns
 // Seller endpoint to fetch their warehouse return requests
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

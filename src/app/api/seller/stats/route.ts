@@ -8,7 +8,7 @@ import { calculateAllBadges } from '@/lib/badge-service'
  * GET /api/seller/stats
  * Get seller stats for badge display
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     

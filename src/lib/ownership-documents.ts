@@ -1,6 +1,6 @@
 import prisma from './prisma'
 import { sendEmail } from './email'
-import { deleteFromCloudinary } from './cloudinary'
+import { _deleteFromCloudinary } from './cloudinary'
 import { deleteFromCloudinaryWithRetry, logCloudinaryDeleteFailure } from './cloudinary-cleanup'
 
 /**

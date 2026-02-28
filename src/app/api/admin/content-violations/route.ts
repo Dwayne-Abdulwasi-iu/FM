@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
             },
           });
           return { ...violation, user: user || { id: violation.userId, name: "Unknown", email: violation.userEmail } };
-        } catch (err) {
+        } catch (_err) {
           return { ...violation, user: { id: violation.userId, name: "Unknown", email: violation.userEmail } };
         }
       })

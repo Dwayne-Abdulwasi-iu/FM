@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
   BadgeCheck,
-  Shield,
+  _Shield,
   Award,
   Star,
   CheckCircle,

@@ -10,7 +10,7 @@ import { initializeSocketServer } from '@/lib/socket-server'
 
 // Extend NodeJS global to store the Socket.IO server
 declare global {
-  var __socketio_server: SocketIOServer | undefined
+  let __socketio_server: SocketIOServer | undefined
 }
 
 export async function GET(req: NextRequest) {

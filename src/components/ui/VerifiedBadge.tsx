@@ -1,7 +1,7 @@
 // Badge component for verified sellers
 'use client';
 
-import { PropsWithChildren } from 'react';
+import { _PropsWithChildren } from 'react';
 
 interface VerifiedBadgeProps {
   isVerified?: boolean;

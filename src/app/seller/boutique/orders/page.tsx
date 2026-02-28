@@ -133,7 +133,7 @@ export default function SellerOrdersPage() {
     };
   }, [searchQuery, minPrice, maxPrice, session?.user]);
 
-  const handleSearch = () => {
+  const _handleSearch = () => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
