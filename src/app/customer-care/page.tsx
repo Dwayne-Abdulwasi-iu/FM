@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, MoreHorizontal, ArrowLeft, Shield, User } from 'lucide-react'
 import { DesignerChatBadge } from '@/components/DesignerBadge'
+import { useSocketChat } from '@/hooks/useSocketChat'
 
 interface ChatMessage {
   id: string
@@ -36,7 +37,6 @@ export default function CustomerCarePage() {
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting')
-
 
   const initializeChat = React.useCallback(async () => {
     try {
@@ -73,6 +73,32 @@ export default function CustomerCarePage() {
     scrollToBottom()
   }, [messages])
 
+  // Socket.IO real-time chat
+  const { isConnected, sendMessage: socketSendMessage } = useSocketChat({
+    sessionId: chatSession?.id || null,
+    user: session?.user ? {
+      id: session.user.id || '',
+      email: session.user.email || '',
+      role: 'USER',
+      name: session.user.name || null
+    } : null,
+    onNewMessage: (message) => {
+      // Only add if it's not from current user (avoid duplicates)
+      if (message.senderId !== session?.user?.id) {
+        setMessages(prev => [...prev, {
+          id: message.id || Date.now().toString(),
+          message: message.message,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          senderRole: message.senderRole,
+          timestamp: message.timestamp,
+          isRead: false,
+          senderDesignerTier: null
+        }])
+      }
+    }
+  })
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -99,26 +125,43 @@ export default function CustomerCarePage() {
     setNewMessage('')
 
     try {
-      const response = await fetch('/api/customer-care/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId: chatSession.id,
+      // Try Socket.IO first
+      if (isConnected && socketSendMessage(messageText)) {
+        // Add message to local state immediately for better UX
+        const newMsg = {
+          id: Date.now().toString(),
           message: messageText,
-        }),
-      })
-
-      if (response.ok) {
-        const newMsg = await response.json()
+          senderId: session?.user?.id || '',
+          senderName: session?.user?.name || session?.user?.email || '',
+          senderRole: 'USER' as const,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          senderDesignerTier: null
+        }
         setMessages(prev => [...prev, newMsg])
-        
-        // Simulate admin response after a short delay (for demo purposes)
-        setTimeout(() => {
-          simulateAdminResponse()
-        }, 1500)
+      } else {
+        // Fallback to HTTP API
+        const response = await fetch('/api/customer-care/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: chatSession.id,
+            message: messageText,
+          }),
+        })
+
+        if (response.ok) {
+          const newMsg = await response.json()
+          setMessages(prev => [...prev, newMsg])
+        }
       }
+      
+      // Simulate admin response after a short delay (for demo purposes)
+      setTimeout(() => {
+        simulateAdminResponse()
+      }, 1500)
     } catch (error) {
       console.error('Failed to send message:', error)
       setNewMessage(messageText) // Restore message on error

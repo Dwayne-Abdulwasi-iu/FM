@@ -74,7 +74,8 @@ export function wrapBrandedEmail(subject: string, content: string): string {
       body { background: #f4f4f8; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
       .email-container { max-width: 480px; margin: 32px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 32px 24px; }
       .logo { text-align: center; margin-bottom: 24px; }
-      .logo img { max-width: 120px; }
+      .logo-box { display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+      .logo svg { width: 40px; height: 40px; }
       h2 { color: #1e293b; }
       .cta-btn { display: inline-block; padding: 14px 28px; background: #4F46E5; color: #fff !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 24px 0; }
       .note, .security { background: #f1f5f9; padding: 14px; border-radius: 8px; margin: 18px 0; font-size: 15px; color: #334155; }
@@ -87,7 +88,24 @@ export function wrapBrandedEmail(subject: string, content: string): string {
   <body>
     <div class="email-container">
       <div class="logo">
-        <img src="https://fashionmarketplace.store/logo.png" alt="Fashion Marketplace Logo" />
+        <div class="logo-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <!-- 4-pointed sparkle star outline (hollow) -->
+            <path d="M12 3 L15 10 L22 12 L15 14 L12 21 L9 14 L2 12 L9 10 Z" />
+            
+            <!-- Small plus sign (upper left) -->
+            <g transform="translate(3.5, 4)">
+              <line x1="1.5" y1="0" x2="1.5" y2="3" stroke-width="1.5" />
+              <line x1="0" y1="1.5" x2="3" y2="1.5" stroke-width="1.5" />
+            </g>
+            
+            <!-- Small plus sign (lower right) -->
+            <g transform="translate(18.5, 17)">
+              <line x1="1.5" y1="0" x2="1.5" y2="3" stroke-width="1.5" />
+              <line x1="0" y1="1.5" x2="3" y2="1.5" stroke-width="1.5" />
+            </g>
+          </svg>
+        </div>
       </div>
       ${content}
       <div class="footer">

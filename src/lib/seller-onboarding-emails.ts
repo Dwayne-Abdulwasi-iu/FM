@@ -60,7 +60,29 @@ function wrapEmail(content: string, preheader: string = ''): string {
       </div>
       <div class="container">
         <div class="header">
-          <div class="logo">🎨 ${APP_NAME}</div>
+          <div style="text-align: center; margin-bottom: 16px;">
+            <div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;" xmlns="http://www.w3.org/2000/svg">
+                <!-- 4-pointed sparkle star outline (hollow) -->
+                <path d="M12 3 L15 10 L22 12 L15 14 L12 21 L9 14 L2 12 L9 10 Z" />
+                
+                <!-- Small plus sign (upper left) -->
+                <g transform="translate(3.5, 4)">
+                  <line x1="1.5" y1="0" x2="1.5" y2="3" stroke-width="1.5" />
+                  <line x1="0" y1="1.5" x2="3" y2="1.5" stroke-width="1.5" />
+                </g>
+                
+                <!-- Small plus sign (lower right) -->
+                <g transform="translate(18.5, 17)">
+                  <line x1="1.5" y1="0" x2="1.5" y2="3" stroke-width="1.5" />
+                  <line x1="0" y1="1.5" x2="3" y2="1.5" stroke-width="1.5" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div style="text-align: center; padding: 10px 0; border-bottom: 2px solid #6366f1;">
+            <div style="font-size: 22px; font-weight: bold; color: #1f2937;">Fashion Marketplace</div>
+          </div>
         </div>
         <div class="content">
           ${content}

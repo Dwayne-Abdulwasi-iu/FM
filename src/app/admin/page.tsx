@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCurrency } from '@/components/CurrencyProvider'
+import { useSocketChat } from '@/hooks/useSocketChat'
 import {
   Users,
   ShoppingBag,
@@ -169,6 +170,55 @@ export default function AdminDashboard() {
     
     fetchAdminData()
   }, [session, status, router])
+
+  // Poll for new chat sessions in real-time
+  useEffect(() => {
+    // Fetch chat sessions when component mounts or tab changes
+    if (activeTab === 'chat') {
+      const fetchChatSessions = async () => {
+        try {
+          const response = await fetch('/api/customer-care/session')
+          if (response.ok) {
+            const data = await response.json()
+            setChatSessions(data.sessions || [])
+          }
+        } catch (error) {
+          console.error('Error fetching chat sessions:', error)
+        }
+      }
+
+      // Fetch immediately
+      fetchChatSessions()
+
+      // Set up polling interval to check for new chat sessions every 3 seconds
+      const pollInterval = setInterval(fetchChatSessions, 3000)
+
+      // Clean up interval when tab changes
+      return () => clearInterval(pollInterval)
+    }
+  }, [activeTab])
+
+  // Socket.IO for real-time admin chat
+  const { isConnected, sendMessage: socketSendMessage } = useSocketChat({
+    sessionId: selectedChatSession?.id || null,
+    user: session?.user ? {
+      id: session.user.id || 'admin',
+      email: session.user.email || '',
+      role: 'ADMIN',
+      name: session.user.name || 'Admin'
+    } : null,
+    onNewMessage: (message) => {
+      // Add new message to chat if it's for the current session
+      if (selectedChatSession && message.senderId !== session?.user?.id) {
+        setChatMessages(prev => [...prev, {
+          id: message.id || Date.now().toString(),
+          message: message.message,
+          isAdmin: message.senderRole === 'ADMIN',
+          createdAt: message.timestamp
+        }])
+      }
+    }
+  })
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
@@ -412,22 +462,37 @@ export default function AdminDashboard() {
     if (!replyMessage.trim()) return
 
     try {
-      const response = await fetch('/api/customer-care/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          message: replyMessage,
-          isAdmin: true
-        })
-      })
-
-      if (response.ok) {
+      // Try Socket.IO first
+      if (isConnected && socketSendMessage(replyMessage.trim())) {
+        // Add message to local state immediately
+        const newMsg = {
+          id: Date.now().toString(),
+          message: replyMessage.trim(),
+          isAdmin: true,
+          createdAt: new Date().toISOString()
+        }
+        setChatMessages(prev => [...prev, newMsg])
         setReplyMessage('')
-        fetchChatMessages(sessionId)
-          showNotification('success', 'Reply sent successfully')
+        showNotification('success', 'Reply sent successfully')
       } else {
-        showNotification('error', 'Failed to send reply')
+        // Fallback to HTTP API
+        const response = await fetch('/api/customer-care/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            message: replyMessage,
+            isAdmin: true
+          })
+        })
+
+        if (response.ok) {
+          setReplyMessage('')
+          fetchChatMessages(sessionId)
+          showNotification('success', 'Reply sent successfully')
+        } else {
+          showNotification('error', 'Failed to send reply')
+        }
       }
     } catch (error) {
         console.error('Error sending reply:', error)

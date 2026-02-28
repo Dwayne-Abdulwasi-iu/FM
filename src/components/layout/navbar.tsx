@@ -7,8 +7,34 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "./NotificationBell";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Image from 'next/image';
-import logo from '/public/logo.png';
+
+const StarLogo = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-full h-full"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* 4-pointed sparkle star outline (hollow) */}
+    <path d="M12 3 L15 10 L22 12 L15 14 L12 21 L9 14 L2 12 L9 10 Z" />
+    
+    {/* Small plus sign (upper left) */}
+    <g transform="translate(3.5, 4)">
+      <line x1="1.5" y1="0" x2="1.5" y2="3" strokeWidth="1.5" />
+      <line x1="0" y1="1.5" x2="3" y2="1.5" strokeWidth="1.5" />
+    </g>
+    
+    {/* Small plus sign (lower right) */}
+    <g transform="translate(18.5, 17)">
+      <line x1="1.5" y1="0" x2="1.5" y2="3" strokeWidth="1.5" />
+      <line x1="0" y1="1.5" x2="3" y2="1.5" strokeWidth="1.5" />
+    </g>
+  </svg>
+);
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -119,10 +145,10 @@ export function Navbar() {
         <div className="flex justify-between items-center h-12 sm:h-14 lg:h-16 gap-0.5 lg:gap-1">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-            <div className="w-7 h-7 sm:w-8 lg:w-8 bg-indigo-700 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs sm:text-sm lg:text-sm">FM</span>
+            <div className="w-7 h-7 sm:w-8 lg:w-8 text-white flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg">
+              <StarLogo />
             </div>
-            <span className="font-bold text-xs sm:text-sm lg:text-base text-gray-900 hidden lg:inline">FM</span>
+            <span className="font-bold text-xs sm:text-sm lg:text-base text-gray-900 hidden lg:inline">Fashion Marketplace</span>
           </Link>
 
           {/* Search Bar */}
