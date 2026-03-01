@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadToCloudinary, generateThumbnailUrl } from "@/lib/cloudinary";
 import prisma from "@/lib/prisma";
+import { DESIGN_CATEGORIES, validateCategory } from "@/lib/design-categories";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +23,6 @@ export async function POST(request: NextRequest) {
     const price = parseFloat(formData.get("price") as string);
     const category = formData.get("category") as string;
     const tagsString = formData.get("tags") as string;
-    
-    // Whitelist allowed categories
-    const ALLOWED_CATEGORIES = ['illustration', 'pattern', 'graphic', 'art', 'fashion', 'design', 'textile', 'digital', 'vector', 'other'];
     
     // Parse tags from comma-separated string to array
     const tags = tagsString 
@@ -54,9 +52,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Validate category against whitelist
-    if (!ALLOWED_CATEGORIES.includes(category.toLowerCase())) {
+    const validCategory = validateCategory(category);
+    if (!validCategory) {
       return NextResponse.json(
-        { error: 'Invalid category' },
+        { error: `Invalid category. Allowed: ${DESIGN_CATEGORIES.join(', ')}` },
         { status: 400 }
       );
     }
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
     // Generate thumbnail URL
     const thumbnailUrl = generateThumbnailUrl(uploadResult.public_id);
 
-    // Save to database
+    // Save to database using the validated category name (ensures consistent casing)
     const design = await prisma.design.create({
       data: {
         title,
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
         price,
         imageUrl: uploadResult.secure_url,
         thumbnailUrl,
-        category,
+        category: validCategory,
         tags,
         designerId: session.user.id,
       },
@@ -168,16 +167,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      // SECURITY: Validate category against whitelist (case-insensitive)
-      const ALLOWED_CATEGORIES = ['illustration', 'pattern', 'graphic', 'art', 'fashion', 'design', 'textile', 'digital', 'vector', 'other'];
-      if (!ALLOWED_CATEGORIES.includes(category.toLowerCase())) {
+      // Validate category against whitelist (case-insensitive)
+      const validCategory = validateCategory(category);
+      if (!validCategory) {
         // Return empty results for invalid category
         return NextResponse.json({
           designs: [],
           pagination: { page, limit, total: 0, pages: 0 },
         });
       }
-      where.category = category.toLowerCase();
+      where.category = validCategory;
     }
 
     if (search) {

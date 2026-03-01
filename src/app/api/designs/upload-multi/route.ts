@@ -6,6 +6,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { fetchExchangeRates, convertToUSD } from '@/lib/currency'
+import { DESIGN_CATEGORIES, validateCategory } from '@/lib/design-categories'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -162,6 +163,15 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Validate category
+    const validCategory = validateCategory(category)
+    if (!validCategory) {
+      return NextResponse.json(
+        { message: `Invalid category. Allowed: ${DESIGN_CATEGORIES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+    
     // Validate currency
     if (submittedCurrency && !['USD', 'NGN'].includes(submittedCurrency)) {
       return NextResponse.json(
@@ -283,7 +293,7 @@ export async function POST(request: NextRequest) {
         submittedOwnershipPrice,
         imageUrl: primaryImageUrl,
         thumbnailUrl,
-        category,
+        category: validCategory,
         tags,
         buyingTypes,
         designerId: session.user.id,
