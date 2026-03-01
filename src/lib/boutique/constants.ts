@@ -224,7 +224,7 @@ export const WAREHOUSE_STATUS = {
 } as const;
 
 // Product Condition
-export const PRODUCT_CONDITION = {
+export const PRODUCT_CONDITIONS = {
   NEW: 'New with tags',
   LIKE_NEW: 'Like new (no tags)',
   GOOD: 'Good condition',
@@ -233,6 +233,30 @@ export const PRODUCT_CONDITION = {
 
 // Sizes
 export const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
+
+// Common Colors for product variants
+export const COMMON_COLORS = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Green', hex: '#00AA00' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Pink', hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Brown', hex: '#8B4513' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Gold', hex: '#FFD700' },
+  { name: 'Silver', hex: '#C0C0C0' },
+  { name: 'Maroon', hex: '#800000' },
+  { name: 'Teal', hex: '#008080' },
+  { name: 'Cyan', hex: '#00FFFF' },
+  { name: 'Magenta', hex: '#FF00FF' },
+  { name: 'Lime', hex: '#00FF00' },
+] as const;
 
 export const SHOE_SIZES = {
   EU: [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48],
@@ -463,3 +487,4 @@ export function canGoLiveDirectly(status: ProductStatus, fulfillmentMethod: Fulf
   // Seller direct products can go live after content approval (no physical verification needed)
   return fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && status === PRODUCT_STATUS.CONTENT_APPROVED;
 }
+

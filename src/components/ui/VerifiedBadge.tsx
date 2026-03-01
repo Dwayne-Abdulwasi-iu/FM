@@ -1,7 +1,7 @@
 // Badge component for verified sellers
 'use client';
 
-import { _PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 
 interface VerifiedBadgeProps {
   isVerified?: boolean;
@@ -78,3 +78,4 @@ export function VerifiedCheckmark({
     </svg>
   );
 }
+

@@ -8,7 +8,7 @@ import { initializePayment as initFlutterwavePayment, isFlutterwaveConfigured, g
 import prisma from '@/lib/prisma'
 import { getCommissionRate } from '@/lib/commission-tiers'
 import { fetchExchangeRates, convertFromUSD } from '@/lib/currency'
-import { getPromotionForDesign, _incrementPromotionUsage } from '@/lib/promotion-engine'
+import { getPromotionForDesign, incrementPromotionUsage } from '@/lib/promotion-engine'
 import { getIdempotencyKey, checkIdempotencyKey, storeIdempotentResponse } from '@/lib/idempotency'
 
 /**

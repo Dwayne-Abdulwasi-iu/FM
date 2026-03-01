@@ -23,16 +23,17 @@ import {
   hasCustomAttributes,
 } from '@/lib/boutique/product-attributes';
 import { 
-  STANDARDSIZES, 
-  GENDEROPTIONS, 
+  STANDARD_SIZES, 
+  GENDER_OPTIONS, 
   OCCASIONS, 
   STYLES, 
-  PRODUCTCONDITION, 
-  BOUTIQUEDEFAULTS,
-  FULFILLMENTMETHOD,
-  FULFILLMENTCONFIG,
-  SELLER_TIERCONFIG,
-  NIGERIANSTATES,
+  PRODUCT_CONDITIONS, 
+  BOUTIQUE_DEFAULTS,
+  FULFILLMENT_METHOD,
+  FULFILLMENT_CONFIG,
+  SELLER_TIER_CONFIG,
+  NIGERIAN_STATES,
+  COMMON_COLORS,
   canUseDirectShipping,
   type FulfillmentMethod,
   type SellerTier,
@@ -373,9 +374,9 @@ function BoutiqueUploadContent() {
         isDraft: true,
         // Fulfillment method
         fulfillmentMethod,
-        sellerShippingLocations: fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT ? sellerShippingLocations : [],
-        sellerShippingTime: fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT ? sellerShippingTime : null,
-        sellerReturnPolicy: fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT ? sellerReturnPolicy : null,
+        sellerShippingLocations: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingLocations : [],
+        sellerShippingTime: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerShippingTime : null,
+        sellerReturnPolicy: fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT ? sellerReturnPolicy : null,
         // Custom attributes (only if category has them and they're not empty)
         customAttributes: Object.keys(customAttributes).length > 0 ? customAttributes : null,
       };
@@ -569,7 +570,7 @@ function BoutiqueUploadContent() {
               type="button"
               onClick={() => setFulfillmentMethod(FULFILLMENT_METHOD.ADMIN_STOCK)}
               className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 text-left transition-all ${
-                fulfillmentMethod === FULFILLMENT_METHOD.ADMINSTOCK
+                fulfillmentMethod === FULFILLMENT_METHOD.ADMIN_STOCK
                   ? 'border-purple-500 bg-purple-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
@@ -592,7 +593,7 @@ function BoutiqueUploadContent() {
               onClick={() => canDirectShip && setFulfillmentMethod(FULFILLMENT_METHOD.SELLER_DIRECT)}
               disabled={!canDirectShip}
               className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 text-left transition-all relative ${
-                fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT
+                fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT
                   ? 'border-purple-500 bg-purple-50'
                   : canDirectShip 
                     ? 'border-gray-200 hover:border-gray-300'
@@ -632,7 +633,7 @@ function BoutiqueUploadContent() {
           )}
 
           {/* Seller Direct Shipping Details */}
-          {fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT && canDirectShip && (
+          {fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && canDirectShip && (
             <div className="mt-4 sm:mt-6 border-t pt-4 sm:pt-6">
               <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-1.5 sm:gap-2">
                 <span className="text-base sm:text-lg">📍</span> Your Shipping Details
@@ -931,7 +932,7 @@ function BoutiqueUploadContent() {
                   aria-label="Select product condition"
                   required
                 >
-                  {Object.entries(PRODUCT_CONDITION).map(([key, label]) => (
+                  {Object.entries(PRODUCT_CONDITIONS).map(([key, label]) => (
                     <option key={key} value={key} className="text-gray-900">{label}</option>
                   ))}
                 </select>
@@ -989,7 +990,7 @@ function BoutiqueUploadContent() {
           {basePrice && (
             <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-purple-50 rounded-lg">
               <p className="text-[10px] sm:text-sm text-purple-800">
-                {fulfillmentMethod === FULFILLMENT_METHOD.ADMINSTOCK ? (
+                {fulfillmentMethod === FULFILLMENT_METHOD.ADMIN_STOCK ? (
                   <>
                     <strong>Commission:</strong> {BOUTIQUE_DEFAULTS.platformCommission}% (Warehouse) • 
                     <strong> Earn:</strong> ₦{(parseFloat(basePrice) * (1 - BOUTIQUE_DEFAULTS.platformCommission / 100)).toLocaleString()}
@@ -1235,4 +1236,5 @@ export default function BoutiqueUploadPage() {
     </Suspense>
   );
 }
+
 

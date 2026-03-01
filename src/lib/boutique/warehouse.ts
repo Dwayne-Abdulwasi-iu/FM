@@ -337,7 +337,7 @@ export async function approveRepostRequest(
   
   // Update product with approval details
   const newStock = request.requestedStock
-  const _daysInWarehouse = getDaysInWarehouse(request.product.receivedByAdminAt)
+  const daysInWarehouse = getDaysInWarehouse(request.product.receivedByAdminAt)
   
   await prisma.boutiqueProduct.update({
     where: { id: request.productId },

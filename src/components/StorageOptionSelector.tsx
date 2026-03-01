@@ -15,7 +15,7 @@ export function StorageOptionSelector({
   productId,
   productTitle,
   expiresAt,
-  _daysInWarehouse,
+  daysInWarehouse,
   onSuccess,
 }: StorageOptionSelectorProps) {
   const [selected, setSelected] = useState<string | null>(null)
@@ -174,3 +174,4 @@ export function StorageOptionSelector({
     </div>
   )
 }
+

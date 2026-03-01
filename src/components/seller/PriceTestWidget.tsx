@@ -37,7 +37,7 @@ interface PriceTestWidgetProps {
 }
 
 // Tier 3+ required for A/B testing
-const ALLOWEDTIERS = ['VIP_DESIGNER', 'VVIP_DESIGNER']
+const ALLOWED_TIERS = ['VIP_DESIGNER', 'VVIP_DESIGNER']
 
 export function PriceTestWidget({ 
   design, 

@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
-import type { DesignerTier, _DesignerBadgeInfo } from '@/lib/designer-tiers'
+import type { DesignerTier, DesignerBadgeInfo } from '@/lib/designer-tiers'
 import { DESIGNER_TIERS, calculateDesignerTier } from '@/lib/designer-tiers'
 
 /**
@@ -207,3 +207,4 @@ export async function checkAndPromoteDesigners(designerIds: string[]): Promise<v
     await checkAndPromoteToSeller(designerId)
   }
 }
+

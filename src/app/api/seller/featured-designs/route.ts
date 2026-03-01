@@ -10,7 +10,7 @@ import {
   checkRateLimit,
   logAuditEntry,
   isItemAlreadyFeatured,
-  _validateItemForFeaturing,
+  validateItemForFeaturing,
   getIpAddress
 } from '@/lib/featured-validation'
 

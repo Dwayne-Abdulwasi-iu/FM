@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, _useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface PreferencesData {
@@ -114,3 +114,4 @@ export async function savePreference(
     console.debug(`Failed to save ${key} preference:`, error)
   }
 }
+

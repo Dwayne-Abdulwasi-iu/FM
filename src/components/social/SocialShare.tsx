@@ -129,13 +129,13 @@ const SHARE_PLATFORMS: SharePlatform[] = [
   },
 ]
 
-const SIZECLASSES = {
+const SIZE_CLASSES = {
   sm: 'p-1.5 text-xs',
   md: 'p-2 text-sm',
   lg: 'p-3 text-base',
 }
 
-const ICON_SIZECLASSES = {
+const ICON_SIZE_CLASSES = {
   sm: '[&>svg]:w-4 [&>svg]:h-4',
   md: '[&>svg]:w-5 [&>svg]:h-5',
   lg: '[&>svg]:w-6 [&>svg]:h-6',

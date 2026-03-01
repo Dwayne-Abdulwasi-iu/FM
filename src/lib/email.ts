@@ -9,7 +9,7 @@
 
 // Import and re-export sync config functions
 export { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
-import { isSMTPConfigured, _isEmailConfigured } from '@/lib/email-config'
+import { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
 import sgMail from '@sendgrid/mail'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -1965,5 +1965,6 @@ export async function sendRepostRejectedNotification(
     `,
   });
 }
+
 
 

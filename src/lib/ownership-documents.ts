@@ -1,6 +1,6 @@
 import prisma from './prisma'
 import { sendEmail } from './email'
-import { _deleteFromCloudinary } from './cloudinary'
+import { deleteFromCloudinary } from './cloudinary'
 import { deleteFromCloudinaryWithRetry, logCloudinaryDeleteFailure } from './cloudinary-cleanup'
 
 /**
@@ -937,3 +937,4 @@ export function generateOwnershipContractHTML(
     </html>
   `
 }
+

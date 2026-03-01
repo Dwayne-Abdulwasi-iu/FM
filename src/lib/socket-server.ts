@@ -4,7 +4,7 @@
  */
 
 import { Server } from 'socket.io'
-import { _IncomingMessage } from 'http'
+import { IncomingMessage } from 'http'
 import type { Socket as ServerSocket } from 'socket.io'
 
 let io: Server | null = null
@@ -116,3 +116,4 @@ export async function shutdownSocketServer(): Promise<void> {
     console.log('[Socket.IO] Server shutdown')
   }
 }
+

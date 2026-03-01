@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Send, Clock, CheckCircle, _AlertCircle, FileText, MessageSquare } from 'lucide-react'
+import { Send, Clock, CheckCircle, AlertCircle, FileText, MessageSquare } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Force dynamic rendering for this page

@@ -9,7 +9,7 @@ import { fulfillPODOrder } from '@/lib/pod-service'
 import { queueFailedNotification } from '@/lib/notification-queue'
 import { createOwnershipContract } from '@/lib/ownership-documents'
 import { validateDesignOwnershipState } from '@/lib/ownership-validation'
-import { _incrementPromotionUsage } from '@/lib/promotion-engine'
+import { incrementPromotionUsage } from '@/lib/promotion-engine'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 

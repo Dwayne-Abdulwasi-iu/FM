@@ -16,7 +16,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { 
-  SHIPPINGCARRIERS,
+  SHIPPING_CARRIERS,
 } from '@/lib/boutique/constants';
 
 interface OrderItem {
@@ -609,4 +609,5 @@ export default function SellerOrdersPage() {
     </div>
   );
 }
+
 

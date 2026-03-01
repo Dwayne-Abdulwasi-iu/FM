@@ -19,10 +19,10 @@ import {
   Rocket,
 } from 'lucide-react';
 import { 
-  GENDEROPTIONS, 
+  GENDER_OPTIONS, 
   STYLES, 
-  PRODUCTCONDITION,
-  FULFILLMENTMETHOD,
+  PRODUCT_CONDITIONS,
+  FULFILLMENT_METHOD,
 } from '@/lib/boutique/constants';
 import '@/app/color-swatch.css';
 
@@ -51,7 +51,7 @@ interface Category {
   children?: Category[];
 }
 
-const SORTOPTIONS = [
+const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
   { value: 'popular', label: 'Popular' },
   { value: 'price_low', label: 'Price: Low to High' },
@@ -316,7 +316,7 @@ function BoutiqueShopContent() {
                 aria-label="Filter by condition"
               >
                 <option value="" className="text-gray-900">All Conditions</option>
-                {Object.entries(PRODUCT_CONDITION).map(([key, label]) => (
+                {Object.entries(PRODUCT_CONDITIONS).map(([key, label]) => (
                   <option key={key} value={key} className="text-gray-900">{label}</option>
                 ))}
               </select>
@@ -614,4 +614,5 @@ export default function BoutiqueShopPage() {
     </Suspense>
   );
 }
+
 

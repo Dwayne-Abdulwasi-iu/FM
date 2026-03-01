@@ -13,7 +13,7 @@ import {
   ArrowLeft,
   Search,
   Filter,
-  _Trash2,
+  Trash2,
   Star,
   BarChart3,
   TrendingUp,
@@ -45,7 +45,7 @@ interface BoutiqueProduct {
   addedByAdmin?: boolean
 }
 
-function _formatDate(dateString: string): string {
+function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -712,4 +712,6 @@ export default function SellerBoutiqueFeaturedPage() {
     </div>
   )
 }
+
+
 

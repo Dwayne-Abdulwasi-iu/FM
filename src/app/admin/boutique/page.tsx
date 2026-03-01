@@ -27,7 +27,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { FULFILLMENTMETHOD, SELLER_TIERCONFIG, type SellerTier } from '@/lib/boutique/constants';
+import { FULFILLMENT_METHOD, SELLER_TIER_CONFIG, type SellerTier } from '@/lib/boutique/constants';
 
 interface ProductMedia {
   id: string;
@@ -113,7 +113,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 };
 
 // Tabs for Admin Stock products
-const ADMIN_STOCKTABS = [
+const ADMIN_STOCK_TABS = [
   { key: 'content', label: 'Content Review', status: 'PENDING_CONTENT_REVIEW' },
   { key: 'awaiting', label: 'Awaiting Shipment', status: 'CONTENT_APPROVED' },
   { key: 'transit', label: 'In Transit', status: 'SHIPPED_TO_ADMIN' },
@@ -123,7 +123,7 @@ const ADMIN_STOCKTABS = [
 ];
 
 // Tabs for Seller Direct products
-const SELLER_DIRECTTABS = [
+const SELLER_DIRECT_TABS = [
   { key: 'direct_content', label: 'Review', status: 'PENDING_CONTENT_REVIEW' },
   { key: 'direct_approved', label: 'Approved', status: 'CONTENT_APPROVED' },
   { key: 'direct_live', label: 'Live', status: 'LIVE' },
@@ -154,7 +154,7 @@ export default function AdminBoutiquePage() {
   const [verificationNotes, setVerificationNotes] = useState('');
 
   // Determine which tabs to show based on fulfillment filter
-  const activeTabs = fulfillmentFilter === 'SELLER_DIRECT' ? SELLER_DIRECTTABS : ADMIN_STOCK_TABS;
+  const activeTabs = fulfillmentFilter === 'SELLER_DIRECT' ? SELLER_DIRECT_TABS : ADMIN_STOCK_TABS;
   const currentTabConfig = activeTabs.find(t => t.key === activeTab);
   const currentTabStatus = currentTabConfig?.status || 'PENDING_CONTENT_REVIEW';
 

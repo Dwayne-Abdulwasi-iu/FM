@@ -21,6 +21,7 @@ import {
   Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { NIGERIAN_STATES } from '@/lib/boutique/constants';
 
 interface CartItem {
   id: string;

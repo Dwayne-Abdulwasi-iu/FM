@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { paystack } from '@/lib/paystack'
-import { _getCommissionRate } from '@/lib/commission-tiers'
+import { getCommissionRate } from '@/lib/commission-tiers'
 import { getPaystackCommissionForSeller } from '@/lib/paystack-commission'
 import prisma from '@/lib/prisma'
 
