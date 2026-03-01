@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { validateCategory } from '@/lib/design-categories'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -144,6 +145,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate category
+    const validCategory = validateCategory(category)
+    if (!validCategory) {
+      return NextResponse.json(
+        { message: 'Invalid category selected' },
+        { status: 400 }
+      )
+    }
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -214,7 +224,7 @@ export async function POST(request: NextRequest) {
         ownershipPrice,
         imageUrl,
         thumbnailUrl,
-        category,
+        category: validCategory,
         tags,
         buyingTypes,
         designerId: session.user.id,
