@@ -1,0 +1,19 @@
+
+> fashion-marketplace@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 46s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/360) ...
+  Generating static pages using 11 workers (90/360) 
+  Generating static pages using 11 workers (180/360) 
+Error occurred prerendering page "/admin/audit-logs/dist". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: Cannot access unstable_prefetch.mode on the server. You cannot dot into a client module from a server component. You can only pass the imported name through.
+    at ignore-listed frames
+Export encountered an error on /admin/audit-logs/dist/page: /admin/audit-logs/dist, exiting the build.
+Γ¿» Next.js build worker exited with code: 1 and signal: null
