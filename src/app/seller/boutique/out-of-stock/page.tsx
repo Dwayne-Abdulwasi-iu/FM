@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, Calendar, TrendingDown, ArrowLeft, ChevronDown, _X } from 'lucide-react';
+import { Package, Calendar, TrendingDown, ArrowLeft, ChevronDown, X } from 'lucide-react';
 
 interface Variant {
   id: string;
@@ -338,3 +338,4 @@ export default function SellerOutOfStockPage() {
     </div>
   );
 }
+

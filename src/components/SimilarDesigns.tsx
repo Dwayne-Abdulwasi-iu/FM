@@ -41,7 +41,7 @@ interface SimilarDesignsProps {
 export default function SimilarDesigns({ 
   designId, 
   category,
-  _designerId,
+  designerId,
   limit = 4 
 }: SimilarDesignsProps) {
   const [designs, setDesigns] = useState<SimilarDesign[]>([])
@@ -193,3 +193,4 @@ export default function SimilarDesigns({
     </div>
   )
 }
+

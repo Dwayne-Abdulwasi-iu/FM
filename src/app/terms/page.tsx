@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, FileText, Shield, Users, CreditCard, Upload, AlertTriangle, Scale } from 'lucide-react'
-import { generateSEOMetadata, SEO_CONFIGS } from '@/lib/seo-config'
+import { generateSEOMetadata, SEOCONFIGS } from '@/lib/seo-config'
 
 export const metadata: Metadata = generateSEOMetadata(SEO_CONFIGS.terms)
 
@@ -187,3 +187,4 @@ export default function TermsOfServicePage() {
     </div>
   )
 }
+

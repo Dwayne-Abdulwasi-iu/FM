@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import _Image from 'next/image'
+import Image from 'next/image'
 import Link from 'next/link'
 import { 
   Package, Truck, Search, Filter, ChevronLeft, ChevronRight,
@@ -519,3 +519,4 @@ export default function AdminShipmentsPage() {
     </div>
   )
 }
+

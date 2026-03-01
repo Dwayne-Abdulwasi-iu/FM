@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Upload, Image as ImageIcon, DollarSign, Tag, Type, FileText, CheckCircle, X, Plus, Trash2, Eye, Lock, Package, Palette, ExternalLink } from 'lucide-react'
-import _Image from 'next/image'
+import Image from 'next/image'
 import Link from 'next/link'
 import SignaturePad from '@/components/SignaturePad'
 
@@ -253,7 +253,7 @@ export default function EnhancedUploadPage() {
               // Upload preview file if provided
               if (ownershipData.previewFile) {
                 try {
-                  const ownershipData_result = await ownershipRes.json()
+                  const ownershipDataresult = await ownershipRes.json()
                   const documentId = ownershipData_result.document?.id || ownershipData_result.id
                   
                   if (documentId) {

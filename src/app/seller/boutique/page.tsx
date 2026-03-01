@@ -80,7 +80,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 };
 
 export default function SellerBoutiquePage() {
-  const { data: _session, status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<BoutiqueProduct[]>([]);
@@ -550,7 +550,7 @@ export default function SellerBoutiquePage() {
                   <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-4">
                     {/* Status Badge */}
                     {(() => {
-                      // For ADMIN_STOCK products, use currentStock; otherwise sum variants
+                      // For ADMINSTOCK products, use currentStock; otherwise sum variants
                       const variantStock = product.variants.reduce((sum, v) => sum + v.quantity, 0);
                       const totalStock = product.fulfillmentMethod === 'ADMIN_STOCK' 
                         ? (product.currentStock || 0) 
@@ -678,3 +678,4 @@ export default function SellerBoutiquePage() {
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
-  _Package, 
+  Package, 
   Search, 
   ChevronLeft, 
   ChevronRight,
@@ -449,7 +449,7 @@ export default function RejectedProductsPage() {
                     )}
 
                     {/* Return Address */}
-                    {false && product.seller.boutique_returnAddress ? (
+                    {false && product.seller.boutiquereturnAddress ? (
                       <div className="p-0.5 sm:p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p className="text-[7.5px] sm:text-sm text-blue-800 font-medium">
                           Return Address (Seller):
@@ -617,3 +617,4 @@ export default function RejectedProductsPage() {
     </div>
   )
 }
+

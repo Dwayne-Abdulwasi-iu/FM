@@ -55,7 +55,7 @@ interface ReferenceDesign {
 }
 
 function CommissionRequestContent() {
-  const { data: _session, status } = useSession();
+  const { data: session, status } = useSession();
   const { formatPrice } = useCurrency();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -948,3 +948,4 @@ export default function CommissionRequestPage() {
     </Suspense>
   );
 }
+

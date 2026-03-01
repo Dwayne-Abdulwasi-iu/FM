@@ -20,7 +20,7 @@ interface ReturnRequest {
   estimatedDelivery?: string
 }
 
-const STEP_ORDER = ['PENDING_ADMIN_REVIEW', 'APPROVED_BY_ADMIN', 'SHIPPED_BY_ADMIN', 'RECEIVED_BY_SELLER', 'COMPLETED']
+const STEPORDER = ['PENDING_ADMIN_REVIEW', 'APPROVED_BY_ADMIN', 'SHIPPED_BY_ADMIN', 'RECEIVED_BY_SELLER', 'COMPLETED']
 
 export default function WarehouseReturnsPage() {
   const { data: session } = useSession()
@@ -330,3 +330,4 @@ export default function WarehouseReturnsPage() {
     </div>
   )
 }
+

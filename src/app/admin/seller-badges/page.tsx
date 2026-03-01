@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Star, Shield, _TrendingUp, Lightbulb } from 'lucide-react'
+import { Star, Shield, TrendingUp, Lightbulb } from 'lucide-react'
 
 interface SellerBadge {
   id: string
@@ -294,3 +294,4 @@ function SellerBadgeCard({
     </div>
   )
 }
+

@@ -16,7 +16,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { 
-  SHIPPING_CARRIERS,
+  SHIPPINGCARRIERS,
 } from '@/lib/boutique/constants';
 
 interface OrderItem {
@@ -133,7 +133,7 @@ export default function SellerOrdersPage() {
     };
   }, [searchQuery, minPrice, maxPrice, session?.user]);
 
-  const _handleSearch = () => {
+  const handleSearch = () => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
@@ -609,3 +609,4 @@ export default function SellerOrdersPage() {
     </div>
   );
 }
+

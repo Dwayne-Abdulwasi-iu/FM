@@ -18,7 +18,7 @@ interface CommissionSettings {
   commissionQueueSize: number | null
 }
 
-const COMMISSION_TYPE_OPTIONS = [
+const COMMISSION_TYPEOPTIONS = [
   'Custom Patterns',
   'Alterations',
   'Full Design',
@@ -432,3 +432,4 @@ export default function CommissionSettingsPage() {
     </div>
   )
 }
+

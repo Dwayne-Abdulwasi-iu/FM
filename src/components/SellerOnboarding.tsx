@@ -4,7 +4,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, ChevronLeft, Upload, CheckCircle, Loader2 } from 'lucide-react'
-import _Image from 'next/image'
+import Image from 'next/image'
 
 const STEPS = [
   { number: 1, title: 'Quick Profile', time: '2 mins' },
@@ -552,3 +552,4 @@ export function SellerOnboarding() {
     </div>
   )
 }
+

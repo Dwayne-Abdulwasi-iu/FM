@@ -44,7 +44,7 @@ interface ReturnRequest {
   }
 }
 
-const RETURN_STATUSES = [
+const RETURNSTATUSES = [
   { value: '', label: 'All Statuses' },
   { value: 'PENDING', label: 'Pending Review' },
   { value: 'APPROVED', label: 'Approved' },
@@ -465,3 +465,4 @@ export default function AdminReturnsPage() {
     </div>
   )
 }
+

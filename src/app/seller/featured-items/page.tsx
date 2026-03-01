@@ -13,8 +13,8 @@ import {
   DollarSign,
   AlertCircle,
   Lock,
-  _ArrowUp,
-  _ArrowDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react'
 
 interface FeaturedItem {
@@ -497,3 +497,4 @@ export default function SellerFeaturedItemsPage() {
     </div>
   )
 }
+

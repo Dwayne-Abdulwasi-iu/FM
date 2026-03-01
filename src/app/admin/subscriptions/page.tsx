@@ -10,10 +10,10 @@ import {
   Search,
   Clock,
   DollarSign,
-  _Crown,
+  Crown,
   ChevronLeft,
   ChevronRight,
-  _MoreVertical,
+  MoreVertical,
   X,
   Zap,
 } from 'lucide-react'
@@ -375,3 +375,4 @@ export default function AdminSubscriptionsPage() {
     </div>
   )
 }
+

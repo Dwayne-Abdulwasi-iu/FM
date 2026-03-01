@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, AlertTriangle, _TrendingUp, _Users, Lock, Activity, Shield } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, TrendingUp, Users, Lock, Activity, Shield } from 'lucide-react'
 
 interface SecurityEvent {
   id: string
@@ -455,3 +455,4 @@ export default function AdminSecurityPage() {
     </div>
   )
 }
+

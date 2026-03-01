@@ -164,11 +164,11 @@ const PAGE_TIPS: PageTip[] = [
   },
 ]
 
-const STORAGE_KEY = 'designdrop_onboarding_complete'
-const STORAGE_VERSION_KEY = 'designdrop_onboarding_version'
-const STORAGE_STEP_KEY = 'designdrop_onboarding_step'
-const STORAGE_PAGE_TIPS_KEY = 'designdrop_page_tips_seen'
-const CURRENT_VERSION = '1.1.0' // Bump version to show updated tour
+const STORAGEKEY = 'designdrop_onboarding_complete'
+const STORAGE_VERSIONKEY = 'designdrop_onboarding_version'
+const STORAGE_STEPKEY = 'designdrop_onboarding_step'
+const STORAGE_PAGE_TIPSKEY = 'designdrop_page_tips_seen'
+const CURRENTVERSION = '1.1.0' // Bump version to show updated tour
 
 export function OnboardingTour() {
   const [isOpen, setIsOpen] = useState(false)
@@ -231,13 +231,13 @@ export function OnboardingTour() {
   // Save current step to localStorage for persistence across navigations
   useEffect(() => {
     if (isOpen) {
-      localStorage.setItem(STORAGE_STEP_KEY, currentStep.toString())
+      localStorage.setItem(STORAGE_STEPKEY, currentStep.toString())
     }
   }, [currentStep, isOpen])
 
   const handleComplete = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, 'true')
-    localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION)
+    localStorage.setItem(STORAGEKEY, 'true')
+    localStorage.setItem(STORAGE_VERSIONKEY, CURRENT_VERSION)
     localStorage.removeItem(STORAGE_STEP_KEY)
     setIsOpen(false)
   }, [])
@@ -279,7 +279,7 @@ export function OnboardingTour() {
     if (currentPageTip) {
       const seenTips = JSON.parse(localStorage.getItem(STORAGE_PAGE_TIPS_KEY) || '[]')
       seenTips.push(currentPageTip.id)
-      localStorage.setItem(STORAGE_PAGE_TIPS_KEY, JSON.stringify(seenTips))
+      localStorage.setItem(STORAGE_PAGE_TIPSKEY, JSON.stringify(seenTips))
     }
     setShowPageTips(false)
     setCurrentPageTip(null)
@@ -600,3 +600,4 @@ export function useOnboardingTour() {
 
   return { resetTour, isTourCompleted, resetPageTips }
 }
+

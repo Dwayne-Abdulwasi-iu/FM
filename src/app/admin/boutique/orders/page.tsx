@@ -41,7 +41,7 @@ interface BoutiqueOrder {
   items: OrderItem[]
 }
 
-const ORDER_STATUSES = [
+const ORDERSTATUSES = [
   { value: '', label: 'All Statuses' },
   { value: 'PENDING_PAYMENT', label: 'Pending Payment' },
   { value: 'PAID', label: 'Paid' },
@@ -446,3 +446,4 @@ export default function AdminBoutiqueOrdersPage() {
     </div>
   )
 }
+

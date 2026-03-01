@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import {
   Search,
-  _AlertCircle,
+  AlertCircle,
   Package,
-  _TrendingDown,
+  TrendingDown,
   Filter,
   Calendar,
   Eye,
@@ -16,7 +16,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { WarehouseReturnModal } from '@/components/boutique/warehouse-return-modal'
-import { _getDaysInWarehouse } from '@/lib/boutique/warehouse'
+import { getDaysInWarehouse } from '@/lib/boutique/warehouse'
 
 interface Product {
   id: string
@@ -59,7 +59,7 @@ export default function SellerWarehouseInventoryPage() {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [salesHistoryPage, setSalesHistoryPage] = useState(0)
-  const SALES_HISTORY_PAGE_SIZE = 10
+  const SALES_HISTORY_PAGESIZE = 10
   
   // Debounce timer for search
   const searchDebounceTimer = useRef<NodeJS.Timeout | null>(null)
@@ -612,9 +612,9 @@ export default function SellerWarehouseInventoryPage() {
                     <Link
                       href={
                         // Internal seller product details for:
-                        // - Return-related statuses (IN_RETURN, RETURNED, SHIPPED_BACK)
+                        // - Return-related statuses (INRETURN, RETURNED, SHIPPED_BACK)
                         // - Out of stock products
-                        // - Products in warehouse but not yet LIVE (RECEIVED_BY_ADMIN, VERIFICATION_PASSED, etc.)
+                        // - Products in warehouse but not yet LIVE (RECEIVED_BYADMIN, VERIFICATIONPASSED, etc.)
                         ['IN_RETURN', 'RETURNED', 'SHIPPED_BACK', 'RETURN_REQUESTED', 'RETURN_SHIPPED', 'RETURNED_TO_SELLER', 'RECEIVED_BY_ADMIN', 'VERIFICATION_PASSED', 'CONTENT_APPROVED', 'SHIPPED_TO_ADMIN', 'PENDING_CONTENT_REVIEW', 'DRAFT'].includes(expandedProduct.status)
                           ? `/seller/boutique/product-details/${expandedProduct.id}`
                           : expandedProduct.status === 'OUT_OF_STOCK'
@@ -650,7 +650,7 @@ export default function SellerWarehouseInventoryPage() {
                             </thead>
                             <tbody>
                               {(expandedProduct.salesHistory || [])
-                                .slice(salesHistoryPage * SALES_HISTORY_PAGE_SIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
+                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
                                 .map((sale: any, idx: number) => {
                                   const saleDate = sale?.soldAt ? new Date(sale.soldAt) : null
                                   const isValidDate = saleDate && !isNaN(saleDate.getTime())
@@ -667,7 +667,7 @@ export default function SellerWarehouseInventoryPage() {
                                 })}
                             </tbody>
                           </table>
-                          {(expandedProduct.salesHistory || []).length > SALES_HISTORY_PAGE_SIZE && (
+                          {(expandedProduct.salesHistory || []).length > SALES_HISTORY_PAGESIZE && (
                             <div className="flex items-center justify-between p-2 border-t text-xs">
                               <span className="text-gray-600">
                                 Page {salesHistoryPage + 1} of {Math.ceil((expandedProduct.salesHistory || []).length / SALES_HISTORY_PAGE_SIZE)}
@@ -682,7 +682,7 @@ export default function SellerWarehouseInventoryPage() {
                                 </button>
                                 <button
                                   onClick={() => setSalesHistoryPage(salesHistoryPage + 1)}
-                                  disabled={(salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE >= (expandedProduct.salesHistory || []).length}
+                                  disabled={(salesHistoryPage + 1) * SALES_HISTORY_PAGESIZE >= (expandedProduct.salesHistory || []).length}
                                   className="px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   Next
@@ -754,3 +754,4 @@ export default function SellerWarehouseInventoryPage() {
     </div>
   )
 }
+

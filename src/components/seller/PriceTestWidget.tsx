@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, _useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   TestTube2, 
@@ -9,7 +9,7 @@ import {
   DollarSign, 
   BarChart3, 
   Play, 
-  _Pause, 
+  Pause, 
   StopCircle,
   HelpCircle,
   CheckCircle,
@@ -30,14 +30,14 @@ interface PriceTestDesign {
 
 interface PriceTestWidgetProps {
   design: PriceTestDesign
-  sellerTier?: string | null // Must be VIP_DESIGNER or VVIP_DESIGNER (Tier 3+)
+  sellerTier?: string | null // Must be VIPDESIGNER or VVIPDESIGNER (Tier 3+)
   onTestStart?: (designId: string, variantPrice: number) => void
   onTestStop?: (designId: string) => void
   className?: string
 }
 
 // Tier 3+ required for A/B testing
-const ALLOWED_TIERS = ['VIP_DESIGNER', 'VVIP_DESIGNER']
+const ALLOWEDTIERS = ['VIP_DESIGNER', 'VVIP_DESIGNER']
 
 export function PriceTestWidget({ 
   design, 
@@ -485,3 +485,4 @@ export function PriceTestResults({
     </div>
   )
 }
+

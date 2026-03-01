@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, _Filter, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Filter, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -228,3 +228,4 @@ export default function DiscrepanciesDashboard() {
     </div>
   )
 }
+

@@ -379,7 +379,7 @@ export default function SellerBoutiqueFeaturedPage() {
     setSelectedProducts(newSelected)
   }
 
-  const _toggleSelectAll = () => {
+  const toggleSelectAll = () => {
     if (selectedProducts.size === products.length) {
       setSelectedProducts(new Set())
     } else {
@@ -712,3 +712,4 @@ export default function SellerBoutiqueFeaturedPage() {
     </div>
   )
 }
+

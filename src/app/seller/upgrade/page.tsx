@@ -14,7 +14,7 @@ import {
   Star,
   Palette,
   Clock,
-  _Shield,
+  Shield,
   X,
   AlertCircle,
   Gift
@@ -1228,3 +1228,4 @@ export default function UpgradePage() {
     </div>
   )
 }
+

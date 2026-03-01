@@ -13,8 +13,8 @@ import {
   Info, 
   Star,
   Lock,
-  _PieChart,
-  _Calendar,
+  PieChart,
+  Calendar,
   DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
@@ -172,7 +172,7 @@ export default function CommissionMilestonesPage() {
   }
 
   const selected = getTemplate(selectedTemplate)
-  const _isLocked = !canUseTemplate(selectedTemplate) && selectedTemplate === 'simple'
+  const isLocked = !canUseTemplate(selectedTemplate) && selectedTemplate === 'simple'
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -426,3 +426,4 @@ export default function CommissionMilestonesPage() {
     </div>
   )
 }
+

@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { prismaErrorResponse } from '@/lib/prismaError'
 import { sendEmail } from '@/lib/email'
 import { queueFailedNotification } from '@/lib/notification-queue'
-import { _isMainAdmin } from '@/lib/admin'
+import { isMainAdmin } from '@/lib/admin'
 import { checkRateLimit, adminBroadcastRateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET - List all broadcasts

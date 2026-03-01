@@ -59,7 +59,7 @@ interface ShippingAddress {
   country: string;
 }
 
-const NIGERIAN_STATES = [
+const NIGERIANSTATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
   'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe', 
   'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
@@ -633,3 +633,4 @@ export default function BoutiqueCheckoutPage() {
     </div>
   );
 }
+

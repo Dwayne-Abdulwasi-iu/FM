@@ -54,7 +54,7 @@ interface FilterOptions {
 }
 
 function AdvancedSearchContent() {
-  const _router = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
   
   const [designs, setDesigns] = useState<Design[]>([])
@@ -614,3 +614,4 @@ export default function AdvancedSearchPage() {
     </Suspense>
   )
 }
+

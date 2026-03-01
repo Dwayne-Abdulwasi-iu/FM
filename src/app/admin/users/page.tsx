@@ -47,7 +47,7 @@ interface Pagination {
   pages: number
 }
 
-const USER_TYPES = [
+const USERTYPES = [
   { value: 'all', label: 'All Users' },
   { value: 'users', label: 'Buyers Only' },
   { value: 'sellers', label: 'All Sellers' },
@@ -55,7 +55,7 @@ const USER_TYPES = [
   { value: 'boutique_sellers', label: 'Boutique Sellers' },
 ]
 
-const DESIGNER_TIERS = [
+const DESIGNERTIERS = [
   { value: '', label: 'All Tiers' },
   { value: 'DESIGNER', label: 'Designer' },
   { value: 'GOLD_DESIGNER', label: 'Gold Designer' },
@@ -63,7 +63,7 @@ const DESIGNER_TIERS = [
   { value: 'VVIP_DESIGNER', label: 'VVIP Designer' },
 ]
 
-const VERIFICATION_STATUS = [
+const VERIFICATIONSTATUS = [
   { value: '', label: 'All Status' },
   { value: 'verified', label: 'Verified' },
   { value: 'unverified', label: 'Unverified' },
@@ -419,7 +419,7 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState<{ count: number; sampleUsers: { name: string; email: string }[] } | null>(null)
 
-  const TARGET_TYPES = [
+  const TARGETTYPES = [
     { value: 'ALL', label: 'All Users' },
     { value: 'USERS', label: 'Buyers Only (No uploads)' },
     { value: 'SELLERS', label: 'All Sellers' },
@@ -616,3 +616,4 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+

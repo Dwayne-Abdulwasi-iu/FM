@@ -14,11 +14,11 @@ import {
   Loader2,
   AlertCircle,
   Eye,
-  _ArrowDownRight,
+  ArrowDownRight,
   Clock,
   CheckCircle,
   XCircle,
-  _RefreshCw,
+  RefreshCw,
 } from 'lucide-react'
 
 interface FinancesSummary {
@@ -322,3 +322,4 @@ export default function FinancesHub() {
     </div>
   )
 }
+

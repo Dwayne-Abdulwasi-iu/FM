@@ -10,7 +10,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   ChevronDown,
-  _AlertCircle,
+  AlertCircle,
   CheckCircle,
   Clock,
   User,
@@ -363,3 +363,4 @@ export default function AdminRejectedReturnsPage() {
     </div>
   )
 }
+

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { _getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth'
 import toast from 'react-hot-toast'
 
 interface OwnershipDoc {

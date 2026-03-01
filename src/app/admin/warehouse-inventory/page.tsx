@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import {
   Search,
   Package,
-  _TrendingDown,
+  TrendingDown,
   Filter,
   Calendar,
   Loader,
@@ -63,7 +63,7 @@ export default function AdminWarehouseInventoryPage() {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [salesHistoryPage, setSalesHistoryPage] = useState(0)
-  const SALES_HISTORY_PAGE_SIZE = 10
+  const SALES_HISTORY_PAGESIZE = 10
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
@@ -610,7 +610,7 @@ export default function AdminWarehouseInventoryPage() {
                             </thead>
                             <tbody>
                               {(filteredProducts.find((p) => p.id === expandedId)?.salesHistory || [])
-                                .slice(salesHistoryPage * SALES_HISTORY_PAGE_SIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
+                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
                                 .map((sale: any, idx: number) => (
                                 <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                   <td className="px-2 py-1 sm:px-3 sm:py-2 text-gray-900 text-xs">
@@ -623,7 +623,7 @@ export default function AdminWarehouseInventoryPage() {
                               ))}
                             </tbody>
                           </table>
-                          {(filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length > SALES_HISTORY_PAGE_SIZE && (
+                          {(filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length > SALES_HISTORY_PAGESIZE && (
                             <div className="flex items-center justify-between p-2 border-t text-xs">
                               <span className="text-gray-600">
                                 Page {salesHistoryPage + 1} of {Math.ceil((filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length / SALES_HISTORY_PAGE_SIZE)}
@@ -638,7 +638,7 @@ export default function AdminWarehouseInventoryPage() {
                                 </button>
                                 <button
                                   onClick={() => setSalesHistoryPage(salesHistoryPage + 1)}
-                                  disabled={(salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE >= (filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length}
+                                  disabled={(salesHistoryPage + 1) * SALES_HISTORY_PAGESIZE >= (filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length}
                                   className="px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   Next
@@ -661,3 +661,4 @@ export default function AdminWarehouseInventoryPage() {
     </div>
   )
 }
+

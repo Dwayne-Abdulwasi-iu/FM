@@ -19,10 +19,10 @@ import {
   Rocket,
 } from 'lucide-react';
 import { 
-  GENDER_OPTIONS, 
+  GENDEROPTIONS, 
   STYLES, 
-  PRODUCT_CONDITION,
-  FULFILLMENT_METHOD,
+  PRODUCTCONDITION,
+  FULFILLMENTMETHOD,
 } from '@/lib/boutique/constants';
 import '@/app/color-swatch.css';
 
@@ -51,7 +51,7 @@ interface Category {
   children?: Category[];
 }
 
-const SORT_OPTIONS = [
+const SORTOPTIONS = [
   { value: 'newest', label: 'Newest' },
   { value: 'popular', label: 'Popular' },
   { value: 'price_low', label: 'Price: Low to High' },
@@ -487,7 +487,7 @@ function BoutiqueShopContent() {
                       <h3 className="font-semibold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 sm:mb-2">{product.title}</h3>
                       
                       {/* Fulfillment Badge */}
-                      {product.fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && (
+                      {product.fulfillmentMethod === FULFILLMENT_METHOD.SELLERDIRECT && (
                         <div className="flex items-center gap-1 mb-1 sm:mb-2">
                           <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700">
                             <Rocket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -614,3 +614,4 @@ export default function BoutiqueShopPage() {
     </Suspense>
   );
 }
+

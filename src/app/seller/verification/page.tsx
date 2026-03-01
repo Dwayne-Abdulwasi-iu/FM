@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
   BadgeCheck,
-  _Shield,
+  Shield,
   Award,
   Star,
   CheckCircle,
@@ -299,8 +299,8 @@ export default function VerificationPage() {
               <p className="font-medium">How badges work:</p>
               <ul className="mt-2 space-y-1 text-xs">
                 <li>✓ Badges are <strong>automatically awarded</strong> when you meet all requirements</li>
-                <li>✓ RISING_STAR, TOP_SELLER badges are immediate</li>
-                <li>✓ VERIFIED_PRO and ELITE badges require admin verification after you qualify</li>
+                <li>✓ RISINGSTAR, TOPSELLER badges are immediate</li>
+                <li>✓ VERIFIEDPRO and ELITE badges require admin verification after you qualify</li>
                 <li>✓ Badges appear on your profile, designs, and in search results</li>
               </ul>
             </div>
@@ -310,3 +310,4 @@ export default function VerificationPage() {
     </div>
   )
 }
+

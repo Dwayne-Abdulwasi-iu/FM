@@ -110,7 +110,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function DesignerCommissionRequestsPage() {
-  const { data: _session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
 
   const [requests, setRequests] = useState<CommissionRequest[]>([]);
@@ -278,10 +278,10 @@ export default function DesignerCommissionRequestsPage() {
       for (const file of deliverableFiles) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'fashion_marketplace');
+        formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOADPRESET || 'fashion_marketplace');
 
         const cloudinaryResponse = await fetch(
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`,
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUDNAME}/auto/upload`,
           {
             method: 'POST',
             body: formData,
@@ -291,7 +291,7 @@ export default function DesignerCommissionRequestsPage() {
         if (cloudinaryResponse.ok) {
           const data = await cloudinaryResponse.json();
           uploadedFiles.push({
-            url: data.secure_url,
+            url: data.secureurl,
             type: file.type,
             name: file.name,
             size: file.size,
@@ -954,3 +954,4 @@ export default function DesignerCommissionRequestsPage() {
     </div>
   );
 }
+

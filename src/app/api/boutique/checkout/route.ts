@@ -25,7 +25,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { paystack, isPaystackConfigured } from '@/lib/paystack';
-import { getPaymentProcessor, extractGeoLocation, type _PaymentProcessor } from '@/lib/geo-detection';
+import { getPaymentProcessor, extractGeoLocation, type PaymentProcessor } from '@/lib/geo-detection';
 import { 
   FULFILLMENT_METHOD, 
   getCommissionRate,

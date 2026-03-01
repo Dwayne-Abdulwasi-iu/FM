@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Package, _Truck, _XCircle, _Clock, MessageSquare, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Package, Truck, XCircle, Clock, MessageSquare, ExternalLink } from 'lucide-react'
 import { useCurrency } from '@/components/CurrencyProvider'
 
 interface ReturnItem {
@@ -239,3 +239,4 @@ export default function BuyerReturnsPage() {
     </div>
   )
 }
+
