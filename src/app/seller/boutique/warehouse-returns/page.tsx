@@ -133,7 +133,7 @@ export default function WarehouseReturnsPage() {
       .map(word => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ')
 
-  const getStepIndex = (status: string) => STEP_ORDER.indexOf(status)
+  const getStepIndex = (status: string) => STEPORDER.indexOf(status)
 
   if (!session?.user) {
     return (
@@ -210,7 +210,7 @@ export default function WarehouseReturnsPage() {
               <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-sm font-semibold text-gray-700 mb-4">Status Timeline</p>
                 <div className="flex gap-1">
-                  {STEP_ORDER.map((step, index) => {
+                  {STEPORDER.map((step: string, index: number) => {
                     const currentIndex = getStepIndex(ret.status)
                     const isCompleted = index < currentIndex || (index === currentIndex && ret.status === 'COMPLETED')
                     const isCurrent = index === currentIndex
@@ -228,7 +228,7 @@ export default function WarehouseReturnsPage() {
                         >
                           {isCompleted ? <Check size={18} /> : index + 1}
                         </div>
-                        {index < STEP_ORDER.length - 1 && (
+                        {index < STEPORDER.length - 1 && (
                           <div className={`h-1 flex-1 mx-1 rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-gray-300'}`} />
                         )}
                       </div>

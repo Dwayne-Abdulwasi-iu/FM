@@ -21,7 +21,7 @@ export default function MilestoneDisplay({
   compact = false
 }: MilestoneDisplayProps) {
   const { formatPrice } = useCurrency()
-  const MILESTONETEMPLATES = {
+  const MILESTONE_TEMPLATES = {
     simple: [
       { name: 'Deposit', percentage: 50, description: 'Released immediately when designer confirms start' },
       { name: 'Final Delivery', percentage: 50, description: 'Released when you approve final work' }

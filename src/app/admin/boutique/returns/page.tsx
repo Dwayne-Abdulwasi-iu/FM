@@ -212,7 +212,7 @@ export default function AdminReturnsPage() {
                 className="border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-black bg-white focus:ring-2 focus:ring-purple-500 text-[11px] sm:text-sm"
                 aria-label="Filter by return status"
               >
-                {RETURN_STATUSES.map(s => (
+                {RETURNSTATUSES.map((s: { value: string; label: string }) => (
                   <option key={s.value} value={s.value} className="text-black">{s.label}</option>
                 ))}
               </select>

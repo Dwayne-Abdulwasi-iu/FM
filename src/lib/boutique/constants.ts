@@ -488,3 +488,38 @@ export function canGoLiveDirectly(status: ProductStatus, fulfillmentMethod: Fulf
   return fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT && status === PRODUCT_STATUS.CONTENT_APPROVED;
 }
 
+// Helper arrays for dropdowns and selects
+export const ORDER_STATUSES = [
+  { label: 'Pending Payment', value: ORDER_STATUS.PENDING_PAYMENT },
+  { label: 'Paid', value: ORDER_STATUS.PAID },
+  { label: 'Processing', value: ORDER_STATUS.PROCESSING },
+  { label: 'Shipped', value: ORDER_STATUS.SHIPPED },
+  { label: 'Delivered', value: ORDER_STATUS.DELIVERED },
+  { label: 'Completed', value: ORDER_STATUS.COMPLETED },
+  { label: 'Return Requested', value: ORDER_STATUS.RETURN_REQUESTED },
+  { label: 'Return Approved', value: ORDER_STATUS.RETURN_APPROVED },
+  { label: 'Return Shipped', value: ORDER_STATUS.RETURN_SHIPPED },
+  { label: 'Return Received', value: ORDER_STATUS.RETURN_RECEIVED },
+  { label: 'Refunded', value: ORDER_STATUS.REFUNDED },
+  { label: 'Cancelled', value: ORDER_STATUS.CANCELLED },
+  { label: 'Disputed', value: ORDER_STATUS.DISPUTED },
+] as const;
+
+export const RETURN_STATUSES = [
+  { label: 'Requested', value: RETURN_STATUS.REQUESTED },
+  { label: 'Approved', value: RETURN_STATUS.APPROVED },
+  { label: 'Rejected', value: RETURN_STATUS.REJECTED },
+  { label: 'Shipped', value: RETURN_STATUS.SHIPPED },
+  { label: 'Received', value: RETURN_STATUS.RECEIVED },
+  { label: 'Inspected', value: RETURN_STATUS.INSPECTED },
+  { label: 'Refund Processing', value: RETURN_STATUS.REFUND_PROCESSING },
+  { label: 'Refunded', value: RETURN_STATUS.REFUNDED },
+  { label: 'Closed', value: RETURN_STATUS.CLOSED },
+] as const;
+
+// Pagination constant
+export const SALES_HISTORY_PAGE_SIZE = 20;
+
+// Warranty steps order for warehouse returns
+export const STEP_ORDER = ['INITIATED', 'SHIPPED', 'RECEIVED', 'INSPECTED', 'RESOLVED'] as const;
+

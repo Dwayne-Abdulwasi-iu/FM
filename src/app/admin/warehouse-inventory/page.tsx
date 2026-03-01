@@ -610,7 +610,7 @@ export default function AdminWarehouseInventoryPage() {
                             </thead>
                             <tbody>
                               {(filteredProducts.find((p) => p.id === expandedId)?.salesHistory || [])
-                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
+                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGESIZE)
                                 .map((sale: any, idx: number) => (
                                 <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                   <td className="px-2 py-1 sm:px-3 sm:py-2 text-gray-900 text-xs">
@@ -626,7 +626,7 @@ export default function AdminWarehouseInventoryPage() {
                           {(filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length > SALES_HISTORY_PAGESIZE && (
                             <div className="flex items-center justify-between p-2 border-t text-xs">
                               <span className="text-gray-600">
-                                Page {salesHistoryPage + 1} of {Math.ceil((filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length / SALES_HISTORY_PAGE_SIZE)}
+                                Page {salesHistoryPage + 1} of {Math.ceil((filteredProducts.find((p) => p.id === expandedId)?.salesHistory || []).length / SALES_HISTORY_PAGESIZE)}
                               </span>
                               <div className="flex gap-1">
                                 <button

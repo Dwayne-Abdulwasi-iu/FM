@@ -650,7 +650,7 @@ export default function SellerWarehouseInventoryPage() {
                             </thead>
                             <tbody>
                               {(expandedProduct.salesHistory || [])
-                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGE_SIZE)
+                                .slice(salesHistoryPage * SALES_HISTORY_PAGESIZE, (salesHistoryPage + 1) * SALES_HISTORY_PAGESIZE)
                                 .map((sale: any, idx: number) => {
                                   const saleDate = sale?.soldAt ? new Date(sale.soldAt) : null
                                   const isValidDate = saleDate && !isNaN(saleDate.getTime())
@@ -670,7 +670,7 @@ export default function SellerWarehouseInventoryPage() {
                           {(expandedProduct.salesHistory || []).length > SALES_HISTORY_PAGESIZE && (
                             <div className="flex items-center justify-between p-2 border-t text-xs">
                               <span className="text-gray-600">
-                                Page {salesHistoryPage + 1} of {Math.ceil((expandedProduct.salesHistory || []).length / SALES_HISTORY_PAGE_SIZE)}
+                                Page {salesHistoryPage + 1} of {Math.ceil((expandedProduct.salesHistory || []).length / SALES_HISTORY_PAGESIZE)}
                               </span>
                               <div className="flex gap-1">
                                 <button

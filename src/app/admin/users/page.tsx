@@ -47,7 +47,7 @@ interface Pagination {
   pages: number
 }
 
-const USERTYPES = [
+const USER_TYPES = [
   { value: 'all', label: 'All Users' },
   { value: 'users', label: 'Buyers Only' },
   { value: 'sellers', label: 'All Sellers' },
@@ -55,7 +55,7 @@ const USERTYPES = [
   { value: 'boutique_sellers', label: 'Boutique Sellers' },
 ]
 
-const DESIGNERTIERS = [
+const DESIGNER_TIERS = [
   { value: '', label: 'All Tiers' },
   { value: 'DESIGNER', label: 'Designer' },
   { value: 'GOLD_DESIGNER', label: 'Gold Designer' },
@@ -63,10 +63,18 @@ const DESIGNERTIERS = [
   { value: 'VVIP_DESIGNER', label: 'VVIP Designer' },
 ]
 
-const VERIFICATIONSTATUS = [
+const VERIFICATION_STATUS = [
   { value: '', label: 'All Status' },
   { value: 'verified', label: 'Verified' },
   { value: 'unverified', label: 'Unverified' },
+]
+
+const TARGET_TYPES = [
+  { value: 'ALL', label: 'All Users' },
+  { value: 'TIER_SPECIFIC', label: 'Specific Tier' },
+  { value: 'LOCATION_SPECIFIC', label: 'Specific Location' },
+  { value: 'BUYER_ONLY', label: 'Buyers Only' },
+  { value: 'SELLER_ONLY', label: 'Sellers Only' },
 ]
 
 export default function AdminUsersPage() {

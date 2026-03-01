@@ -2,31 +2,17 @@
 > fashion-marketplace@0.1.0 build
 > next build
 
-ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
- We detected multiple lockfiles and selected the directory of C:\Users\Dwayne\package-lock.json as the root directory.
- To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
-   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
- Detected additional lockfiles: 
-   * C:\Users\Dwayne\OneDrive\Desktop\fashion-marketplace\package-lock.json
-
-Γû▓ Next.js 16.1.4 (Turbopack)
+Γû▓ Next.js 16.1.6 (Turbopack)
 - Environments: .env.local, .env
-- Experiments (use with caution):
-  ┬╖ serverActions
 
   Creating an optimized production build ...
-Γ£ô Compiled successfully in 27.4s
+Γ£ô Compiled successfully in 55s
   Running TypeScript ...
-Failed to compile.
-
-./src/app/seller/upgrade/page.tsx:483:54
-Type error: 'subscriptionStatus.totalEarnings' is possibly 'undefined'.
-
-  481 |                         className="bg-amber-500 h-2 rounded-full transition-all"
-  482 |                         // eslint-disable-next-line -- dynamic width calculation
-> 483 |                         style={{ width: `${Math.min((subscriptionStatus.totalEarnings / 100) * 100, 100)}%` }}
-      |                                                      ^
-  484 |                       />
-  485 |                     </div>
-  486 |                     <p className="text-xs md:text-sm text-gray-600">
-Next.js build worker exited with code: 1 and signal: null
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/361) ...
+Error occurred prerendering page "/account/security/dist". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: Cannot access unstable_prefetch.mode on the server. You cannot dot into a client module from a server component. You can only pass the imported name through.
+    at ignore-listed frames
+  Generating static pages using 11 workers (90/361) 
+Export encountered an error on /account/security/dist/page: /account/security/dist, exiting the build.
+Γ¿» Next.js build worker exited with code: 1 and signal: null

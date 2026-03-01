@@ -253,7 +253,7 @@ export default function EnhancedUploadPage() {
               // Upload preview file if provided
               if (ownershipData.previewFile) {
                 try {
-                  const ownershipDataresult = await ownershipRes.json()
+                  const ownershipData_result = await ownershipRes.json()
                   const documentId = ownershipData_result.document?.id || ownershipData_result.id
                   
                   if (documentId) {

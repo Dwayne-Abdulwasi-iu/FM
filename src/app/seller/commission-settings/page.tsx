@@ -18,7 +18,7 @@ interface CommissionSettings {
   commissionQueueSize: number | null
 }
 
-const COMMISSION_TYPEOPTIONS = [
+const COMMISSION_TYPE_OPTIONS = [
   'Custom Patterns',
   'Alterations',
   'Full Design',

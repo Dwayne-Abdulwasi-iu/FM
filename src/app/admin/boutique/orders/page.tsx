@@ -262,7 +262,7 @@ export default function AdminBoutiqueOrdersPage() {
                 className="border rounded-lg px-2 sm:px-3 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-xs sm:text-sm"
                 aria-label="Filter by order status"
               >
-                {ORDER_STATUSES.map(s => (
+                {ORDERSTATUSES.map((s: { value: string; label: string }) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>

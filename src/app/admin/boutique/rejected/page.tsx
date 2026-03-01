@@ -449,7 +449,7 @@ export default function RejectedProductsPage() {
                     )}
 
                     {/* Return Address */}
-                    {false && product.seller.boutiquereturnAddress ? (
+                    {false && product.seller.boutique_returnAddress ? (
                       <div className="p-0.5 sm:p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p className="text-[7.5px] sm:text-sm text-blue-800 font-medium">
                           Return Address (Seller):

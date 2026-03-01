@@ -22,7 +22,7 @@ interface LiveStats {
   fallback?: boolean
 }
 
-const STATICONS = [
+const STAT_ICONS = [
   <Users key="users" className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />,
   <TrendingUp key="trending" className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />,
   <Globe key="globe" className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />,

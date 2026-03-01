@@ -196,9 +196,9 @@ export default function AdminDeliveriesPage() {
   }
 
   const tabs = [
-    { id: 'READY_FOR_COLLECTION', label: 'Ready for Collection', count: statusCounts?.ready_forcollection || 0, icon: Clock },
+    { id: 'READY_FOR_COLLECTION', label: 'Ready for Collection', count: statusCounts?.ready_for_collection || 0, icon: Clock },
     { id: 'COLLECTED_BY_ADMIN', label: 'Collected', count: statusCounts?.collected || 0, icon: Box },
-    { id: 'IN_TRANSIT', label: 'In Transit', count: statusCounts?.intransit || 0, icon: Truck },
+    { id: 'IN_TRANSIT', label: 'In Transit', count: statusCounts?.in_transit || 0, icon: Truck },
     { id: 'DELIVERED', label: 'Delivered', count: statusCounts?.delivered || 0, icon: CheckCircle },
   ]
 
