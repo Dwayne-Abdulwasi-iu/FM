@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { validateCategory } from "@/lib/design-categories";
 
 /**
  * POST /api/search/advanced - Advanced search with filters
@@ -48,7 +49,13 @@ export async function POST(request: NextRequest) {
 
     // Category filter
     if (category && category !== 'all') {
-      where.category = category;
+      const validCategory = validateCategory(category);
+      if (validCategory) {
+        where.category = validCategory;
+      } else {
+        // Invalid category, return empty results
+        return NextResponse.json({}, { status: 400 });
+      }
     }
 
     // Style filter

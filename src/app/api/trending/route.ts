@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { validateCategory } from "@/lib/design-categories";
 
 // Maximum limit to prevent memory exhaustion
 const MAX_LIMIT = 50;
@@ -20,7 +21,18 @@ export async function GET(request: NextRequest) {
     };
 
     if (category && category !== 'all') {
-      where.category = category;
+      const validCategory = validateCategory(category);
+      if (validCategory) {
+        where.category = validCategory;
+      } else {
+        // Invalid category, return empty results
+        return NextResponse.json({
+          trending: [],
+          risingStars: [],
+          newDesigns: [],
+          bestSellers: []
+        });
+      }
     }
 
     // Get designs sorted by trending score

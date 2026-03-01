@@ -310,39 +310,43 @@ describe('Flaw 8: Field Length Validation', () => {
 // FLAW 9: Category Whitelist Validation
 // ============================================================================
 describe('Flaw 9: Category Whitelist Validation', () => {
-  const ALLOWED_CATEGORIES = [
-    'illustration',
-    'pattern',
-    'graphic',
-    'art',
-    'fashion',
-    'design',
-    'textile',
-    'digital',
-    'vector',
-    'other'
+  // Categories match the actual app design categories
+  const DESIGN_CATEGORIES = [
+    'Fashion Illustrations',
+    'Digital Designs',
+    'Pattern Designs',
+    'Sketches',
+    'Technical Drawings',
+    'Concept Art'
   ];
 
-  const validateCategory = (category: string) => {
-    return ALLOWED_CATEGORIES.includes(category.toLowerCase());
+  const validateCategory = (category: string | null | undefined) => {
+    if (!category) return null;
+    const trimmed = String(category).trim();
+    return DESIGN_CATEGORIES.find(c => c.toLowerCase() === trimmed.toLowerCase()) || null;
   };
 
   it('should accept whitelisted categories', () => {
-    expect(validateCategory('illustration')).toBe(true);
-    expect(validateCategory('pattern')).toBe(true);
-    expect(validateCategory('art')).toBe(true);
+    expect(validateCategory('Fashion Illustrations')).toBe('Fashion Illustrations');
+    expect(validateCategory('Digital Designs')).toBe('Digital Designs');
+    expect(validateCategory('Pattern Designs')).toBe('Pattern Designs');
   });
 
   it('should accept case-insensitive matches', () => {
-    expect(validateCategory('ILLUSTRATION')).toBe(true);
-    expect(validateCategory('Pattern')).toBe(true);
-    expect(validateCategory('ART')).toBe(true);
+    expect(validateCategory('fashion illustrations')).toBe('Fashion Illustrations');
+    expect(validateCategory('DIGITAL DESIGNS')).toBe('Digital Designs');
+    expect(validateCategory('pattern designs')).toBe('Pattern Designs');
+  });
+
+  it('should accept trimmed whitespace', () => {
+    expect(validateCategory('  Fashion Illustrations  ')).toBe('Fashion Illustrations');
+    expect(validateCategory('\tDigital Designs\n')).toBe('Digital Designs');
   });
 
   it('should reject categories not on whitelist', () => {
-    expect(validateCategory('malware')).toBe(false);
-    expect(validateCategory('injection')).toBe(false);
-    expect(validateCategory('anything_else')).toBe(false);
+    expect(validateCategory('malware')).toBeNull();
+    expect(validateCategory('injection')).toBeNull();
+    expect(validateCategory('anything_else')).toBeNull();
   });
 
   it('should prevent injection attacks', () => {
