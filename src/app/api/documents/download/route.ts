@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MOA_TEMPLATE } from '@/lib/documents/moa-template'
 import { AOA_TEMPLATE } from '@/lib/documents/aoa-template'
+import {
+  DESIGNER_OWNERSHIP_PURCHASE_TEMPLATE,
+  DESIGNER_PREMIUM_PARTNERSHIP_TEMPLATE,
+  DESIGNER_WORKFORHIRE_COMMISSION_TEMPLATE,
+} from '@/lib/documents/designer-contract-templates'
 
 /**
- * API Route to generate and download MOA/AOA as text or formatted document
- * GET /api/documents/download?type=moa|aoa
+ * API Route to generate and download MOA/AOA/Designer Contracts as text or formatted document
+ * GET /api/documents/download?type=moa|aoa|designer_ownership|designer_premium|designer_workforhire
  */
 
 export async function GET(request: NextRequest) {
@@ -13,17 +18,43 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')?.toLowerCase()
     const format = searchParams.get('format') || 'txt' // txt, json, or html
 
-    if (!type || !['moa', 'aoa'].includes(type)) {
+    const validTypes = [
+      'moa',
+      'aoa',
+      'designer_ownership',
+      'designer_premium',
+      'designer_workforhire',
+    ]
+
+    if (!type || !validTypes.includes(type)) {
       return NextResponse.json(
-        { error: 'Invalid document type. Use "moa" or "aoa"' },
+        {
+          error: 'Invalid document type. Use "moa", "aoa", "designer_ownership", "designer_premium", or "designer_workforhire"',
+        },
         { status: 400 }
       )
     }
 
-    const template = type === 'moa' ? MOA_TEMPLATE : AOA_TEMPLATE
-    const documentName = type === 'moa' 
-      ? 'Memorandum_of_Association' 
-      : 'Articles_of_Association'
+    const template =
+      type === 'moa'
+        ? MOA_TEMPLATE
+        : type === 'aoa'
+          ? AOA_TEMPLATE
+          : type === 'designer_ownership'
+            ? DESIGNER_OWNERSHIP_PURCHASE_TEMPLATE
+            : type === 'designer_premium'
+              ? DESIGNER_PREMIUM_PARTNERSHIP_TEMPLATE
+              : DESIGNER_WORKFORHIRE_COMMISSION_TEMPLATE
+
+    const documentNames: { [key: string]: string } = {
+      moa: 'Memorandum_of_Association',
+      aoa: 'Articles_of_Association',
+      designer_ownership: 'Design_Ownership_Purchase_Agreement',
+      designer_premium: 'Premium_Creator_Partnership_Agreement',
+      designer_workforhire: 'Work_For_Hire_Commission_Agreement',
+    }
+
+    const documentName = documentNames[type]
 
     // Return as plain text file
     if (format === 'txt') {
@@ -38,17 +69,26 @@ export async function GET(request: NextRequest) {
 
     // Return as JSON
     if (format === 'json') {
+      const documentTypeLabels: { [key: string]: string } = {
+        moa: 'Memorandum of Association',
+        aoa: 'Articles of Association',
+        designer_ownership: 'Design Ownership Purchase Agreement',
+        designer_premium: 'Premium Creator Partnership Agreement',
+        designer_workforhire: 'Work-For-Hire Commission Agreement',
+      }
+
       return NextResponse.json({
         documentType: type.toUpperCase(),
         documentName,
+        documentLabel: documentTypeLabels[type],
         content: template,
         generatedAt: new Date().toISOString(),
         instructions: [
-          'This is your company\'s ' + (type === 'moa' ? 'Memorandum' : 'Articles') + ' of Association.',
+          `This is a ${documentTypeLabels[type]}.`,
           'Please customize all bracketed sections [INSERT ...] with your actual information.',
           'Have this document reviewed by a legal professional in your jurisdiction.',
-          'Once approved, register it with your company registration authority.'
-        ]
+          'Once approved and finalized, execute with both parties.',
+        ],
       })
     }
 
