@@ -134,7 +134,6 @@ function formatAsHTML(content: string, title: string): string {
     if (/^\d+\./.test(trimmed)) {
       htmlContent += `<h3 class="section-heading">${escapeHtml(trimmed)}</h3>\n<div class="section-content">\n`
       inSection = true
-      sectionNumber++
     }
     // Bold subsection headers
     else if (/^[A-Z][A-Z\s]+:$/.test(trimmed) && trimmed.length < 80) {
