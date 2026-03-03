@@ -32,6 +32,9 @@ export default function AdminSellerBadgesPage() {
   const [sellers, setSellers] = useState<SellerBadge[]>([])
   const [loading, setLoading] = useState(true)
   const [badgeFilter, setBadgeFilter] = useState<string>('')
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
+  const limit = 50
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -42,14 +45,14 @@ export default function AdminSellerBadgesPage() {
       router.push('/')
       return
     }
-    fetchSellers()
+    setOffset(0)
+    fetchSellers(0)
   }, [session, status, badgeFilter])
 
-  const fetchSellers = async () => {
+  const fetchSellers = async (pageOffset: number) => {
     try {
       setLoading(true)
-      // Load up to 500 sellers instead of default 50
-      let url = '/api/admin/seller-badges?limit=500'
+      let url = `/api/admin/seller-badges?limit=${limit}&offset=${pageOffset}`
       if (badgeFilter) {
         url += `&badge=${badgeFilter}`
       }
@@ -57,12 +60,28 @@ export default function AdminSellerBadgesPage() {
       if (!res.ok) throw new Error('Failed to fetch sellers')
       const data = await res.json()
       setSellers(data.sellers || [])
+      setTotal(data.pagination?.total || 0)
+      setOffset(pageOffset)
     } catch (error) {
       console.error('Fetch error:', error)
       toast.error('Failed to load sellers')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleNextPage = () => {
+    const nextOffset = offset + limit
+    if (nextOffset < total) {
+      fetchSellers(nextOffset)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handlePrevPage = () => {
+    const prevOffset = Math.max(0, offset - limit)
+    fetchSellers(prevOffset)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleBadgeChange = async (sellerId: string, badge: string | null) => {
@@ -74,7 +93,7 @@ export default function AdminSellerBadgesPage() {
       })
       if (!res.ok) throw new Error('Failed to update badge')
       toast.success('Seller badge updated')
-      fetchSellers()
+      fetchSellers(offset)
     } catch (error) {
       console.error('Error:', error)
       toast.error('Failed to update badge')
@@ -134,6 +153,31 @@ export default function AdminSellerBadgesPage() {
             </select>
           </div>
 
+          {/* Pagination Info */}
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {offset + 1} to {Math.min(offset + limit, total)} of {total} sellers
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={offset === 0 || loading}
+                  className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={handleNextPage}
+                  disabled={offset + limit >= total || loading}
+                  className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Sellers Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6">
             {sellers.length === 0 ? (
@@ -147,11 +191,38 @@ export default function AdminSellerBadgesPage() {
                   seller={seller}
                   onBadgeChange={handleBadgeChange}
                   getBadgeColor={getBadgeColor}
-                  fetchSellers={fetchSellers}
+                  fetchSellers={() => fetchSellers(offset)}
                 />
               ))
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {total > limit && (
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Page {Math.floor(offset / limit) + 1} of {Math.ceil(total / limit)}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={offset === 0 || loading}
+                    className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={offset + limit >= total || loading}
+                    className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

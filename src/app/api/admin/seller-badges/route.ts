@@ -21,14 +21,14 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const badge = searchParams.get('badge')
     const limitParam = parseInt(searchParams.get('limit') || '50')
-    const limit = Number.isNaN(limitParam) || limitParam < 1 ? 50 : Math.min(limitParam, 100)
+    const limit = Number.isNaN(limitParam) || limitParam < 1 ? 50 : Math.min(limitParam, 500)
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
 
     const where: Record<string, unknown> = {
       // Show all users (ADMIN, USER, SELLER roles) - sellers are anyone with designs/sales
       OR: [
         { totalSales: { gt: 0 } },  // Has made sales
-        { designs: { some: {} } }   // Has uploaded designs
+        { avgRating: { gt: 0 } }    // Has ratings from reviews
       ]
     }
 
