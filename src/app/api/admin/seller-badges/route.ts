@@ -25,7 +25,11 @@ export async function GET(request: NextRequest) {
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
 
     const where: Record<string, unknown> = {
-      role: { in: ['SELLER', 'ADMIN'] }
+      // Show all users (ADMIN, USER, SELLER roles) - sellers are anyone with designs/sales
+      OR: [
+        { totalSales: { gt: 0 } },  // Has made sales
+        { designs: { some: {} } }   // Has uploaded designs
+      ]
     }
 
     if (badge) {
