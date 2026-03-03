@@ -48,9 +48,10 @@ export default function AdminSellerBadgesPage() {
   const fetchSellers = async () => {
     try {
       setLoading(true)
-      let url = '/api/admin/seller-badges'
+      // Load up to 500 sellers instead of default 50
+      let url = '/api/admin/seller-badges?limit=500'
       if (badgeFilter) {
-        url += `?badge=${badgeFilter}`
+        url += `&badge=${badgeFilter}`
       }
       const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch sellers')
