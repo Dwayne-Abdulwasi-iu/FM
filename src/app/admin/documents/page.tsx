@@ -6,12 +6,13 @@ import { Download, FileText, Eye, Copy, Check, Plus, Trash2, Archive, CheckCircl
 import toast from 'react-hot-toast'
 
 interface DocumentInfo {
-  id: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract'
+  id: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract' | 'designer_ownership' | 'designer_premium' | 'designer_workforhire'
   title: string
   description: string
   longDescription: string
   icon: React.ReactNode
   importance: 'critical' | 'important' | 'reference'
+  category?: 'corporate' | 'designer'
 }
 
 interface DocumentVersion {
@@ -35,7 +36,8 @@ const DOCUMENTS: DocumentInfo[] = [
     description: 'Defines the company\'s name, objects, and authorized capital',
     longDescription: 'The Memorandum of Association (MOA) is the founding document of your company. It specifies your company\'s name, primary objectives, authorized share capital, and liability of members. This document is essential for company registration and defines the external constitution of your company.',
     icon: <FileText className="w-6 h-6" />,
-    importance: 'critical'
+    importance: 'critical',
+    category: 'corporate'
   },
   {
     id: 'aoa',
@@ -43,7 +45,8 @@ const DOCUMENTS: DocumentInfo[] = [
     description: 'Governs internal management, shares, and operations',
     longDescription: 'The Articles of Association (AOA) is the internal constitution of your company. It covers share capital, member rights, general meetings, board of directors, staff employment, financial management, and operational procedures. This document provides the framework for how your company operates.',
     icon: <FileText className="w-6 h-6" />,
-    importance: 'critical'
+    importance: 'critical',
+    category: 'corporate'
   },
   {
     id: 'shareholder_agreement',
@@ -51,7 +54,8 @@ const DOCUMENTS: DocumentInfo[] = [
     description: 'Governs share transfers, investor protections, and dispute resolution',
     longDescription: 'The Shareholder Agreement is a comprehensive contract between shareholders covering share transfers, voting rights, drag-along/tag-along rights, deadlock resolution, valuation mechanisms, and future partnerships. Essential for protecting shareholder interests and managing ownership transitions.',
     icon: <FileText className="w-6 h-6" />,
-    importance: 'important'
+    importance: 'important',
+    category: 'corporate'
   },
   {
     id: 'employment_contract',
@@ -59,7 +63,35 @@ const DOCUMENTS: DocumentInfo[] = [
     description: 'Template for employment agreements with all legal requirements',
     longDescription: 'Professional employment contract template covering compensation, benefits, working hours, leave entitlements, confidentiality, intellectual property, termination procedures, and statutory compliance. Customizable for different employee roles and requirements.',
     icon: <FileText className="w-6 h-6" />,
-    importance: 'important'
+    importance: 'important',
+    category: 'corporate'
+  },
+  {
+    id: 'designer_ownership',
+    title: 'Design Ownership Purchase Agreement',
+    description: 'Platform purchases exclusive copyright ownership of designs',
+    longDescription: 'Agreement for purchasing full copyright ownership of designs from designers. Platform acquires all rights to sell, modify, and distribute designs worldwide in perpetuity. Includes warranties, non-compete clauses, and indemnification terms. Best for bulk library building.',
+    icon: <FileText className="w-6 h-6" />,
+    importance: 'critical',
+    category: 'designer'
+  },
+  {
+    id: 'designer_premium',
+    title: 'Premium Creator Partnership (3 Designs/Month)',
+    description: 'Exclusive 12-month partnership with monthly retainer or revenue share',
+    longDescription: 'Long-term exclusive partnership where designer commits to 3 original designs per month for 12 months. Platform gets exclusive rights for 90 days, then non-exclusive perpetual license. Designer receives monthly retainer or 60% revenue share (whichever is higher) plus premium benefits including featured badge, priority support, and co-marketing opportunities.',
+    icon: <FileText className="w-6 h-6" />,
+    importance: 'critical',
+    category: 'designer'
+  },
+  {
+    id: 'designer_workforhire',
+    title: 'Work-For-Hire Commission Agreement',
+    description: 'Platform commissions specific designs with design briefs',
+    longDescription: 'Agreement for platform-initiated design commissions. Designer creates specific design(s) based on platform brief and receives one-time payment. Platform owns 100% copyright and has exclusive distribution rights for 24 months. Includes NDA clause (₦1M/₦10K penalty for breach), revision limits, and timeline requirements.',
+    icon: <FileText className="w-6 h-6" />,
+    importance: 'important',
+    category: 'designer'
   }
 ]
 
@@ -154,7 +186,7 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleDownload = async (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract', format: 'txt' | 'json' | 'html') => {
+  const handleDownload = async (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract' | 'designer_ownership' | 'designer_premium' | 'designer_workforhire', format: 'txt' | 'json' | 'html') => {
     setDownloading(`${type}-${format}`)
     try {
       const response = await fetch(`/api/documents/download?type=${type}&format=${format}`)
@@ -172,7 +204,10 @@ export default function DocumentsPage() {
         'moa': 'Memorandum_of_Association',
         'aoa': 'Articles_of_Association',
         'shareholder_agreement': 'Shareholder_Agreement',
-        'employment_contract': 'Employment_Contract'
+        'employment_contract': 'Employment_Contract',
+        'designer_ownership': 'Design_Ownership_Purchase_Agreement',
+        'designer_premium': 'Premium_Creator_Partnership_Agreement',
+        'designer_workforhire': 'Work_For_Hire_Commission_Agreement'
       }
       
       const fileName = fileNames[type] || 'Document'
@@ -191,7 +226,7 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleView = (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract') => {
+  const handleView = (type: 'moa' | 'aoa' | 'shareholder_agreement' | 'employment_contract' | 'designer_ownership' | 'designer_premium' | 'designer_workforhire') => {
     window.open(`/api/documents/download?type=${type}&format=html`, '_blank')
   }
 
@@ -234,79 +269,163 @@ export default function DocumentsPage() {
           </ul>
         </div>
 
-        {/* Documents Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {DOCUMENTS.map((doc) => (
-            <div key={doc.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
-              {/* Card Header */}
-              <div className={`p-6 bg-gradient-to-r ${
-                doc.importance === 'critical' 
-                  ? 'from-red-500 to-pink-500' 
-                  : 'from-blue-500 to-indigo-500'
-              } text-white`}>
-                <div className="flex items-center gap-3 mb-3">
-                  {doc.icon}
-                  <span className="px-2 py-1 bg-white/20 rounded text-xs font-semibold">
-                    {doc.importance.toUpperCase()}
-                  </span>
+        {/* Corporate Documents Section */}
+        <div className="mb-12">
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Corporate Documents</h3>
+            <p className="text-gray-600">Foundational company and legal documents</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {DOCUMENTS.filter(doc => doc.category === 'corporate').map((doc) => (
+              <div key={doc.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                {/* Card Header */}
+                <div className={`p-6 bg-gradient-to-r ${
+                  doc.importance === 'critical' 
+                    ? 'from-red-500 to-pink-500' 
+                    : 'from-blue-500 to-indigo-500'
+                } text-white`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    {doc.icon}
+                    <span className="px-2 py-1 bg-white/20 rounded text-xs font-semibold">
+                      {doc.importance.toUpperCase()}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">{doc.title}</h2>
+                  <p className="text-white/90">{doc.description}</p>
                 </div>
-                <h2 className="text-2xl font-bold mb-2">{doc.title}</h2>
-                <p className="text-white/90">{doc.description}</p>
-              </div>
 
-              {/* Card Body */}
-              <div className="p-6">
-                <p className="text-gray-700 mb-6 leading-relaxed">
-                  {doc.longDescription}
-                </p>
+                {/* Card Body */}
+                <div className="p-6">
+                  <p className="text-gray-700 mb-6 leading-relaxed">
+                    {doc.longDescription}
+                  </p>
 
-                {/* Download Options */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-3">Download Options:</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['txt', 'json', 'html'].map((format) => (
-                      <button
-                        key={format}
-                        onClick={() => handleDownload(doc.id, format as 'txt' | 'json' | 'html')}
-                        disabled={downloading === `${doc.id}-${format}`}
-                        className="flex items-center justify-center gap-1 px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="text-xs">{format.toUpperCase()}</span>
-                      </button>
-                    ))}
+                  {/* Download Options */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">Download Options:</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['txt', 'json', 'html'].map((format) => (
+                        <button
+                          key={format}
+                          onClick={() => handleDownload(doc.id as any, format as 'txt' | 'json' | 'html')}
+                          disabled={downloading === `${doc.id}-${format}`}
+                          className="flex items-center justify-center gap-1 px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="text-xs">{format.toUpperCase()}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleView(doc.id as any)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleCopyInfo(doc.id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                    >
+                      {copied === doc.id ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy Link
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleView(doc.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View
-                  </button>
-                  <button
-                    onClick={() => handleCopyInfo(doc.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-                  >
-                    {copied === doc.id ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy Link
-                      </>
-                    )}
-                  </button>
+        {/* Designer Contracts Section */}
+        <div className="mb-12">
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Designer Contracts</h3>
+            <p className="text-gray-600">Agreements for recruiting and partnering with designers. Designers choose which contract model suits their needs.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {DOCUMENTS.filter(doc => doc.category === 'designer').map((doc) => (
+              <div key={doc.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden border-t-4 border-purple-600">
+                {/* Card Header */}
+                <div className="p-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    {doc.icon}
+                    <span className="px-2 py-1 bg-white/20 rounded text-xs font-semibold">
+                      {doc.importance.toUpperCase()}
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-bold mb-2">{doc.title}</h2>
+                  <p className="text-white/90 text-sm">{doc.description}</p>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-6">
+                  <p className="text-gray-700 text-sm mb-6 leading-relaxed">
+                    {doc.longDescription}
+                  </p>
+
+                  {/* Download Options */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 mb-3 text-sm">Download Options:</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['txt', 'json', 'html'].map((format) => (
+                        <button
+                          key={format}
+                          onClick={() => handleDownload(doc.id as any, format as 'txt' | 'json' | 'html')}
+                          disabled={downloading === `${doc.id}-${format}`}
+                          className="flex items-center justify-center gap-1 px-2 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span className="hidden sm:inline">{format.toUpperCase()}</span>
+                          <span className="sm:hidden">{format.slice(0, 1).toUpperCase()}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleView(doc.id as any)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-sm"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleCopyInfo(doc.id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-sm"
+                    >
+                      {copied === doc.id ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy Link
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Instructions Section */}

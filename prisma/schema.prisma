@@ -208,6 +208,9 @@ model User {
   documentVersionsCreated DocumentVersion[] @relation("DocumentVersionCreated")
   documentVersionsApproved DocumentVersion[] @relation("DocumentVersionApproved")
   documentUsageRecords DocumentUsage[] @relation("DocumentUsage")
+  
+  // Designer Contracts
+  designerContracts DesignerContract[] @relation("DesignerContracts")
 
   // Essential indexes for user queries
   @@index([role])
@@ -3504,4 +3507,57 @@ model DocumentUsage {
   @@index([usageType])
   @@index([accessedAt])
   @@map("document_usage")
+}
+
+model DesignerContract {
+  id                  String   @id @default(cuid()) @map("_id")
+  
+  // Designer info
+  designerId          String
+  designer            User     @relation("DesignerContracts", fields: [designerId], references: [id], onDelete: Cascade)
+  
+  // Contract type
+  contractType        String   // OWNERSHIP_PURCHASE, PREMIUM_PARTNERSHIP, WORK_FOR_HIRE
+  
+  // Contract status
+  status              String   @default("PENDING_REVIEW") // PENDING_REVIEW, OFFERED, SIGNED, ACTIVE, ARCHIVED, CANCELLED
+  
+  // Signature & Agreement
+  signedAt            DateTime?
+  signedBy            String?  // Email or name of signer
+  agreementDocHash    String?  // Hash of agreed document for verification
+  
+  // Contract terms
+  monthlyRetainer     Float?   // For PREMIUM_PARTNERSHIP
+  commissionRate      Float?   // For PREMIUM_PARTNERSHIP (default 60%)
+  designsPerMonth     Int?     // For PREMIUM_PARTNERSHIP (e.g., 3)
+  exclusivityDays     Int?     // Number of days design is exclusive (90, 180, etc.)
+  
+  // For OWNERSHIP_PURCHASE
+  purchasePrice       Float?
+  purchaseCurrency    String?  // USD, NGN
+  designIds           String[] // Array of design IDs being purchased
+  
+  // For WORK_FOR_HIRE
+  projectName         String?
+  commissionAmount    Float?
+  commissionCurrency  String?
+  deliveryDeadline    DateTime?
+  revisionRounds      Int?     // Max revision rounds included
+  ndaClause           Boolean  @default(true)
+  
+  // Admin info
+  offeredBy           String? // Admin email who sent the contract
+  offeredAt           DateTime?
+  notes               String?
+  
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([designerId])
+  @@index([status])
+  @@index([contractType])
+  @@index([createdAt])
+  @@map("designer_contracts")
 }
