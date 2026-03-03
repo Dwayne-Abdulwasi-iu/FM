@@ -121,11 +121,54 @@ export async function GET(request: NextRequest) {
  * Format template as styled HTML for printing/viewing
  */
 function formatAsHTML(content: string, title: string): string {
-  const escapedContent = content
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br>')
+  // Parse content into structured sections for better styling
+  const lines = content.split('\n')
+  let htmlContent = ''
+  let inSection = false
+  let sectionNumber = 0
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    // Section headers (e.g., "1. OWNERSHIP TRANSFER")
+    if (/^\d+\./.test(trimmed)) {
+      htmlContent += `<h3 class="section-heading">${escapeHtml(trimmed)}</h3>\n<div class="section-content">\n`
+      inSection = true
+      sectionNumber++
+    }
+    // Bold subsection headers
+    else if (/^[A-Z][A-Z\s]+:$/.test(trimmed) && trimmed.length < 80) {
+      if (inSection) htmlContent += '</div>\n'
+      htmlContent += `<h4 class="subsection-heading">${escapeHtml(trimmed)}</h4>\n`
+      inSection = true
+    }
+    // Checkmarks and X marks with styling
+    else if (trimmed.startsWith('✅') || trimmed.startsWith('✓')) {
+      htmlContent += `<div class="item-approved">${escapeHtml(trimmed)}</div>\n`
+    } else if (trimmed.startsWith('❌') || trimmed.startsWith('✗')) {
+      htmlContent += `<div class="item-denied">${escapeHtml(trimmed)}</div>\n`
+    }
+    // Bullet points
+    else if (trimmed.startsWith('-') && trimmed.length > 1) {
+      htmlContent += `<div class="bullet-point">${escapeHtml(trimmed.substring(1).trim())}</div>\n`
+    }
+    // Numbered items
+    else if (/^\d+\./.test(trimmed) && trimmed.length < 150) {
+      htmlContent += `<div class="numbered-item">${escapeHtml(trimmed)}</div>\n`
+    }
+    // Horizontal dividers
+    else if (trimmed === '---' || trimmed === '----') {
+      if (inSection) htmlContent += '</div>\n'
+      htmlContent += `<div class="divider"></div>\n`
+      inSection = false
+    }
+    // Regular paragraph
+    else if (trimmed.length > 0) {
+      htmlContent += `<p class="paragraph">${escapeHtml(trimmed)}</p>\n`
+    }
+  }
+
+  if (inSection) htmlContent += '</div>\n'
 
   return `
 <!DOCTYPE html>
@@ -141,72 +184,246 @@ function formatAsHTML(content: string, title: string): string {
       box-sizing: border-box;
     }
     
+    html {
+      scroll-behavior: smooth;
+    }
+    
     body {
-      font-family: 'Times New Roman', Times, serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f5f5f5;
-      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      line-height: 1.8;
+      color: #2c3e50;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 30px 20px;
+      min-height: 100vh;
     }
     
     .container {
       max-width: 900px;
       margin: 0 auto;
-      background-color: white;
-      padding: 40px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      background-color: #ffffff;
+      padding: 60px 50px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px 8px 0 0;
     }
     
     .header {
       text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 3px double #000;
-      padding-bottom: 15px;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 2px solid #e8ebf0;
     }
     
     .header h1 {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
     }
     
-    .header p {
+    .header .company {
+      font-size: 14px;
+      color: #667eea;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    
+    .header .date {
       font-size: 12px;
-      color: #666;
+      color: #718096;
+      font-style: italic;
     }
     
-    .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #ccc;
-      font-size: 10px;
-      color: #999;
+    .divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #e8ebf0, transparent);
+      margin: 35px 0;
     }
     
-    .content {
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      line-height: 1.5;
+    .section-heading {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a202c;
+      margin-top: 35px;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      display: inline-block;
+    }
+    
+    .section-content {
+      margin-left: 0;
+      margin-bottom: 25px;
+    }
+    
+    .subsection-heading {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2d3748;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #667eea;
+    }
+    
+    .paragraph {
+      margin-bottom: 14px;
+      line-height: 1.8;
+      text-align: justify;
+    }
+    
+    .bullet-point {
+      margin-left: 30px;
+      margin-bottom: 10px;
+      line-height: 1.7;
+      border-left: 3px solid #e8ebf0;
+      padding-left: 15px;
+    }
+    
+    .numbered-item {
+      margin-left: 30px;
+      margin-bottom: 10px;
+      line-height: 1.7;
+      color: #2d3748;
+    }
+    
+    .item-approved {
+      margin-left: 30px;
+      margin-bottom: 10px;
+      color: #22863a;
+      font-weight: 500;
+      padding: 8px 12px;
+      background-color: #f0f8f4;
+      border-left: 3px solid #28a745;
+      border-radius: 3px;
+    }
+    
+    .item-denied {
+      margin-left: 30px;
+      margin-bottom: 10px;
+      color: #cb2431;
+      font-weight: 500;
+      padding: 8px 12px;
+      background-color: #ffeef0;
+      border-left: 3px solid #cb2431;
+      border-radius: 3px;
     }
     
     .disclaimer {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #fff3cd;
-      border: 1px solid #ffc107;
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #fef8e7;
+      border-left: 4px solid #f39c12;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #7d6608;
+    }
+    
+    .disclaimer strong {
+      color: #a97e04;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    
+    .signatures {
+      margin-top: 60px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    
+    .signature-block {
+      border-top: 1px solid #2c3e50;
+      padding-top: 10px;
+      text-align: left;
+      font-size: 12px;
+    }
+    
+    .signature-block strong {
+      display: block;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    
+    .signature-label {
+      font-size: 11px;
+      color: #718096;
+      margin-bottom: 3px;
+    }
+    
+    .footer {
+      margin-top: 50px;
+      padding-top: 25px;
+      border-top: 2px solid #e8ebf0;
+      text-align: center;
+      font-size: 11px;
+      color: #718096;
+      line-height: 1.8;
+    }
+    
+    .footer p {
+      margin-bottom: 6px;
     }
     
     @media print {
       body {
-        background-color: white;
+        background: white;
         padding: 0;
       }
+      
       .container {
         box-shadow: none;
+        border-radius: 0;
         max-width: 100%;
+        padding: 50px 40px;
+      }
+      
+      .container::before {
+        background: #667eea;
+      }
+      
+      @page {
+        margin: 1in;
+      }
+      
+      .divider {
+        background: #e8ebf0;
+      }
+    }
+    
+    @media screen and (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+      }
+      
+      .header h1 {
+        font-size: 22px;
+      }
+      
+      .section-heading {
+        font-size: 16px;
+      }
+      
+      .signatures {
+        grid-template-columns: 1fr;
+        gap: 30px;
       }
     }
   </style>
@@ -214,30 +431,60 @@ function formatAsHTML(content: string, title: string): string {
 <body>
   <div class="container">
     <div class="header">
+      <div class="company">Fashion Marketplace</div>
       <h1>${title}</h1>
-      <p>Fashion Marketplace Platform</p>
-      <p>Generated on ${new Date().toLocaleDateString()}</p>
+      <div class="date">Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
     </div>
     
     <div class="content">
-${escapedContent}
+${htmlContent}
+    </div>
+    
+    <div class="signatures">
+      <div class="signature-block">
+        <strong>Designer / Creator</strong>
+        <div class="signature-label">Signature: ________________________</div>
+        <div class="signature-label">Name: ________________________</div>
+        <div class="signature-label">Date: ________________________</div>
+      </div>
+      <div class="signature-block">
+        <strong>Fashion Marketplace Platform</strong>
+        <div class="signature-label">Signature: ________________________</div>
+        <div class="signature-label">Name: ________________________</div>
+        <div class="signature-label">Date: ________________________</div>
+      </div>
     </div>
     
     <div class="disclaimer">
-      <strong>IMPORTANT DISCLAIMER:</strong><br>
-      This is a template document. You MUST:
-      <br>1. Customize all [INSERT ...] sections with your actual information
-      <br>2. Have this reviewed by a legal professional in your jurisdiction
-      <br>3. Comply with local company registration requirements
-      <br>4. Register with the appropriate corporate authority
+      <strong>⚠️ IMPORTANT DISCLAIMER</strong>
+      This is a template document. Before execution, you MUST:
+      <br>• Customize all [INSERT ...] sections with your actual information
+      <br>• Have this reviewed by a legal professional in your jurisdiction
+      <br>• Ensure compliance with local laws and regulations
+      <br>• Both parties must sign and retain copies for their records
     </div>
     
     <div class="footer">
-      <p>This document was generated by Fashion Marketplace Platform Management System</p>
-      <p>For legal advice, please consult a qualified attorney.</p>
+      <p><strong>Fashion Marketplace Platform Legal Document Management System</strong></p>
+      <p>This document was generated from the Fashion Marketplace Platform. For legal advice, consult a qualified attorney.</p>
+      <p style="margin-top: 15px; color: #cbd5e0;">© 2026 Fashion Marketplace. All rights reserved.</p>
     </div>
   </div>
 </body>
 </html>
   `
+}
+
+/**
+ * Escape HTML special characters
+ */
+function escapeHtml(text: string): string {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }
+  return text.replace(/[&<>"']/g, (m) => map[m])
 }
