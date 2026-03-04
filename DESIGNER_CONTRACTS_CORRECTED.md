@@ -430,10 +430,17 @@ Platform: _________________________ Date: __________
 - Retainer not capped (Designer keeps 60% of all sales above minimum)
 
 **[OPTION C: Hybrid (Best for Both Parties)]**
-- Base Retainer: ₦[X] per month (guaranteed minimum)
-- Plus: 50% revenue share on sales exceeding ₦50,000/$500/month
-- Example: ₦100K retainer + 50% of all sales over ₦50K
-- Capped at [optional: no cap / cap of ₦[X]/month]
+
+A. **Base Retainer:** The Platform shall pay the Designer a guaranteed monthly fee of ₦[Insert Amount]. This fee is payable regardless of sales volume and ensures the Designer's ongoing availability for [list services, e.g., maintenance and updates].
+
+B. **Performance Bonus (The "Mark" System):**
+   • The Threshold: The "Platform Mark" is set at ₦[Insert Your Break-Even Goal] in Gross Sales per calendar month.
+   • The Calculation: For every Naira generated above the Platform Mark, the Designer shall earn a performance bonus of 15%.
+   • Example: If the Mark is ₦100,000 and monthly sales reach ₦150,000, the Designer earns 15% of the ₦50,000 excess (₦7,500).
+
+C. **Payment Terms:** The Base Retainer shall be paid on the [e.g., 1st] of each month. The Performance Bonus shall be calculated at the end of the month and paid by the [e.g., 5th] of the following month.
+
+D. **Maximum Payout (Optional Cap):** To ensure platform sustainability, the total monthly Performance Bonus shall not exceed ₦[Insert Cap Amount] per month.
 
 **[PLATFORM MUST SELECT AND CIRCLE ONE ABOVE]**
 
