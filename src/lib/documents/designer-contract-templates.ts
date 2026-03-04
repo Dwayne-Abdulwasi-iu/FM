@@ -341,31 +341,29 @@ Designer Retains:
 
 3A. PAYMENT STRUCTURE - CHOOSE ONE (MUST BE EXPLICIT):
 
-**[OPTION A: Guaranteed Monthly Retainer - RECOMMENDED]**
-- Designer receives ₦[X,XXX] or $[XXX] per month, regardless of sales
-- Payment guaranteed on [specific date, e.g., 30th of each month]
-- Plus 10% bonus commission if monthly sales exceed ₦50,000/$500
-- Minimum guaranteed: ₦[X] per month for 12 months
-- Total commitment: ₦[X × 12] annually
+**[OPTION A: Guaranteed Monthly Retainer + Performance Bonus]** ⭐ RECOMMENDED
+- Designer receives ₦[X,XXX] or $[XXX] per month Base Retainer (guaranteed, non-refundable)
+- This fee covers 3 design submissions monthly, regardless of sales volume
+- Platform Mark (Threshold): ₦[Insert Break-Even Goal] in Gross Sales per calendar month
+- Performance Bonus: Designer earns 15% of all Gross Sales exceeding the Mark
+- Example: If Mark is ₦100,000 and monthly sales reach ₦150,000, Designer earns ₦[Retainer] + 15% of ₦50,000 excess (₦7,500)
+- Maximum Cap: Total monthly Performance Bonus shall NOT exceed ₦[Insert Cap] per month (ensures platform sustainability)
+- Total Potential Monthly: ₦[Retainer] + up to ₦[Cap] = ₦[Max Total]
 
-**[OPTION B: Pure Revenue Share]**
+**[OPTION B: Pure Revenue Share (Retainer Model)]**
 - Designer receives 60% of gross design sales revenue
 - Monthly minimum: ₦[X] or $[X]
 - If monthly sales fall below this, Platform subsidizes the difference
 - Retainer not capped (Designer keeps 60% of all sales above minimum)
-
-**[OPTION C: Hybrid (Best for Both Parties)]**
-- Base Retainer: ₦[X] per month (guaranteed minimum)
-- Plus: 50% revenue share on sales exceeding ₦50,000/$500/month
-- Example: ₦100K retainer + 50% of all sales over ₦50K
-- Capped at [optional: no cap / cap of ₦[X]/month]
+- ⚠️ WARNING: This option may result in significant Platform losses if Designer prolific
 
 **[PLATFORM MUST SELECT AND CIRCLE ONE ABOVE]**
 
-Payment Method:
-- Paystack Bank Transfer / Stripe / Direct Bank Deposit
-- Paid monthly no later than [5th of following month]
-- Designer receives itemized sales report with payment
+Payment Terms:
+- Base Retainer: Paid on [specific date, e.g., 1st of each month]
+- Performance Bonus: Calculated at end of calendar month, paid by [5th of following month]
+- Payment Method: Paystack Bank Transfer / Stripe / Direct Bank Deposit
+- Designer receives: Itemized sales report with bonus calculation breakdown
 
 3B. Premium Benefits (Annual, for duration of contract):
 ✅ Featured Designer Badge on Designer profile (verified checkmark)
