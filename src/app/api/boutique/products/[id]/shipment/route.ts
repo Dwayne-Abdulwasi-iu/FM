@@ -148,7 +148,7 @@ export async function POST(
         <p>Our warehouse team will notify you once they receive and inspect your shipment.</p>
         
         <p>
-          <a href="${baseUrl}/seller/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+          <a href="${baseUrl}/seller/boutique/ship" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
             Track Shipment
           </a>
         </p>

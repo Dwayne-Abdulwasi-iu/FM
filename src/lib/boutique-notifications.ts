@@ -157,7 +157,7 @@ export async function notifyContentApproved(
       </p>
       
       <p style="margin-top: 30px;">
-        <a href="https://fashion-marketplace.com/seller/boutique" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        <a href="${process.env.NEXTAUTH_URL || 'https://fashionmarketplace.store'}/seller/boutique" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
           View Your Products
         </a>
       </p>
@@ -221,7 +221,7 @@ export async function notifyContentRejected(
       </p>
       
       <p style="margin-top: 30px;">
-        <a href="https://fashion-marketplace.com/seller/boutique" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        <a href="${process.env.NEXTAUTH_URL || 'https://fashionmarketplace.store'}/seller/boutique" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
           Edit Product
         </a>
       </p>
@@ -426,7 +426,7 @@ export async function notifyProductStatusChange(
           <p style="font-size: 18px; font-weight: bold; color: #27ae60;">Your product <strong>"${productTitle}"</strong> is now live on the marketplace!</p>
           <p style="color: #666;">Buyers can now see and purchase your product. Check your dashboard to monitor sales and inventory.</p>
           <p>
-            <a href="https://fashion-marketplace.com/seller/boutique" style="display: inline-block; background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            <a href="${process.env.NEXTAUTH_URL || 'https://fashionmarketplace.store'}/seller/boutique" style="display: inline-block; background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
               View Your Product
             </a>
           </p>

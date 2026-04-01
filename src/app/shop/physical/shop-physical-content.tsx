@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, Star, Heart, Filter, Grid, List, ChevronDown } from 'lucide-react'
-import { convertFromUSD } from '@/lib/currency'
+import { convertFromUSD, formatNGNPrice } from '@/lib/currency'
 
 interface Product {
   id: string
@@ -69,7 +69,9 @@ export default function ShopPhysicalContent() {
     }
   }
 
-  const formatPrice = (priceUSD: number) => {
+  // Boutique prices are stored in NGN — use formatNGNPrice instead
+  // Legacy formatPrice kept for non-boutique items if needed in future
+  const _formatPrice = (priceUSD: number) => {
     let convertedAmount = priceUSD
     
     if (preferredCurrency !== 'USD' && exchangeRates[preferredCurrency]) {
@@ -274,7 +276,7 @@ export default function ShopPhysicalContent() {
                     <span className="text-[8px] text-gray-600 ml-0.5">({product._count?.reviews ?? 0})</span>
                   </div>
                   <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                    <span className="font-bold text-indigo-600 text-[10px] sm:text-xs">{formatPrice(product.basePrice)}</span>
+                    <span className="font-bold text-indigo-600 text-[10px] sm:text-xs">{formatNGNPrice(product.basePrice)}</span>
                     <span className="text-[8px] text-gray-600 truncate ml-1">{(product.seller?.displayName || product.seller?.name || 'Unknown').slice(0, 8)}</span>
                   </div>
                 </div>
@@ -314,7 +316,7 @@ export default function ShopPhysicalContent() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm sm:text-base text-indigo-600">{formatPrice(product.basePrice)}</span>
+                    <span className="font-bold text-sm sm:text-base text-indigo-600">{formatNGNPrice(product.basePrice)}</span>
                     <button className="p-1 hover:bg-gray-100 rounded-lg transition" title="Add to wishlist">
                       <Heart className="w-4 h-4 text-gray-400" />
                     </button>

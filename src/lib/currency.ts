@@ -178,6 +178,19 @@ export function detectUserCurrency(locale?: string): string {
 }
 
 /**
+ * Format a price that is already stored in NGN (e.g. boutique products).
+ * Does NOT apply USD-to-NGN conversion — the value is already in Naira.
+ */
+export function formatNGNPrice(amountNGN: number): string {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amountNGN)
+}
+
+/**
  * Get all supported currencies for dropdown
  */
 export function getSupportedCurrencies(): CurrencyConfig[] {

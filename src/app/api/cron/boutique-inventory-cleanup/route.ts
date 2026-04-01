@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
           </table>
 
           <p style="margin-top: 24px;">
-            <a href="${process.env.NEXTAUTH_URL}/admin/boutique/products?status=LIQUIDATED" 
+            <a href="${process.env.NEXTAUTH_URL}/admin/boutique" 
                style="background: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
               View Liquidated Products
             </a>

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ArrowLeft, AlertTriangle, Calendar, Truck, AlertCircle, Play, X } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { useCurrency } from '@/components/CurrencyProvider';
+import { formatNGNPrice } from '@/lib/currency';
 
 interface ProductMedia {
   id: string;
@@ -43,7 +43,7 @@ interface RejectedProduct {
 export default function SellerRejectedProductsPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
-  const { formatPrice } = useCurrency();
+  // Boutique prices are stored in NGN — no conversion needed
   const [products, setProducts] = useState<RejectedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -278,7 +278,7 @@ export default function SellerRejectedProductsPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-xs sm:text-sm text-gray-900">{formatPrice(product.basePrice)}</p>
+                        <p className="font-semibold text-xs sm:text-sm text-gray-900">{formatNGNPrice(product.basePrice)}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
                           REJECTED
                         </span>
@@ -311,7 +311,7 @@ export default function SellerRejectedProductsPage() {
                           </div>
                           <div>
                             <span className="text-gray-600">Base Price</span>
-                            <p className="text-gray-900 mt-0.5">{formatPrice(product.basePrice)}</p>
+                            <p className="text-gray-900 mt-0.5">{formatNGNPrice(product.basePrice)}</p>
                           </div>
                           <div>
                             <span className="text-gray-600">Category</span>

@@ -128,7 +128,7 @@ export async function POST(
         <p>You will receive an email notification once the review is complete.</p>
         
         <p>
-          <a href="${baseUrl}/seller/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
+          <a href="${baseUrl}/seller/boutique" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 8px;">
             View Product
           </a>
         </p>
@@ -156,7 +156,7 @@ export async function POST(
         </ul>
         
         <p>
-          <a href="${baseUrl}/admin/boutique/products/${id}" style="display: inline-block; padding: 12px 24px; background-color: #FF6B6B; color: white; text-decoration: none; border-radius: 8px;">
+          <a href="${baseUrl}/admin/boutique/product-details/${id}" style="display: inline-block; padding: 12px 24px; background-color: #FF6B6B; color: white; text-decoration: none; border-radius: 8px;">
             Review Product
           </a>
         </p>

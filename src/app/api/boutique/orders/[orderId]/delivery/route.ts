@@ -111,9 +111,9 @@ export async function POST(
           <p>Your order will be marked as complete and funds will be released to your account soon.</p>
 
           <p style="margin-top: 24px;">
-            <a href="${process.env.NEXTAUTH_URL}/seller/boutique/orders/${orderId}" 
+            <a href="${process.env.NEXTAUTH_URL}/seller/boutique/orders" 
                style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
-              View Order
+              View Orders
             </a>
           </p>
         `,

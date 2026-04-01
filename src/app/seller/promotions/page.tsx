@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCurrency } from '@/components/CurrencyProvider'
+import { formatNGNPrice } from '@/lib/currency'
 import {
   Tag,
   Plus,
@@ -614,7 +615,7 @@ export default function SellerPromotionsPage() {
                                   </div>
                                 </div>
                                 <p className="text-xs sm:text-sm font-medium text-gray-900 mt-1 line-clamp-2">{product.title}</p>
-                                <p className="text-xs text-gray-500">{formatPrice(product.basePrice)}</p>
+                                <p className="text-xs text-gray-500">{formatNGNPrice(product.basePrice)}</p>
                               </Link>
                             ))}
                         </div>

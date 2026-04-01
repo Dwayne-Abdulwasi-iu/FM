@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { useCurrency } from '@/components/CurrencyProvider';
+import { formatNGNPrice } from '@/lib/currency';
 import {
   Package,
   Plus,
@@ -82,7 +82,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
 export default function SellerBoutiquePage() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
-  const { formatPrice } = useCurrency();
+  // Boutique prices are stored in NGN — use direct NGN formatter
+  const formatPrice = formatNGNPrice;
   const [products, setProducts] = useState<BoutiqueProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
