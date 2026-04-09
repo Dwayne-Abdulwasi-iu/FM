@@ -31,7 +31,7 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
 // Last updated: January 2026 - update periodically as a safety net
 let exchangeRatesCache: Record<string, number> = {
   USD: 1,
-  NGN: 1600,  // Default fallback (aligned with paystack.ts)
+  NGN: 1372,  // Default fallback updated to match the latest live USD/NGN rate source
   GBP: 0.79,
   EUR: 0.92,
   GHS: 16,

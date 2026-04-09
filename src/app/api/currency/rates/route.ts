@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({
       rates: {
         USD: 1,
-        NGN: rates.NGN || 1600,
+        NGN: rates.NGN || 1372,
         EUR: rates.EUR || 0.92,
         GBP: rates.GBP || 0.79,
         GHS: rates.GHS || 16,
@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({
       rates: {
         USD: 1,
-        NGN: 1600,
+        NGN: 1372,
         EUR: 0.92,
         GBP: 0.79,
         GHS: 16,

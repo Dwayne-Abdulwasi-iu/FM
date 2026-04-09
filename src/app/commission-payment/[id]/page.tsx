@@ -56,7 +56,7 @@ export default function CommissionPaymentPage({ params }: { params: Promise<{ id
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [clearingSession, setClearingSession] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paystack'>('stripe');
-  const [exchangeRate, setExchangeRate] = useState<number>(1600); // Default fallback
+  const [exchangeRate, setExchangeRate] = useState<number>(1372); // Default fallback
   const [availableMethods, setAvailableMethods] = useState<{ stripe: boolean; paystack: boolean } | null>(null);
 
   useEffect(() => {

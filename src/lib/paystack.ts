@@ -151,9 +151,9 @@ export async function getUSDToNGNRate(): Promise<number> {
     return fallbackRate
   }
   
-  // If no fallback configured, use a conservative recent rate with warning
-  console.error('CRITICAL: No exchange rate available. Using emergency fallback: 1 USD = 1600 NGN. Configure FALLBACK_USD_NGN_RATE env var.')
-  return 1600 // Emergency fallback - should rarely be reached with 3 APIs
+  // If no fallback configured, use the latest known live-ish rate with warning
+  console.error('CRITICAL: No exchange rate available. Using emergency fallback: 1 USD = 1372 NGN. Configure FALLBACK_USD_NGN_RATE env var with a current live rate.')
+  return 1372 // Emergency fallback - should rarely be reached with 3 APIs
 }
 
 export async function convertUSDToNGN(usdAmount: number): Promise<number> {

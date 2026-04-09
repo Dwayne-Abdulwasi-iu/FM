@@ -41,7 +41,7 @@ export default function ShopPhysicalContent() {
   const [maxPrice, setMaxPrice] = useState(1000)
   const [categories, setCategories] = useState<string[]>([])
   const [preferredCurrency, setPreferredCurrency] = useState('USD')
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ USD: 1, NGN: 1600, EUR: 0.92, GBP: 0.79 })
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ USD: 1, NGN: 1372, EUR: 0.92, GBP: 0.79 })
 
   useEffect(() => {
     fetchCurrencySettings()

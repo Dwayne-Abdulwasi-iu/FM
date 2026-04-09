@@ -126,7 +126,7 @@ function getFallbackRates(baseCurrency: string): Record<string, number> {
     USD: 1,
     EUR: 0.92,
     GBP: 0.79,
-    NGN: 1600,
+    NGN: 1372,
     GHS: 16,
     KES: 155,
     ZAR: 19,

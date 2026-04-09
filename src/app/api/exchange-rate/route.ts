@@ -20,7 +20,7 @@ export async function GET() {
     
     // Return fallback rate on error
     return NextResponse.json({
-      rate: 1600,
+      rate: 1372,
       currency: "NGN",
       base: "USD",
       timestamp: new Date().toISOString(),
