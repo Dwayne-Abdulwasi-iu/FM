@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Star } from 'lucide-react'
-import { useCurrency } from '@/components/CurrencyProvider'
+import { formatNGNPrice } from '@/lib/currency'
 
 interface BoutiqueProduct {
   id: string
   slug?: string
   title: string
-  basePrice: number
+  basePrice?: number
+  price?: number
   imageUrl: string
   category?: {
     name: string
@@ -28,7 +29,6 @@ interface BoutiqueProduct {
 export function FeaturedBoutiqueProducts() {
   const [products, setProducts] = useState<BoutiqueProduct[]>([])
   const [loading, setLoading] = useState(true)
-  const { formatPrice } = useCurrency()
 
   useEffect(() => {
     fetchFeaturedProducts()
@@ -169,7 +169,13 @@ export function FeaturedBoutiqueProducts() {
                 )}
 
                 <p className="text-[9px] sm:text-xs font-bold text-indigo-600 mt-1 sm:mt-1.5">
-                  {formatPrice(typeof product.basePrice === 'number' ? product.basePrice : 0)}
+                  {formatNGNPrice(
+                    typeof product.price === 'number'
+                      ? product.price
+                      : typeof product.basePrice === 'number'
+                      ? product.basePrice
+                      : 0
+                  )}
                 </p>
                 
                 {product.seller && (

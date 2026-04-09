@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
           where: { id: item.itemId },
           select: {
             id: true,
+            slug: true,
             title: true,
             thumbnailUrl: true,
             basePrice: true,
@@ -109,15 +110,17 @@ export async function GET(request: NextRequest) {
           }
         })
 
-        if (!product) return null
+        if (!product || product.status !== 'LIVE') return null
 
         return {
           id: item.id,
           itemId: product.id,
           itemType: 'BOUTIQUE_PRODUCT',
           title: product.title,
+          slug: product.slug,
           imageUrl: product.thumbnailUrl,
           price: product.basePrice,
+          basePrice: product.basePrice,
           category: product.category.name,
           position: item.position,
           addedAt: item.addedAt.toISOString(),

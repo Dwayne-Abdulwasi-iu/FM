@@ -16,18 +16,22 @@ type ProductWithRelations = Prisma.BoutiqueProductGetPayload<{
   };
 }>;
 
-// GET /api/boutique/shop/[slug] - Get single product details
+// GET /api/boutique/shop/[slug] - Get single product details by slug or ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
+    const identifier = slug?.trim();
 
     const product = await prisma.boutiqueProduct.findFirst({
       where: {
-        slug,
         status: "LIVE",
+        OR: [
+          { slug: identifier },
+          { id: identifier },
+        ],
       },
       select: {
         id: true,
