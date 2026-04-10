@@ -22,7 +22,9 @@ export async function GET(req: NextRequest) {
     console.log('[Socket.IO API] Initializing Socket.IO server...')
     
     // Get the HTTP server instance from Next.js
-    const httpServer = (req as any).socket?.server || new NetServer()
+    // Use a narrow typed cast to avoid `any` eslint rule
+    const maybeReq = req as unknown as { socket?: { server?: NetServer } }
+    const httpServer = maybeReq.socket?.server || new NetServer()
     
     // Initialize Socket.IO server
     global.__socketio_server = initializeSocketServer(httpServer)

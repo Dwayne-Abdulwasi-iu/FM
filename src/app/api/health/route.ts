@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getRedisClient } from '@/lib/redis';
 
+type HealthResponse = {
+  status: 'ok' | 'degraded' | 'down'
+  timestamp: string
+  database?: string
+  redis?: string
+  warnings?: string[]
+}
+
 export async function GET() {
-  const health: any = {
+  const health: HealthResponse = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     database: 'ok',
     redis: process.env.REDIS_URL ? 'configured' : 'not-configured',
-  };
+  }
 
   // Check Redis availability (required for Pro Trial feature)
   const redis = getRedisClient();
