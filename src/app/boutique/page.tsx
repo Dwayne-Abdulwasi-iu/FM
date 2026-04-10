@@ -18,6 +18,8 @@ import {
   X,
   Rocket,
 } from 'lucide-react';
+import { useCurrency } from '@/components/CurrencyProvider';
+import { formatPriceFromNGN } from '@/lib/currency';
 import { 
   GENDER_OPTIONS, 
   STYLES, 
@@ -158,6 +160,22 @@ function BoutiqueShopContent() {
     setExpandedParentCategory(null);
     setCategoryOnSidebarOpen(null);
   };
+
+  const { currency, rates } = useCurrency()
+  const formatBoutiquePrice = (amountNGN: number) => formatPriceFromNGN(amountNGN, currency, rates)
+
+  const getBoutiqueDisplayPrice = (amountNGN: number) => {
+    const ngnFormatted = formatPriceFromNGN(amountNGN, 'NGN', rates)
+    const convertedFormatted = formatPriceFromNGN(amountNGN, currency, rates)
+    
+    // Always show conversion when currency differs from NGN
+    if (currency !== 'NGN') {
+      return { display: convertedFormatted, showConversion: true, converted: ngnFormatted }
+    }
+    
+    // When in NGN, show NGN as primary
+    return { display: ngnFormatted, showConversion: false, converted: '' }
+  }
 
   const hasActiveFilters = selectedCategory || selectedGender || selectedStyle || selectedCondition || minPrice || maxPrice;
 
@@ -502,13 +520,25 @@ function BoutiqueShopContent() {
                       )}
                       
                       {/* Price */}
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="text-sm sm:text-lg font-bold text-purple-600">
-                          ₦{(product.salePrice || product.basePrice).toLocaleString()}
-                        </span>
+                      <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                        {(() => {
+                          const priceDisplay = getBoutiqueDisplayPrice(product.salePrice || product.basePrice)
+                          return (
+                            <>
+                              <span className="text-sm sm:text-lg font-bold text-purple-600">
+                                {priceDisplay.display}
+                              </span>
+                              {priceDisplay.showConversion && (
+                                <span className="text-[9px] sm:text-xs text-gray-500">
+                                  {priceDisplay.converted}
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                         {product.salePrice && (
                           <span className="text-[10px] sm:text-sm text-gray-400 line-through">
-                            ₦{product.basePrice.toLocaleString()}
+                            {formatBoutiquePrice(product.basePrice)}
                           </span>
                         )}
                       </div>

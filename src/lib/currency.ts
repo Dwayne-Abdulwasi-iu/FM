@@ -191,6 +191,22 @@ export function formatNGNPrice(amountNGN: number): string {
 }
 
 /**
+ * Format a price stored in NGN for a display currency.
+ */
+export function formatPriceFromNGN(
+  amountNGN: number,
+  displayCurrency: string = 'NGN',
+  rates: Record<string, number> = exchangeRatesCache
+): string {
+  if (displayCurrency === 'NGN') {
+    return formatNGNPrice(amountNGN)
+  }
+
+  const amountUSD = convertToUSD(amountNGN, 'NGN', rates)
+  return formatPrice(amountUSD, displayCurrency, rates)
+}
+
+/**
  * Get all supported currencies for dropdown
  */
 export function getSupportedCurrencies(): CurrencyConfig[] {

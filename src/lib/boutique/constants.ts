@@ -298,10 +298,31 @@ export const STYLES = [
   'Western',
 ] as const;
 
+// Boutique Commission Tiers (same as digital for consistency)
+// ADMIN_STOCK now uses tiered rates based on seller earnings
+// This ensures resellers can stay profitable while rewarding volume
+export const BOUTIQUE_COMMISSION_TIERS = {
+  STARTER: { threshold: 0, rate: 0.001, name: 'Starter (0.1%)', nextThreshold: 100 },
+  NEW: { threshold: 100, rate: 0.08, name: 'New Seller (8%)', nextThreshold: 500 },
+  BRONZE: { threshold: 500, rate: 0.07, name: 'Bronze (7%)', nextThreshold: 2000 },
+  SILVER: { threshold: 2000, rate: 0.065, name: 'Silver (6.5%)', nextThreshold: 5000 },
+  GOLD: { threshold: 5000, rate: 0.06, name: 'Gold (6%)', nextThreshold: 10000 },
+  PLATINUM: { threshold: 10000, rate: 0.055, name: 'Platinum (5.5%)', nextThreshold: null },
+} as const;
+
+export function getBoutiqueCommissionTier(totalEarnings: number) {
+  if (totalEarnings >= BOUTIQUE_COMMISSION_TIERS.PLATINUM.threshold) return 'PLATINUM';
+  if (totalEarnings >= BOUTIQUE_COMMISSION_TIERS.GOLD.threshold) return 'GOLD';
+  if (totalEarnings >= BOUTIQUE_COMMISSION_TIERS.SILVER.threshold) return 'SILVER';
+  if (totalEarnings >= BOUTIQUE_COMMISSION_TIERS.BRONZE.threshold) return 'BRONZE';
+  if (totalEarnings >= BOUTIQUE_COMMISSION_TIERS.NEW.threshold) return 'NEW';
+  return 'STARTER';
+}
+
 // Platform Settings Defaults
 export const BOUTIQUE_DEFAULTS = {
-  // Commission
-  platformCommission: 15, // 15%
+  // Commission - kept for reference, but now using tiered system
+  platformCommission: 15, // deprecated: use BOUTIQUE_COMMISSION_TIERS instead
   
   // Storage
   freeStorageDays: 30,
@@ -421,13 +442,19 @@ export function getSellerTierLevel(tier: SellerTier | null | undefined): number 
 /**
  * Get commission rate for boutique sales based on fulfillment method
  * 
- * ADMIN_STOCK (warehouse): 15% flat - platform handles storage, verification, shipping
- * SELLER_DIRECT: Uses tiered rates like digital designs (0.1%, 10%, 9.5%, 9%, 8.5%, 8%, 7%)
- *                since platform doesn't handle any physical aspects
+ * BOTH ADMIN_STOCK and SELLER_DIRECT use SAME TIERED COMMISSION:
+ * - STARTER ($0-$100): 0.1% - Almost free! Onboarding tier
+ * - NEW ($100-$500): 8% - New sellers
+ * - BRONZE ($500-$2k): 7% - Growing sellers
+ * - SILVER ($2k-$5k): 6.5% - Established sellers
+ * - GOLD ($5k-$10k): 6% - High volume
+ * - PLATINUM ($10k+): 5.5% - Top sellers
  * 
- * @param tier - Seller's tier (used for eligibility check, not rate calculation for SELLER_DIRECT)
+ * Pro Subscribers (VIP/VVIP): Get 1% additional discount (minimum 5%)
+ * 
+ * @param tier - Seller's tier (used for eligibility check)
  * @param fulfillmentMethod - ADMIN_STOCK or SELLER_DIRECT
- * @param sellerTotalEarnings - Total earnings for tiered rate calculation (SELLER_DIRECT only)
+ * @param sellerTotalEarnings - Total earnings for tiered rate calculation
  * @param isProSubscriber - Whether seller has VIP/VVIP subscription
  */
 export function getCommissionRate(
@@ -436,15 +463,16 @@ export function getCommissionRate(
   sellerTotalEarnings: number = 0,
   isProSubscriber: boolean = false
 ): number {
-  if (fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
-    // SELLER_DIRECT: Use tiered commission like digital designs
-    // Platform doesn't handle shipping, storage, or physical verification
-    const tieredRate = getDigitalCommissionRate(sellerTotalEarnings, isProSubscriber);
-    return tieredRate; // Returns decimal like 0.10 for 10%
+  // BOTH methods use same tiered commission tiers now
+  const commissionTier = getBoutiqueCommissionTier(sellerTotalEarnings);
+  const baseRate = BOUTIQUE_COMMISSION_TIERS[commissionTier as keyof typeof BOUTIQUE_COMMISSION_TIERS].rate;
+  
+  // Apply Pro subscriber discount if applicable (VIP/VVIP have 1% additional discount, min 5%)
+  if (isProSubscriber) {
+    return Math.max(baseRate - 0.01, 0.05); // Min 5% for pro subscribers
   }
   
-  // ADMIN_STOCK: Flat 15% commission (platform handles everything)
-  return BOUTIQUE_DEFAULTS.platformCommission / 100; // Convert 15 to 0.15
+  return baseRate; // Returns decimal like 0.08 for 8%
 }
 
 export function getDirectShipDeadline(): { hours: number; graceHours: number } {

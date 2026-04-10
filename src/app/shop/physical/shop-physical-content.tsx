@@ -1,19 +1,22 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingBag, Star, Heart, Filter, Grid, List, ChevronDown } from 'lucide-react'
-import { convertFromUSD, formatNGNPrice } from '@/lib/currency'
+import { ShoppingBag, Star, Heart, Grid, List } from 'lucide-react'
+import { formatPriceFromNGN } from '@/lib/currency'
 
 interface Product {
   id: string
   title: string
   slug?: string | null
   basePrice: number
-  thumbnailUrl: string | null
-  imageUrl: string
+  salePrice?: number | null
+  promotionPrice?: number
+  promotionType?: string | null
+  promotionId?: string
+  discountAmount?: number
+  imageUrl: string | null
   category?: {
     name: string
   } | null
@@ -30,7 +33,6 @@ interface Product {
 }
 
 export default function ShopPhysicalContent() {
-  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -69,19 +71,8 @@ export default function ShopPhysicalContent() {
     }
   }
 
-  // Boutique prices are stored in NGN — use formatNGNPrice instead
-  // Legacy formatPrice kept for non-boutique items if needed in future
-  const _formatPrice = (priceUSD: number) => {
-    let convertedAmount = priceUSD
-    
-    if (preferredCurrency !== 'USD' && exchangeRates[preferredCurrency]) {
-      convertedAmount = convertFromUSD(priceUSD, preferredCurrency, exchangeRates)
-    }
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: preferredCurrency
-    }).format(convertedAmount)
+  const _formatPrice = (priceNGN: number) => {
+    return formatPriceFromNGN(priceNGN, preferredCurrency, exchangeRates)
   }
 
   const fetchProducts = async () => {
@@ -96,13 +87,13 @@ export default function ShopPhysicalContent() {
       if (data.products && Array.isArray(data.products)) {
         setProducts(data.products)
         // Calculate max price from products
-        const prices = data.products.map((p: any) => p.basePrice || 0)
+        const prices = data.products.map((p: Product) => p.basePrice || 0)
         const calculatedMax = Math.max(...prices, 1000)
         setMaxPrice(Math.round(calculatedMax))
         setPriceRange({ min: 0, max: calculatedMax })
         
         // Extract unique categories
-        const uniqueCats = [...new Set(data.products.map((p: any) => p.category?.name).filter(Boolean))]
+        const uniqueCats = [...new Set(data.products.map((p: Product) => p.category?.name).filter(Boolean))]
         setCategories(uniqueCats as string[])
       } else {
         setProducts([])
@@ -159,6 +150,7 @@ export default function ShopPhysicalContent() {
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <select
+                aria-label="Sort by"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-black bg-white"
@@ -191,6 +183,7 @@ export default function ShopPhysicalContent() {
           {/* Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <select
+              aria-label="Filter by category"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               className="px-2 py-1.5 border border-gray-300 rounded-lg text-[11px] sm:text-xs text-black bg-white"
@@ -203,6 +196,7 @@ export default function ShopPhysicalContent() {
             <div className="flex items-center gap-1.5">
               <input
                 type="range"
+                aria-label="Filter by max price"
                 min="0"
                 max={maxPrice}
                 value={priceRange.max}
@@ -214,7 +208,7 @@ export default function ShopPhysicalContent() {
                 }}
                 className="flex-1"
               />
-              <span className="text-[11px] sm:text-xs text-gray-600 whitespace-nowrap">Max: ${priceRange.max}</span>
+              <span className="text-[11px] sm:text-xs text-gray-600 whitespace-nowrap">Max: {_formatPrice(priceRange.max)}</span>
             </div>
           </div>
         </div>
@@ -247,11 +241,16 @@ export default function ShopPhysicalContent() {
               >
                 <div className="aspect-square relative overflow-hidden bg-gray-200">
                   <Image
-                    src={product.thumbnailUrl || product.imageUrl}
+                    src={product.imageUrl || '/placeholder.png'}
                     alt={product.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform"
                   />
+                  {product.salePrice && (
+                    <div className="absolute top-1 left-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded">
+                      {Math.round((1 - product.salePrice / product.basePrice) * 100)}% OFF
+                    </div>
+                  )}
                   <button
                     onClick={(e) => {
                       e.preventDefault()
@@ -275,9 +274,12 @@ export default function ShopPhysicalContent() {
                     ))}
                     <span className="text-[8px] text-gray-600 ml-0.5">({product._count?.reviews ?? 0})</span>
                   </div>
-                  <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                    <span className="font-bold text-indigo-600 text-[10px] sm:text-xs">{formatNGNPrice(product.basePrice)}</span>
-                    <span className="text-[8px] text-gray-600 truncate ml-1">{(product.seller?.displayName || product.seller?.name || 'Unknown').slice(0, 8)}</span>
+                  <div className="flex items-center gap-1 mt-1.5 sm:mt-2 flex-wrap">
+                    <span className="font-bold text-indigo-600 text-[10px] sm:text-xs">{_formatPrice(product.salePrice || product.basePrice)}</span>
+                    {product.salePrice && (
+                      <span className="text-[8px] text-gray-400 line-through">{_formatPrice(product.basePrice)}</span>
+                    )}
+                    <span className="text-[8px] text-gray-600 truncate ml-auto">{(product.seller?.displayName || product.seller?.name || 'Unknown').slice(0, 8)}</span>
                   </div>
                 </div>
               </Link>
@@ -293,11 +295,16 @@ export default function ShopPhysicalContent() {
               >
                 <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 rounded-lg overflow-hidden">
                   <Image
-                    src={product.thumbnailUrl || product.imageUrl}
+                    src={product.imageUrl || '/placeholder.png'}
                     alt={product.title}
                     fill
                     className="object-cover"
                   />
+                  {product.salePrice && (
+                    <div className="absolute top-1 left-1 bg-red-500 text-white text-[7px] sm:text-[8px] font-bold px-1 sm:px-1.5 py-0.5 rounded">
+                      {Math.round((1 - product.salePrice / product.basePrice) * 100)}% OFF
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 flex flex-col justify-between min-w-0">
                   <div>
@@ -316,7 +323,12 @@ export default function ShopPhysicalContent() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm sm:text-base text-indigo-600">{formatNGNPrice(product.basePrice)}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-bold text-sm sm:text-base text-indigo-600">{_formatPrice(product.salePrice || product.basePrice)}</span>
+                      {product.salePrice && (
+                        <span className="text-[8px] text-gray-400 line-through">{_formatPrice(product.basePrice)}</span>
+                      )}
+                    </div>
                     <button className="p-1 hover:bg-gray-100 rounded-lg transition" title="Add to wishlist">
                       <Heart className="w-4 h-4 text-gray-400" />
                     </button>

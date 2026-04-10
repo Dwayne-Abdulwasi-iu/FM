@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
+import { useCurrency } from '@/components/CurrencyProvider';
+import { formatPriceFromNGN } from '@/lib/currency';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -90,6 +92,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
+  const { currency, rates } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
@@ -190,6 +193,21 @@ export default function ProductDetailPage() {
       v.quantity > 0
     );
   };
+
+  const formatBoutiquePrice = (amountNGN: number) => formatPriceFromNGN(amountNGN, currency, rates)
+
+  const getBoutiqueDisplayPrice = (amountNGN: number) => {
+    const ngnFormatted = formatPriceFromNGN(amountNGN, 'NGN', rates)
+    const convertedFormatted = formatPriceFromNGN(amountNGN, currency, rates)
+    
+    // Always show conversion when currency differs from NGN
+    if (currency !== 'NGN') {
+      return { display: convertedFormatted, showConversion: true, converted: ngnFormatted }
+    }
+    
+    // When in NGN, show NGN as primary
+    return { display: ngnFormatted, showConversion: false, converted: '' }
+  }
 
   const getPrice = () => {
     if (!product) return 0;
@@ -568,12 +586,24 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className="text-2xl sm:text-3xl font-bold text-purple-600">
-                  ₦{getPrice().toLocaleString()}
-                </span>
+                {(() => {
+                  const priceDisplay = getBoutiqueDisplayPrice(getPrice())
+                  return (
+                    <>
+                      <span className="text-2xl sm:text-3xl font-bold text-purple-600">
+                        {priceDisplay.display}
+                      </span>
+                      {priceDisplay.showConversion && (
+                        <span className="text-sm sm:text-lg text-gray-400">
+                          ({priceDisplay.converted})
+                        </span>
+                      )}
+                    </>
+                  )
+                })()}
                 {product.salePrice && (
                   <span className="text-lg sm:text-xl text-gray-400 line-through">
-                    ₦{product.basePrice.toLocaleString()}
+                    {formatBoutiquePrice(product.basePrice)}
                   </span>
                 )}
                 {product.salePrice && (
@@ -1048,13 +1078,25 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="p-3">
                     <h3 className="font-medium text-gray-900 line-clamp-1">{p.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-purple-600 font-bold">
-                        ₦{(p.salePrice || p.basePrice).toLocaleString()}
-                      </span>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {(() => {
+                        const priceDisplay = getBoutiqueDisplayPrice(p.salePrice || p.basePrice)
+                        return (
+                          <>
+                            <span className="text-purple-600 font-bold">
+                              {priceDisplay.display}
+                            </span>
+                            {priceDisplay.showConversion && (
+                              <span className="text-xs text-gray-500">
+                                {priceDisplay.converted}
+                              </span>
+                            )}
+                          </>
+                        )
+                      })()}
                       {p.salePrice && (
                         <span className="text-sm text-gray-400 line-through">
-                          ₦{p.basePrice.toLocaleString()}
+                          {formatBoutiquePrice(p.basePrice)}
                         </span>
                       )}
                     </div>

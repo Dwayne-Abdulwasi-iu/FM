@@ -4,21 +4,17 @@
 // PAYMENT & REFUND POLICY:
 // -------------------------
 // ADMIN_STOCK orders:
-//   - Platform receives 100% of payment (15% commission after seller payout)
+//   - Platform receives 100% of payment (tiered commission 0.1%-8% after seller payout)
 //   - Platform handles shipping, returns, and refunds directly via Paystack
 //   - Full refund control since platform holds the funds
 //
 // SELLER_DIRECT orders:
-//   - Paystack split pays seller directly at checkout (minus tiered 7-10% commission)
+//   - Paystack split pays seller directly at checkout (minus tiered 0.1%-8% commission)
 //   - Refunds/Returns require MANUAL seller coordination:
 //     1. Buyer requests return via /api/boutique/returns
 //     2. Admin reviews and approves/rejects
-//     3. Seller processes refund directly to buyer
-//     4. If seller unresponsive, admin intervenes (warn/suspend/ban)
+//     3. Seller processes refund back to buyer
 //   - Platform can only automatically refund its commission portion
-//   - This is industry standard (Amazon, Etsy model) for marketplace sellers
-//   - See: /src/lib/boutique/refund.ts for refund utilities
-//   - See: /src/app/api/boutique/returns/route.ts for return requests
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -45,31 +41,26 @@ function generateOrderNumber(): string {
 }
 
 // Calculate platform fee based on fulfillment method and seller tier
-// For SELLER_DIRECT: uses tiered rates based on seller's total earnings
-// For ADMIN_STOCK: uses flat 15% rate
+// Both ADMIN_STOCK and SELLER_DIRECT use tiered rates (0.1%-8%) based on seller's total earnings
 async function calculatePlatformFee(
   amount: number, 
   fulfillmentMethod: FulfillmentMethod, 
   sellerTier: SellerTier | null,
   sellerId: string
 ): Promise<number> {
-  let sellerTotalEarnings = 0;
-  let isProSubscriber = false;
+  // Fetch seller's total earnings and subscription status for tiered calculation
+  const sellerStats = await prisma.user.findUnique({
+    where: { id: sellerId },
+    select: { 
+      totalEarnings: true,
+      designerTier: true, // VIP/VVIP are pro subscribers
+    },
+  });
   
-  // For SELLER_DIRECT, we need to fetch seller's earnings for tiered rate
-  if (fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT) {
-    const sellerStats = await prisma.user.findUnique({
-      where: { id: sellerId },
-      select: { 
-        totalEarnings: true,
-        designerTier: true, // VIP/VVIP are pro subscribers
-      },
-    });
-    sellerTotalEarnings = sellerStats?.totalEarnings || 0;
-    // VIP and VVIP tiers are considered pro subscribers
-    isProSubscriber = sellerStats?.designerTier === 'VIP_DESIGNER' || sellerStats?.designerTier === 'VVIP_DESIGNER';
-  }
+  const sellerTotalEarnings = sellerStats?.totalEarnings || 0;
+  const isProSubscriber = sellerStats?.designerTier === 'VIP_DESIGNER' || sellerStats?.designerTier === 'VVIP_DESIGNER';
   
+  // Get commission rate using tiered system (applies to both ADMIN_STOCK and SELLER_DIRECT)
   const commissionRate = getCommissionRate(sellerTier, fulfillmentMethod, sellerTotalEarnings, isProSubscriber);
   return Math.round(amount * commissionRate * 100) / 100; // Return in same currency unit
 }
@@ -293,8 +284,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Calculate platform fee
-      // For SELLER_DIRECT: Uses tiered commission like digital designs (0.1% - 10%)
-      // For ADMIN_STOCK: Commission only on products (15%), shipping 100% to platform
+      // Both ADMIN_STOCK and SELLER_DIRECT: Use tiered commission (0.1%-8%) based on seller's earnings
+      // SELLER_DIRECT: Commission on products + shipping
+      // ADMIN_STOCK: Commission on products only, shipping 100% to platform
       const commissionableAmount = fulfillmentMethod === FULFILLMENT_METHOD.SELLER_DIRECT
         ? subtotal + shippingCost  // Commission on products + shipping
         : subtotal;  // Commission only on products
