@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, VariantDiscrepancyAppeal, DisputeAppeal } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
 
@@ -42,7 +42,7 @@ export async function PUT(
 
     // Prevent downgrading from a resolved state back to PENDING
     // First, check current status to prevent backtracking
-    type LocalAppeal = { appealStatus?: string };
+    type LocalAppeal = { appealStatus?: string; status?: string };
     let currentAppeal: LocalAppeal | null = null;
     try {
       currentAppeal = await prisma.variantDiscrepancyAppeal.findUnique({
@@ -86,7 +86,7 @@ export async function PUT(
     }
 
     // Try to update variant discrepancy appeal first
-    let appeal: Prisma.VariantDiscrepancyAppeal | Prisma.DisputeAppeal | null = null;
+    let appeal: any | null = null;
     let isVariantAppeal = false;
     
     try {
@@ -162,7 +162,7 @@ export async function PUT(
         let emailHtml = '';
 
         if (isVariantAppeal) {
-          const productTitle = (appeal as Prisma.VariantDiscrepancyAppeal).decision?.discrepancy?.variant?.product?.title || 'Unknown Product';
+          const productTitle = appeal?.decision?.discrepancy?.variant?.product?.title || 'Unknown Product';
           emailSubject = `${statusText}: ${productTitle}`;
           emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -204,9 +204,7 @@ export async function PUT(
           `;
         }
 
-        const sellerEmail = isVariantAppeal
-          ? (appeal as Prisma.VariantDiscrepancyAppeal).seller?.email
-          : (appeal as Prisma.DisputeAppeal).seller?.email;
+        const sellerEmail = appeal?.seller?.email;
 
         await sendEmail({
           to: sellerEmail,

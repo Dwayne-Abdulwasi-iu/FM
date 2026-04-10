@@ -4,6 +4,7 @@
  */
 
 import { v2 as cloudinary } from 'cloudinary'
+import type { PrismaClient } from '@prisma/client'
 
 export interface CloudinaryDeleteLog {
   fileUrl: string
@@ -90,7 +91,7 @@ export async function deleteFromCloudinaryWithRetry(
  * FLAW FIX #16: Log failed Cloudinary deletions for manual review
  */
 export async function logCloudinaryDeleteFailure(
-  prisma: any,
+  prisma: PrismaClient,
   documentId: string,
   fileUrl: string,
   error: string
@@ -129,7 +130,7 @@ export async function logCloudinaryDeleteFailure(
 /**
  * FLAW FIX #16: Admin script to find and retry orphaned files
  */
-export async function findOrphanedCloudinaryFiles(prisma: any) {
+export async function findOrphanedCloudinaryFiles(prisma: PrismaClient) {
   const failedDeletions = await prisma.cloudinaryDeleteLog.findMany({
     where: {
       status: 'FAILED',

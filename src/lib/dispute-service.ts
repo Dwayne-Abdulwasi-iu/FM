@@ -635,7 +635,9 @@ async function getAllDisputes(): Promise<Dispute[]> {
 }
 
 // Convert Prisma Dispute to service Dispute interface
-function convertPrismaDisputeToInterface(prismaDispute: any): Dispute {
+import type { Dispute as PrismaDispute } from '@prisma/client'
+
+function convertPrismaDisputeToInterface(prismaDispute: PrismaDispute & { messages?: any[]; evidence?: string[] }): Dispute {
   return {
     id: prismaDispute.id,
     type: prismaDispute.type as DisputeType,

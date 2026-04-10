@@ -21,12 +21,15 @@ export async function initiateSellerTransfer(data: TransferData) {
 
     if (!sellerAccount || !sellerAccount.isVerified) {
       console.warn(`Seller ${sellerId} account not verified for transfer`)
-      
-      // Create notification about unverified account
-      await createTransferNotification({
-        sellerId,
-        type: 'FAILED',
-        message: `Payment could not be processed. Your Paystack account is not verified.`
+      // Create generic platform notification (no transfer record exists yet)
+      await prisma.notification.create({
+        data: {
+          userId: sellerId,
+          type: 'TRANSFER_FAILED',
+          title: 'Transfer Failed',
+          message: `Payment could not be processed. Your Paystack account is not verified.`,
+          data: {}
+        }
       })
       
       return {
@@ -93,6 +96,7 @@ export async function initiateSellerTransfer(data: TransferData) {
         
         await createTransferNotification({
           sellerId,
+          transferId: transfer.id,
           type: 'FAILED',
           message: `Failed to process payment: Could not create recipient code for transfer.`
         })
@@ -109,7 +113,7 @@ export async function initiateSellerTransfer(data: TransferData) {
     // Ensure we have a recipient code before initiating transfer
     if (!recipientCode) {
       console.error(`No recipient code available for seller ${sellerId} after attempted creation`)
-      await prisma.paystackTransfer.update({
+        await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -117,6 +121,12 @@ export async function initiateSellerTransfer(data: TransferData) {
           failureReason: 'Recipient code creation failed'
         }
       })
+        await createTransferNotification({
+          sellerId,
+          transferId: transfer.id,
+          type: 'FAILED',
+          message: `Failed to process payment: No recipient code available for transfer.`
+        })
       return {
         success: false,
         error: 'No recipient code available',
@@ -134,7 +144,7 @@ export async function initiateSellerTransfer(data: TransferData) {
         reason: `Earnings from sale of "${designTitle}" - Order #${orderNumber}`
       })
 
-      if (paystackTransfer.status && paystackTransfer.data?.reference) {
+        if (paystackTransfer.status && paystackTransfer.data?.reference) {
         await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
@@ -143,12 +153,11 @@ export async function initiateSellerTransfer(data: TransferData) {
           }
         })
 
-        await prisma.transferNotification.create({
-          data: {
-            sellerId,
-            type: 'SUCCESS',
-            message: `Payment of ₦${amountNGN.toLocaleString()} received for "${designTitle}"`
-          }
+        await createTransferNotification({
+          sellerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Payment of ₦${amountNGN.toLocaleString()} received for "${designTitle}"`
         })
 
         console.log(`Transfer successful for seller ${sellerId}: ₦${amountNGN}`)
@@ -173,12 +182,11 @@ export async function initiateSellerTransfer(data: TransferData) {
         }
       })
 
-      await prisma.transferNotification.create({
-        data: {
-          sellerId,
-          type: 'FAILED',
-          message: `Payment processing failed. We will retry automatically.`
-        }
+      await createTransferNotification({
+        sellerId,
+        transferId: transfer.id,
+        type: 'FAILED',
+        message: `Payment processing failed. We will retry automatically.`
       })
 
       return {
@@ -311,6 +319,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         
         await createTransferNotification({
           sellerId: designerId,
+          transferId: transfer.id,
           type: 'FAILED',
           message: `Commission payment failed: Could not create recipient code. Please verify your bank details.`
         })
@@ -326,7 +335,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
     if (!recipientCode) {
       console.error(`No recipient code available for designer ${designerId}`)
-      await prisma.paystackTransfer.update({
+        await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -334,6 +343,12 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
           failureReason: 'Recipient code creation failed'
         }
       })
+        await createTransferNotification({
+          sellerId: designerId,
+          transferId: transfer.id,
+          type: 'FAILED',
+          message: `Commission payment failed: No recipient code available.`
+        })
       return {
         success: false,
         error: 'No recipient code available',
@@ -351,7 +366,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         reason: `Commission earnings for "${commissionTitle}"`
       })
 
-      if (paystackTransfer.status && paystackTransfer.data?.reference) {
+        if (paystackTransfer.status && paystackTransfer.data?.reference) {
         await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
@@ -360,12 +375,11 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
           }
         })
 
-        await prisma.transferNotification.create({
-          data: {
-            sellerId: designerId,
-            type: 'SUCCESS',
-            message: `Commission payment of ₦${amountNGN.toLocaleString()} received for "${commissionTitle}"`
-          }
+        await createTransferNotification({
+          sellerId: designerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Commission payment of ₦${amountNGN.toLocaleString()} received for "${commissionTitle}"`
         })
 
         // Update commission request with payout info
@@ -399,12 +413,11 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         }
       })
 
-      await prisma.transferNotification.create({
-        data: {
-          sellerId: designerId,
-          type: 'FAILED',
-          message: `Commission payment processing failed. We will retry automatically.`
-        }
+      await createTransferNotification({
+        sellerId: designerId,
+        transferId: transfer.id,
+        type: 'FAILED',
+        message: `Commission payment processing failed. We will retry automatically.`
       })
 
       return {
@@ -426,14 +439,29 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
 export async function createTransferNotification(data: {
   sellerId: string
+  transferId?: string
   type: 'SUCCESS' | 'FAILED' | 'PENDING' | 'RETRY'
   message: string
 }) {
-  return prisma.transferNotification.create({
+  if (data.transferId) {
+    return prisma.transferNotification.create({
+      data: {
+        transferId: data.transferId,
+        sellerId: data.sellerId,
+        type: data.type,
+        message: data.message
+      }
+    })
+  }
+
+  // If no transferId is provided, fall back to a generic platform notification
+  return prisma.notification.create({
     data: {
-      sellerId: data.sellerId,
-      type: data.type,
-      message: data.message
+      userId: data.sellerId,
+      type: `TRANSFER_${data.type}`,
+      title: 'Transfer Update',
+      message: data.message,
+      data: {}
     }
   })
 }
@@ -522,12 +550,11 @@ export async function retryFailedTransfers() {
       if (result.success) {
         console.log(`Retry successful for transfer ${transfer.id}`)
         
-        await prisma.transferNotification.create({
-          data: {
-            sellerId: transfer.sellerId,
-            type: 'SUCCESS',
-            message: `Payment retry successful. ₦${transfer.amountNGN.toLocaleString()} transferred.`
-          }
+        await createTransferNotification({
+          sellerId: transfer.sellerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Payment retry successful. ₦${transfer.amountNGN.toLocaleString()} transferred.`
         })
       } else if (!result.shouldRetry) {
         console.log(`Transfer ${transfer.id} cannot be retried - permanent failure`)

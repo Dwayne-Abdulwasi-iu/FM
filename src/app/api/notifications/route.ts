@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { Prisma } from '@prisma/client';
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getCachedData, invalidateCachePattern, CACHE_TTL } from "@/lib/cache";
@@ -21,15 +22,13 @@ export async function GET(request: NextRequest) {
     const cursor = searchParams.get("cursor"); // ID of the last notification from previous page
     
     const fetchNotifications = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const where: any = { userId: session.user.id, isDeleted: false };
+      const where: Prisma.NotificationWhereInput = { userId: session.user.id, isDeleted: false };
       if (unreadOnly) {
         where.isRead = false;
       }
       
       // Cursor-based pagination query
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const queryOptions: any = {
+      const queryOptions: Prisma.NotificationFindManyArgs = {
         where,
         orderBy: { createdAt: "desc" },
         take: limit + 1, // Fetch one extra to determine if there are more
@@ -40,13 +39,12 @@ export async function GET(request: NextRequest) {
         queryOptions.skip = 1; // Skip the cursor item itself
       }
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const [notificationsRaw, unreadCount, totalCount] = await Promise.all([
-        (prisma as any).notification.findMany(queryOptions),
-        (prisma as any).notification.count({
+        prisma.notification.findMany(queryOptions),
+        prisma.notification.count({
           where: { userId: session.user.id, isRead: false, isDeleted: false },
         }),
-        (prisma as any).notification.count({
+        prisma.notification.count({
           where: { userId: session.user.id, isDeleted: false },
         }),
       ]);
@@ -101,8 +99,7 @@ export async function PATCH(request: NextRequest) {
     
     if (markAllRead) {
       // Mark all non-deleted notifications as read for this user
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).notification.updateMany({
+      await prisma.notification.updateMany({
         where: { userId: session.user.id, isRead: false, isDeleted: false },
         data: { isRead: true, readAt: new Date() },
       });
@@ -116,8 +113,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Verify notification belongs to this user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const notification = await (prisma as any).notification.findUnique({
+    const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
     });
     
@@ -129,8 +125,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).notification.update({
+    await prisma.notification.update({
       where: { id: notificationId },
       data: { isRead: true, readAt: new Date() },
     });
@@ -165,8 +160,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Verify notification belongs to this user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const notification = await (prisma as any).notification.findUnique({
+    const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
     });
     
@@ -179,8 +173,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Soft delete - maintain audit trail for security purposes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).notification.update({
+    await prisma.notification.update({
       where: { id: notificationId },
       data: { isDeleted: true, deletedAt: new Date() },
     });

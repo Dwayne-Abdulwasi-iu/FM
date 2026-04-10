@@ -25,7 +25,7 @@ export function getIdempotencyKey(headers: Headers): string | null {
  * Check if we've already processed this idempotency key
  * @returns Cached response if exists, null if not found
  */
-export async function checkIdempotencyKey(idempotencyKey: string): Promise<any | null> {
+export async function checkIdempotencyKey(idempotencyKey: string): Promise<unknown | null> {
   try {
     const record = await prisma.idempotencyKey.findUnique({
       where: { key: idempotencyKey }
@@ -53,7 +53,7 @@ export async function checkIdempotencyKey(idempotencyKey: string): Promise<any |
 export async function storeIdempotentResponse(
   idempotencyKey: string,
   userId: string,
-  responseData: any,
+  responseData: unknown,
   ttlMinutes: number = 1440
 ): Promise<void> {
   try {

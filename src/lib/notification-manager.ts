@@ -179,11 +179,15 @@ class NotificationManager {
 export const notificationManager = new NotificationManager();
 
 // HMR cleanup to prevent memory leaks during development
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-if (isBrowser && typeof (globalThis as any).module !== 'undefined' && (globalThis as any).module?.hot) {
-  (globalThis as any).module.hot.dispose(() => {
-    notificationManager.cleanup();
-  });
+type HMRModule = { hot?: { dispose: (callback: () => void) => void } }
+// HMR cleanup when available
+if (isBrowser) {
+  const mod = (globalThis as unknown as { module?: HMRModule }).module
+  if (mod?.hot) {
+    mod.hot.dispose(() => {
+      notificationManager.cleanup();
+    })
+  }
 }
 
 // Helper to dispatch refresh event (for backwards compatibility)
