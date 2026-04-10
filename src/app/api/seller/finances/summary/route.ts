@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import type { PaystackTransfer } from '@prisma/client'
 import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(_req: NextRequest) {
@@ -53,16 +54,16 @@ export async function GET(_req: NextRequest) {
     })
 
     // Get transfer stats
-    const transfers = await prisma.paystackTransfer.findMany({
+    const transfers: PaystackTransfer[] = await prisma.paystackTransfer.findMany({
       where: { sellerId: userId }
     })
 
-    const successfulTransfers = transfers.filter((t: any) => t.paystackStatus === 'SUCCESS').length
-    const pendingTransfers = transfers.filter((t: any) => t.paystackStatus === 'PENDING').length
-    const failedTransfers = transfers.filter((t: any) => t.paystackStatus === 'FAILED').length
+    const successfulTransfers = transfers.filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS').length
+    const pendingTransfers = transfers.filter((t: PaystackTransfer) => t.paystackStatus === 'PENDING').length
+    const failedTransfers = transfers.filter((t: PaystackTransfer) => t.paystackStatus === 'FAILED').length
     const totalAmountTransferred = transfers
-      .filter((t: any) => t.paystackStatus === 'SUCCESS')
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS')
+      .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountUSD || 0), 0)
 
     // Get recent earnings (last 7 days)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -79,8 +80,8 @@ export async function GET(_req: NextRequest) {
     
     // Get pending payout (transfers in progress - PENDING and INITIATED)
     const pendingAmount = transfers
-      .filter((t: any) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t: PaystackTransfer) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
+      .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountUSD || 0), 0)
     
     // Available balance = Total - (Withdrawn + Pending + Failed that user hasn't cancelled)
     // For now: Total - Withdrawn - Pending
