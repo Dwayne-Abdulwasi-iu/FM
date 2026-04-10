@@ -10,6 +10,7 @@ import { initializeSocketServer } from '@/lib/socket-server'
 
 // Extend NodeJS global to store the Socket.IO server
 declare global {
+  // eslint-disable-next-line no-var -- declaring an ambient global variable
   var __socketio_server: SocketIOServer | undefined
 }
 

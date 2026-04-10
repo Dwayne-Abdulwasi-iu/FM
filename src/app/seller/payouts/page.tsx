@@ -4,8 +4,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { getCommissionRate, getSellerTierInfo } from '@/lib/commission-tiers'
-import dynamic from 'next/dynamic'
-const CommissionCalculatorWidget = dynamic(() => import('@/components/seller/commission-calculator-widget').then(m => m.CommissionCalculatorWidget), { ssr: false })
+import { CommissionCalculatorWidget } from '@/components/seller/commission-calculator-widget'
 import { AlertCircle, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 

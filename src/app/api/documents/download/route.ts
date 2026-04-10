@@ -125,7 +125,7 @@ function formatAsHTML(content: string, title: string): string {
   const lines = content.split('\n')
   let htmlContent = ''
   let inSection = false
-  let sectionNumber = 0
+  const sectionNumber = 0
 
   for (const line of lines) {
     const trimmed = line.trim()

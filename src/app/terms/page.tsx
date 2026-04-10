@@ -1,3 +1,4 @@
+import React from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, FileText, Shield, Users, CreditCard, Upload, AlertTriangle, Scale } from 'lucide-react'
