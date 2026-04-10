@@ -12,7 +12,7 @@ function getAuthHeaders() {
   };
 }
 
-export async function initializeTransaction(data: any) {
+export async function initializeTransaction(data: Record<string, unknown>) {
   try {
     const response = await axios.post(
       `${PAYSTACK_BASE_URL}/transaction/initialize`,
@@ -20,14 +20,19 @@ export async function initializeTransaction(data: any) {
       { headers: getAuthHeaders() }
     );
     return response.data;
-  } catch (error: any) {
-    console.error('Paystack API Error:', {
-      status: error.response?.status,
-      message: error.response?.data?.message,
-      errors: error.response?.data?.errors,
-      data: data
-    });
-    throw error;
+  } catch (err: unknown) {
+    // Better axios error handling without using `any`
+    if (axios.isAxiosError(err)) {
+      console.error('Paystack API Error:', {
+        status: err.response?.status,
+        message: err.response?.data?.message,
+        errors: err.response?.data?.errors,
+        data
+      });
+    } else {
+      console.error('Paystack API Error (non-axios):', err);
+    }
+    throw err;
   }
 }
 
@@ -38,8 +43,15 @@ export async function verifyTransaction(reference: string) {
       { headers: getAuthHeaders() }
     );
     return response.data;
-  } catch (error) {
-    console.error('Paystack verification failed:', error);
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error('Paystack verification failed:', {
+        status: err.response?.status,
+        data: err.response?.data
+      });
+    } else {
+      console.error('Paystack verification failed (non-axios):', err);
+    }
     throw new Error('Payment verification temporarily unavailable');
   }
 }
