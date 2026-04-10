@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import type { PaystackTransfer } from '@prisma/client'
 import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET() {
@@ -69,15 +70,15 @@ export async function GET() {
     const lastMonthEarnings = lastMonthResult._sum?.sellerAmount ?? 0
 
     // Get transfer data to calculate accurate balance
-    const transfers = await prisma.paystackTransfer.findMany({
+    const transfers: PaystackTransfer[] = await prisma.paystackTransfer.findMany({
       where: { sellerId: userId }
     })
     const totalWithdrawn = transfers
-      .filter((t: any) => t.paystackStatus === 'SUCCESS')
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS')
+      .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountUSD || 0), 0)
     const pendingPayout = transfers
-      .filter((t: any) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t: PaystackTransfer) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
+      .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountUSD || 0), 0)
     const availableBalance = Math.max(totalEarnings - totalWithdrawn - pendingPayout, 0)
 
     return NextResponse.json({
