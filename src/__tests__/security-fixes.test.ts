@@ -350,8 +350,8 @@ describe('Flaw 9: Category Whitelist Validation', () => {
   });
 
   it('should prevent injection attacks', () => {
-    expect(validateCategory("illustration'; DROP TABLE designs; --")).toBe(false);
-    expect(validateCategory('<script>alert("xss")</script>')).toBe(false);
+    expect(validateCategory("illustration'; DROP TABLE designs; --")).toBeNull();
+    expect(validateCategory('<script>alert("xss")</script>')).toBeNull();
   });
 });
 

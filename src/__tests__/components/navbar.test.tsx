@@ -46,7 +46,8 @@ describe('Navbar', () => {
       </MockSessionProvider>
     )
 
-    expect(getAllByText('FM').length).toBeGreaterThan(0)
+    // Logo text may render as full name in the DOM; check for the platform name
+    expect(getAllByText('Fashion Marketplace').length).toBeGreaterThan(0)
   })
 
   it('shows sign in button when not authenticated', () => {

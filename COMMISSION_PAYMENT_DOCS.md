@@ -111,6 +111,43 @@ export default function MyComponent() {
 }
 ```
 
+---
+
+## Update: Boutique Commission Policy (2026-04-10)
+
+We recently updated boutique commission calculations to a unified, tiered system (`BOUTIQUE_COMMISSION_TIERS`) shared by both `SELLER_DIRECT` and `ADMIN_STOCK` fulfillment methods. This replaces the previous flat 15% admin-stock commission and ensures fairer rates for resellers and long-running sellers.
+
+Key points:
+- New tiers (USD lifetime earnings basis):
+  - STARTER: 0.1% (0 — $100)
+  - NEW: 8% ($100 — $500)
+  - BRONZE: 7% ($500 — $2,000)
+  - SILVER: 6.5% ($2,000 — $5,000)
+  - GOLD: 6% ($5,000 — $10,000)
+  - PLATINUM: 5.5% ($10,000+)
+- Pro-subscriber discount: −1% off the base tier rate (floor: 5%).
+- Commissionable amount differences:
+  - `SELLER_DIRECT`: commission applies to product + shipping (split payments).
+  - `ADMIN_STOCK`: commission applies to product only; shipping is retained by the platform.
+
+Rollout guidance:
+- This change has been implemented in code and unit-tested; however, consider a communication plan for sellers (grandfathering vs immediate):
+  - Option A (Immediate): New orders use tiered rates immediately.
+  - Option B (Phased): Apply new tiers to orders placed after a chosen effective date.
+  - Option C (Grandfather): Existing listings/orders keep prior commission for X days.
+
+Admin action items:
+- Update seller-facing dashboards and FAQs to show `BOUTIQUE_COMMISSION_TIERS` and the pro-subscriber discount.
+- Run staging end-to-end checkout tests to verify `sellerEarning` records and payout transfers reflect tiered commissions.
+- Audit historical payout reports for references to the flat 15% and update documents accordingly.
+
+Code pointers:
+- `src/lib/boutique/constants.ts` — `BOUTIQUE_COMMISSION_TIERS` and `getCommissionRate()`
+- `src/app/api/boutique/checkout/route.ts` — `calculatePlatformFee()` now uses the unified tiers
+- `src/components/seller/commission-calculator-widget.tsx` — interactive calculator (update if needed to show boutique tiers)
+
+If you want, I can now update the seller dashboard UI to surface the seller's current tier and an embedded commission savings calculator. Proceed? 
+
 ## 3. Commission Breakdown Component
 
 ### Component: `CommissionBreakdown`

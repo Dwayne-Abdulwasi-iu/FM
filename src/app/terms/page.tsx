@@ -48,11 +48,11 @@ export default function TermsOfServicePage() {
               <p className="text-[10px] sm:text-base text-gray-700 mb-2">Fashion Marketplace connects designers with buyers. Services include:</p>
               <ul className="list-disc list-inside ml-4 text-[10px] sm:text-base text-gray-700 space-y-1">
                 <li>Design uploads & portfolios</li>
-                <li>Digital design sales (30% commission)</li>
-                <li>Print-on-Demand products (40% commission)</li>
-                <li>Boutique/physical products (20-30% tiered commission)</li>
-                <li>Payment processing & payouts</li>
-                <li>Dispute resolution & buyer protection</li>
+                  <li>Digital design sales (commission varies by product type and seller tier)</li>
+                  <li>Print-on-Demand products (commission varies by product and plan)</li>
+                  <li>Boutique/physical products use a unified tiered commission system (`BOUTIQUE_COMMISSION_TIERS`) based on seller lifetime earnings</li>
+                  <li>Payment processing & payouts</li>
+                  <li>Dispute resolution & buyer protection</li>
               </ul>
             </section>
 
@@ -89,7 +89,8 @@ export default function TermsOfServicePage() {
                 <p><strong>Pricing:</strong> Designers set prices. Taxes and fees calculated at checkout transparently.</p>
                 <p><strong>Payment Processing:</strong> Stripe (USD) and PayStack (NGN) handle transactions securely.</p>
                 <p><strong>Refunds:</strong> Digital items non-refundable after delivery. Physical items may be returnable per seller terms (14-30 days).</p>
-                <p><strong>Payouts:</strong> Weekly/bi-weekly/monthly to verified bank accounts, minus fees and taxes.</p>
+                 <p><strong>Payouts:</strong> Weekly/bi-weekly/monthly to verified bank accounts, minus platform commission and processor fees.</p>
+                 <p><strong>Commission Structure:</strong> Boutique and seller commissions now use a tiered system based on lifetime earnings. See the <Link href="/seller/payouts" className="underline">Seller Payouts</Link> page or <Link href="/COMMISSION_PAYMENT_DOCS.md" className="underline">Commission docs</Link> for full details.</p>
               </div>
             </section>
 

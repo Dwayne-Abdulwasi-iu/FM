@@ -7,10 +7,14 @@
 **Commission Model:**
 ```
 Sellers pay commission based on monthly sales:
-- ₦0-99k GMV → 15%
-- ₦100k-500k → 12% 
-- ₦500k-1M → 10%
-- ₦1M+ → 8%
+Sellers pay commission based on a unified tiered boutique policy.
+Refer to `COMMISSION_PAYMENT_DOCS.md` for full details — key tiers (USD lifetime earnings basis):
+  - STARTER: 0.1% (0 — $100)
+  - NEW: 8% ($100 — $500)
+  - BRONZE: 7% ($500 — $2,000)
+  - SILVER: 6.5% ($2,000 — $5,000)
+  - GOLD: 6% ($5,000 — $10,000)
+  - PLATINUM: 5.5% ($10,000+)
 ```
 
 **Key Files:**
@@ -270,6 +274,7 @@ POST /api/admin/payment-reconciliation
 **What sellers see:**
 - Real-time commission calculator
 - Current tier (15%, 12%, 10%, 8%)
+ - Current tiering: see `COMMISSION_PAYMENT_DOCS.md` (boutique tiered rates)
 - How much they earn per sale
 - Payment schedule timeline
 - Tier comparison table

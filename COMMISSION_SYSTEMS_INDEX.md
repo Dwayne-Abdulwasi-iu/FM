@@ -179,6 +179,22 @@ Seller receives: ₦88,000
 
 ---
 
+## Update (2026-04-10): Boutique Commission Tiers
+
+The platform now uses `BOUTIQUE_COMMISSION_TIERS` for boutique sales. This unified, tiered structure applies to both `SELLER_DIRECT` and `ADMIN_STOCK` fulfillment methods and replaces the previous flat 15% admin-stock commission.
+
+Summary of new tiers (USD lifetime earnings basis):
+- STARTER: 0.1% (0 — $100)
+- NEW: 8% ($100 — $500)
+- BRONZE: 7% ($500 — $2,000)
+- SILVER: 6.5% ($2,000 — $5,000)
+- GOLD: 6% ($5,000 — $10,000)
+- PLATINUM: 5.5% ($10,000+)
+
+Pro-subscriber sellers receive a −1% discount on their base tier (minimum commission cap: 5%).
+
+See `COMMISSION_PAYMENT_DOCS.md` and `src/lib/boutique/constants.ts` for details and rollout recommendations.
+
 ## 🎯 Implementation Path
 
 ### Phase 1: Setup (1 hour)

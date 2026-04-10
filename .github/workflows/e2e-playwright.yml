@@ -1,0 +1,40 @@
+name: E2E Playwright
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  e2e:
+    name: Run Playwright E2E on staging
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Run E2E tests
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          STRIPE_TEST_KEY: ${{ secrets.STRIPE_TEST_KEY }}
+          PAYSTACK_TEST_KEY: ${{ secrets.PAYSTACK_TEST_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        run: npm run test:e2e

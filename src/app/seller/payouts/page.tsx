@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { getCommissionRate } from '@/lib/commission-tiers'
+import { getCommissionRate, getSellerTierInfo } from '@/lib/commission-tiers'
+import dynamic from 'next/dynamic'
+const CommissionCalculatorWidget = dynamic(() => import('@/components/seller/commission-calculator-widget').then(m => m.CommissionCalculatorWidget), { ssr: false })
 import { AlertCircle, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 
@@ -80,28 +82,18 @@ export default async function SellerPayoutsPage() {
 
   const monthlyGMV = monthlyOrders.reduce((sum: number, order) => sum + order.totalAmount, 0)
   const monthlyCommissions = monthlyOrders.reduce((sum: number, order) => {
-    // Recalculate commission using tiered rates with trial check
     const isProSubscriber = user.designerTier === 'VIP_DESIGNER' || user.designerTier === 'VVIP_DESIGNER'
-    
-    // Check for active trial or subscription
     const now = new Date()
-    const hasActiveTrial = Boolean(
-      (user.proTrialActivated ?? false) && 
-      user.proTrialExpiresAt && 
-      user.proTrialExpiresAt > now
-    )
-    const hasActiveSubscription = Boolean(
-      (user.proSubscriptionActive ?? false) && 
-      user.proSubscriptionExpiresAt && 
-      user.proSubscriptionExpiresAt > now
-    )
-    
-    // Apply trial benefits to commission rate (1% discount)
+    const hasActiveTrial = Boolean((user.proTrialActivated ?? false) && user.proTrialExpiresAt && user.proTrialExpiresAt > now)
+    const hasActiveSubscription = Boolean((user.proSubscriptionActive ?? false) && user.proSubscriptionExpiresAt && user.proSubscriptionExpiresAt > now)
     const hasProBenefits = isProSubscriber || hasActiveSubscription || hasActiveTrial
     const commissionRate = getCommissionRate(user.totalEarnings, hasProBenefits)
     const commission = order.totalAmount * commissionRate
     return sum + commission
   }, 0)
+
+  // Seller tier info (for sidebar & calculator)
+  const sellerTierInfo = await getSellerTierInfo(user.id)
 
   // Get next payout date (1st of next month)
   const today = new Date()
@@ -185,26 +177,28 @@ export default async function SellerPayoutsPage() {
               </div>
             </div>
 
-            {/* Help Card */}
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
-              <div className="flex gap-3 mb-4">
-                <HelpCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                <h3 className="font-semibold text-purple-900">Commission Tiers</h3>
+            {/* Tier Card */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Your Tier</h3>
+                <span className="text-sm text-gray-600">As of {new Date().toLocaleDateString()}</span>
               </div>
-              <ul className="space-y-2 text-sm">
-                <li className="text-purple-800">
-                  <strong>STARTER:</strong> $0-$100 = 0.1%
-                </li>
-                <li className="text-purple-800">
-                  <strong>NEW:</strong> $100-$500 = 10%
-                </li>
-                <li className="text-purple-800">
-                  <strong>SILVER:</strong> $2k-$5k = 9%
-                </li>
-                <li className="text-purple-800">
-                  <strong>GOLD:</strong> $5k-$10k = 8.5%
-                </li>
-              </ul>
+              {sellerTierInfo ? (
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{sellerTierInfo.tierName}</p>
+                  <p className="text-xs text-gray-600 mt-1">Lifetime earnings: ${sellerTierInfo.totalEarnings.toFixed(2)}</p>
+                  <p className="mt-3 text-sm">Current rate: <strong className="text-orange-600">{(sellerTierInfo.commissionRate * 100).toFixed(2)}%</strong></p>
+                  {sellerTierInfo.nextTier && (
+                    <p className="text-xs text-gray-600 mt-2">{sellerTierInfo.amountToNextTier && sellerTierInfo.amountToNextTier > 0 ? `Earn $${sellerTierInfo.amountToNextTier.toFixed(2)} more to reach ${sellerTierInfo.nextTier}` : 'Top tier reached'}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No tier data available.</p>
+              )}
+
+              <div className="mt-4">
+                <CommissionCalculatorWidget />
+              </div>
             </div>
           </div>
         </div>

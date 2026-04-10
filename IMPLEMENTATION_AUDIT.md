@@ -275,8 +275,8 @@ model Referral {
    - Falls back gracefully
 
 2. ✅ Commission rate logic:
-   - ADMIN_STOCK: Flat 15%
-   - SELLER_DIRECT: Tiered 7-10% based on seller earnings
+   - ADMIN_STOCK: Tiered (uses `BOUTIQUE_COMMISSION_TIERS`, same as `SELLER_DIRECT`)
+   - SELLER_DIRECT: Tiered based on seller lifetime earnings (see `COMMISSION_PAYMENT_DOCS.md`)
 
 3. ✅ Fulfillment method support:
    - ADMIN_STOCK: Platform ships, 100% shipping fee to platform

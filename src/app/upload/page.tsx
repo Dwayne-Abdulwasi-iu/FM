@@ -71,6 +71,24 @@ export default function EnhancedUploadPage() {
     }
   }, [session])
 
+  // Fetch seller tier info to display current commission rate on upload page
+  const [currentCommissionRate, setCurrentCommissionRate] = useState<number | null>(null)
+  useEffect(() => {
+    let mounted = true
+    async function fetchTier() {
+      try {
+        const res = await fetch('/api/seller/commission-tier')
+        if (!res.ok) return
+        const json = await res.json()
+        if (mounted) setCurrentCommissionRate(json.commissionRate)
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (session?.user?.id) fetchTier()
+    return () => { mounted = false }
+  }, [session])
+
   const checkBankAccountStatus = async () => {
     try {
       const response = await fetch('/api/seller/account')
@@ -515,6 +533,19 @@ export default function EnhancedUploadPage() {
                     <Plus className="h-2.5 sm:h-3 w-2.5 sm:w-3 mr-0.5 sm:mr-1" />
                     Add File
                   </button>
+                </div>
+
+                {/* Commission note for sellers */}
+                <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs sm:text-sm text-amber-800">
+                    <strong>Commission:</strong>{' '}
+                    {currentCommissionRate ? (
+                      <>{(currentCommissionRate * 100).toFixed(2)}% will be deducted as platform commission based on your current tier.</>
+                    ) : (
+                      <>Your commission rate will be shown here after you sign in.</>
+                    )}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-amber-700 mt-1">Commission is calculated per sale based on your lifetime earnings tier. See <Link href="/seller/payouts" className="text-amber-800 underline">Payouts</Link> for details.</p>
                 </div>
 
                 {/* Seller Recommendation Message */}
