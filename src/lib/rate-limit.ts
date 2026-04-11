@@ -31,12 +31,8 @@ export async function checkRateLimit(
   const expiresAt = new Date(now.getTime() + windowMs);
 
   try {
-    // Use type assertion for new model
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
-
     // Try to find existing entry
-    const existing = await prismaAny.rateLimitEntry.findUnique({
+    const existing = await prisma.rateLimitEntry.findUnique({
       where: { key },
     });
 
@@ -44,7 +40,7 @@ export async function checkRateLimit(
       // Check if window has expired
       if (existing.windowStart < windowStart) {
         // Window expired, reset counter
-        const _updated = await prismaAny.rateLimitEntry.update({
+        const _updated = await prisma.rateLimitEntry.update({
           where: { key },
           data: {
             count: 1,
@@ -70,7 +66,7 @@ export async function checkRateLimit(
       }
 
       // Increment counter
-      const updated = await prismaAny.rateLimitEntry.update({
+      const updated = await prisma.rateLimitEntry.update({
         where: { key },
         data: {
           count: existing.count + 1,
@@ -85,7 +81,7 @@ export async function checkRateLimit(
     }
 
     // No existing entry, create new one
-    await prismaAny.rateLimitEntry.create({
+    await prisma.rateLimitEntry.create({
       data: {
         key,
         count: 1,

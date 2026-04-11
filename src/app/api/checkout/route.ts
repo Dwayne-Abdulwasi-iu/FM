@@ -87,7 +87,18 @@ export async function POST(request: NextRequest) {
 
     console.log('[CHECKOUT] POST /api/checkout called', { userId: session.user.id })
     
-    let cartItems, paymentMethod, phoneNumber, countryCode, shippingAddress
+    type CartItem = {
+      designId: string
+      quantity: number | string
+      purchaseType?: string
+      podPrice?: number
+      podProductId?: string
+      podProductName?: string
+      podProvider?: string
+      variant?: 'A' | 'B' | string
+    }
+
+    let cartItems: CartItem[] | undefined, paymentMethod, phoneNumber, countryCode, shippingAddress
     try {
       const body = await request.json()
       cartItems = body.cartItems
@@ -227,11 +238,13 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      // Persist numeric quantity back to cart item for downstream processing
+      item.quantity = qty
     }
 
   // Verify cart items and calculate total
   let totalAmount = 0
-  const lineItems: unknown[] = []
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
   type OrderItem = { 
     designId: string; 
     quantity: number; 
@@ -279,6 +292,9 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+
+      // Ensure we have a numeric quantity for this item (validated earlier)
+      const quantity = parseInt(String(item.quantity), 10)
 
       // Get correct price based on purchase type
       // For POD items, use the podPrice from the cart; otherwise use design price
@@ -335,7 +351,7 @@ export async function POST(request: NextRequest) {
 
       // Only apply promotions to regular digital designs (not POD or ownership)
       if (item.purchaseType !== 'POD' && item.purchaseType !== 'OWNERSHIP') {
-        const allDesignIds = cartItems.map((ci: any) => ci.designId)
+        const allDesignIds = cartItems.map((ci: CartItem) => ci.designId)
         const promotion = await getPromotionForDesign(
           design.id,
           design.designerId,
@@ -362,7 +378,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const itemTotal = price * item.quantity
+      const itemTotal = price * quantity
       totalAmount += itemTotal
 
       // Customer pays the full listed price - no additional fees
@@ -381,13 +397,13 @@ export async function POST(request: NextRequest) {
           },
           unit_amount: Math.round(price * 100), // Convert to cents
         },
-        quantity: item.quantity,
+        quantity: quantity,
       })
 
       // Build order item with POD fields if applicable
       const orderItem: OrderItem = {
         designId: design.id,
-        quantity: item.quantity,
+        quantity: quantity,
         price: price,
         purchaseType: item.purchaseType || 'REGULAR',
         designerId: design.designerId,
@@ -417,16 +433,16 @@ export async function POST(request: NextRequest) {
           prisma.design.update({
             where: { id: design.id },
             data: {
-              priceTestSalesB: { increment: item.quantity },
-              priceTestRevenueB: { increment: price * item.quantity },
+              priceTestSalesB: { increment: quantity },
+              priceTestRevenueB: { increment: price * quantity },
             },
           }).catch(err => console.error('[Checkout] Failed to update price test stats:', err))
         } else {
           prisma.design.update({
             where: { id: design.id },
             data: {
-              priceTestSalesA: { increment: item.quantity },
-              priceTestRevenueA: { increment: price * item.quantity },
+              priceTestSalesA: { increment: quantity },
+              priceTestRevenueA: { increment: price * quantity },
             },
           }).catch(err => console.error('[Checkout] Failed to update price test stats:', err))
         }

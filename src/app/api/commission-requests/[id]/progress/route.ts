@@ -33,8 +33,7 @@ export async function GET(
     
     const { id } = await params;
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commission = await (prisma as any).commissionRequest.findUnique({
+    const commission = await prisma.commissionRequest.findUnique({
       where: { id },
       select: {
         id: true,
@@ -106,8 +105,7 @@ export async function POST(
       );
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commission = await (prisma as any).commissionRequest.findUnique({
+    const commission = await prisma.commissionRequest.findUnique({
       where: { id },
       include: {
         requester: {
@@ -142,7 +140,7 @@ export async function POST(
     }
 
     // Rate limiting: Max 5 progress updates per day
-    const existingUpdates = (commission.progressUpdates || []) as ProgressUpdate[];
+    const existingUpdates = (commission.progressUpdates || []) as unknown as ProgressUpdate[];
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const recentUpdates = existingUpdates.filter(
       (update: ProgressUpdate) => update.timestamp > oneDayAgo
@@ -165,10 +163,9 @@ export async function POST(
     
     const updatedProgressUpdates = [...existingUpdates, newUpdate];
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).commissionRequest.update({
+    await prisma.commissionRequest.update({
       where: { id },
-      data: { progressUpdates: updatedProgressUpdates as unknown[] }
+      data: { progressUpdates: updatedProgressUpdates as any }
     });
     
     // Send email notification to client
@@ -189,8 +186,7 @@ export async function POST(
     }
     
     // Create in-app notification
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).notification.create({
+    await prisma.notification.create({
       data: {
         userId: commission.requesterId,
         type: "COMMISSION_PROGRESS",

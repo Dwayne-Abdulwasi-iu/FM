@@ -47,9 +47,7 @@ interface AuditLogEntry {
  */
 export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
   try {
-    // Use type assertion for new model
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).auditLog.create({
+    await prisma.auditLog.create({
       data: {
         action: entry.action,
         category: entry.category,
@@ -58,7 +56,7 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
         actorEmail: entry.actorEmail || null,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        metadata: entry.metadata || null,
+        metadata: entry.metadata as any || null,
         ipAddress: entry.ipAddress || null,
         userAgent: entry.userAgent || null,
         success: entry.success ?? true,
