@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify notification belongs to this seller
-    const notification = await (prisma as any).transferNotification.findUnique({
+    const notification = await prisma.transferNotification.findUnique({
       where: { id: notificationId }
     })
 

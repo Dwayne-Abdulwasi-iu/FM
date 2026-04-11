@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { validateCategory } from '@/lib/design-categories'
 
 // Maximum limit to prevent memory exhaustion
@@ -29,13 +30,13 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
     const searchTerm = query.trim()
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.DesignWhereInput = {
       isActive: true,
       approvalStatus: 'APPROVED',
       OR: [
         { title: { contains: searchTerm, mode: 'insensitive' } },
         { description: { contains: searchTerm, mode: 'insensitive' } },
-        { tags: { contains: searchTerm, mode: 'insensitive' } },
+        { tags: { hasSome: [searchTerm] } },
         { category: { contains: searchTerm, mode: 'insensitive' } },
         {
           designer: {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     const [designs, total] = await Promise.all([
       prisma.design.findMany({
-        where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */,
+        where,
         skip,
         take: limit,
         orderBy: [
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.design.count({ where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */ }),
+      prisma.design.count({ where }),
     ])
 
     return NextResponse.json({

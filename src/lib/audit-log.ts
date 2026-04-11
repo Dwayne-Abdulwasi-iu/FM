@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client'
 
 export type AuditAction = 
   | "PAYMENT_CONFIRMED"
@@ -56,7 +57,7 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
         actorEmail: entry.actorEmail || null,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        metadata: entry.metadata as any || null,
+        metadata: entry.metadata ? (entry.metadata as unknown as Prisma.JsonValue) : null,
         ipAddress: entry.ipAddress || null,
         userAgent: entry.userAgent || null,
         success: entry.success ?? true,

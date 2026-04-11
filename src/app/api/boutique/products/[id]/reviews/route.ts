@@ -221,7 +221,7 @@ export async function DELETE(
     }
 
     // Only allow owner or admin to delete
-    const isAdmin = (session.user as any).role === 'ADMIN'
+    const isAdmin = session.user?.role === 'ADMIN'
     if (review.userId !== session.user.id && !isAdmin) {
       return NextResponse.json(
         { success: false, message: 'Not authorized' },

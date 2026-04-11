@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client'
 import { validateAttachmentUrls } from "@/lib/cloudinary";
 import { filterMessageContent, getViolationSummary } from "@/lib/content-filter";
 import { 
@@ -83,7 +84,7 @@ export async function GET(
     if (hasUnreadUpdates) {
       await prisma.commissionRequest.update({
         where: { id },
-        data: { messages: updatedMessages as any }
+        data: { messages: updatedMessages as unknown as Prisma.InputJsonValue[] }
       });
     }
     
@@ -252,7 +253,7 @@ export async function POST(
     
     await prisma.commissionRequest.update({
       where: { id },
-      data: { messages: updatedMessages as any }
+      data: { messages: updatedMessages as unknown as Prisma.InputJsonValue[] }
     });
     
     // Send email notification to the other party

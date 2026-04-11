@@ -141,8 +141,7 @@ export function quoteRateLimitKey(designerId: string, commissionId: string): str
  */
 export async function cleanupExpiredRateLimits(): Promise<number> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (prisma as any).rateLimitEntry.deleteMany({
+    const result = await prisma.rateLimitEntry.deleteMany({
       where: {
         expiresAt: {
           lt: new Date(),

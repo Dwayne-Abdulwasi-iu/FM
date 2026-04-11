@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client'
 import { validateAttachmentUrls } from "@/lib/cloudinary";
 import { sendProgressUpdateToClient } from "@/lib/email";
 
@@ -165,7 +166,7 @@ export async function POST(
     
     await prisma.commissionRequest.update({
       where: { id },
-      data: { progressUpdates: updatedProgressUpdates as any }
+      data: { progressUpdates: updatedProgressUpdates as unknown as Prisma.InputJsonValue[] }
     });
     
     // Send email notification to client

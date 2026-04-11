@@ -38,35 +38,13 @@ export async function GET(
     
     const { id } = await params;
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dispute = await (prisma as any).commissionRequest.findUnique({
+    const dispute = await prisma.commissionRequest.findUnique({
       where: { id },
       include: {
-        requester: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            createdAt: true
-          }
-        },
+        requester: true,
         designer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            createdAt: true,
-            sellerAccount: {
-              select: {
-                businessName: true,
-                bankName: true,
-                accountNumber: true,
-                accountName: true,
-                paystackSubaccountCode: true
-              }
-            }
+          include: {
+            sellerAccount: true
           }
         }
       }
@@ -122,26 +100,13 @@ export async function POST(
       );
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commission = await (prisma as any).commissionRequest.findUnique({
+    const commission = await prisma.commissionRequest.findUnique({
       where: { id },
       include: {
-        requester: {
-          select: { id: true, name: true, email: true }
-        },
+        requester: true,
         designer: {
-          select: { 
-            id: true, 
-            name: true, 
-            email: true,
-            sellerAccount: {
-              select: {
-                paystackSubaccountCode: true,
-                accountNumber: true,
-                bankName: true,
-                accountName: true
-              }
-            }
+          include: {
+            sellerAccount: true
           }
         }
       }
@@ -287,8 +252,7 @@ export async function POST(
       ? "DELIVERED" 
       : "IN_PROGRESS";
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updatedCommission = await (prisma as any).commissionRequest.update({
+    const updatedCommission = await prisma.commissionRequest.update({
       where: { id },
       data: {
         disputeResolvedAt: new Date(),
@@ -344,8 +308,7 @@ export async function POST(
     }
     
     // Create admin log entry
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).notification.create({
+    await prisma.notification.create({
       data: {
         userId: session.user.id,
         type: "DISPUTE_RESOLVED",

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client'
 import { validateCategory } from "@/lib/design-categories";
 
 // Maximum limit to prevent memory exhaustion
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "12", 10), MAX_LIMIT);
     const category = searchParams.get("category");
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.DesignWhereInput = {
       isActive: true,
       approvalStatus: 'APPROVED',
     };
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Get designs sorted by trending score
     const designs = await prisma.design.findMany({
-      where: where as any,
+      where,
       take: limit,
       orderBy: [
         { trendingScore: 'desc' },
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
     // Also get rising stars (new designs with high engagement)
     const risingStars = await prisma.design.findMany({
       where: {
-        ...where as any,
+        ...where,
         createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         },

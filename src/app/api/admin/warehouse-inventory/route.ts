@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const searchQuery = searchParams.get('search')
 
     // Build where clause
-    const where: any = {}
+    const where: Prisma.BoutiqueProductWhereInput = {}
 
     // Always exclude products that never made it to warehouse
     // Only show products that reached warehouse: LIVE, OUT_OF_STOCK, IN_RETURN, RETURN_REQUESTED, RETURN_SHIPPED, RETURNED_TO_SELLER, VERIFICATION_PASSED, RECEIVED_BY_ADMIN
@@ -66,17 +67,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (dateFrom) {
-      where.warehouseReceivedAt = {
-        ...where.warehouseReceivedAt,
-        gte: new Date(dateFrom),
-      }
+      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as any) || {}, { gte: new Date(dateFrom) })
     }
 
     if (dateTo) {
-      where.warehouseReceivedAt = {
-        ...where.warehouseReceivedAt,
-        lte: new Date(dateTo),
-      }
+      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as any) || {}, { lte: new Date(dateTo) })
     }
 
     if (searchQuery) {
@@ -199,12 +194,24 @@ export async function GET(request: NextRequest) {
           displayPrice: product.salePrice || product.basePrice,
           totalSold,
           shipmentWarehouseAddress: product.shipmentWarehouseAddress,
-          salesHistory: salesHistory.map(item => ({
-            quantity: item.quantity,
-            variantInfo: item.variant ? `${item.variant.color || ''} ${item.variant.size || ''}`.trim() : (item.variantSnapshot ? `${(item.variantSnapshot as any).color || ''} ${(item.variantSnapshot as any).size || ''}`.trim() : 'Standard'),
-            soldAt: item.createdAt,
-            price: item.price
-          }))
+          salesHistory: salesHistory.map(sItem => {
+            const variantInfo = sItem.variant
+              ? `${sItem.variant.color || ''} ${sItem.variant.size || ''}`.trim()
+              : (() => {
+                  const snap = sItem.variantSnapshot && typeof sItem.variantSnapshot === 'object' ? sItem.variantSnapshot as Record<string, unknown> : null
+                  const color = snap && typeof snap['color'] === 'string' ? snap['color'] as string : ''
+                  const size = snap && typeof snap['size'] === 'string' ? snap['size'] as string : ''
+                  const info = `${color} ${size}`.trim()
+                  return info || 'Standard'
+                })()
+
+            return {
+              quantity: sItem.quantity,
+              variantInfo,
+              soldAt: sItem.createdAt,
+              price: sItem.price
+            }
+          })
         }
       })
     )

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 
 /**
  * POST /api/seller/promotions - Create a promotion
@@ -31,11 +32,11 @@ export async function POST(request: NextRequest) {
 
     // Sanitize designIds and productIds - filter out empty or null values
     const designIds = (rawDesignIds || [])
-      .filter((id: any): id is string => typeof id === 'string' && id.trim().length > 0)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0)
       .map((id: string) => id.trim());
     
     const productIds = (rawProductIds || [])
-      .filter((id: any): id is string => typeof id === 'string' && id.trim().length > 0)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0)
       .map((id: string) => id.trim());
 
     // Check what type of items this promotion applies to
@@ -332,7 +333,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status"); // active, expired, all
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.PromotionWhereInput = {
       sellerId: session.user.id,
     };
 
@@ -347,7 +348,7 @@ export async function GET(request: NextRequest) {
     }
 
     const promotions = await prisma.promotion.findMany({
-      where: where as any,
+      where,
       orderBy: { createdAt: 'desc' },
     });
 
@@ -355,8 +356,8 @@ export async function GET(request: NextRequest) {
     const enrichedPromotions = await Promise.all(
       promotions.map(async (promo) => {
         try {
-          const designIds = Array.isArray(promo.designIds) ? promo.designIds : [];
-          const productIds = Array.isArray((promo as any).productIds) ? (promo as any).productIds : [];
+          const designIds = Array.isArray(promo.designIds) ? (promo.designIds as string[]) : [];
+          const productIds = Array.isArray(promo.productIds) ? (promo.productIds as string[]) : [];
 
           const designs = designIds.length > 0 
             ? await prisma.design.findMany({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 import { validateCategory } from "@/lib/design-categories";
 
 /**
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: Record<string, unknown> = {
+    const where: Prisma.DesignWhereInput = {
       isActive: true,
       approvalStatus: 'APPROVED',
     };
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sort order
-    let orderBy: Record<string, string>[] = [];
+    let orderBy: Prisma.Enumerable<Prisma.DesignOrderByWithRelationInput> = [];
     switch (sortBy) {
       case 'price_low':
         orderBy = [{ price: 'asc' }];
@@ -123,10 +124,10 @@ export async function POST(request: NextRequest) {
 
     const [designs, total] = await Promise.all([
       prisma.design.findMany({
-        where: where as any,
+        where,
         skip,
         take: limit,
-        orderBy: orderBy as any,
+        orderBy,
         include: {
           designer: {
             select: {
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
           },
         },
       }),
-      prisma.design.count({ where: where as any }),
+      prisma.design.count({ where }),
     ]);
 
     // Record search history if user is logged in

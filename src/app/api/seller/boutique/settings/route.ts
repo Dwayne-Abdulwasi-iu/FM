@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 interface ReturnAddress {
   name: string
@@ -68,7 +69,7 @@ export async function PUT(request: NextRequest) {
     const updated = await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        boutique_returnAddress: returnAddress as any,
+        boutique_returnAddress: returnAddress as unknown as Prisma.InputJsonValue,
       },
       select: {
         id: true,
