@@ -631,14 +631,22 @@ export async function POST(request: NextRequest) {
           const configuredPct = typeof configuredPctRaw === 'string' ? parseFloat(configuredPctRaw) : (typeof configuredPctRaw === 'number' ? configuredPctRaw : NaN)
 
           if (!isFinite(configuredPct) || Math.abs(configuredPct - expectedPaystackPct) > 0.1) {
-            console.warn('[CHECKOUT] Paystack subaccount percentage mismatch for', subaccountCode, {
+            console.error('[CHECKOUT] Paystack subaccount percentage mismatch for', subaccountCode, {
               expectedPaystackPct,
               configuredPct,
               computedRate
             })
+            return NextResponse.json(
+              { message: 'Paystack seller subaccount percentage is misconfigured. Please contact support to resolve subaccount settings before proceeding with checkout.' },
+              { status: 422 }
+            )
           }
         } catch (err) {
-          console.warn('[CHECKOUT] Failed to verify Paystack subaccount percentage:', err)
+          console.error('[CHECKOUT] Failed to verify Paystack subaccount percentage:', err)
+          return NextResponse.json(
+            { message: 'Unable to verify Paystack seller subaccount. Please try again later or contact support.' },
+            { status: 503 }
+          )
         }
 
         transactionData.subaccount = subaccounts[0].subaccount
@@ -905,6 +913,35 @@ export async function POST(request: NextRequest) {
           }
 
           if (subaccounts.length === 1) {
+            // Verify the seller's Paystack subaccount percentage before using direct subaccount in fallback
+            try {
+              const computedRate = subaccounts[0].commissionRate
+              const expectedPaystackPct = Math.round(computedRate * 100 * 10) / 10
+              const subaccountCode = subaccounts[0].subaccount
+              const subResp = await paystack.subaccount.get(subaccountCode)
+              const configuredPctRaw = subResp?.data?.percentage_charge
+              const configuredPct = typeof configuredPctRaw === 'string' ? parseFloat(configuredPctRaw) : (typeof configuredPctRaw === 'number' ? configuredPctRaw : NaN)
+
+              if (!isFinite(configuredPct) || Math.abs(configuredPct - expectedPaystackPct) > 0.1) {
+                console.error('[CHECKOUT] Paystack subaccount percentage mismatch (fallback) for', subaccountCode, {
+                  expectedPaystackPct,
+                  configuredPct,
+                  computedRate
+                })
+                // Block checkout in fallback when subaccount isn't configured as expected
+                return NextResponse.json(
+                  { message: 'Paystack seller subaccount percentage is misconfigured. Please contact support to resolve subaccount settings before proceeding with checkout.' },
+                  { status: 422 }
+                )
+              }
+            } catch (err) {
+              console.error('[CHECKOUT] Failed to verify Paystack subaccount percentage (fallback):', err)
+              return NextResponse.json(
+                { message: 'Unable to verify Paystack seller subaccount. Please try again later or contact support.' },
+                { status: 503 }
+              )
+            }
+
             transactionData.subaccount = subaccounts[0].subaccount
             console.log('Single seller (fallback) - using direct subaccount:', subaccounts[0].subaccount)
           } else if (subaccounts.length > 1) {
