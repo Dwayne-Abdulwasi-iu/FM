@@ -4,7 +4,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import type { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { prismaErrorResponse } from '@/lib/prismaError';
 
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest) {
       // Fetch dispute appeals - minimal data for list view
       (appealType === 'all' || appealType === 'dispute')
         ? (() => {
-          let whereCondition: Prisma.DisputeAppealWhereInput = {};
+            let whereCondition: any = {};
             if (status !== 'all') {
               if (status === 'PENDING') {
                 whereCondition = { status: { in: ['SUBMITTED', 'UNDER_REVIEW'] } };

@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { requiresOverrideReason, type BoutiqueOrderStatus } from '@/lib/boutique/statusMapping'
-import type { Prisma, BoutiqueOrderAuditLog } from '@prisma/client'
 
 export async function GET(
   request: NextRequest,
@@ -12,8 +11,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    const user = session?.user as { id?: string; role?: string; name?: string; email?: string } | undefined
-    if (!session || user?.role !== 'ADMIN') {
+    if (!session || (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -69,7 +67,7 @@ export async function GET(
     }
 
     // Fetch audit logs separately to avoid 500 error if table doesn't exist yet
-    const auditLogs: BoutiqueOrderAuditLog[] = []
+    const auditLogs: any[] = []
     try {
       const logs = await prisma.boutiqueOrderAuditLog.findMany({
         where: { orderId },
@@ -106,12 +104,11 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    const user = session?.user as { id?: string; role?: string; name?: string; email?: string } | undefined
-    if (!session || user?.role !== 'ADMIN') {
+    if (!session || (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const adminId = user?.id
+    const adminId = (session.user as any).id
     const { orderId } = await params
     const body = await request.json()
     const { status, trackingNumber, trackingUrl, notes, overrideReason } = body
@@ -344,7 +341,7 @@ export async function PATCH(
             action: status ? 'STATUS_CHANGE' : 'NOTES_UPDATE',
             oldStatus: existingOrder.status,
             newStatus: auditNewStatus || undefined,
-            changedFields: hasOtherChanges ? (changedFields as unknown as Prisma.JsonValue) : null,
+            changedFields: hasOtherChanges ? (changedFields as any) : null,
             isManualOverride: isManualStatusOverride,
             overrideReason: overrideReason || undefined,
             triggerType: 'ADMIN',
@@ -503,7 +500,7 @@ export async function PATCH(
     }
 
     // Fetch audit logs to include in response (so frontend doesn't need separate call)
-    const auditLogs: BoutiqueOrderAuditLog[] = []
+    const auditLogs: any[] = []
     try {
       const logs = await prisma.boutiqueOrderAuditLog.findMany({
         where: { orderId },

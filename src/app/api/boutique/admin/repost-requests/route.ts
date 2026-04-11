@@ -5,8 +5,8 @@ import { approveRepostRequest, rejectRepostRequest } from '@/lib/boutique/wareho
 import prisma from '@/lib/prisma'
 
 // Simple in-memory cache for PENDING requests (5 second TTL)
-const cache: { data: unknown[] | null; timestamp: number; TTL: number } = {
-  data: null,
+const cache = {
+  data: null as any,
   timestamp: 0,
   TTL: 5000 // 5 seconds
 }
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Optimized query with pagination
     const requests = await prisma.boutiqueRepostRequest.findMany({
       where: {
-        status: status as string,
+        status: status as any,
       },
       select: {
         id: true,

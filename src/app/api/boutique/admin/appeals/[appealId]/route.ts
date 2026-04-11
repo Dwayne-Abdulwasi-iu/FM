@@ -4,7 +4,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import type { Prisma, VariantDiscrepancyAppeal, DisputeAppeal } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
 
@@ -42,8 +41,7 @@ export async function PUT(
 
     // Prevent downgrading from a resolved state back to PENDING
     // First, check current status to prevent backtracking
-    type LocalAppeal = { appealStatus?: string; status?: string };
-    let currentAppeal: LocalAppeal | null = null;
+    let currentAppeal: any = null;
     try {
       currentAppeal = await prisma.variantDiscrepancyAppeal.findUnique({
         where: { id: appealId },
@@ -86,7 +84,7 @@ export async function PUT(
     }
 
     // Try to update variant discrepancy appeal first
-    let appeal: unknown = null;
+    let appeal: any = null;
     let isVariantAppeal = false;
     
     try {
@@ -120,9 +118,9 @@ export async function PUT(
         },
       });
       isVariantAppeal = true;
-    } catch (variantError: unknown) {
+    } catch (variantError: any) {
       // If not found, try dispute appeal
-      if (typeof variantError === 'object' && variantError !== null && 'code' in variantError && (variantError as { code?: string }).code === 'P2025') {
+      if (variantError?.code === 'P2025') {
         appeal = await prisma.disputeAppeal.update({
           where: { id: appealId },
           data: {
@@ -142,19 +140,6 @@ export async function PUT(
     }
 
     // Notify seller of resolution
-    // Small helper to safely extract nested string fields from runtime objects
-    const safeGetString = (obj: unknown, path: string[]): string | undefined => {
-      let cur: unknown = obj
-      for (const key of path) {
-        if (cur && typeof cur === 'object' && key in (cur as Record<string, unknown>)) {
-          cur = (cur as Record<string, unknown>)[key]
-        } else {
-          return undefined
-        }
-      }
-      return typeof cur === 'string' ? cur : undefined
-    }
-
     if (appealStatus !== 'PENDING') {
       try {
         const statusMap: Record<string, string> = {
@@ -175,7 +160,7 @@ export async function PUT(
         let emailHtml = '';
 
         if (isVariantAppeal) {
-          const productTitle = safeGetString(appeal, ['decision', 'discrepancy', 'variant', 'product', 'title']) || 'Unknown Product';
+          const productTitle = appeal.decision?.discrepancy?.variant?.product?.title || 'Unknown Product';
           emailSubject = `${statusText}: ${productTitle}`;
           emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -217,18 +202,12 @@ export async function PUT(
           `;
         }
 
-        const sellerEmail = safeGetString(appeal, ['seller', 'email']);
-
-        if (sellerEmail) {
-          await sendEmail({
-            to: sellerEmail,
-            subject: emailSubject,
-            text: `Your appeal has been updated. Status: ${statusText}`,
-            html: emailHtml,
-          });
-        } else {
-          console.warn('No seller email found for appeal, skipping email notification')
-        }
+        await sendEmail({
+          to: appeal.seller.email,
+          subject: emailSubject,
+          text: `Your appeal has been updated. Status: ${statusText}`,
+          html: emailHtml,
+        });
       } catch (emailError) {
         console.error('Failed to notify seller of appeal resolution:', emailError);
       }

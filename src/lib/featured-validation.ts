@@ -98,7 +98,7 @@ export function getAuditLog(userId: string, limit: number = 50): AuditLogEntry[]
 export async function validateItemForFeaturing(
   itemId: string,
   itemType: 'DESIGN' | 'BOUTIQUE_PRODUCT',
-  prisma: import('@prisma/client').PrismaClient,
+  prisma: any,
   userId: string
 ): Promise<{ valid: boolean; error?: string }> {
   try {
@@ -169,7 +169,7 @@ export async function isItemAlreadyFeatured(
   itemId: string,
   itemType: 'DESIGN' | 'BOUTIQUE_PRODUCT',
   userId: string,
-  prisma: import('@prisma/client').PrismaClient
+  prisma: any
 ): Promise<boolean> {
   try {
     if (itemType === 'DESIGN') {

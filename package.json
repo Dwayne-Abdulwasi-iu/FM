@@ -7,7 +7,7 @@
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
-    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --ext .ts,.tsx,.js,.jsx",
+    "lint": "next lint",
     "test:mongo": "node scripts/check-mongo-env.js && node src/test-mongo.js",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

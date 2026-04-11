@@ -11,7 +11,7 @@ interface TierInfo {
   nextTier?: string | null
   nextTierThreshold?: number | null
   amountToNextTier?: number | null
-  allTiers?: Array<{ key: string; effectiveRate: number }>
+  allTiers?: Array<any>
 }
 
 export function CommissionCalculatorWidget() {
@@ -25,10 +25,10 @@ export function CommissionCalculatorWidget() {
     let mounted = true
     async function fetchTier() {
       try {
-          const res = await fetch('/api/seller/commission-tier')
-          if (!res.ok) return
-          const data = await res.json()
-          if (mounted) setTierInfo(data as TierInfo)
+        const res = await fetch('/api/seller/commission-tier')
+        if (!res.ok) return
+        const data = await res.json()
+        if (mounted) setTierInfo(data)
       } catch (e) {
         // ignore
       } finally {

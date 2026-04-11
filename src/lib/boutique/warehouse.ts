@@ -7,7 +7,6 @@
  */
 
 import prisma from '@/lib/prisma'
-import type { BoutiqueProduct } from '@prisma/client'
 import { differenceInDays } from 'date-fns'
 import {
   sendMonth5WarehouseNotification,
@@ -210,7 +209,7 @@ export async function submitRepostRequest(
   sellerId: string,
   reason: string,
   notes: string | undefined,
-  product: Partial<BoutiqueProduct> & { currentStock?: number | null; receivedByAdminAt?: Date | null }
+  product: any // BoutiqueProduct
 ) {
   const daysInWarehouse = getDaysInWarehouse(product.receivedByAdminAt)
   const canRepostCheck = canRepost(daysInWarehouse)
@@ -338,6 +337,7 @@ export async function approveRepostRequest(
   
   // Update product with approval details
   const newStock = request.requestedStock
+  const daysInWarehouse = getDaysInWarehouse(request.product.receivedByAdminAt)
   
   await prisma.boutiqueProduct.update({
     where: { id: request.productId },
@@ -451,7 +451,7 @@ export async function rejectRepostRequest(
 export async function requestWarehouseReturn(
   productId: string,
   sellerId: string,
-  product: Partial<BoutiqueProduct> & { warehouseReceivedAt?: Date | null; fullReturnEnabled?: boolean; variants?: Array<{ id: string; quantity: number }>; currentStock?: number | null }
+  product: any // BoutiqueProduct with variants
 ) {
   // Check if product is in return already
   if (product.fullReturnEnabled) {
@@ -544,7 +544,7 @@ export async function requestWarehouseReturn(
 export async function approveWarehouseReturn(
   productId: string,
   sellerId: string,
-  product: Partial<BoutiqueProduct> | null,
+  product: any,
   adminNotes?: string
 ) {
   // Verify shipment exists and is still pending or being approved
@@ -613,12 +613,12 @@ export async function approveWarehouseReturn(
       status: 'IN_RETURN'
     }
   })
-    console.log('Product status updated to IN_RETURN:', {
-      productId,
-      oldStatus: product?.status,
-      newStatus: updateResult.status,
-      timestamp: new Date().toISOString()
-    })
+  console.log('Product status updated to IN_RETURN:', {
+    productId,
+    oldStatus: product.status,
+    newStatus: updateResult.status,
+    timestamp: new Date().toISOString()
+  })
 
   return {
     daysInWarehouse,
