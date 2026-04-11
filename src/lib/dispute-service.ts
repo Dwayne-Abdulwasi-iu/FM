@@ -637,7 +637,7 @@ async function getAllDisputes(): Promise<Dispute[]> {
 // Convert Prisma Dispute to service Dispute interface
 import type { Dispute as PrismaDispute } from '@prisma/client'
 
-function convertPrismaDisputeToInterface(prismaDispute: PrismaDispute & { messages?: any[]; evidence?: string[] }): Dispute {
+function convertPrismaDisputeToInterface(prismaDispute: PrismaDispute & { messages?: unknown[]; evidence?: string[] }): Dispute {
   return {
     id: prismaDispute.id,
     type: prismaDispute.type as DisputeType,
@@ -664,16 +664,20 @@ function convertPrismaDisputeToInterface(prismaDispute: PrismaDispute & { messag
       uploadedBy: 'buyer' as const,
     })),
     sellerEvidence: [],
-    messages: (prismaDispute.messages || []).map((msg: any) => ({
-      id: msg.id,
-      senderId: msg.senderId,
-      senderRole: msg.senderRole as 'buyer' | 'seller' | 'admin',
-      senderName: msg.senderRole,
-      message: msg.message,
-      attachments: msg.attachments || [],
-      isPrivate: false,
-      createdAt: msg.createdAt,
-    })),
+    messages: (prismaDispute.messages || []).map((msg: unknown) => {
+      const m = msg as Record<string, unknown>;
+      const attachments = Array.isArray(m.attachments) ? (m.attachments as unknown[]).map(a => String(a)) : [];
+      return {
+        id: String(m.id ?? ''),
+        senderId: String(m.senderId ?? ''),
+        senderRole: ((m.senderRole as string) === 'seller' || (m.senderRole as string) === 'admin') ? (m.senderRole as 'buyer' | 'seller' | 'admin') : 'buyer',
+        senderName: String(m.senderName ?? m.senderRole ?? 'Unknown'),
+        message: String(m.message ?? ''),
+        attachments,
+        isPrivate: Boolean(m.isPrivate ?? false),
+        createdAt: m.createdAt ? new Date(m.createdAt as string) : new Date(),
+      };
+    }),
     priority: (prismaDispute.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
     resolution: prismaDispute.resolution ? JSON.parse(prismaDispute.resolution) : undefined,
     createdAt: prismaDispute.createdAt,

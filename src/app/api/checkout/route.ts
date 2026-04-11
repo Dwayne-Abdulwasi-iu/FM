@@ -621,6 +621,26 @@ export async function POST(request: NextRequest) {
       // For multi-seller orders, use split with flat amounts
       if (subaccounts.length === 1) {
         // Single seller - use subaccount directly (cleaner, auto-splits)
+        // But verify the subaccount's configured percentage_charge matches our computed tiered rate
+        try {
+          const computedRate = subaccounts[0].commissionRate // decimal (e.g., 0.10)
+          const expectedPaystackPct = Math.round(computedRate * 100 * 10) / 10 // e.g., 10.0
+          const subaccountCode = subaccounts[0].subaccount
+          const subResp = await paystack.subaccount.get(subaccountCode)
+          const configuredPctRaw = subResp?.data?.percentage_charge
+          const configuredPct = typeof configuredPctRaw === 'string' ? parseFloat(configuredPctRaw) : (typeof configuredPctRaw === 'number' ? configuredPctRaw : NaN)
+
+          if (!isFinite(configuredPct) || Math.abs(configuredPct - expectedPaystackPct) > 0.1) {
+            console.warn('[CHECKOUT] Paystack subaccount percentage mismatch for', subaccountCode, {
+              expectedPaystackPct,
+              configuredPct,
+              computedRate
+            })
+          }
+        } catch (err) {
+          console.warn('[CHECKOUT] Failed to verify Paystack subaccount percentage:', err)
+        }
+
         transactionData.subaccount = subaccounts[0].subaccount
         // Note: bearer is not needed here - Paystack uses the subaccount's percentage_charge
         console.log('Single seller - using direct subaccount:', subaccounts[0].subaccount)
@@ -807,8 +827,9 @@ export async function POST(request: NextRequest) {
               const designerTotal = orderItems
                 .filter(item => item.designerId === designerId)
                 .reduce((sum, item) => sum + (item.price * item.quantity), 0)
-
-              const commissionRate = getCommissionRate(seller?.totalEarnings || 0)
+              const totalEarnings = seller?.totalEarnings ?? 0
+              const isProSubscriber = seller?.designerTier === 'VIP_DESIGNER' || seller?.designerTier === 'VVIP_DESIGNER'
+              const commissionRate = getCommissionRate(totalEarnings, isProSubscriber)
               const platformFee = designerTotal * commissionRate
               const designerEarnings = designerTotal - platformFee
 
@@ -859,17 +880,50 @@ export async function POST(request: NextRequest) {
             totalAmount: paystackOrder.totalAmount
           })
 
-          const paystackResult = await paystack.transaction.initialize({
+          // Build same transaction payload as main Paystack flow so splits apply
+          const transactionMetadata: Record<string, string | boolean> = {
+            userId: session.user.id,
+            orderId: paystackOrder.id,
+            platformFee: subaccounts.reduce((sum, s) => sum + (s.designerTotal * s.commissionRate), 0).toFixed(2),
+            orderItems: JSON.stringify(orderItems),
+            originalAmountUSD: totalAmount.toString(),
+            splitPaymentEnabled: subaccounts.length > 0,
+            orderType: hasPodItems ? 'POD' : 'DIGITAL'
+          }
+
+          if (hasPodItems && shippingAddress) {
+            transactionMetadata.shippingAddress = JSON.stringify(shippingAddress)
+          }
+
+          const transactionData: Record<string, unknown> = {
             email: session.user.email || 'customer@example.com',
-            amount: Math.round(amountInNGN * 100),
+            amount: Math.round(amountInNGN * 100), // Paystack expects kobo
+            currency: 'NGN',
             reference: paymentReference,
-            metadata: {
-              orderId: paystackOrder.id,
-              userId: session.user.id,
-              subaccounts: subaccounts,
-              orderType: hasPodItems ? 'POD' : 'DIGITAL'
+            callback_url: `${process.env.NEXTAUTH_URL}/checkout/success?reference=${paymentReference}`,
+            metadata: transactionMetadata
+          }
+
+          if (subaccounts.length === 1) {
+            transactionData.subaccount = subaccounts[0].subaccount
+            console.log('Single seller (fallback) - using direct subaccount:', subaccounts[0].subaccount)
+          } else if (subaccounts.length > 1) {
+            transactionData.split = {
+              type: 'flat',
+              bearer_type: 'account',
+              subaccounts: subaccounts.map(s => ({ subaccount: s.subaccount, share: s.share }))
             }
-          })
+            console.log('Multi-seller split configuration (fallback):', JSON.stringify(transactionData.split, null, 2))
+          } else {
+            console.warn('No sellers with Paystack subaccounts found (fallback)')
+            return NextResponse.json({ message: 'Unable to process payment. Sellers are not set up for Paystack payments.' }, { status: 503 })
+          }
+
+          const paystackResult = await paystack.transaction.initialize(transactionData)
+
+          if (!paystackResult.status) {
+            throw new Error('Failed to initialize Paystack transaction (fallback)')
+          }
 
           return NextResponse.json({
             orderId: paystackOrder.id,

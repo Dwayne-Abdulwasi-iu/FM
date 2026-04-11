@@ -86,7 +86,7 @@ export async function PUT(
     }
 
     // Try to update variant discrepancy appeal first
-    let appeal: any | null = null;
+    let appeal: unknown = null;
     let isVariantAppeal = false;
     
     try {
@@ -142,6 +142,19 @@ export async function PUT(
     }
 
     // Notify seller of resolution
+    // Small helper to safely extract nested string fields from runtime objects
+    const safeGetString = (obj: unknown, path: string[]): string | undefined => {
+      let cur: unknown = obj
+      for (const key of path) {
+        if (cur && typeof cur === 'object' && key in (cur as Record<string, unknown>)) {
+          cur = (cur as Record<string, unknown>)[key]
+        } else {
+          return undefined
+        }
+      }
+      return typeof cur === 'string' ? cur : undefined
+    }
+
     if (appealStatus !== 'PENDING') {
       try {
         const statusMap: Record<string, string> = {
@@ -162,7 +175,7 @@ export async function PUT(
         let emailHtml = '';
 
         if (isVariantAppeal) {
-          const productTitle = appeal?.decision?.discrepancy?.variant?.product?.title || 'Unknown Product';
+          const productTitle = safeGetString(appeal, ['decision', 'discrepancy', 'variant', 'product', 'title']) || 'Unknown Product';
           emailSubject = `${statusText}: ${productTitle}`;
           emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -204,14 +217,18 @@ export async function PUT(
           `;
         }
 
-        const sellerEmail = appeal?.seller?.email;
+        const sellerEmail = safeGetString(appeal, ['seller', 'email']);
 
-        await sendEmail({
-          to: sellerEmail,
-          subject: emailSubject,
-          text: `Your appeal has been updated. Status: ${statusText}`,
-          html: emailHtml,
-        });
+        if (sellerEmail) {
+          await sendEmail({
+            to: sellerEmail,
+            subject: emailSubject,
+            text: `Your appeal has been updated. Status: ${statusText}`,
+            html: emailHtml,
+          });
+        } else {
+          console.warn('No seller email found for appeal, skipping email notification')
+        }
       } catch (emailError) {
         console.error('Failed to notify seller of appeal resolution:', emailError);
       }

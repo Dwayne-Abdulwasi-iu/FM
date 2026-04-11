@@ -12,14 +12,20 @@ function getAuthHeaders() {
   };
 }
 
-export async function initializeTransaction(data: Record<string, unknown>) {
+export interface PaystackResponse<T = Record<string, unknown>> {
+  status: boolean
+  message?: string
+  data: T
+}
+
+export async function initializeTransaction(data: Record<string, unknown>): Promise<PaystackResponse> {
   try {
     const response = await axios.post(
       `${PAYSTACK_BASE_URL}/transaction/initialize`,
       data,
       { headers: getAuthHeaders() }
     );
-    return response.data;
+    return response.data as PaystackResponse;
   } catch (err: unknown) {
     // Better axios error handling without using `any`
     if (axios.isAxiosError(err)) {
@@ -42,7 +48,7 @@ export async function verifyTransaction(reference: string) {
       `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
       { headers: getAuthHeaders() }
     );
-    return response.data;
+    return response.data as PaystackResponse;
   } catch (err: unknown) {
     if (axios.isAxiosError(err)) {
       console.error('Paystack verification failed:', {
@@ -184,8 +190,9 @@ export async function convertNGNToUSD(ngnAmount: number): Promise<number> {
  */
 export const paystack = {
   transaction: {
-    async initialize(data: Record<string, unknown>) {
-      return initializeTransaction(data);
+    async initialize(data: Record<string, unknown>): Promise<PaystackResponse<{ authorization_url?: string; reference?: string }>> {
+      const resp = await initializeTransaction(data)
+      return resp as unknown as PaystackResponse<{ authorization_url?: string; reference?: string }>
     },
     async verify(reference: string) {
       return verifyTransaction(reference);
@@ -211,13 +218,13 @@ export const paystack = {
     }
   },
   transfer_recipient: {
-    async create(data: { type: string; name: string; account_number: string; bank_code: string; currency: string }) {
+    async create(data: { type: string; name: string; account_number: string; bank_code: string; currency: string }): Promise<PaystackResponse<{ recipient_code?: string }>> {
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transferrecipient`,
         data,
         { headers: getAuthHeaders() }
       );
-      return response.data;
+      return response.data as PaystackResponse<{ recipient_code?: string }>;
     },
     async list() {
       const response = await axios.get(
@@ -228,13 +235,13 @@ export const paystack = {
     }
   },
   transfer: {
-    async initiate(data: { source: string; amount: number; recipient: string; reason?: string }) {
+    async initiate(data: { source: string; amount: number; recipient: string; reason?: string }): Promise<PaystackResponse<{ reference?: string }>> {
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transfer`,
         data,
         { headers: getAuthHeaders() }
       );
-      return response.data;
+      return response.data as PaystackResponse<{ reference?: string }>;
     }
   },
   subaccount: {
@@ -253,6 +260,14 @@ export const paystack = {
         { headers: getAuthHeaders() }
       );
       return response.data;
+    }
+    ,
+    async get(subaccountCode: string) {
+      const response = await axios.get(
+        `${PAYSTACK_BASE_URL}/subaccount/${subaccountCode}`,
+        { headers: getAuthHeaders() }
+      );
+      return response.data as PaystackResponse<{ percentage_charge?: number }>
     }
   },
   balance: {

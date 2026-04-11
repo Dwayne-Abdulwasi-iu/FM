@@ -1,4 +1,4 @@
-import { paystack, getUSDToNGNRate } from './paystack'
+import { paystack, getUSDToNGNRate, PaystackResponse } from './paystack'
 import prisma from './prisma'
 
 export interface TransferData {
@@ -61,7 +61,7 @@ export async function initiateSellerTransfer(data: TransferData) {
     if (!recipientCode) {
       try {
         console.log(`Creating recipient code for seller ${sellerId}`)
-        const recipient = await paystack.transfer_recipient.create({
+        const recipient: PaystackResponse<{ recipient_code?: string }> = await paystack.transfer_recipient.create({
           type: 'nuban',
           name: sellerAccount.accountName,
           account_number: sellerAccount.accountNumber,
@@ -285,7 +285,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
     if (!recipientCode) {
       try {
         console.log(`Creating recipient code for designer ${designerId}`)
-        const recipient = await paystack.transfer_recipient.create({
+          const recipient: PaystackResponse<{ recipient_code?: string }> = await paystack.transfer_recipient.create({
           type: 'nuban',
           name: sellerAccount.accountName,
           account_number: sellerAccount.accountNumber,
@@ -359,7 +359,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
     // Initiate the transfer
     try {
-      const paystackTransfer = await paystack.transfer.initiate({
+      const paystackTransfer: PaystackResponse<{ reference?: string }> = await paystack.transfer.initiate({
         source: 'balance',
         amount: amountNGN * 100, // Convert to kobo
         recipient: recipientCode,

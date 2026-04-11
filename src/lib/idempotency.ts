@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 /**
  * Idempotency Key Utilities
@@ -64,12 +65,12 @@ export async function storeIdempotentResponse(
       create: {
         key: idempotencyKey,
         userId,
-        responseData,
+        responseData: responseData as unknown as Prisma.InputJsonValue,
         expiresAt
       },
       update: {
         userId,
-        responseData,
+        responseData: responseData as unknown as Prisma.InputJsonValue,
         expiresAt,
         updatedAt: new Date()
       }
