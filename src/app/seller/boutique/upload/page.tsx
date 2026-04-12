@@ -125,6 +125,7 @@ function BoutiqueUploadContent() {
   // Fulfillment Method (Seller Direct vs Admin Stock)
   const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>(FULFILLMENT_METHOD.ADMIN_STOCK);
   const [sellerTier, setSellerTier] = useState<SellerTier | null>(null);
+  const [boutiqueCommissionInfo, setBoutiqueCommissionInfo] = useState<any>(null);
   const [canDirectShip, setCanDirectShip] = useState(false);
   const [sellerShippingLocations, setSellerShippingLocations] = useState<string[]>([]);
   const [sellerShippingTime, setSellerShippingTime] = useState('2-3 business days');
@@ -154,10 +155,12 @@ function BoutiqueUploadContent() {
     try {
       const response = await fetch('/api/profile');
       const data = await response.json();
-      if (data.success && data.user) {
+      // API returns { success: true, user, boutiqueCommission }
+      if (data && data.user) {
         const tier = data.user.designerTier as SellerTier | null;
         setSellerTier(tier);
         setCanDirectShip(canUseDirectShipping(tier));
+        setBoutiqueCommissionInfo(data.boutiqueCommission || null)
       }
     } catch (error) {
       console.error('Failed to fetch seller tier:', error);
@@ -992,8 +995,18 @@ function BoutiqueUploadContent() {
               <p className="text-[10px] sm:text-sm text-purple-800">
                 {fulfillmentMethod === FULFILLMENT_METHOD.ADMIN_STOCK ? (
                   <>
-                    <strong>Commission:</strong> {BOUTIQUE_DEFAULTS.platformCommission}% (Warehouse) • 
-                    <strong> Earn:</strong> ₦{(parseFloat(basePrice) * (1 - BOUTIQUE_DEFAULTS.platformCommission / 100)).toLocaleString()}
+                    <strong>Commission:</strong>{' '}
+                    {boutiqueCommissionInfo ? (
+                      <>{boutiqueCommissionInfo.percentage}% ({boutiqueCommissionInfo.tierName})</>
+                    ) : (
+                      <>Calculating commission...</>
+                    )}
+                    {' '}• <strong> Earn:</strong>{' '}
+                    {boutiqueCommissionInfo ? (
+                      <>₦{(parseFloat(basePrice) * (1 - boutiqueCommissionInfo.rate)).toLocaleString()}</>
+                    ) : (
+                      <>Calculating...</>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1002,6 +1015,12 @@ function BoutiqueUploadContent() {
                   </>
                 )}
               </p>
+
+              {fulfillmentMethod === FULFILLMENT_METHOD.ADMIN_STOCK && boutiqueCommissionInfo && (
+                <div className="mt-2 text-[10px] sm:text-xs text-gray-600">
+                  Progress to next tier: {Math.round(boutiqueCommissionInfo.progressToNextTier)}%{boutiqueCommissionInfo.amountToNextTier ? ` • ${boutiqueCommissionInfo.amountToNextTier} to next tier` : ''}
+                </div>
+              )}
             </div>
           )}
         </div>
