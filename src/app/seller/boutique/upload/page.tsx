@@ -64,23 +64,7 @@ interface MediaFile {
   uploading?: boolean;
 }
 
-const COMMONCOLORS = [
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Navy', hex: '#001F3F' },
-  { name: 'Red', hex: '#DC2626' },
-  { name: 'Blue', hex: '#2563EB' },
-  { name: 'Green', hex: '#16A34A' },
-  { name: 'Yellow', hex: '#EAB308' },
-  { name: 'Pink', hex: '#EC4899' },
-  { name: 'Purple', hex: '#9333EA' },
-  { name: 'Orange', hex: '#EA580C' },
-  { name: 'Brown', hex: '#92400E' },
-  { name: 'Gray', hex: '#6B7280' },
-  { name: 'Beige', hex: '#D4A574' },
-  { name: 'Gold', hex: '#D4AF37' },
-  { name: 'Silver', hex: '#C0C0C0' },
-];
+
 
 function BoutiqueUploadContent() {
   const { status: authStatus } = useSession();
