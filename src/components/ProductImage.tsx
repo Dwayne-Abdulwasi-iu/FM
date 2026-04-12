@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Image from 'next/image'
 import { Package } from 'lucide-react'
 
 interface ProductImageProps {
@@ -29,14 +30,15 @@ export function ProductImage({
   }
 
   return (
-    <div className={containerClassName}>
-      <img
-        src={src}
+    <div className={`${containerClassName} relative`}>
+      <Image
+        src={src || ''}
         alt={alt}
         className={className}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
         onError={() => setImageError(true)}
-        onLoad={() => setIsLoading(false)}
-        style={{ display: imageError ? 'none' : 'block' }}
+        onLoadingComplete={() => setIsLoading(false)}
       />
       {isLoading && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse" />

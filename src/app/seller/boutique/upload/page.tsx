@@ -46,6 +46,17 @@ interface Category {
   children?: Category[];
 }
 
+interface BoutiqueCommission {
+  tier: string;
+  tierName: string;
+  rate: number;
+  percentage: string;
+  nextThreshold: number | null;
+  amountToNextTier: number | null;
+  progressToNextTier: number;
+  totalEarnings: number;
+}
+
 interface Variant {
   id?: string;
   size: string;
@@ -109,7 +120,7 @@ function BoutiqueUploadContent() {
   // Fulfillment Method (Seller Direct vs Admin Stock)
   const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>(FULFILLMENT_METHOD.ADMIN_STOCK);
   const [sellerTier, setSellerTier] = useState<SellerTier | null>(null);
-  const [boutiqueCommissionInfo, setBoutiqueCommissionInfo] = useState<any>(null);
+  const [boutiqueCommissionInfo, setBoutiqueCommissionInfo] = useState<BoutiqueCommission | null>(null);
   const [canDirectShip, setCanDirectShip] = useState(false);
   const [sellerShippingLocations, setSellerShippingLocations] = useState<string[]>([]);
   const [sellerShippingTime, setSellerShippingTime] = useState('2-3 business days');
@@ -127,12 +138,14 @@ function BoutiqueUploadContent() {
     }
   }, [authStatus, router]);
 
+  // fetch* functions are stable via useCallback; run when editId changes
   useEffect(() => {
     fetchCategories();
     fetchSellerTier();
     if (editId) {
       fetchProduct(editId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
 
   const fetchSellerTier = async () => {
