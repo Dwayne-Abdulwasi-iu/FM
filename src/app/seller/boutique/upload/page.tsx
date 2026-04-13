@@ -127,7 +127,7 @@ function BoutiqueUploadContent() {
   const [sellerReturnPolicy, setSellerReturnPolicy] = useState('7-day return policy');
 
   // Custom product attributes (category-specific: perfume, jewelry, headwear, etc.)
-  const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
+  const [customAttributes, setCustomAttributes] = useState<Record<string, string | number | readonly string[] | undefined>>({});
 
   // Selected parent category for subcategory dropdown
   const [selectedParentCategory, setSelectedParentCategory] = useState<Category | null>(null);
