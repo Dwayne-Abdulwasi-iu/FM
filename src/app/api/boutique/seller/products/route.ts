@@ -75,7 +75,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch shipment status for each product to determine display status
     const productsWithShipmentStatus = await Promise.all(
-      products.map(async (product: any) => {
+      // product shape is from prisma select above
+      products.map(async (product) => {
         let displayStatus = product.status;
 
         // If product is in return workflow, check the MOST RECENT shipment status

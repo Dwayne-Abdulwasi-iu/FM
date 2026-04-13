@@ -53,16 +53,17 @@ export async function GET(_req: NextRequest) {
     })
 
     // Get transfer stats
-    const transfers = await prisma.paystackTransfer.findMany({
+    type Transfer = { paystackStatus?: string | null; amountUSD?: number | null }
+    const transfers: Transfer[] = await prisma.paystackTransfer.findMany({
       where: { sellerId: userId }
     })
 
-    const successfulTransfers = transfers.filter((t: any) => t.paystackStatus === 'SUCCESS').length
-    const pendingTransfers = transfers.filter((t: any) => t.paystackStatus === 'PENDING').length
-    const failedTransfers = transfers.filter((t: any) => t.paystackStatus === 'FAILED').length
+    const successfulTransfers = transfers.filter((t) => t.paystackStatus === 'SUCCESS').length
+    const pendingTransfers = transfers.filter((t) => t.paystackStatus === 'PENDING').length
+    const failedTransfers = transfers.filter((t) => t.paystackStatus === 'FAILED').length
     const totalAmountTransferred = transfers
-      .filter((t: any) => t.paystackStatus === 'SUCCESS')
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t) => t.paystackStatus === 'SUCCESS')
+      .reduce((sum: number, t) => sum + (t.amountUSD || 0), 0)
 
     // Get recent earnings (last 7 days)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -79,8 +80,8 @@ export async function GET(_req: NextRequest) {
     
     // Get pending payout (transfers in progress - PENDING and INITIATED)
     const pendingAmount = transfers
-      .filter((t: any) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t) => ['PENDING', 'INITIATED'].includes(t.paystackStatus || ''))
+      .reduce((sum: number, t) => sum + (t.amountUSD || 0), 0)
     
     // Available balance = Total - (Withdrawn + Pending + Failed that user hasn't cancelled)
     // For now: Total - Withdrawn - Pending

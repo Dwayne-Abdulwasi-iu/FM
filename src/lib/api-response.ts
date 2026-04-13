@@ -55,8 +55,8 @@ export function apiServerError(message = 'Internal server error', error?: Error)
   return apiError(message, 500, 'INTERNAL_ERROR')
 }
 
-export function apiSuccess(data: any = null, status: number = 200) {
-  return NextResponse.json(data, { status })
+export function apiSuccess<T = unknown>(data?: T, status: number = 200) {
+  return NextResponse.json(data ?? null, { status })
 }
 
 /**
@@ -64,7 +64,7 @@ export function apiSuccess(data: any = null, status: number = 200) {
  * Returns error response if any fields are missing
  */
 export function validateRequiredFields(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   requiredFields: string[]
 ): { valid: boolean; error?: ReturnType<typeof apiError> } {
   const missing = requiredFields.filter(field => data[field] === undefined || data[field] === null)

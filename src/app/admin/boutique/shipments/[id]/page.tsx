@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
@@ -152,7 +153,7 @@ export default function ShipmentDetailPage() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
       router.push('/auth/signin')
       return
     }
@@ -181,7 +182,7 @@ export default function ShipmentDetailPage() {
     }
   }
 
-  const handleAction = async (action: string, data: any = {}) => {
+  const handleAction = async (action: string, data: Record<string, unknown> = {}) => {
     setActionLoading(true)
     try {
       const res = await fetch(`/api/boutique/admin/shipments/${shipmentId}`, {
@@ -215,7 +216,7 @@ export default function ShipmentDetailPage() {
     }))
 
     try {
-      const payload: any = { 
+      const payload: Record<string, unknown> = { 
         acceptanceStatus,
         notes: decision.notes || undefined,
         rejectionCategory: decision.rejectionCategory || undefined
@@ -387,9 +388,11 @@ export default function ShipmentDetailPage() {
                 <div key={product.id} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 rounded bg-gray-200 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {product.thumbnailUrl ? (
-                      <img
+                      <Image
                         src={product.thumbnailUrl}
                         alt={product.title}
+                        width={64}
+                        height={64}
                         className="w-full h-full object-cover"
                       />
                     ) : (

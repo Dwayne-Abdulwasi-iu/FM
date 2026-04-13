@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { getCommissionRate, getSellerTierInfo } from '@/lib/commission-tiers'
-import { CommissionCalculatorWidget } from '@/components/seller/commission-calculator-widget'
+import CommissionCalculatorWidget from '@/components/seller/CommissionCalculatorWidget.client'
 import { AlertCircle, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 

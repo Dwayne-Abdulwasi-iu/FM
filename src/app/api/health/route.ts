@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getRedisClient } from '@/lib/redis';
 
+interface HealthResponse {
+  status: 'ok' | 'failed';
+  timestamp: string;
+  database: string;
+  redis: string;
+  warnings?: string[];
+}
+
 export async function GET() {
-  const health: any = {
+  const health: HealthResponse = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     database: 'ok',

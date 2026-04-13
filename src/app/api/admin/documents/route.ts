@@ -98,7 +98,8 @@ export async function GET(req: NextRequest) {
     const skip = parseInt(searchParams.get('skip') || '0', 10)
 
     // Build filter
-    const filter: any = {}
+    // Narrow typing for prisma filter
+    const filter: Record<string, unknown> = {}
     if (documentType) filter.documentType = documentType
     if (status) filter.status = status
 
@@ -164,7 +165,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Version not found' }, { status: 404 })
     }
 
-    let updateData: any = {}
+    // Safe typing for update payload
+    let updateData: Record<string, unknown> = {}
 
     if (action === 'approve') {
       updateData = {

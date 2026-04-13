@@ -122,7 +122,14 @@ export async function GET() {
         
         // Check for promotions (only for regular digital items) using pre-fetched data
         const sellerPromotions = promotionsBySeller.get(item.design.designerId) || []
-        let bestMatch: any = null
+        type BestMatch = {
+          promotionId: string
+          type: string
+          discountAmount: number
+          discountedPrice: number
+        }
+
+        let bestMatch: BestMatch | null = null
         let bestDiscount = 0
         
         for (const promo of sellerPromotions) {

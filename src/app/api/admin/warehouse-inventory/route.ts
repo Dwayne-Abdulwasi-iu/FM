@@ -67,11 +67,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (dateFrom) {
-      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as any) || {}, { gte: new Date(dateFrom) })
+      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as unknown) || {}, { gte: new Date(dateFrom) })
     }
 
     if (dateTo) {
-      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as any) || {}, { lte: new Date(dateTo) })
+      where.warehouseReceivedAt = Object.assign({}, (where.warehouseReceivedAt as unknown) || {}, { lte: new Date(dateTo) })
     }
 
     if (searchQuery) {
