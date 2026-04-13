@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 
 /**
  * GET /api/contests - Get contests list
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    const where: Record<string, unknown> = { isPublic: true };
+    const where: Prisma.ContestWhereInput = { isPublic: true };
 
     if (status !== "all") {
       where.status = status.toUpperCase();
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const [contests, total] = await Promise.all([
       prisma.contest.findMany({
-        where: where as any,
+        where,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.contest.count({ where: where as any }),
+      prisma.contest.count({ where }),
     ]);
 
     return NextResponse.json({

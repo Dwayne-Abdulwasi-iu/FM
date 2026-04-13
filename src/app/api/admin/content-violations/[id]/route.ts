@@ -23,8 +23,7 @@ export async function GET(
     
     const { id } = await params;
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const violation = await (prisma as any).contentViolation.findUnique({
+    const violation = await prisma.contentViolation.findUnique({
       where: { id },
     });
     
@@ -33,8 +32,7 @@ export async function GET(
     }
     
     // Get user's violation history
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userHistory = await (prisma as any).contentViolation.findMany({
+    const userHistory = await prisma.contentViolation.findMany({
       where: { userId: violation.userId },
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -83,8 +81,7 @@ export async function PATCH(
       );
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const violation = await (prisma as any).contentViolation.findUnique({
+    const violation = await prisma.contentViolation.findUnique({
       where: { id },
     });
     
@@ -93,8 +90,7 @@ export async function PATCH(
     }
     
     // Update the violation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (prisma as any).contentViolation.update({
+    const updated = await prisma.contentViolation.update({
       where: { id },
       data: {
         reviewed: true,
@@ -107,8 +103,7 @@ export async function PATCH(
     
     // If action is BANNED, we could also update the user's status
     if (action === "BANNED") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (prisma as any).user.update({
+      await prisma.user.update({
         where: { id: violation.userId },
         data: {
           // Add a flag or update role - depends on your user model
@@ -122,15 +117,13 @@ export async function PATCH(
     if (action === "WARNED") {
       try {
         // Get user details for email
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const user = await (prisma as any).user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { id: violation.userId },
           select: { email: true, name: true },
         });
 
         // Create platform notification
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (prisma as any).notification.create({
+        await prisma.notification.create({
           data: {
             userId: violation.userId,
             type: "POLICY_WARNING",

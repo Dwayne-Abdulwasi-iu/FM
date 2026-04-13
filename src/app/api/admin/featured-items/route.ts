@@ -44,14 +44,17 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Get featured designs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let designFeatures: any[] = []
     let designCount = 0
 
     // Get featured boutique products
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let boutiqueFeatures: any[] = []
     let boutiqueCount = 0
 
     // Get admin featured items
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let adminFeatures: any[] = []
     let adminCount = 0
 
@@ -196,6 +199,7 @@ export async function GET(request: NextRequest) {
       const productIds = adminItems.filter(i => i.itemType === 'BOUTIQUE_PRODUCT').map(i => i.itemId)
 
       // Fetch all designs at once
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const designsByIdMap = new Map<string, any>()
       if (designIds.length > 0) {
         const designs = await prisma.design.findMany({
@@ -214,6 +218,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Fetch all products at once
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const productsByIdMap = new Map<string, any>()
       if (productIds.length > 0) {
         const products = await prisma.boutiqueProduct.findMany({

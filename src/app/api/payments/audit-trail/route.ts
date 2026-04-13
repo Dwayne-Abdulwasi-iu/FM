@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where filter based on user role
-    const isAdmin = (session.user as any).role === 'ADMIN'
+    const isAdmin = session.user?.role === 'ADMIN'
     const where: any = {}
 
     // Restrict to user's own data if not admin

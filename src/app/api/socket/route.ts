@@ -10,6 +10,7 @@ import { initializeSocketServer } from '@/lib/socket-server'
 
 // Extend NodeJS global to store the Socket.IO server
 declare global {
+  /* eslint-disable-next-line no-var */
   var __socketio_server: SocketIOServer | undefined
 }
 
@@ -20,8 +21,9 @@ export async function GET(req: NextRequest) {
   if (!global.__socketio_server) {
     console.log('[Socket.IO API] Initializing Socket.IO server...')
     
-    // Get the HTTP server instance from Next.js
-    const httpServer = (req as any).socket?.server || new NetServer()
+    // Get the HTTP server instance from Next.js (typed)
+    type ReqWithSocket = NextRequest & { socket?: { server?: NetServer } }
+    const httpServer = (req as unknown as ReqWithSocket).socket?.server || new NetServer()
     
     // Initialize Socket.IO server
     global.__socketio_server = initializeSocketServer(httpServer)

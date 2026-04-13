@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { PRODUCT_STATUS, BOUTIQUE_DEFAULTS } from '@/lib/boutique/constants';
 import { notifyContentApproved, notifyContentRejected, notifyProductStatusChange } from '@/lib/boutique-notifications';
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.BoutiqueProductWhereInput = {};
     
     if (status === 'all') {
       // Show all non-draft products
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // For status counts, count all statuses but respect fulfillment filter
-    const whereForStatusCounts: Record<string, unknown> = {
+    const whereForStatusCounts: Prisma.BoutiqueProductWhereInput = {
       status: { not: 'DRAFT' },
     };
     if (fulfillmentMethod && fulfillmentMethod !== 'ALL') {
@@ -120,11 +121,12 @@ export async function GET(request: NextRequest) {
 
     // Fetch shipment details for products that have shipmentId
     const productsWithShipment = await Promise.all(
-      products.map(async (product: any) => {
+      products.map(async (product) => {
         let shipment = null;
-        if ((product as any).shipmentId) {
+        if (product.shipmentId) {
           shipment = await prisma.sellerToAdminShipment.findUnique({
-            where: { id: (product as any).shipmentId },
+            where: { id: product.shipmentId },
+            select: { warehouseAddress: true }
           });
         }
         return {

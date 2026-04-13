@@ -41,8 +41,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { action } = body;
 
     // Find the request
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commissionRequest = await (prisma as any).commissionRequest.findUnique({
+    const commissionRequest = await prisma.commissionRequest.findUnique({
       where: { id },
       include: {
         requester: {
@@ -347,8 +346,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update the request
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updatedRequest = await (prisma as any).commissionRequest.update({
+    const updatedRequest = await prisma.commissionRequest.update({
       where: { id },
       data: updateData,
     });

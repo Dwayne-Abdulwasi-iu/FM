@@ -1,4 +1,4 @@
-import { paystack, getUSDToNGNRate } from './paystack'
+import { paystack, getUSDToNGNRate, PaystackResponse } from './paystack'
 import prisma from './prisma'
 
 export interface TransferData {
@@ -21,12 +21,15 @@ export async function initiateSellerTransfer(data: TransferData) {
 
     if (!sellerAccount || !sellerAccount.isVerified) {
       console.warn(`Seller ${sellerId} account not verified for transfer`)
-      
-      // Create notification about unverified account
-      await createTransferNotification({
-        sellerId,
-        type: 'FAILED',
-        message: `Payment could not be processed. Your Paystack account is not verified.`
+      // Create generic platform notification (no transfer record exists yet)
+      await prisma.notification.create({
+        data: {
+          userId: sellerId,
+          type: 'TRANSFER_FAILED',
+          title: 'Transfer Failed',
+          message: `Payment could not be processed. Your Paystack account is not verified.`,
+          data: {}
+        }
       })
       
       return {
@@ -41,7 +44,7 @@ export async function initiateSellerTransfer(data: TransferData) {
     const amountNGN = Math.round(sellerAmount * exchangeRate)
 
     // Create transfer record
-    const transfer = await (prisma as any).paystackTransfer.create({
+    const transfer = await prisma.paystackTransfer.create({
       data: {
         orderId,
         designId,
@@ -58,7 +61,7 @@ export async function initiateSellerTransfer(data: TransferData) {
     if (!recipientCode) {
       try {
         console.log(`Creating recipient code for seller ${sellerId}`)
-        const recipient = await paystack.transfer_recipient.create({
+        const recipient: PaystackResponse<{ recipient_code?: string }> = await paystack.transfer_recipient.create({
           type: 'nuban',
           name: sellerAccount.accountName,
           account_number: sellerAccount.accountNumber,
@@ -70,7 +73,7 @@ export async function initiateSellerTransfer(data: TransferData) {
           recipientCode = recipient.data.recipient_code
           
           // Save recipient code
-await (prisma as any).sellerAccount.update({
+          await prisma.sellerAccount.update({
             where: { userId: sellerId },
             data: { recipientCode }
           })
@@ -82,7 +85,7 @@ await (prisma as any).sellerAccount.update({
       } catch (recipientError) {
         console.error(`Failed to create recipient for seller ${sellerId}:`, recipientError)
         
-        await (prisma as any).paystackTransfer.update({
+        await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
             paystackStatus: 'FAILED',
@@ -93,6 +96,7 @@ await (prisma as any).sellerAccount.update({
         
         await createTransferNotification({
           sellerId,
+          transferId: transfer.id,
           type: 'FAILED',
           message: `Failed to process payment: Could not create recipient code for transfer.`
         })
@@ -109,7 +113,7 @@ await (prisma as any).sellerAccount.update({
     // Ensure we have a recipient code before initiating transfer
     if (!recipientCode) {
       console.error(`No recipient code available for seller ${sellerId} after attempted creation`)
-      await (prisma as any).paystackTransfer.update({
+        await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -117,6 +121,12 @@ await (prisma as any).sellerAccount.update({
           failureReason: 'Recipient code creation failed'
         }
       })
+        await createTransferNotification({
+          sellerId,
+          transferId: transfer.id,
+          type: 'FAILED',
+          message: `Failed to process payment: No recipient code available for transfer.`
+        })
       return {
         success: false,
         error: 'No recipient code available',
@@ -134,8 +144,8 @@ await (prisma as any).sellerAccount.update({
         reason: `Earnings from sale of "${designTitle}" - Order #${orderNumber}`
       })
 
-      if (paystackTransfer.status && paystackTransfer.data?.reference) {
-        await (prisma as any).paystackTransfer.update({
+        if (paystackTransfer.status && paystackTransfer.data?.reference) {
+        await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
             paystackStatus: 'SUCCESS',
@@ -143,12 +153,11 @@ await (prisma as any).sellerAccount.update({
           }
         })
 
-        await (prisma as any).transferNotification.create({
-          data: {
-            sellerId,
-            type: 'SUCCESS',
-            message: `Payment of ₦${amountNGN.toLocaleString()} received for "${designTitle}"`
-          }
+        await createTransferNotification({
+          sellerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Payment of ₦${amountNGN.toLocaleString()} received for "${designTitle}"`
         })
 
         console.log(`Transfer successful for seller ${sellerId}: ₦${amountNGN}`)
@@ -164,7 +173,7 @@ await (prisma as any).sellerAccount.update({
       const errorMsg = transferError instanceof Error ? transferError.message : 'Unknown error'
       console.error(`Transfer error for seller ${sellerId}:`, errorMsg)
 
-      await (prisma as any).paystackTransfer.update({
+      await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -173,12 +182,11 @@ await (prisma as any).sellerAccount.update({
         }
       })
 
-      await (prisma as any).transferNotification.create({
-        data: {
-          sellerId,
-          type: 'FAILED',
-          message: `Payment processing failed. We will retry automatically.`
-        }
+      await createTransferNotification({
+        sellerId,
+        transferId: transfer.id,
+        type: 'FAILED',
+        message: `Payment processing failed. We will retry automatically.`
       })
 
       return {
@@ -207,7 +215,7 @@ export async function updateTransferStatus(
     failureReason?: string
   }
 ) {
-  return (prisma as any).paystackTransfer.update({
+  return prisma.paystackTransfer.update({
     where: { id: transferId },
     data: {
       paystackStatus: updates.status,
@@ -260,7 +268,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
     const amountNGN = Math.round(designerEarnings * exchangeRate)
 
     // Create transfer record (reusing PaystackTransfer model)
-    const transfer = await (prisma as any).paystackTransfer.create({
+    const transfer = await prisma.paystackTransfer.create({
       data: {
         orderId: commissionRequestId, // Use commission ID as reference
         designId: commissionRequestId, // Use commission ID
@@ -277,7 +285,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
     if (!recipientCode) {
       try {
         console.log(`Creating recipient code for designer ${designerId}`)
-        const recipient = await paystack.transfer_recipient.create({
+          const recipient: PaystackResponse<{ recipient_code?: string }> = await paystack.transfer_recipient.create({
           type: 'nuban',
           name: sellerAccount.accountName,
           account_number: sellerAccount.accountNumber,
@@ -288,7 +296,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         if (recipient.status && recipient.data?.recipient_code) {
           recipientCode = recipient.data.recipient_code
           
-          await (prisma as any).sellerAccount.update({
+          await prisma.sellerAccount.update({
             where: { userId: designerId },
             data: { recipientCode }
           })
@@ -300,7 +308,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
       } catch (recipientError) {
         console.error(`Failed to create recipient for designer ${designerId}:`, recipientError)
         
-        await (prisma as any).paystackTransfer.update({
+        await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
             paystackStatus: 'FAILED',
@@ -311,6 +319,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         
         await createTransferNotification({
           sellerId: designerId,
+          transferId: transfer.id,
           type: 'FAILED',
           message: `Commission payment failed: Could not create recipient code. Please verify your bank details.`
         })
@@ -326,7 +335,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
     if (!recipientCode) {
       console.error(`No recipient code available for designer ${designerId}`)
-      await (prisma as any).paystackTransfer.update({
+        await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -334,6 +343,12 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
           failureReason: 'Recipient code creation failed'
         }
       })
+        await createTransferNotification({
+          sellerId: designerId,
+          transferId: transfer.id,
+          type: 'FAILED',
+          message: `Commission payment failed: No recipient code available.`
+        })
       return {
         success: false,
         error: 'No recipient code available',
@@ -344,15 +359,15 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
     // Initiate the transfer
     try {
-      const paystackTransfer = await paystack.transfer.initiate({
+      const paystackTransfer: PaystackResponse<{ reference?: string }> = await paystack.transfer.initiate({
         source: 'balance',
         amount: amountNGN * 100, // Convert to kobo
         recipient: recipientCode,
         reason: `Commission earnings for "${commissionTitle}"`
       })
 
-      if (paystackTransfer.status && paystackTransfer.data?.reference) {
-        await (prisma as any).paystackTransfer.update({
+        if (paystackTransfer.status && paystackTransfer.data?.reference) {
+        await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
             paystackStatus: 'SUCCESS',
@@ -360,12 +375,11 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
           }
         })
 
-        await (prisma as any).transferNotification.create({
-          data: {
-            sellerId: designerId,
-            type: 'SUCCESS',
-            message: `Commission payment of ₦${amountNGN.toLocaleString()} received for "${commissionTitle}"`
-          }
+        await createTransferNotification({
+          sellerId: designerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Commission payment of ₦${amountNGN.toLocaleString()} received for "${commissionTitle}"`
         })
 
         // Update commission request with payout info
@@ -390,7 +404,7 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
       const errorMsg = transferError instanceof Error ? transferError.message : 'Unknown error'
       console.error(`Commission transfer error for designer ${designerId}:`, errorMsg)
 
-      await (prisma as any).paystackTransfer.update({
+      await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           paystackStatus: 'FAILED',
@@ -399,12 +413,11 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
         }
       })
 
-      await (prisma as any).transferNotification.create({
-        data: {
-          sellerId: designerId,
-          type: 'FAILED',
-          message: `Commission payment processing failed. We will retry automatically.`
-        }
+      await createTransferNotification({
+        sellerId: designerId,
+        transferId: transfer.id,
+        type: 'FAILED',
+        message: `Commission payment processing failed. We will retry automatically.`
       })
 
       return {
@@ -426,14 +439,29 @@ export async function initiateCommissionTransfer(data: CommissionTransferData) {
 
 export async function createTransferNotification(data: {
   sellerId: string
+  transferId?: string
   type: 'SUCCESS' | 'FAILED' | 'PENDING' | 'RETRY'
   message: string
 }) {
-  return (prisma as any).transferNotification.create({
+  if (data.transferId) {
+    return prisma.transferNotification.create({
+      data: {
+        transferId: data.transferId,
+        sellerId: data.sellerId,
+        type: data.type,
+        message: data.message
+      }
+    })
+  }
+
+  // If no transferId is provided, fall back to a generic platform notification
+  return prisma.notification.create({
     data: {
-      sellerId: data.sellerId,
-      type: data.type,
-      message: data.message
+      userId: data.sellerId,
+      type: `TRANSFER_${data.type}`,
+      title: 'Transfer Update',
+      message: data.message,
+      data: {}
     }
   })
 }
@@ -441,7 +469,7 @@ export async function createTransferNotification(data: {
 export async function retryFailedTransfers() {
   try {
     // Get transfers that failed and haven't exceeded max retries
-    const failedTransfers = await (prisma as any).paystackTransfer.findMany({
+    const failedTransfers = await prisma.paystackTransfer.findMany({
       where: {
         paystackStatus: 'FAILED',
         retryCount: {
@@ -477,7 +505,7 @@ export async function retryFailedTransfers() {
       console.log(`Retrying transfer ${transfer.id} (attempt ${transfer.retryCount + 1})`)
 
       // Get the order to get design info
-      const order = await (prisma as any).order.findUnique({
+      const order = await prisma.order.findUnique({
         where: { id: transfer.orderId },
         include: {
           items: {
@@ -493,14 +521,15 @@ export async function retryFailedTransfers() {
         continue
       }
 
-      const design = order.items.find((item: any) => item.designId === transfer.designId)?.design
+      type OrderItem = { designId?: string; design?: { title?: string } }
+      const design = order.items.find((item: OrderItem) => item.designId === transfer.designId)?.design
       if (!design) {
         console.error(`Design ${transfer.designId} not found for retry`)
         continue
       }
 
       // Update retry count and timestamp
-      await (prisma as any).paystackTransfer.update({
+      await prisma.paystackTransfer.update({
         where: { id: transfer.id },
         data: {
           retryCount: transfer.retryCount + 1,
@@ -521,17 +550,16 @@ export async function retryFailedTransfers() {
       if (result.success) {
         console.log(`Retry successful for transfer ${transfer.id}`)
         
-        await (prisma as any).transferNotification.create({
-          data: {
-            sellerId: transfer.sellerId,
-            type: 'SUCCESS',
-            message: `Payment retry successful. ₦${transfer.amountNGN.toLocaleString()} transferred.`
-          }
+        await createTransferNotification({
+          sellerId: transfer.sellerId,
+          transferId: transfer.id,
+          type: 'SUCCESS',
+          message: `Payment retry successful. ₦${transfer.amountNGN.toLocaleString()} transferred.`
         })
       } else if (!result.shouldRetry) {
         console.log(`Transfer ${transfer.id} cannot be retried - permanent failure`)
         
-        await (prisma as any).paystackTransfer.update({
+        await prisma.paystackTransfer.update({
           where: { id: transfer.id },
           data: {
             paystackStatus: 'FAILED',

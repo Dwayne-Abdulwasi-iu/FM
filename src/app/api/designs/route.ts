@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadToCloudinary, generateThumbnailUrl } from "@/lib/cloudinary";
 import prisma from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 import { DESIGN_CATEGORIES, validateCategory } from "@/lib/design-categories";
 
 export async function POST(request: NextRequest) {
@@ -153,7 +154,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.DesignWhereInput = {
       // Only show approved designs
       approvalStatus: "APPROVED",
       isActive: true,
@@ -206,7 +207,7 @@ export async function GET(request: NextRequest) {
 
     const [designs, total] = await Promise.all([
       prisma.design.findMany({
-        where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */,
+        where,
         skip,
         take: limit,
         orderBy,
@@ -234,7 +235,7 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-  prisma.design.count({ where: (where as any) /* eslint-disable-line @typescript-eslint/no-explicit-any */ }),
+  prisma.design.count({ where }),
     ]);
 
     // Add promotion data to each design (N+1 QUERY FIX)

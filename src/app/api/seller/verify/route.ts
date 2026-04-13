@@ -67,7 +67,8 @@ export async function POST() {
             console.log('Recipient creation response:', JSON.stringify(recipient, null, 2))
 
             if (recipient.status) {
-              recipientCode = recipient.data.recipient_code
+              // recipient.data.recipient_code may be undefined; store as string | null
+              recipientCode = typeof recipient.data.recipient_code === 'string' ? recipient.data.recipient_code : null
               console.log('Recipient created successfully:', recipientCode)
             } else {
               console.error('Recipient creation failed:', recipient.message)

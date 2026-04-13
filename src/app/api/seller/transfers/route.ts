@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import type { PaystackTransfer } from '@prisma/client'
 import { prismaErrorResponse } from '@/lib/prismaError'
 
 export async function GET(_request: NextRequest) {
@@ -33,7 +34,7 @@ export async function GET(_request: NextRequest) {
     const sellerId = session.user.id
 
     // Get all transfers for this user
-    const transfers = await (prisma as any).paystackTransfer.findMany({
+    const transfers: PaystackTransfer[] = await prisma.paystackTransfer.findMany({
       where: { sellerId },
       orderBy: { createdAt: 'desc' }
     })
@@ -41,15 +42,15 @@ export async function GET(_request: NextRequest) {
     // Summary stats
     const stats = {
       totalTransfers: transfers.length,
-      successfulTransfers: transfers.filter((t: any) => t.paystackStatus === 'SUCCESS').length,
-      failedTransfers: transfers.filter((t: any) => ['FAILED', 'CANCELLED'].includes(t.paystackStatus || '')).length,
-      pendingTransfers: transfers.filter((t: any) => ['PENDING', 'INITIATED'].includes(t.paystackStatus || '')).length,
+      successfulTransfers: transfers.filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS').length,
+      failedTransfers: transfers.filter((t: PaystackTransfer) => ['FAILED', 'CANCELLED'].includes(t.paystackStatus || '')).length,
+      pendingTransfers: transfers.filter((t: PaystackTransfer) => ['PENDING', 'INITIATED'].includes(t.paystackStatus || '')).length,
       totalAmountUSD: transfers
-        .filter((t: any) => t.paystackStatus === 'SUCCESS')
-        .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0),
+        .filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS')
+        .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountUSD || 0), 0),
       totalAmountNGN: transfers
-        .filter((t: any) => t.paystackStatus === 'SUCCESS')
-        .reduce((sum: number, t: any) => sum + (t.amountNGN || 0), 0)
+        .filter((t: PaystackTransfer) => t.paystackStatus === 'SUCCESS')
+        .reduce((sum: number, t: PaystackTransfer) => sum + (t.amountNGN || 0), 0)
     }
 
     return NextResponse.json({

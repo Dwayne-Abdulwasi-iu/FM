@@ -21,7 +21,7 @@ export async function GET() {
     }
 
     // Get unread notifications
-    const unreadCount = await (prisma as any).transferNotification.count({
+    const unreadCount = await prisma.transferNotification.count({
       where: {
         sellerId: user.id,
         isRead: false
@@ -29,7 +29,7 @@ export async function GET() {
     })
 
     // Get recent notifications (last 20)
-    const notifications = await (prisma as any).transferNotification.findMany({
+    const notifications = await prisma.transferNotification.findMany({
       where: { sellerId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 20
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify notification belongs to this seller
-    const notification = await (prisma as any).transferNotification.findUnique({
+    const notification = await prisma.transferNotification.findUnique({
       where: { id: notificationId }
     })
 

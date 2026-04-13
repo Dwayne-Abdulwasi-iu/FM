@@ -11,7 +11,7 @@ interface TierInfo {
   nextTier?: string | null
   nextTierThreshold?: number | null
   amountToNextTier?: number | null
-  allTiers?: Array<any>
+  allTiers?: Array<{ key: string; effectiveRate?: number }>
 }
 
 export function CommissionCalculatorWidget() {
@@ -25,15 +25,15 @@ export function CommissionCalculatorWidget() {
     let mounted = true
     async function fetchTier() {
       try {
-        const res = await fetch('/api/seller/commission-tier')
-        if (!res.ok) return
-        const data = await res.json()
-        if (mounted) setTierInfo(data)
-      } catch (e) {
-        // ignore
-      } finally {
-        if (mounted) setLoading(false)
-      }
+          const res = await fetch('/api/seller/commission-tier')
+          if (!res.ok) return
+          const data = await res.json()
+          if (mounted) setTierInfo(data)
+        } catch {
+          // ignore
+        } finally {
+          if (mounted) setLoading(false)
+        }
     }
     fetchTier()
     return () => { mounted = false }
@@ -50,8 +50,8 @@ export function CommissionCalculatorWidget() {
   // Find next tier rate if available
   let nextTierRate = null as number | null
   if (tierInfo.allTiers && tierInfo.nextTier) {
-    const next = (tierInfo.allTiers as any[]).find(t => t.key === tierInfo.nextTier)
-    if (next) nextTierRate = next.effectiveRate
+    const next = tierInfo.allTiers.find(t => t.key === tierInfo.nextTier)
+    if (next) nextTierRate = next.effectiveRate ?? null
   }
 
   const platformFee = saleTotal * currentRate

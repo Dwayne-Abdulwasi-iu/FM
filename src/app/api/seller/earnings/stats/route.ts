@@ -69,15 +69,16 @@ export async function GET() {
     const lastMonthEarnings = lastMonthResult._sum?.sellerAmount ?? 0
 
     // Get transfer data to calculate accurate balance
-    const transfers = await prisma.paystackTransfer.findMany({
+    type Transfer = { paystackStatus?: string | null; amountUSD?: number | null }
+    const transfers: Transfer[] = await prisma.paystackTransfer.findMany({
       where: { sellerId: userId }
     })
     const totalWithdrawn = transfers
-      .filter((t: any) => t.paystackStatus === 'SUCCESS')
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t) => t.paystackStatus === 'SUCCESS')
+      .reduce((sum: number, t) => sum + (t.amountUSD || 0), 0)
     const pendingPayout = transfers
-      .filter((t: any) => ['PENDING', 'INITIATED'].includes(t.paystackStatus))
-      .reduce((sum: number, t: any) => sum + (t.amountUSD || 0), 0)
+      .filter((t) => ['PENDING', 'INITIATED'].includes(t.paystackStatus || ''))
+      .reduce((sum: number, t) => sum + (t.amountUSD || 0), 0)
     const availableBalance = Math.max(totalEarnings - totalWithdrawn - pendingPayout, 0)
 
     return NextResponse.json({

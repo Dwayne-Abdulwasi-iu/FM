@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -293,10 +294,12 @@ export function ProgressTimeline({ progressUpdates }: ProgressTimelineProps) {
                           rel="noopener noreferrer"
                           className="block"
                         >
-                          <img
+                          <Image
                             src={photo}
                             alt={`Progress ${index + 1} - Photo ${photoIdx + 1}`}
-                            className="w-16 h-16 object-cover rounded-lg border hover:opacity-75 transition"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg border hover:opacity-75 transition"
                           />
                         </a>
                       ))}

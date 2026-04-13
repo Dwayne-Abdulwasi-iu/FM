@@ -47,8 +47,7 @@ export async function GET() {
     ];
     
     // Optimized query: only fetch fields needed for unread calculation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commissions = await (prisma as any).commissionRequest.findMany({
+    const commissions = await prisma.commissionRequest.findMany({
       where: {
         OR: [
           { requesterId: userId },
@@ -63,7 +62,7 @@ export async function GET() {
         designerId: true,
         messages: true, // JSON field - Prisma doesn't support projection within JSON
       }
-    }) as CommissionMinimal[];
+    }) as unknown as CommissionMinimal[];
     
     let totalUnread = 0;
     const commissionsWithUnread: UnreadCommission[] = [];

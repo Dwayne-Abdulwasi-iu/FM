@@ -157,16 +157,15 @@ export function SocialShare({
   const [copied, setCopied] = useState(false)
   const [instagramCopied, setInstagramCopied] = useState(false)
 
-  const shareData: ShareData = {
-    url,
-    title,
-    description,
-    imageUrl,
-    hashtags,
-    via,
-  }
-
   const handleShare = useCallback(async (platform: SharePlatform) => {
+    const shareData: ShareData = {
+      url,
+      title,
+      description,
+      imageUrl,
+      hashtags,
+      via,
+    }
     // Special handling for Instagram
     if (platform.id === 'instagram') {
       // Copy link to clipboard for Instagram
@@ -205,7 +204,7 @@ export function SocialShare({
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400')
     }
-  }, [shareData, url])
+  }, [url, title, description, imageUrl, hashtags, via])
 
   const handleCopyLink = useCallback(async () => {
     try {

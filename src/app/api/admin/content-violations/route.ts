@@ -43,12 +43,10 @@ export async function GET(request: NextRequest) {
     }
     
     // Get total count
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const total = await (prisma as any).contentViolation.count({ where });
+    const total = await prisma.contentViolation.count({ where });
     
     // Get violations
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const violations = await (prisma as any).contentViolation.findMany({
+    const violations = await prisma.contentViolation.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
@@ -56,11 +54,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch user data separately for each violation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const violationsWithUsers = await Promise.all(
-      violations.map(async (violation: any) => {
+      violations.map(async (violation) => {
         try {
-          const user = await (prisma as any).user.findUnique({
+          const user = await prisma.user.findUnique({
             where: { id: violation.userId },
             select: {
               id: true,
@@ -76,14 +73,12 @@ export async function GET(request: NextRequest) {
     );
     
     // Get stats
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stats = await (prisma as any).contentViolation.groupBy({
+    const stats = await prisma.contentViolation.groupBy({
       by: ["violationType"],
       _count: { violationType: true },
     });
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pendingCount = await (prisma as any).contentViolation.count({
+    const pendingCount = await prisma.contentViolation.count({
       where: { reviewed: false },
     });
     

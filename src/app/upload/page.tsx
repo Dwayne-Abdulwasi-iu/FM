@@ -580,15 +580,17 @@ export default function EnhancedUploadPage() {
                           <div className="space-y-2">
                             {media.fileType === 'VIDEO' ? (
                               <video 
-                                src={media.preview} 
+                                src={media.preview as string} 
                                 className="max-h-32 mx-auto rounded"
                                 controls
                               />
                             ) : (
-                              <img 
-                                src={media.preview || ''} 
-                                alt="Preview" 
-                                className="max-h-32 mx-auto rounded"
+                              <Image
+                                src={media.preview || ''}
+                                alt="Preview"
+                                width={320}
+                                height={180}
+                                className="max-h-32 mx-auto rounded object-contain"
                               />
                             )}
                             <button
