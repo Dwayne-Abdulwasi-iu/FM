@@ -4,8 +4,8 @@ import { AttributeField } from '@/lib/boutique/product-attributes';
 
 interface ProductAttributesFormProps {
   fields: AttributeField[];
-  values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  values: Record<string, unknown>;
+  onChange: (key: string, value: unknown) => void;
 }
 
 export function ProductAttributesForm({
