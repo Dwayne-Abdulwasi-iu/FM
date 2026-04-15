@@ -276,6 +276,36 @@ export default function DocumentsPage() {
             <p className="text-gray-600">Foundational company and legal documents</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            {/* Manual card for Loan Portfolio Proposal (static HTML) */}
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+              <div className={`p-6 bg-gradient-to-r from-blue-500 to-indigo-500 text-white`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <FileText className="w-6 h-6" />
+                  <span className="px-2 py-1 bg-white/20 rounded text-xs font-semibold">REFERENCE</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Loan Portfolio Proposal</h2>
+                <p className="text-white/90">Printable loan proposal for Fashion Marketplace operations.</p>
+              </div>
+
+              <div className="p-6">
+                <p className="text-gray-700 mb-6 leading-relaxed">A concise, printable loan proposal for lender review. Opens as a standalone HTML document.</p>
+                <div className="mb-6">
+                  <h4 className="font-semibold text-gray-900 mb-3">Actions</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <a href="/documents/loan-proposal.html" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1 px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium">
+                      <Eye className="w-4 h-4" />
+                      <span className="text-xs">View</span>
+                    </a>
+                    <a href="/documents/loan-proposal.docx" className="flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium">
+                      <Download className="w-4 h-4" />
+                      <span className="text-xs">Download DOCX</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {DOCUMENTS.filter(doc => doc.category === 'corporate').map((doc) => (
               <div key={doc.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
                 {/* Card Header */}
@@ -627,6 +657,15 @@ export default function DocumentsPage() {
                 <li><strong>HTML:</strong> Formatted for web viewing and printing</li>
               </ul>
             </div>
+          </div>
+
+          <div className="mt-6">
+            <h4 className="font-semibold text-blue-900 mb-2">Added Documents</h4>
+            <ul className="text-sm text-blue-800 ml-4 list-disc">
+              <li>
+                <a href="/documents/loan-proposal.html" target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline">Loan Portfolio Proposal — AnoNymouZ Dwayne</a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
