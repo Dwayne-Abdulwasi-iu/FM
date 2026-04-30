@@ -101,7 +101,7 @@ export default function BoutiqueCartPage() {
     setUpdating(itemId);
     try {
       const response = await fetch('/api/boutique/cart', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId, quantity: newQuantity }),
       });
@@ -124,10 +124,8 @@ export default function BoutiqueCartPage() {
   const removeItem = async (itemId: string) => {
     setUpdating(itemId);
     try {
-      const response = await fetch('/api/boutique/cart', {
+      const response = await fetch(`/api/boutique/cart?itemId=${encodeURIComponent(itemId)}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId }),
       });
       
       const data = await response.json();
@@ -151,10 +149,8 @@ export default function BoutiqueCartPage() {
     
     try {
       for (const item of cart.unavailableItems) {
-        await fetch('/api/boutique/cart', {
+        await fetch(`/api/boutique/cart?itemId=${encodeURIComponent(item.id)}`, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.id }),
         });
       }
       toast.success('Removed unavailable items');
