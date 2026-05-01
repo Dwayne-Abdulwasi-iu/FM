@@ -256,6 +256,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sellerAccount = await prisma.sellerAccount.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!sellerAccount) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Bank account required to upload boutique products. Please add your bank account details first.',
+          requiresBankAccount: true,
+          redirectTo: '/profile#bank-account'
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!sellerAccount.isVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Your bank account needs to be verified before you can upload boutique products. Please verify your account first.',
+          requiresVerification: true,
+          bankAccountExists: true,
+          redirectTo: '/profile#bank-verification'
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       title,

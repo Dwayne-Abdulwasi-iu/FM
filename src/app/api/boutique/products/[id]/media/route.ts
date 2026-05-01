@@ -23,6 +23,35 @@ export async function POST(
       );
     }
 
+    const sellerAccount = await prisma.sellerAccount.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!sellerAccount) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Bank account required to upload boutique product media. Please add your bank account details first.',
+          requiresBankAccount: true,
+          redirectTo: '/profile#bank-account'
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!sellerAccount.isVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Your bank account needs to be verified before uploading boutique product media. Please verify your account first.',
+          requiresVerification: true,
+          bankAccountExists: true,
+          redirectTo: '/profile#bank-verification'
+        },
+        { status: 403 }
+      );
+    }
+
     const product = await prisma.boutiqueProduct.findUnique({
       where: { id },
       include: { media: true },

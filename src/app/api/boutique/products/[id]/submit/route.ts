@@ -23,6 +23,35 @@ export async function POST(
       );
     }
 
+    const sellerAccount = await prisma.sellerAccount.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!sellerAccount) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Bank account required to submit boutique products. Please add your bank account details first.',
+          requiresBankAccount: true,
+          redirectTo: '/profile#bank-account'
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!sellerAccount.isVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Your bank account needs to be verified before you can submit boutique products. Please verify your account first.',
+          requiresVerification: true,
+          bankAccountExists: true,
+          redirectTo: '/profile#bank-verification'
+        },
+        { status: 403 }
+      );
+    }
+
     const product = await prisma.boutiqueProduct.findUnique({
       where: { id },
       include: {
@@ -72,8 +101,8 @@ export async function POST(
       errors.push('Title must be at least 10 characters');
     }
 
-    if (!product.description || product.description.length < 50) {
-      errors.push('Description must be at least 50 characters');
+    if (!product.description || product.description.length < 20) {
+      errors.push('Description must be at least 20 characters');
     }
 
     if (product.basePrice <= 0) {

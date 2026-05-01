@@ -78,7 +78,7 @@ interface MediaFile {
 
 
 function BoutiqueUploadContent() {
-  const { status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
@@ -89,6 +89,8 @@ function BoutiqueUploadContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [bankAccountRequired, setBankAccountRequired] = useState(false);
+  const [bankAccountNeedsVerification, setBankAccountNeedsVerification] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -163,6 +165,33 @@ function BoutiqueUploadContent() {
       console.error('Failed to fetch seller tier:', error);
     }
   };
+
+  const checkBankAccountStatus = async () => {
+    try {
+      const response = await fetch('/api/seller/account');
+      if (!response.ok) {
+        setBankAccountRequired(true);
+        return;
+      }
+
+      const data = await response.json();
+      setBankAccountRequired(false);
+      setBankAccountNeedsVerification(false);
+      if (!data.sellerAccount) {
+        setBankAccountRequired(true);
+      } else if (!data.sellerAccount.isVerified) {
+        setBankAccountNeedsVerification(true);
+      }
+    } catch (error) {
+      console.error('Error checking bank account status:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      checkBankAccountStatus();
+    }
+  }, [session?.user?.id]);
 
   const fetchCategories = async () => {
     try {
@@ -322,7 +351,7 @@ function BoutiqueUploadContent() {
   const validateForm = (): string[] => {
     const errs: string[] = [];
     if (!title || title.length < 10) errs.push('Title must be at least 10 characters');
-    if (!description || description.length < 50) errs.push('Description must be at least 50 characters');
+    if (!description || description.length < 20) errs.push('Description must be at least 20 characters');
     if (!categoryId) errs.push('Category is required');
     if (selectedParentCategory?.children && selectedParentCategory.children.length > 0 && !subcategory) errs.push('Subcategory is required');
     if (!condition) errs.push('Condition is required');
@@ -349,6 +378,11 @@ function BoutiqueUploadContent() {
   };
 
   const handleSaveDraft = async () => {
+    if (bankAccountRequired || bankAccountNeedsVerification) {
+      setErrors(['Please add and verify your bank account before uploading boutique products.']);
+      return;
+    }
+
     setSaving(true);
     setErrors([]);
     
@@ -431,6 +465,11 @@ function BoutiqueUploadContent() {
   };
 
   const handleSubmitForReview = async () => {
+    if (bankAccountRequired || bankAccountNeedsVerification) {
+      setErrors(['Please add and verify your bank account before submitting boutique products.']);
+      return;
+    }
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
@@ -504,7 +543,7 @@ function BoutiqueUploadContent() {
           <div className="flex items-center gap-1.5 sm:gap-3">
             <button
               onClick={handleSaveDraft}
-              disabled={saving}
+              disabled={saving || bankAccountRequired || bankAccountNeedsVerification}
               className="px-2 sm:px-4 py-1.5 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
             >
               <Save className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -512,7 +551,7 @@ function BoutiqueUploadContent() {
             </button>
             <button
               onClick={editId ? handleSubmitForReview : handleSaveDraft}
-              disabled={submitting || saving}
+              disabled={submitting || saving || bankAccountRequired || bankAccountNeedsVerification}
               className="px-2 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-lg flex items-center gap-1 sm:gap-2 hover:bg-purple-700 text-xs sm:text-sm"
             >
               <Send className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -545,6 +584,46 @@ function BoutiqueUploadContent() {
           <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
             <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             <span className="text-green-800 text-xs sm:text-base">{successMessage}</span>
+          </div>
+        )}
+
+        {bankAccountRequired && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm sm:text-base font-semibold text-yellow-800 mb-1">Bank Account Required</h3>
+                <p className="text-xs sm:text-sm text-yellow-700 mb-3">
+                  To upload boutique products and receive payouts, please add your bank account details first.
+                </p>
+                <button
+                  onClick={() => router.push('/profile?tab=account&action=add-bank#bank-account')}
+                  className="inline-flex items-center justify-center rounded-lg bg-yellow-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-yellow-700"
+                >
+                  Add Bank Account
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bankAccountNeedsVerification && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm sm:text-base font-semibold text-blue-800 mb-1">Bank Account Verification Required</h3>
+                <p className="text-xs sm:text-sm text-blue-700 mb-3">
+                  Your bank account has been added but needs verification before you can upload boutique products.
+                </p>
+                <button
+                  onClick={() => router.push('/profile#bank-verification')}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs sm:text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Verify Bank Account
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
