@@ -950,7 +950,7 @@ function BoutiqueUploadContent() {
                 placeholder="Describe your product in detail..."
                 className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm text-gray-900 placeholder:text-gray-400"
               />
-              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">{description.length}/1000 (min 50)</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">{description.length}/1000 (min 20)</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:gap-4">
