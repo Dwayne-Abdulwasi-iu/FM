@@ -23,8 +23,18 @@ export function isSMTPConfigured(): boolean {
 }
 
 /**
- * Check if any email method is configured (SMTP only)
+ * Check if Gmail SMTP is configured
+ */
+export function isGmailConfigured(): boolean {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+
+  return !!(user && pass);
+}
+
+/**
+ * Check if any email method is configured (SendGrid, Gmail SMTP, or generic SMTP)
  */
 export function isEmailConfigured(): boolean {
-  return isSMTPConfigured();
+  return !!(process.env.SENDGRID_API_KEY || isGmailConfigured() || isSMTPConfigured());
 }

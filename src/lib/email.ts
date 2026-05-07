@@ -2,14 +2,15 @@
  * Email Service for Fashion Marketplace Notifications
  * 
  * This service handles sending email notifications for various events.
- * Supports SendGrid API (primary) and SMTP (fallback) - SendGrid takes priority.
+ * Supports SendGrid API (primary), Gmail SMTP, and generic SMTP (fallback).
+ * Priority: SendGrid > Gmail SMTP > Generic SMTP
  * 
  * NOTE: This is a server-only module. Import only in server components and API routes.
  */
 
 // Import and re-export sync config functions
-export { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
-import { isSMTPConfigured, isEmailConfigured } from '@/lib/email-config'
+export { isSMTPConfigured, isEmailConfigured, isGmailConfigured } from '@/lib/email-config'
+import { isSMTPConfigured, isEmailConfigured, isGmailConfigured } from '@/lib/email-config'
 import sgMail from '@sendgrid/mail'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -27,23 +28,48 @@ function getTransporter(): Transporter | null {
     return transporter;
   }
 
-  // Use SMTP (SendGrid via SMTP or custom SMTP) as fallback
+  // Use Gmail SMTP if configured
+  if (isGmailConfigured()) {
+    const user = process.env.GMAIL_USER;
+    const pass = process.env.GMAIL_APP_PASSWORD;
+
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user,
+        pass,
+      },
+    });
+    console.log(`[Email] Using Gmail SMTP transport (user: ${user})`);
+    return transporter;
+  }
+
+  // Use generic SMTP (SendGrid via SMTP or custom SMTP) as fallback
   if (isSMTPConfigured()) {
     // Support both SMTP_* and EMAIL_SERVER_* env variable names
     const host = process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST;
-    const port = process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '465';
+    const portString = process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || '465';
+    const port = parseInt(portString, 10);
     const user = process.env.SMTP_USER || process.env.EMAIL_SERVER_USER;
     const pass = process.env.SMTP_PASS || process.env.EMAIL_SERVER_PASSWORD;
-    const secure = process.env.SMTP_SECURE !== 'false'; // Default to true for port 465
+
+    const secure = process.env.SMTP_SECURE === 'true'
+      ? true
+      : process.env.SMTP_SECURE === 'false'
+      ? false
+      : port === 465;
 
     transporter = nodemailer.createTransport({
       host,
-      port: parseInt(port),
+      port,
       secure,
       auth: {
         user,
         pass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
     console.log(`[Email] Using SMTP transport (host: ${host}, port: ${port}, secure: ${secure})`);
     return transporter;
@@ -150,12 +176,12 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     }
   }
 
-  // Fallback to SMTP if SendGrid not configured or fails
+  // Fallback to Gmail SMTP or generic SMTP
   const transport = getTransporter();
   
   if (!transport) {
     console.log(`[Email - NOT SENT] To: ${options.to}, Subject: ${options.subject}`);
-    console.log(`[Email] Configure SENDGRID_API_KEY or SMTP_HOST/PORT/USER/PASS to enable email`);
+    console.log(`[Email] Configure SENDGRID_API_KEY, GMAIL_USER/GMAIL_APP_PASSWORD, or SMTP_HOST/PORT/USER/PASS to enable email`);
     return false;
   }
 

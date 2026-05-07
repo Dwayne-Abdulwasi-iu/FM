@@ -120,8 +120,10 @@ Required for full functionality:
 - `REDIS_URL` — Optional but recommended for rate limiting and job queues
 
 Additional recommended:
-- `SENDGRID_API_KEY` — Preferred email provider (falls back to SMTP if not set)
-- `EMAIL_FROM` — Verified sender address (must be verified in SendGrid when using API)
+- `SENDGRID_API_KEY` — Preferred email provider
+- `GMAIL_USER`, `GMAIL_APP_PASSWORD` — Gmail SMTP fallback (requires app password, not regular password)
+- `EMAIL_FROM` — Verified sender address (must be verified in SendGrid when using API, or Gmail account for Gmail SMTP)
+- `SMTP_HOST/PORT/USER/PASS` — Generic SMTP fallback
 - `SENTRY_DSN` — Optional error tracking
 - Local Redis: run `.\scripts\setup-redis.ps1` or `./scripts/setup-redis.sh` to auto-configure
 
